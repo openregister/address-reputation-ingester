@@ -1,8 +1,12 @@
+import play.PlayImport.PlayKeys
 import sbt.Keys._
 import sbt.Tests.{SubProcess, Group}
 import sbt._
+import sbtassembly.{PathList, MergeStrategy, AssemblyKeys}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 
+
+import AssemblyKeys._
 
 trait MicroService {
 
@@ -11,6 +15,8 @@ trait MicroService {
   import uk.gov.hmrc.{SbtBuildInfo, ShellPrompt}
 
   import TestPhases._
+
+import sbtassembly.AssemblyPlugin.defaultShellScript
 
   val appName: String
   val appVersion: String
@@ -46,7 +52,24 @@ trait MicroService {
     .settings(SbtBuildInfo(): _*)
     .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
     .settings(resolvers += Resolver.bintrayRepo("hmrc", "releases"))
-}
+    .settings(mainClass in assembly := Some("play.core.server.NettyServer"))
+    .settings(fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value))
+    .settings(assemblyMergeStrategy in assembly := {
+      case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
+      case PathList("com", "codahale", "metrics",  xs @ _*)         => MergeStrategy.first
+      case PathList("org", "apache", "commons", "logging",  xs @ _*)         => MergeStrategy.first
+      case PathList("play", "core", "server",   xs @ _*)         => MergeStrategy.first
+      case PathList(ps @ _*) if ps.last endsWith ".html" => MergeStrategy.first
+      case PathList(ps @ _*) if ps.last endsWith "BuildInfo$.class" => MergeStrategy.first
+      case PathList(ps @ _*) if ps.last endsWith "BuildInfo.class" => MergeStrategy.first
+      case "application.conf"                            => MergeStrategy.concat
+      case "unwanted.txt"                                => MergeStrategy.discard
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    })
+
+  }
 
 private object TestPhases {
 
