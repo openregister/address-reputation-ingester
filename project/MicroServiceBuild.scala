@@ -33,7 +33,12 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "play-url-binders" % playUrlBindersVersion,
     "uk.gov.hmrc" %% "play-config" % playConfigVersion,
     "uk.gov.hmrc" %% "play-json-logger" % playJsonLoggerVersion,
-    "uk.gov.hmrc" %% "domain" % domainVersion
+    "uk.gov.hmrc" %% "domain" % domainVersion,
+    "org.apache.ftpserver" % "ftpserver" % "1.0.5",
+    "org.simpleflatmapper" % "sfm" % "2.2",
+    "org.apache.commons" % "commons-compress" % "1.10",
+    "commons-net" % "commons-net" % "3.4"
+
   )
 
   trait TestDependencies {
@@ -45,7 +50,7 @@ private object AppDependencies {
     def apply() = new TestDependencies {
       override lazy val test = Seq(
         "uk.gov.hmrc" %% "hmrctest" % hmrcTestVersion % scope,
-        "org.scalatest" %% "scalatest" % "2.2.2" % scope,
+        "org.scalatest" %% "scalatest" % "2.2.6" % scope,
         "org.pegdown" % "pegdown" % "1.4.2" % scope,        
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope
       )
