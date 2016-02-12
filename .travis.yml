@@ -8,4 +8,11 @@ jdk:
 cache:
   directories:
     - '$HOME/.ivy2/cache'
+
+script:
+  - sbt assembly
+
+notifications:
+  email:
+    - andy.hicks@digital.hmrc.gov.uk
     
