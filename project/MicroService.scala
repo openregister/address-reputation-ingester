@@ -59,6 +59,7 @@ import sbtassembly.AssemblyPlugin.defaultShellScript
       case PathList("com", "codahale", "metrics",  xs @ _*)         => MergeStrategy.first
       case PathList("org", "apache", "commons", "logging",  xs @ _*)         => MergeStrategy.first
       case PathList("play", "core", "server",   xs @ _*)         => MergeStrategy.first
+      case PathList("org", "slf4j", "impl",   xs @ _*)         => MergeStrategy.first
       case PathList(ps @ _*) if ps.last endsWith ".html" => MergeStrategy.first
       case PathList(ps @ _*) if ps.last endsWith "BuildInfo$.class" => MergeStrategy.first
       case PathList(ps @ _*) if ps.last endsWith "BuildInfo.class" => MergeStrategy.first
