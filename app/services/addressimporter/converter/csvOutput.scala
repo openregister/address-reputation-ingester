@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package controllers
+package services.addressimporter.converter
 
-import uk.gov.hmrc.play.microservice.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
-import play.api.mvc._
-import scala.concurrent.Future
+case class CSVLine(uprn: Long, line1: String, line2: String, line3: String, town: String, postcode: String) {
+  import OSCleanup._
 
-object MicroserviceHelloWorld extends MicroserviceHelloWorld
-
-trait MicroserviceHelloWorld extends BaseController {
-
-  def hello():Action[AnyContent]  = Action.async { implicit request =>
-    Future.successful(Ok("Hello world"))
-  }
+  override def toString: String =
+    uprn + "," +
+      "\"" + line1.rmDupSpace.capitalisation.trim + "\"" + "," +
+      "\"" + line2.rmDupSpace.capitalisation.trim + "\"" + "," +
+      "\"" + line3.rmDupSpace.capitalisation.trim + "\"" + "," +
+      "\"" + town.rmDupSpace.capitalisation.trim + "\"" + "," +
+      postcode.trim
 }
