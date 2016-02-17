@@ -4,7 +4,7 @@ object MicroServiceBuild extends Build with MicroService {
   import scala.util.Properties.envOrElse
 
   val appName = "address-lookup-ingestor"
-  val appVersion = envOrElse("ADDRESS_LOOKUP_INGESTOR_VERSION", "999-SNAPSHOT")
+//  val appVersion = envOrElse("ADDRESS_LOOKUP_INGESTOR_VERSION", "999-SNAPSHOT")
 
   override lazy val appDependencies: Seq[ModuleID] = AppDependencies()
 }

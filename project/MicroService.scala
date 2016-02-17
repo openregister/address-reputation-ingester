@@ -4,7 +4,7 @@ import sbt.Tests.{SubProcess, Group}
 import sbt._
 import sbtassembly.{PathList, MergeStrategy, AssemblyKeys}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
-
+import sbtassembly.AssemblyPlugin.defaultShellScript
 
 import AssemblyKeys._
 
@@ -19,7 +19,7 @@ trait MicroService {
 import sbtassembly.AssemblyPlugin.defaultShellScript
 
   val appName: String
-  val appVersion: String
+//  val appVersion: String
 
   lazy val appDependencies : Seq[ModuleID] = ???
   lazy val plugins : Seq[Plugins] = Seq(play.PlayScala)
@@ -28,13 +28,14 @@ import sbtassembly.AssemblyPlugin.defaultShellScript
   lazy val microservice = Project(appName, file("."))
     .enablePlugins(plugins : _*)
     .settings(playSettings : _*)
-    .settings(version := appVersion)
+//    .settings(version := appVersion)
     .settings(scalaSettings: _*)
+    .settings(scalaVersion := "2.11.7")
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
     .settings(
       targetJvm := "jvm-1.8",
-      shellPrompt := ShellPrompt(appVersion),
+//      shellPrompt := ShellPrompt(appVersion),
       libraryDependencies ++= appDependencies,
       parallelExecution in Test := false,
       fork in Test := false,
@@ -53,6 +54,7 @@ import sbtassembly.AssemblyPlugin.defaultShellScript
     .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
     .settings(resolvers += Resolver.bintrayRepo("hmrc", "releases"))
     .settings(mainClass in assembly := Some("play.core.server.NettyServer"))
+    .settings(assemblyJarName in assembly := s"${name.value}-${version.value}.tgz")
     .settings(fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value))
     .settings(assemblyMergeStrategy in assembly := {
       case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
