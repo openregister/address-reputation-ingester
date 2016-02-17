@@ -3,8 +3,11 @@ import sbt.Keys._
 import sbt.Tests.{SubProcess, Group}
 import sbt._
 import sbtassembly.{PathList, MergeStrategy, AssemblyKeys}
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 import sbtassembly.AssemblyPlugin.defaultShellScript
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
+import uk.gov.hmrc.versioning.SbtGitVersioning
+
 
 import AssemblyKeys._
 
@@ -71,6 +74,8 @@ import sbtassembly.AssemblyPlugin.defaultShellScript
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
     })
+    .enablePlugins(SbtDistributablesPlugin, SbtGitVersioning)
+
 
   }
 
