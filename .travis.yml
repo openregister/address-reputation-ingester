@@ -9,8 +9,6 @@ cache:
   directories:
     - '$HOME/.ivy2/cache'
 
-script:
-  - sbt assembly
 
 notifications:
   email:
