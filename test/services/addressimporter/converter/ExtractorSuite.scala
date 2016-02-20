@@ -100,6 +100,7 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
   test("can find a BLPU item") {
     val data =
       """
+        |10,"GeoPlace",9999,2011-07-08,1,2011-07-08,16:00:30,"1.0","F"
         |21,"I",521480,320077134,1,2,2011-09-09,,354661.00,702526.00,1,9066,1992-06-10,,2004-08-10,2004-08-09,"S","KY10 2PY",0
         | """.stripMargin
 
