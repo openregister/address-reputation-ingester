@@ -73,6 +73,7 @@ trait OrdnanceSurveyController extends Controller {
                 // scalastyle:off
                 out.write(line.toString.getBytes)
                 out.write("\n".getBytes)
+                out.flush()
               }
               val result = Extractor.extract(new File(tmpZipfilesHome + "/" + subFolder), csvOut)
 
