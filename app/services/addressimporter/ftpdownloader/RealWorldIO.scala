@@ -36,6 +36,10 @@ trait RealWorldIO extends FileIO {
     }
   }
 
+  def logout(): Unit = {
+    ftpClient.logout()
+  }
+
   override def folder(dir: String): Try[List[String]] = Try {
     val listFolders = ftpClient.listDirectories(dir)
     val folderNames = listFolders.map(_.getName)

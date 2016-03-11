@@ -52,7 +52,17 @@ object OSCleanup {
 
 
 object OSCsv {
+
+  var csvFormat = 2
+
   val RecordIdentifier_idx = 0
+
+}
+
+object OSHeader {
+  val RecordId = "10"
+
+  val Version_Idx = 7
 
 }
 
@@ -60,8 +70,9 @@ object OSBlpu {
   val RecordId = "21"
 
   val LogicalStatus_Idx = 4
-  val PostalAddrCode_Idx = 16
-  val Postcode_Idx = 17
+
+  def PostalAddrCode_Idx = if(OSCsv.csvFormat==1) 16 else 19
+  def Postcode_Idx =  if(OSCsv.csvFormat==1) 17 else 20
 
   def apply(csv: Array[String]):OSBlpu = new OSBlpu(csv.toVector)
 }
@@ -81,15 +92,15 @@ class OSBlpu(csv: Vector[String]) {
 object OSDpa {
   val RecordId = "28"
 
-  val SubBuildingName_Idx = 8
-  val BuildingName_Idx = 9
-  val BuildingNumber_Idx = 10
-  val DependentThoroughfareName_Idx = 11
-  val ThoroughfareName_Idx = 12
-  val DoubleDependentLocality_Idx = 13
-  val DependentLocality_Idx = 14
-  val PostTown_Idx = 15
-  val Postcode_Idx = 16
+  def SubBuildingName_Idx = if(OSCsv.csvFormat==1) 8 else 7
+  def BuildingName_Idx = if(OSCsv.csvFormat==1) 9  else 8
+  def BuildingNumber_Idx = if(OSCsv.csvFormat==1) 10 else 9
+  def DependentThoroughfareName_Idx = if(OSCsv.csvFormat==1) 11 else 10
+  def ThoroughfareName_Idx = if(OSCsv.csvFormat==1) 12 else 11
+  def DoubleDependentLocality_Idx = if(OSCsv.csvFormat==1) 13  else 12
+  def DependentLocality_Idx = if(OSCsv.csvFormat==1) 14 else 13
+  def PostTown_Idx = if(OSCsv.csvFormat==1) 15 else 14
+  def Postcode_Idx = if(OSCsv.csvFormat==1) 16  else 15
 
   def apply(csv: Array[String]):OSDpa = new OSDpa(csv.toVector)
 }
@@ -170,7 +181,7 @@ class OSStreetDescriptor(csv: Vector[String]) {
 object OSLpi {
   val RecordId = "24"
 
-  val TogicalStatus_Idx = 6
+  val LogicalStatus_Idx = 6
   val SaoStartNumber_Idx = 11
   val SaoStartSuffix_Idx = 12
   val SaoEndNumber_Idx = 13
@@ -194,7 +205,7 @@ class OSLpi(csv: Vector[String]) {
 
   lazy val uprn:Long = csv(Uprn_Idx).toLong
 
-  def logicalStatus:Char = csv(TogicalStatus_Idx).head
+  def logicalStatus:Char = csv(LogicalStatus_Idx).head
 
   def saoStartNumber:String = csv(SaoStartNumber_Idx).cleanup
 

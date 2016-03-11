@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package services.addressimporter.ftpdownloader
 
 import java.text.SimpleDateFormat
@@ -131,7 +147,10 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
 
     val timeNow = dateFormater.parse("Wed Feb 03 12:58:00 GMT 2016").getTime
 
-    val files = List[OsFile](OsFile("file1.zip", "/from-os/DS1234567", fileCreationTime1, size = 1), OsFile("file2.zip", "/from-os/DS1234567", fileCreationTime2, size = 2))
+    val files = List[OsFile](
+      OsFile("file1.zip", "/from-os/DS1234567", fileCreationTime1, size = 1),
+      OsFile("file2.zip", "/from-os/DS1234567", fileCreationTime2, size = 2)
+    )
 
     val testFtp = new FtpDownloader with DummyFtp
     val result = testFtp.oldFiles(timeNow, files)
