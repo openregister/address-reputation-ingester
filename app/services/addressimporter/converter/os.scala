@@ -71,8 +71,14 @@ object OSBlpu {
 
   val LogicalStatus_Idx = 4
 
-  def PostalAddrCode_Idx = if(OSCsv.csvFormat==1) 16 else 19
-  def Postcode_Idx =  if(OSCsv.csvFormat==1) 17 else 20
+  val v1_PostalAddrCode_Idx = 16
+  val v2_PostalAddrCode_Idx = 19
+
+  val v1_Postcode_Idx = 17
+  val v2_Postcode_Idx = 20
+
+  lazy val PostalAddrCode_Idx = if(OSCsv.csvFormat==1) v1_PostalAddrCode_Idx else v2_PostalAddrCode_Idx
+  lazy val Postcode_Idx =  if(OSCsv.csvFormat==1) v1_Postcode_Idx else v2_Postcode_Idx
 
   def apply(csv: Array[String]):OSBlpu = new OSBlpu(csv.toVector)
 }
@@ -92,15 +98,34 @@ class OSBlpu(csv: Vector[String]) {
 object OSDpa {
   val RecordId = "28"
 
-  def SubBuildingName_Idx = if(OSCsv.csvFormat==1) 8 else 7
-  def BuildingName_Idx = if(OSCsv.csvFormat==1) 9  else 8
-  def BuildingNumber_Idx = if(OSCsv.csvFormat==1) 10 else 9
-  def DependentThoroughfareName_Idx = if(OSCsv.csvFormat==1) 11 else 10
-  def ThoroughfareName_Idx = if(OSCsv.csvFormat==1) 12 else 11
-  def DoubleDependentLocality_Idx = if(OSCsv.csvFormat==1) 13  else 12
-  def DependentLocality_Idx = if(OSCsv.csvFormat==1) 14 else 13
-  def PostTown_Idx = if(OSCsv.csvFormat==1) 15 else 14
-  def Postcode_Idx = if(OSCsv.csvFormat==1) 16  else 15
+  val v1_SubBuildingName_Idx = 8
+  val v2_SubBuildingName_Idx = 7
+  val v1_BuildingName_Idx = 9
+  val v2_BuildingName_Idx = 8
+  val v1_BuildingNumber_Idx = 10
+  val v2_BuildingNumber_Idx = 9
+  val v1_DependentThoroughfareName_Idx = 11
+  val v2_DependentThoroughfareName_Idx = 10
+  val v1_ThoroughfareName_Idx = 12
+  val v2_ThoroughfareName_Idx = 11
+  val v1_DoubleDependentLocality_Idx = 13
+  val v2_DoubleDependentLocality_Idx = 12
+  val v1_DependentLocality_Idx = 14
+  val v2_DependentLocality_Idx = 13
+  val v1_PostTown_Idx = 15
+  val v2_PostTown_Idx = 14
+  val v1_Postcode_Idx = 16
+  val v2_Postcode_Idx = 15
+
+  lazy val SubBuildingName_Idx = if(OSCsv.csvFormat==1) v1_SubBuildingName_Idx else v2_SubBuildingName_Idx
+  lazy val BuildingName_Idx = if(OSCsv.csvFormat==1) v1_BuildingName_Idx  else v2_BuildingName_Idx
+  lazy val BuildingNumber_Idx = if(OSCsv.csvFormat==1) v1_BuildingNumber_Idx else v2_BuildingNumber_Idx
+  lazy val DependentThoroughfareName_Idx = if(OSCsv.csvFormat==1) v1_DependentThoroughfareName_Idx else v2_DependentThoroughfareName_Idx
+  lazy val ThoroughfareName_Idx = if(OSCsv.csvFormat==1) v1_ThoroughfareName_Idx else v2_ThoroughfareName_Idx
+  lazy val DoubleDependentLocality_Idx = if(OSCsv.csvFormat==1) v1_DoubleDependentLocality_Idx  else v2_DoubleDependentLocality_Idx
+  lazy val DependentLocality_Idx = if(OSCsv.csvFormat==1) v1_DependentLocality_Idx else v2_DependentLocality_Idx
+  lazy val PostTown_Idx = if(OSCsv.csvFormat==1) v1_PostTown_Idx else v2_PostTown_Idx
+  lazy val Postcode_Idx = if(OSCsv.csvFormat==1) v1_Postcode_Idx  else v2_Postcode_Idx
 
   def apply(csv: Array[String]):OSDpa = new OSDpa(csv.toVector)
 }
