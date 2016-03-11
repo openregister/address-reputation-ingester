@@ -16,23 +16,20 @@
 
 package services.addressimporter.converter
 
-import java.io.{ByteArrayInputStream, InputStream, File, StringReader}
+import java.io.{ByteArrayInputStream, File, InputStream, StringReader}
 import java.util.Collections
 
-import services.addressimporter.converter.Extractor.{Blpu, Street}
-import services.addressimporter.converter.extractor.{SecondPass, FirstPass}
 import org.apache.commons.compress.archivers.zip.{ZipArchiveEntry, ZipFile}
 import org.mockito.Matchers._
-import org.scalatest.{Matchers, FunSuite}
+import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
+import org.scalatest.{FunSuite, Matchers}
 import org.sfm.csv.CsvParser
+import services.addressimporter.converter.Extractor.{Blpu, Street}
+import services.addressimporter.converter.extractor.{FirstPass, SecondPass}
 
 import scala.collection.JavaConverters._
-import scala.collection.immutable.{HashSet, HashMap}
-
-
-import org.mockito.Mockito._
-
+import scala.collection.immutable.{HashMap, HashSet}
 import scala.util.Success
 
 class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
@@ -114,7 +111,6 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
   }
 
 
-
   test("can find a BLPU item") {
     val data =
       """
@@ -152,6 +148,7 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     assert(result.dpa.headOption === Some(expectedId))
   }
 
+
   test("can find a LPI item can find a blpu item") {
     val data =
       """
@@ -168,6 +165,7 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     assert(result.size === 0)
   }
 
+
   test("can find a LPI item can NOT find a blpu item") {
     val data =
       """
@@ -183,7 +181,6 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
 
     assert(result.size === 1, "item is not removed")
   }
-
 
 
   test("Check the exported format of a DLP message ") {
@@ -203,8 +200,8 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
 
     val dpa = OSDpa(csvLine)
     FirstPass.exportDPA(dpa)(out)
-
   }
+
 
   test("Check the exported format of a LPI message ") {
     val data =
@@ -237,7 +234,6 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
 
     val lpi = OSLpi(csvLine)
     SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
-
   }
 
 
@@ -313,37 +309,10 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
   test("string processing functions ") {
     import OSCleanup._
 
-    assert( "  ".cleanup === "")
-    assert( "\"\"".cleanup === "")
-    assert( "\"Hello\"".cleanup === "Hello")
-
+    assert("  ".cleanup === "")
+    assert("\"\"".cleanup === "")
+    assert("\"Hello\"".cleanup === "Hello")
   }
-
-
-  test("check final formatting of for a single csv line") {
-
-    assert(CSVLine(1L, "", "", "", "", "").toString() === """1,"","","","",""", "Empty list")
-
-    assert(
-      CSVLine(1L, "1 UPPER KENNERTY MILL COTTAGES", "ST ANDREWS PARISH CHURCH", "", "NEWCASTLE UPON TYNE", "G77 6RT").toString()
-        ===
-        """1,"1 Upper Kennerty Mill Cottages","St Andrews Parish Church","","Newcastle upon Tyne",G77 6RT""", "full"
-    )
-
-    assert(
-      CSVLine(1L, "1 UPPER KENNERTY MILL COTTAGES", "", "", "NEWCASTLE UPON TYNE", "").toString()
-        ===
-        """1,"1 Upper Kennerty Mill Cottages","","","Newcastle upon Tyne",""", "town"
-    )
-
-    assert(
-      CSVLine(1L, "1 UPPER KENNERTY MILL COTTAGES", "", "", "NEWCASTLE-UPON-TYNE", "").toString()
-        ===
-        """1,"1 Upper Kennerty Mill Cottages","","","Newcastle-upon-Tyne",""", "town with '-'"
-    )
-
-  }
-
 
 
   test("Check the combining of two empty ForwardData objects works") {
@@ -386,7 +355,6 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
   }
 
 
-
   test("zipreader test") {
     val mockZipFile = mock[ZipFile]
 
@@ -405,6 +373,7 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     assert(result.isSuccess)
   }
 
+
   test("zipreader test empty zipfile") {
     val mockZipFile = mock[ZipFile]
 
@@ -422,7 +391,6 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     assert(result.isFailure)
     result.failed.get shouldBe a[EmptyFileException]
   }
-
 
 
   test("check 1st pass") {
@@ -445,6 +413,7 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     assert(result.isSuccess)
   }
 
+
   test("check 1st pass with invalid csv will generate an error") {
     val data =
       """15,"I",31068,48504236"""
@@ -465,6 +434,7 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     assert(result.isFailure)
     assert(result.failed.get.getMessage === "8")
   }
+
 
   test("check 2nd pass") {
     val data =
@@ -516,8 +486,9 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
   test("all things ForwardData") {
     val fd1 = ForwardData.empty
 
-    assert( fd1.toString === "ForwardData(Map(),Set(),Map(),Map())")
+    assert(fd1.toString === "ForwardData(Map(),Set(),Map(),Map())")
   }
+
 
   test("Having no files should successfully return nothing") {
     val mockFile = mock[File]
@@ -529,7 +500,6 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
 
     assert(result === Some(Success(0)))
   }
-
 
 
 }

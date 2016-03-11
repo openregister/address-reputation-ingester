@@ -45,9 +45,7 @@ trait OrdnanceSurveyController extends Controller {
 
     val dataContent: Enumerator[Array[Byte]] = Enumerator.fromStream(data).andThen(Enumerator.eof)
 
-
     Future {
-
       Try {
         val conf = ConfigFactory.load()
 
@@ -60,7 +58,6 @@ trait OrdnanceSurveyController extends Controller {
 
         // temp folder details
         val tmpZipfilesHome = conf.getString("app.temp.folder")
-
 
         val ftpClient = new FtpDownloader with RealWorldIO
         ftpClient.FileCreationDelay = 1
@@ -87,6 +84,7 @@ trait OrdnanceSurveyController extends Controller {
         ftpClient.logout()
 
       }.recoverWith { case x =>
+        // TODO this should not be necessary - just let it bubble up
         x.printStackTrace()
         throw x
       }
