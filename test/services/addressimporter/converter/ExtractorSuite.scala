@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package services.addressimporter.converter
 
 import java.io.{ByteArrayInputStream, InputStream, File, StringReader}
@@ -23,6 +39,8 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
 
   implicit val dummyOut = (out: CSVLine) => {}
 
+  // test data is long so disabe scalastyle check
+  // scalastyle:off  line.size.limit
 
   test("Can find OSStreetDescriptor details") {
     val data =
@@ -130,7 +148,8 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     val result = FirstPass.processLine(x.iterator().asScala, streetsMap, lpiLogicStatusMap, dummyOut)
 
     assert(result.dpa.size === 1)
-    assert(result.dpa.headOption === Some(9051119283L))
+    val expectedId = 9051119283L
+    assert(result.dpa.headOption === Some(expectedId))
   }
 
   test("can find a LPI item can find a blpu item") {
