@@ -42,6 +42,12 @@ object FirstPass {
     csvIterator.foldLeft(ForwardData.empty.copy(streets = streetsMap, lpiLogicStatus = lpiLogicStatusMap)) { case (fd, csvLine) =>
       csvLine(OSCsv.RecordIdentifier_idx) match {
 
+        case OSHeader.RecordId =>
+
+          OSCsv.csvFormat = if( csvLine(OSHeader.Version_Idx) == "1.0" ) 1 else 2
+
+          fd // no change
+
         case OSBlpu.RecordId if csvLine(OSBlpu.PostalAddrCode_Idx) == "S" =>
           val blpu = OSBlpu(csvLine)
           ForwardData(fd.blpu + (blpu.uprn -> Blpu(blpu.postcode, blpu.logicalStatus)), fd.dpa, fd.streets, fd.lpiLogicStatus)
