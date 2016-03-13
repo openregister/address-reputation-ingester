@@ -18,9 +18,9 @@ package services.addressimporter.converter
 
 import java.io.File
 
-import services.addressimporter.converter.Extractor.{Street, Blpu}
-import services.addressimporter.converter.extractor.{FirstPass, SecondPass}
 import org.apache.commons.compress.archivers.zip.ZipFile
+import services.addressimporter.converter.Extractor.{Blpu, Street}
+import services.addressimporter.converter.extractor.{FirstPass, SecondPass}
 
 import scala.collection.immutable.{HashMap, HashSet}
 import scala.util.Try
@@ -33,7 +33,7 @@ object Extractor {
 
   def listFiles(file: File): Option[Vector[ZipFile]] =
     if (!file.isDirectory) None
-    else Some(file.listFiles().filter( f => f.getName.toLowerCase.endsWith(".zip")).map(LoadZip.file2ZipFile).toVector)
+    else Some(file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).map(LoadZip.file2ZipFile).toVector)
 
 
   def extract(rootDir: File, out: (CSVLine) => Unit): Option[Try[Int]] = {
@@ -45,13 +45,11 @@ object Extractor {
       }
     x.map(t => t.map(x => x.size))
   }
-
-
 }
 
 
 object ForwardData {
-  def empty:ForwardData = ForwardData(HashMap.empty[Long, Blpu], HashSet.empty[Long], HashMap.empty[Long, Street], HashMap.empty[Long, Byte])
+  def empty: ForwardData = ForwardData(HashMap.empty[Long, Blpu], HashSet.empty[Long], HashMap.empty[Long, Street], HashMap.empty[Long, Byte])
 }
 
 case class ForwardData(blpu: HashMap[Long, Blpu], dpa: HashSet[Long], streets: HashMap[Long, Street], lpiLogicStatus: HashMap[Long, Byte]) {

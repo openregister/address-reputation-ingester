@@ -16,9 +16,9 @@
 
 package services.addressimporter.converter.extractor
 
-import services.addressimporter.converter.Extractor.{Street, Blpu}
-import services.addressimporter.converter._
 import org.apache.commons.compress.archivers.zip.ZipFile
+import services.addressimporter.converter.Extractor.{Blpu, Street}
+import services.addressimporter.converter._
 
 import scala.collection.immutable.HashMap
 import scala.util.Try
@@ -66,30 +66,34 @@ object SecondPass {
 
   def processLine(csvIterator: Iterator[Array[String]], remainingBLPU0: HashMap[Long, Blpu],
                   streetList: HashMap[Long, Street], out: (CSVLine) => Unit): HashMap[Long, Blpu] = {
-    csvIterator.foldLeft(remainingBLPU0) { (blpuList, csvLine) =>
-      csvLine(OSCsv.RecordIdentifier_idx) match {
-        case OSLpi.RecordId =>
+    csvIterator.foldLeft(remainingBLPU0) {
+      (blpuList, csvLine) =>
+        csvLine(OSCsv.RecordIdentifier_idx) match {
+          case OSLpi.RecordId =>
 
-          val lpi = OSLpi(csvLine)
-          val blpu = blpuList.get(lpi.uprn)
+            val lpi = OSLpi(csvLine)
+            val blpu = blpuList.get(lpi.uprn)
 
-          blpu match {
-            case Some(b) if b.logicalStatus == lpi.logicalStatus =>
-              exportLPI(lpi, b, streetList)(out)
-              blpuList - lpi.uprn
-            case _ => blpuList
-          }
-        case _ => blpuList
-      }
+            blpu match {
+              case Some(b) if b.logicalStatus == lpi.logicalStatus =>
+                exportLPI(lpi, b, streetList)(out)
+                blpuList - lpi.uprn
+              case _ => blpuList
+            }
+
+          case _ => blpuList
+        }
     }
   }
 
 
   def secondPass(zipFiles: Vector[ZipFile], fd: ForwardData, out: (CSVLine) => Unit): Try[HashMap[Long, Blpu]] = Try {
-    zipFiles.foldLeft(fd.blpu) { case (remainingBLPU0, file) =>
-      LoadZip.zipReader(file) { csvIterator =>
-        processLine(csvIterator, remainingBLPU0, fd.streets, out)
-      }.get
+    zipFiles.foldLeft(fd.blpu) {
+      case (remainingBLPU0, file) =>
+        LoadZip.zipReader(file) {
+          csvIterator =>
+            processLine(csvIterator, remainingBLPU0, fd.streets, out)
+        }.get
     }
   }
 

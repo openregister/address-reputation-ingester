@@ -16,9 +16,9 @@
 
 package services.addressimporter.converter.extractor
 
-import services.addressimporter.converter.Extractor.{Street, Blpu}
-import services.addressimporter.converter._
 import org.apache.commons.compress.archivers.zip.ZipFile
+import services.addressimporter.converter.Extractor.{Blpu, Street}
+import services.addressimporter.converter._
 
 import scala.collection.immutable.HashMap
 import scala.util.Try
@@ -39,59 +39,64 @@ object FirstPass {
 
   def processLine(csvIterator: Iterator[Array[String]], streetsMap: HashMap[Long, Street],
                   lpiLogicStatusMap: HashMap[Long, Byte], out: (CSVLine) => Unit): ForwardData = {
-    csvIterator.foldLeft(ForwardData.empty.copy(streets = streetsMap, lpiLogicStatus = lpiLogicStatusMap)) { case (fd, csvLine) =>
-      csvLine(OSCsv.RecordIdentifier_idx) match {
-
-        case OSHeader.RecordId =>
-
-          OSCsv.csvFormat = if( csvLine(OSHeader.Version_Idx) == "1.0" ) 1 else 2
-
-          fd // no change
-
-        case OSBlpu.RecordId if csvLine(OSBlpu.PostalAddrCode_Idx) == "S" =>
-          val blpu = OSBlpu(csvLine)
-          ForwardData(fd.blpu + (blpu.uprn -> Blpu(blpu.postcode, blpu.logicalStatus)), fd.dpa, fd.streets, fd.lpiLogicStatus)
-
-        case OSDpa.RecordId =>
-          val osDpa = OSDpa(csvLine)
-          exportDPA(osDpa)(out)
-          ForwardData(fd.blpu, fd.dpa + osDpa.uprn, fd.streets, fd.lpiLogicStatus)
-
-        case OSStreet.RecordId =>
-          val street = OSStreet(csvLine)
-
-          def updatedStreet(): Street = fd.streets.get(street.usrn).fold(Street(street.recordType)) { aStreet: Street =>
-            Street(street.recordType, aStreet.streetDescription, aStreet.localityName, aStreet.townName)
-          }
-
-          ForwardData(fd.blpu, fd.dpa, fd.streets + (street.usrn -> updatedStreet), fd.lpiLogicStatus)
-
-
-        case OSStreetDescriptor.RecordId if csvLine(OSStreetDescriptor.Language_Idx) == "ENG" =>
-          val sd = OSStreetDescriptor(csvLine)
-
-          def updateStreet(): Street = fd.streets.get(sd.usrn).fold(
-            Street('A', sd.description, sd.locality, sd.town)) { aStreet: Street =>
-            Street(aStreet.recordType, sd.description, sd.locality, sd.town)
-          }
-
-          ForwardData(fd.blpu, fd.dpa, fd.streets + (sd.usrn -> updateStreet), fd.lpiLogicStatus)
-
-        case _ => fd
-      }
+    csvIterator.foldLeft(ForwardData.empty.copy(streets = streetsMap, lpiLogicStatus = lpiLogicStatusMap)) {
+      case (fd, csvLine) => discriminateLine(fd, csvLine, out)
     }
   }
 
-  def findData(f: ZipFile, streetsMap: HashMap[Long, Street], lpiLogicStatusMap: HashMap[Long, Byte], out: (CSVLine) => Unit): Try[ForwardData] =
-    LoadZip.zipReader(f) { itr =>
-      processLine(itr, streetsMap, lpiLogicStatusMap, out)
+  private def discriminateLine(fd: ForwardData, csvLine: Array[String], out: (CSVLine) => Unit) =
+    csvLine(OSCsv.RecordIdentifier_idx) match {
+
+      case OSHeader.RecordId =>
+        OSCsv.csvFormat = if (csvLine(OSHeader.Version_Idx) == "1.0") 1 else 2
+        fd // no change
+
+      case OSBlpu.RecordId if OSBlpu.isSmallPostcode(csvLine) =>
+        val blpu = OSBlpu(csvLine)
+        ForwardData(fd.blpu + (blpu.uprn -> Blpu(blpu.postcode, blpu.logicalStatus)), fd.dpa, fd.streets, fd.lpiLogicStatus)
+
+      case OSDpa.RecordId =>
+        val osDpa = OSDpa(csvLine)
+        exportDPA(osDpa)(out)
+        ForwardData(fd.blpu, fd.dpa + osDpa.uprn, fd.streets, fd.lpiLogicStatus)
+
+      case OSStreet.RecordId =>
+        val street = OSStreet(csvLine)
+
+        def updatedStreet(): Street = fd.streets.get(street.usrn).fold(Street(street.recordType)) {
+          aStreet: Street =>
+            Street(street.recordType, aStreet.streetDescription, aStreet.localityName, aStreet.townName)
+        }
+
+        ForwardData(fd.blpu, fd.dpa, fd.streets + (street.usrn -> updatedStreet), fd.lpiLogicStatus)
+
+      case OSStreetDescriptor.RecordId if OSStreetDescriptor.isEnglish(csvLine) =>
+        val sd = OSStreetDescriptor(csvLine)
+
+        def updateStreet(): Street = fd.streets.get(sd.usrn).fold(
+          Street('A', sd.description, sd.locality, sd.town)) {
+          aStreet: Street =>
+            Street(aStreet.recordType, sd.description, sd.locality, sd.town)
+        }
+
+        ForwardData(fd.blpu, fd.dpa, fd.streets + (sd.usrn -> updateStreet), fd.lpiLogicStatus)
+
+      case _ => fd
+    }
+
+
+  private def findData(f: ZipFile, streetsMap: HashMap[Long, Street], lpiLogicStatusMap: HashMap[Long, Byte], out: (CSVLine) => Unit): Try[ForwardData] =
+    LoadZip.zipReader(f) {
+      itr =>
+        processLine(itr, streetsMap, lpiLogicStatusMap, out)
     }
 
 
   def firstPass(zipFiles: Vector[ZipFile], out: (CSVLine) => Unit): Try[ForwardData] = Try {
-    zipFiles.foldLeft(ForwardData.empty) { case (accFD, f) =>
-      val updates = findData(f, accFD.streets, accFD.lpiLogicStatus, out)
-      accFD.update(updates.get)
+    zipFiles.foldLeft(ForwardData.empty) {
+      case (accFD, f) =>
+        val updates = findData(f, accFD.streets, accFD.lpiLogicStatus, out)
+        accFD.update(updates.get)
     }
   }
 

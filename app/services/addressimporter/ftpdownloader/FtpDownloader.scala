@@ -72,12 +72,18 @@ trait FtpDownloader {
 
         val subFolderName: String = folderName(oFiles).getOrElse("Unknown")
 
-        val totalThatWasDownloaded = oFiles.foldLeft(0) { case (count, f) =>
-          val result = downloadAFile(f, localFolderName + "/" + subFolderName).get
-          if (result) count + 1 else count
+        val totalThatWereDownloaded = oFiles.foldLeft(0) {
+          case (count, f) =>
+            val result = downloadAFile(f, localFolderName + "/" + subFolderName).get
+            if (result) count + 1 else count
         }
-        if (totalThatWasDownloaded != totalToDownload) throw new NotAllDownloadedException("Not All Downloaded")
-        (totalThatWasDownloaded, subFolderName)
+        if (totalThatWereDownloaded != totalToDownload) {
+          val missing = totalToDownload - totalThatWereDownloaded
+          // TODO better information would be given by first catching the case where none were downloaded.
+          throw new UnfinishedDownloadException(s"Not all were downloaded: missing $missing out of $totalToDownload")
+        }
+        (totalThatWereDownloaded, subFolderName)
+
       case Failure(err) =>
         throw err
         (0, "")
@@ -86,12 +92,12 @@ trait FtpDownloader {
   }
 
   def folderName(osfiles: List[OsFile]): Option[String] = Try {
-      val f = osfiles.head.name
-      if (f.endsWith(".zip") && f.startsWith("AddressBasePremium")) {
-        Some(f.split("_")(2))
-      }
-      else None
-    }.recover { case err => None }.get
+    val f = osfiles.head.name
+    if (f.endsWith(".zip") && f.startsWith("AddressBasePremium")) {
+      Some(f.split("_")(2))
+    }
+    else None
+  }.recover { case err => None }.get
 
 
   def downloadAFile(osFile: OsFile, localFolderName: String): Try[Boolean] = Try {
@@ -102,8 +108,7 @@ trait FtpDownloader {
   }
 
   def withinValidTime(fileCreationTime: Long, timeNow: Long): Boolean = {
-    if ((timeNow - fileCreationTime) >= FileCreationDelay) false
-    else true
+    (timeNow - fileCreationTime) < FileCreationDelay
   }
 
 
@@ -119,7 +124,7 @@ trait FtpDownloader {
   }
 }
 
-class NotAllDownloadedException(msg: String) extends Exception(msg)
+class UnfinishedDownloadException(msg: String) extends Exception(msg)
 
 case class OsFile(name: String, folder: String, date: Long, size: Long)
 

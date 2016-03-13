@@ -27,6 +27,7 @@ import scala.util.Try
 
 case class EmptyFileException(msg: String) extends Throwable(msg)
 
+
 object LoadZip {
 
   def file2ZipFile(f: File): ZipFile = new ZipFile(f)
