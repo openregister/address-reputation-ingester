@@ -78,9 +78,9 @@ object OSBlpu {
 
   def apply(csv: Array[String]): OSBlpu =
     if (OSCsv.csvFormat == 1)
-      new OSBlpu(csv(Uprn_Idx).toLong, csv(4).head, csv(17))
+      OSBlpu(csv(Uprn_Idx).toLong, csv(4).head, csv(17))
     else
-      new OSBlpu(csv(Uprn_Idx).toLong, csv(4).head, csv(20))
+      OSBlpu(csv(Uprn_Idx).toLong, csv(4).head, csv(20))
 }
 
 case class OSBlpu(uprn: Long,
@@ -95,7 +95,7 @@ object OSDpa {
 
   def apply(csv: Array[String]): OSDpa =
     if (OSCsv.csvFormat == 1)
-      new OSDpa(
+      OSDpa(
         csv(Uprn_Idx).toLong,
         csv(8).cleanup,
         csv(9).cleanup,
@@ -107,7 +107,7 @@ object OSDpa {
         csv(15).cleanup,
         csv(16).cleanup)
     else
-      new OSDpa(
+      OSDpa(
         csv(Uprn_Idx).toLong,
         csv(7).cleanup,
         csv(8).cleanup,
@@ -137,7 +137,7 @@ object OSStreet {
 
   import OSCleanup._
 
-  def apply(csv: Array[String]): OSStreet = new OSStreet(csv(Uprn_Idx).toLong, csv(4).head)
+  def apply(csv: Array[String]): OSStreet = OSStreet(csv(Uprn_Idx).toLong, csv(4).head)
 }
 
 case class OSStreet(usrn: Long,
@@ -151,7 +151,7 @@ object OSStreetDescriptor {
 
   import OSCleanup._
 
-  def apply(csv: Array[String]): OSStreetDescriptor = new OSStreetDescriptor(
+  def apply(csv: Array[String]): OSStreetDescriptor = OSStreetDescriptor(
     csv(Uprn_Idx).toLong,
     csv(4).cleanup,
     csv(5).cleanup,
@@ -171,7 +171,7 @@ object OSLpi {
 
   import OSCleanup._
 
-  def apply(csv: Array[String]): OSLpi = new OSLpi(
+  def apply(csv: Array[String]): OSLpi = OSLpi(
     csv(Uprn_Idx).toLong,
     csv(6).head,
     csv(11).cleanup,
