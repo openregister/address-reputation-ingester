@@ -68,9 +68,11 @@ object OSHeader {
 object OSBlpu {
   val RecordId = "21"
 
-  private def postalAddrCode_Idx = if (OSCsv.csvFormat == 1) 16 else 19
+  def isSmallPostcode(csv: Array[String]): Boolean = {
+    def postalAddrCodeIdx:Int = if (OSCsv.csvFormat == 1) 16 else 19
 
-  def isSmallPostcode(csv: Array[String]): Boolean = csv(postalAddrCode_Idx) == "S"
+    csv(postalAddrCodeIdx) == "S"
+  }
 
   import OSCleanup._
 
