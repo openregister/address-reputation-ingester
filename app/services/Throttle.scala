@@ -42,7 +42,7 @@ class Throttle(initialDelayPerItem: Long, initialBackoffFactor: Float, time: Tim
   var backoffFactor = initialBackoffFactor
 
   /** Grab the lock here, then start some work. */
-  def start() = new TimedLock(delayPerItem, backoffFactor, time)
+  def start():TimedLock = new TimedLock(delayPerItem, backoffFactor, time)
 }
 
 
@@ -52,7 +52,7 @@ class TimedLock(val delayPerItem: Long, backoffFactor: Float, time: Time) {
 
   val startTime = time.now()
 
-  def timeTaken = time.now() - startTime
+  def timeTaken:Long = time.now() - startTime
 
   /**
     * Release the lock after processing 'numItems' records. The waiting time is calculated
@@ -95,7 +95,7 @@ trait Time {
 object NormalTime extends Time {
   val clock = Clock.systemDefaultZone()
 
-  override def now() = clock.millis()
+  override def now():Long = clock.millis()
 
   override def sleep(ms: Long) {
     Thread.sleep(ms)
