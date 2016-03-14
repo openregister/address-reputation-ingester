@@ -37,9 +37,7 @@ import java.util.concurrent.locks.ReentrantLock
 //
 // Either of these can be disabled by setting to zero by their configuration parameter.
 
-class Throttle(initialDelayPerItem: Long, initialBackoffFactor: Float, time: Time) {
-  var delayPerItem = initialDelayPerItem
-  var backoffFactor = initialBackoffFactor
+class Throttle(delayPerItem: Long, backoffFactor: Float, time: Time) {
 
   /** Grab the lock here, then start some work. */
   def start():TimedLock = new TimedLock(delayPerItem, backoffFactor, time)
@@ -93,9 +91,9 @@ trait Time {
 }
 
 object NormalTime extends Time {
-  val clock = Clock.systemDefaultZone()
+  val clock = Clock.systemDefaultZone
 
-  override def now():Long = clock.millis()
+  override def now():Long = clock.millis
 
   override def sleep(ms: Long) {
     Thread.sleep(ms)

@@ -48,7 +48,7 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     val streetsMap = HashMap.empty[Long, Street]
     val lpiLogicStatusMap = HashMap.empty[Long, Byte]
 
-    val result = FirstPass.processLine(x.iterator().asScala, streetsMap, lpiLogicStatusMap, dummyOut)
+    val result = FirstPass.processFile(x.iterator().asScala, streetsMap, lpiLogicStatusMap, dummyOut)
 
     assert(result.streets.size === 1)
     assert(result.streets.headOption === Some((48504236, Street('A', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))))
@@ -68,7 +68,7 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     val streetsMap = HashMap.empty[Long, Street]
     val lpiLogicStatusMap = HashMap.empty[Long, Byte]
 
-    val result = FirstPass.processLine(x.iterator().asScala, streetsMap, lpiLogicStatusMap, dummyOut)
+    val result = FirstPass.processFile(x.iterator().asScala, streetsMap, lpiLogicStatusMap, dummyOut)
 
     assert(result.streets.size === 1)
     assert(result.streets.headOption === Some((47208194, Street('2', "CWMDUAD TO CYNWYL ELFED", "CWMDUAD", "CARMARTHEN"))))
@@ -86,7 +86,7 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     val streetsMap = HashMap.empty[Long, Street]
     val lpiLogicStatusMap = HashMap.empty[Long, Byte]
 
-    val result = FirstPass.processLine(x.iterator().asScala, streetsMap, lpiLogicStatusMap, dummyOut)
+    val result = FirstPass.processFile(x.iterator().asScala, streetsMap, lpiLogicStatusMap, dummyOut)
 
     assert(result.streets.size === 1)
     assert(result.streets.headOption === Some((48504236, Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))))
@@ -104,7 +104,7 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     val streetsMap = HashMap.empty[Long, Street]
     val lpiLogicStatusMap = HashMap.empty[Long, Byte]
 
-    val result = FirstPass.processLine(x.iterator().asScala, streetsMap, lpiLogicStatusMap, dummyOut)
+    val result = FirstPass.processFile(x.iterator().asScala, streetsMap, lpiLogicStatusMap, dummyOut)
 
     assert(result.streets.size === 1)
     assert(result.streets.headOption === Some((48504236, Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))))
@@ -123,7 +123,7 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     val streetsMap = HashMap.empty[Long, Street]
     val lpiLogicStatusMap = HashMap.empty[Long, Byte]
 
-    val result = FirstPass.processLine(x.iterator().asScala, streetsMap, lpiLogicStatusMap, dummyOut)
+    val result = FirstPass.processFile(x.iterator().asScala, streetsMap, lpiLogicStatusMap, dummyOut)
 
     assert(result.blpu.size === 1)
     assert(result.blpu.headOption === Some((320077134, Blpu("KY10 2PY", '1'))))
@@ -141,7 +141,7 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     val streetsMap = HashMap.empty[Long, Street]
     val lpiLogicStatusMap = HashMap.empty[Long, Byte]
 
-    val result = FirstPass.processLine(x.iterator().asScala, streetsMap, lpiLogicStatusMap, dummyOut)
+    val result = FirstPass.processFile(x.iterator().asScala, streetsMap, lpiLogicStatusMap, dummyOut)
 
     assert(result.dpa.size === 1)
     val expectedId = 9051119283L
