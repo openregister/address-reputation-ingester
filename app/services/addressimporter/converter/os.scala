@@ -68,22 +68,31 @@ object OSHeader {
 object OSBlpu {
   val RecordId = "21"
 
-  private def postalAddrCode_Idx = if (OSCsv.csvFormat == 1) 16 else 19
+  val V1LogicalStatusIdx = 4
+  val V1PostalAddrCodeIdx = 16
+  val V1PostcodeIdx = 17
 
-  def isSmallPostcode(csv: Array[String]): Boolean = csv(postalAddrCode_Idx) == "S"
+  val V2LogicalStatusIdx = 4
+  val V2PostalAddrCodeIdx = 19
+  val V2PostcodeIdx = 20
+
+
+  def isSmallPostcode(csv: Array[String]): Boolean = {
+    def postalAddrCodeIdx: Int = if (OSCsv.csvFormat == 1) V1PostalAddrCodeIdx else V2PostalAddrCodeIdx
+
+    csv(postalAddrCodeIdx) == "S"
+  }
 
   import OSCleanup._
 
   def apply(csv: Array[String]): OSBlpu =
     if (OSCsv.csvFormat == 1)
-      new OSBlpu(csv(Uprn_Idx).toLong, csv(4).head, csv(17))
+      OSBlpu(csv(Uprn_Idx).toLong, csv(V1LogicalStatusIdx).head, csv(V1PostcodeIdx))
     else
-      new OSBlpu(csv(Uprn_Idx).toLong, csv(4).head, csv(20))
+      OSBlpu(csv(Uprn_Idx).toLong, csv(V2LogicalStatusIdx).head, csv(V2PostcodeIdx))
 }
 
-case class OSBlpu(uprn: Long,
-                  logicalStatus: Char,
-                  postcode: String)
+case class OSBlpu(uprn: Long, logicalStatus: Char, postcode: String)
 
 
 object OSDpa {
@@ -91,43 +100,57 @@ object OSDpa {
 
   import OSCleanup._
 
+  val V1SubBuildingNameIdx = 8
+  val V1BuildingNameIdx = 9
+  val V1BuildingNumberIdx = 10
+  val V1DependentThoroughfareNameIdx = 11
+  val V1ThoroughfareNameIdx = 12
+  val V1DoubleDependentLocalityIdx = 13
+  val V1DependentLocalityIdx = 14
+  val V1PostTownIdx = 15
+  val V1PostcodeIdx = 16
+
+  val V2SubBuildingNameIdx = 7
+  val V2BuildingNameIdx = 8
+  val V2BuildingNumberIdx = 9
+  val V2DependentThoroughfareNameIdx = 10
+  val V2ThoroughfareNameIdx = 11
+  val V2DoubleDependentLocalityIdx = 12
+  val V2DependentLocalityIdx = 13
+  val V2PostTownIdx = 14
+  val V2PostcodeIdx = 15
+
+
   def apply(csv: Array[String]): OSDpa =
     if (OSCsv.csvFormat == 1)
-      new OSDpa(
+      OSDpa(
         csv(Uprn_Idx).toLong,
-        csv(8).cleanup,
-        csv(9).cleanup,
-        csv(10).cleanup,
-        csv(11).cleanup,
-        csv(12).cleanup,
-        csv(13).cleanup,
-        csv(14).cleanup,
-        csv(15).cleanup,
-        csv(16).cleanup)
+        csv(V1SubBuildingNameIdx).cleanup,
+        csv(V1BuildingNameIdx).cleanup,
+        csv(V1BuildingNumberIdx).cleanup,
+        csv(V1DependentThoroughfareNameIdx).cleanup,
+        csv(V1ThoroughfareNameIdx).cleanup,
+        csv(V1DoubleDependentLocalityIdx).cleanup,
+        csv(V1DependentLocalityIdx).cleanup,
+        csv(V1PostTownIdx).cleanup,
+        csv(V1PostcodeIdx).cleanup)
     else
-      new OSDpa(
+      OSDpa(
         csv(Uprn_Idx).toLong,
-        csv(7).cleanup,
-        csv(8).cleanup,
-        csv(9).cleanup,
-        csv(10).cleanup,
-        csv(11).cleanup,
-        csv(12).cleanup,
-        csv(13).cleanup,
-        csv(14).cleanup,
-        csv(15).cleanup)
+        csv(V2SubBuildingNameIdx).cleanup,
+        csv(V2BuildingNameIdx).cleanup,
+        csv(V2BuildingNumberIdx).cleanup,
+        csv(V2DependentThoroughfareNameIdx).cleanup,
+        csv(V2ThoroughfareNameIdx).cleanup,
+        csv(V2DoubleDependentLocalityIdx).cleanup,
+        csv(V2DependentLocalityIdx).cleanup,
+        csv(V2PostTownIdx).cleanup,
+        csv(V2PostcodeIdx).cleanup)
 }
 
-case class OSDpa(uprn: Long,
-                 subBuildingName: String,
-                 buildingName: String,
-                 buildingNumber: String,
-                 dependentThoroughfareName: String,
-                 thoroughfareName: String,
-                 doubleDependentLocality: String,
-                 dependentLocality: String,
-                 postTown: String,
-                 postcode: String)
+case class OSDpa(uprn: Long, subBuildingName: String, buildingName: String, buildingNumber: String,
+                 dependentThoroughfareName: String, thoroughfareName: String, doubleDependentLocality: String,
+                 dependentLocality: String, postTown: String, postcode: String)
 
 
 object OSStreet {
@@ -135,33 +158,35 @@ object OSStreet {
 
   import OSCleanup._
 
-  def apply(csv: Array[String]): OSStreet = new OSStreet(csv(Uprn_Idx).toLong, csv(4).head)
+  val RecordTypeIdx = 4
+
+  def apply(csv: Array[String]): OSStreet = OSStreet(csv(Uprn_Idx).toLong, csv(RecordTypeIdx).head)
 }
 
-case class OSStreet(usrn: Long,
-                    recordType: Char)
+case class OSStreet(usrn: Long, recordType: Char)
 
 
 object OSStreetDescriptor {
   val RecordId = "15"
 
-  def isEnglish(csv: Array[String]): Boolean = csv(8) == "ENG"
-
   import OSCleanup._
 
-  def apply(csv: Array[String]): OSStreetDescriptor = new OSStreetDescriptor(
+  val DescriptionIdx = 4
+  val LocalityIdx = 5
+  val TownIdx = 6
+  val LanguageIdx = 8
+
+  def isEnglish(csv: Array[String]): Boolean = csv(LanguageIdx) == "ENG"
+
+  def apply(csv: Array[String]): OSStreetDescriptor = OSStreetDescriptor(
     csv(Uprn_Idx).toLong,
-    csv(4).cleanup,
-    csv(5).cleanup,
-    csv(6).cleanup.intern,
-    csv(8).cleanup.intern)
+    csv(DescriptionIdx).cleanup,
+    csv(LocalityIdx).cleanup,
+    csv(TownIdx).cleanup.intern,
+    csv(LanguageIdx).cleanup.intern)
 }
 
-case class OSStreetDescriptor(usrn: Long,
-                              description: String,
-                              locality: String,
-                              town: String,
-                              language: String)
+case class OSStreetDescriptor(usrn: Long, description: String, locality: String, town: String, language: String)
 
 
 object OSLpi {
@@ -169,32 +194,37 @@ object OSLpi {
 
   import OSCleanup._
 
-  def apply(csv: Array[String]): OSLpi = new OSLpi(
+  val LogicalStatusIdx = 6
+  val SaoStartNumberIdx = 11
+  val SaoStartSuffixIdx = 12
+  val SaoEndNumberIdx = 13
+  val SaoEndSuffixIdx = 14
+  val SaoTextIdx = 15
+  val PaoStartNumberIdx = 16
+  val PaoStartSuffixIdx = 17
+  val PaoEndNumberIdx = 18
+  val PaoEndSuffixIdx = 19
+  val PaoTextIdx = 20
+  val UsrnIdx = 21
+
+
+  def apply(csv: Array[String]): OSLpi = OSLpi(
     csv(Uprn_Idx).toLong,
-    csv(6).head,
-    csv(11).cleanup,
-    csv(12).cleanup,
-    csv(13).cleanup,
-    csv(14).cleanup,
-    csv(15).cleanup,
-    csv(16).cleanup,
-    csv(17).cleanup,
-    csv(18).cleanup,
-    csv(19).cleanup,
-    csv(20).cleanup,
-    csv(21).toLong)
+    csv(LogicalStatusIdx).head,
+    csv(SaoStartNumberIdx).cleanup,
+    csv(SaoStartSuffixIdx).cleanup,
+    csv(SaoEndNumberIdx).cleanup,
+    csv(SaoEndSuffixIdx).cleanup,
+    csv(SaoTextIdx).cleanup,
+    csv(PaoStartNumberIdx).cleanup,
+    csv(PaoStartSuffixIdx).cleanup,
+    csv(PaoEndNumberIdx).cleanup,
+    csv(PaoEndSuffixIdx).cleanup,
+    csv(PaoTextIdx).cleanup,
+    csv(UsrnIdx).toLong)
 }
 
-case class OSLpi(uprn: Long,
-                 logicalStatus: Char,
-                 saoStartNumber: String,
-                 saoStartSuffix: String,
-                 saoEndNumber: String,
-                 saoEndSuffix: String,
-                 saoText: String,
-                 paoStartNumber: String,
-                 paoStartSuffix: String,
-                 paoEndNumber: String,
-                 paoEndSuffix: String,
-                 paoText: String,
-                 usrn: Long)
+case class OSLpi(uprn: Long, logicalStatus: Char, saoStartNumber: String, saoStartSuffix: String,
+                 saoEndNumber: String, saoEndSuffix: String, saoText: String,
+                 paoStartNumber: String, paoStartSuffix: String, paoEndNumber: String,
+                 paoEndSuffix: String, paoText: String, usrn: Long)

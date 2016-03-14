@@ -7,12 +7,7 @@ import org.scalatest.mock.MockitoSugar
 
 class ThrottleTest extends FunSuite with MockitoSugar {
 
-  test(
-    """
-       Given that time ticks are stubbed to be advancing very slowly,
-       When a throttle is used with a periodic setting,
-       Then the sleep time would have been period * numItems.
-    """) {
+  test( """ When a throttle is used with a periodic setting then the sleep time would have been period * numItems.""") {
     val time = mock[Time]
     val throttle = new Throttle(10, 0, time)
 
@@ -25,12 +20,7 @@ class ThrottleTest extends FunSuite with MockitoSugar {
     verify(time).sleep(70)
   }
 
-  test(
-    """
-       Given that time ticks are stubbed to be advancing very slowly,
-       When a throttle is used with a backoff setting,
-       Then the sleep time would have been period * numItems.
-    """) {
+  test( """ When a throttle is used with a backoff setting then the sleep time would have been period * numItems.""") {
     val time = mock[Time]
     val throttle = new Throttle(0, 10, time)
 

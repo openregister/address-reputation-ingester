@@ -26,7 +26,7 @@ import scala.util.Try
 
 class FtpDownloaderSuite extends FunSuite with Matchers {
 
-  val dateFormatter = new SimpleDateFormat("EEE MMM Dd HH:mm:ss zzz yyyy")
+  val simpleDateFormatter = new SimpleDateFormat("EEE MMM Dd HH:mm:ss zzz yyyy")
 
 
   trait DummyFtp extends FileIO {
@@ -96,8 +96,8 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
 
 
   test("Check file on server for less that 24 hours") {
-    val fileCreationTime = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
-    val timeNow = dateFormatter.parse("Wed Feb 03 12:58:00 GMT 2016").getTime
+    val fileCreationTime = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
+    val timeNow = simpleDateFormatter.parse("Wed Feb 03 12:58:00 GMT 2016").getTime
 
     val testFtp = new FtpDownloader with DummyFtp
     val result = testFtp.withinValidTime(fileCreationTime, timeNow)
@@ -106,8 +106,8 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
   }
 
   test("Check file on server for more than 24 hours") {
-    val fileCreationTime = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
-    val timeNow = dateFormatter.parse("Wed Feb 04 12:58:00 GMT 2016").getTime
+    val fileCreationTime = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
+    val timeNow = simpleDateFormatter.parse("Wed Feb 04 12:58:00 GMT 2016").getTime
 
     val testFtp = new FtpDownloader with DummyFtp
     val result = testFtp.withinValidTime(fileCreationTime, timeNow)
@@ -116,8 +116,8 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
   }
 
   test("Return all files older than 24 hours") {
-    val fileCreationTime = dateFormatter.parse("Mon Feb 01 11:58:00 GMT 2016").getTime
-    val timeNow = dateFormatter.parse("Wed Feb 03 12:58:00 GMT 2016").getTime
+    val fileCreationTime = simpleDateFormatter.parse("Mon Feb 01 11:58:00 GMT 2016").getTime
+    val timeNow = simpleDateFormatter.parse("Wed Feb 03 12:58:00 GMT 2016").getTime
 
     val files = List[OsFile](OsFile("file1.zip", "/from-os/DS1234567", fileCreationTime, size = 1))
 
@@ -129,8 +129,8 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
   }
 
   test("Don't return files newer than 24 hours") {
-    val fileCreationTime = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
-    val timeNow = dateFormatter.parse("Wed Feb 03 12:58:00 GMT 2016").getTime
+    val fileCreationTime = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
+    val timeNow = simpleDateFormatter.parse("Wed Feb 03 12:58:00 GMT 2016").getTime
 
     val files = List[OsFile](OsFile("file1.zip", "/from-os/DS1234567", fileCreationTime, size = 1))
 
@@ -142,10 +142,10 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
   }
 
   test("Return only files that are older than 24 hours not newer") {
-    val fileCreationTime1 = dateFormatter.parse("Fri Jan 08 11:58:00 GMT 2016").getTime //Older than 24 hours
-    val fileCreationTime2 = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime //Less that 24 hours
+    val fileCreationTime1 = simpleDateFormatter.parse("Fri Jan 08 11:58:00 GMT 2016").getTime //Older than 24 hours
+    val fileCreationTime2 = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime //Less that 24 hours
 
-    val timeNow = dateFormatter.parse("Wed Feb 03 12:58:00 GMT 2016").getTime
+    val timeNow = simpleDateFormatter.parse("Wed Feb 03 12:58:00 GMT 2016").getTime
 
     val files = List[OsFile](
       OsFile("file1.zip", "/from-os/DS1234567", fileCreationTime1, size = 1),
@@ -163,12 +163,12 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
   test("Download files from a given directory") {
     val testFtp = new FtpDownloader with DummyFtp {
       override def files(dir: String): Try[List[OsFile]] = Try {
-        val fileCreationTime = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
+        val fileCreationTime = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
         List[OsFile](OsFile("AddressBasePremium_COU_2015-12-24_001_csv.zip", "/from-os/DS1234567", fileCreationTime, size = 1))
       }
     }
 
-    val timeNow = dateFormatter.parse("Fri Feb 05 12:58:00 GMT 2016").getTime
+    val timeNow = simpleDateFormatter.parse("Fri Feb 05 12:58:00 GMT 2016").getTime
 
     val result = testFtp.downloadFiles("/os-from", "/temp", timeNow)
     assert(result.isSuccess === true)
@@ -179,7 +179,7 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
   test("Download 5 files from a given directory") {
     val testFtp = new FtpDownloader with DummyFtp {
       override def files(dir: String): Try[List[OsFile]] = Try {
-        val fileCreationTime = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
+        val fileCreationTime = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
         List[OsFile](
           OsFile("AddressBasePremium_COU_2015-12-24_001_csv.zip", "/from-os/DS1234567", fileCreationTime, size = 1),
           OsFile("AddressBasePremium_COU_2015-12-24_002_csv.zip", "/from-os/DS1234567", fileCreationTime, size = 1),
@@ -190,7 +190,7 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
       }
     }
 
-    val timeNow = dateFormatter.parse("Fri Feb 05 12:58:00 GMT 2016").getTime
+    val timeNow = simpleDateFormatter.parse("Fri Feb 05 12:58:00 GMT 2016").getTime
 
     val result = testFtp.downloadFiles("/os-from", "/temp", timeNow)
     assert(result.isSuccess === true)
@@ -198,11 +198,11 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
   }
 
   test("Download 4 files leaving the 'new' file") {
-    val timeNow = dateFormatter.parse("Fri Feb 05 12:58:00 GMT 2016").getTime
+    val timeNow = simpleDateFormatter.parse("Fri Feb 05 12:58:00 GMT 2016").getTime
 
     val testFtp = new FtpDownloader with DummyFtp {
       override def files(dir: String): Try[List[OsFile]] = Try {
-        val fileCreationTime = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
+        val fileCreationTime = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
         List[OsFile](
           OsFile("AddressBasePremium_COU_2015-12-24_001_csv.zip", "/from-os/DS1234567", fileCreationTime, size = 1),
           OsFile("AddressBasePremium_COU_2015-12-24_002_csv.zip", "/from-os/DS1234567", fileCreationTime, size = 1),
@@ -222,7 +222,7 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
   test("Download files from a given directory, with network error") {
     val testFtp = new FtpDownloader with DummyFtp {
       override def files(dir: String): Try[List[OsFile]] = Try {
-        val fileCreationTime = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
+        val fileCreationTime = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
         List[OsFile](
           OsFile("AddressBasePremium_COU_2015-12-24_001_csv.zip", "/from-os/DS1234567", fileCreationTime, size = 1),
           OsFile("AddressBasePremium_COU_2015-12-24_002_csv.zip", "/from-os/DS1234567", fileCreationTime, size = 1),
@@ -241,7 +241,7 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
 
     }
 
-    val timeNow = dateFormatter.parse("Fri Feb 05 12:58:00 GMT 2016").getTime
+    val timeNow = simpleDateFormatter.parse("Fri Feb 05 12:58:00 GMT 2016").getTime
 
     val result = testFtp.downloadFiles("/os-from", "/temp", timeNow)
     assert(result.isFailure === true)
@@ -268,7 +268,7 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
   }
 
   test("Check error when invalid file is downloaded from a given directory") {
-    val fileCreationTime = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
+    val fileCreationTime = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
     val testFtp = new FtpDownloader with DummyFtp {
       override def files(dir: String): Try[List[OsFile]] = Try {
         List(new OsFile("Readme.zip", "/from-os/DS1234567", fileCreationTime, size = 1))
@@ -287,7 +287,7 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
         true
       }
     }
-    val fileCreationTime = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
+    val fileCreationTime = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
     val aFile = new OsFile("AddressBasePremium_COU_2015-12-24_005_csv.zip", "/from-os/DS1234567", fileCreationTime, size = 1)
 
     val result = testFtp.downloadAFile(aFile, "/temp")
@@ -320,7 +320,7 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
       }
 
       override def files(dir: String): Try[List[OsFile]] = Try {
-        val fileCreationTime = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
+        val fileCreationTime = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
         List[OsFile](
           OsFile("AddressBasePremium_COU_2015-12-24_001_csv.zip", "/from-os/DS1234567", fileCreationTime, size = 1)
         )
@@ -346,7 +346,7 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
       }
 
       override def files(dir: String): Try[List[OsFile]] = Try {
-        val fileCreationTime = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
+        val fileCreationTime = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
         List[OsFile](
           OsFile("AddressBasePremium_COU_2015-12-24_001_csv.zip", "/from-os/DS1234567", fileCreationTime, size = 1)
         )
@@ -374,12 +374,12 @@ class FtpDownloaderSuite extends FunSuite with Matchers {
       override def files(dir: String): Try[List[OsFile]] = Try {
         dir match {
           case "/os-from" =>
-            val fileCreationTime = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
+            val fileCreationTime = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
             List[OsFile](
               OsFile("AddressBasePremium_COU_2015-12-24_001_csv.zip", "/from-os/DS1234567", fileCreationTime, size = 1)
             )
           case "/os-from/DS1234567" =>
-            val fileCreationTime = dateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
+            val fileCreationTime = simpleDateFormatter.parse("Wed Feb 03 11:58:00 GMT 2016").getTime
             List[OsFile](
               OsFile("AddressBasePremium_COU_2015-12-24_002_csv.zip", "/from-os/DS1234567", fileCreationTime, size = 1)
             )

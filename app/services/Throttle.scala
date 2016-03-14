@@ -1,3 +1,20 @@
+/*
+ * Copyright 2016 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
 package services
 
 import java.time.Clock
@@ -20,12 +37,10 @@ import java.util.concurrent.locks.ReentrantLock
 //
 // Either of these can be disabled by setting to zero by their configuration parameter.
 
-class Throttle(initialDelayPerItem: Long, initialBackoffFactor: Float, time: Time) {
-  var delayPerItem = initialDelayPerItem
-  var backoffFactor = initialBackoffFactor
+class Throttle(delayPerItem: Long, backoffFactor: Float, time: Time) {
 
   /** Grab the lock here, then start some work. */
-  def start() = new TimedLock(delayPerItem, backoffFactor, time)
+  def start():TimedLock = new TimedLock(delayPerItem, backoffFactor, time)
 }
 
 
@@ -35,7 +50,7 @@ class TimedLock(val delayPerItem: Long, backoffFactor: Float, time: Time) {
 
   val startTime = time.now()
 
-  def timeTaken = time.now() - startTime
+  def timeTaken:Long = time.now() - startTime
 
   /**
     * Release the lock after processing 'numItems' records. The waiting time is calculated
@@ -76,9 +91,9 @@ trait Time {
 }
 
 object NormalTime extends Time {
-  val clock = Clock.systemDefaultZone()
+  val clock = Clock.systemDefaultZone
 
-  override def now() = clock.millis()
+  override def now():Long = clock.millis
 
   override def sleep(ms: Long) {
     Thread.sleep(ms)
