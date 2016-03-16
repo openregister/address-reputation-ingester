@@ -16,16 +16,23 @@
 
 package controllers
 
+import play.api.mvc.Action
 import uk.gov.hmrc.play.microservice.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
-import play.api.mvc._
-import scala.concurrent.Future
 
-object MicroserviceHelloWorld extends MicroserviceHelloWorld
+import scala.io.Source
+import play.api.Play._
 
-trait MicroserviceHelloWorld extends BaseController {
 
-  def hello():Action[AnyContent]  = Action.async { implicit request =>
-    Future.successful(Ok("Hello world"))
+object PingController extends PingController
+
+
+trait PingController extends BaseController {
+
+  val stream = getClass.getResourceAsStream("/provenance.json")
+  val versionInfo = Source.fromInputStream(stream).mkString
+  stream.close()
+
+  def ping() = Action { request =>
+    Ok(versionInfo).withHeaders(CACHE_CONTROL -> "no-cache,max-age=0,must-revalidate", CONTENT_TYPE -> "application/json")
   }
 }

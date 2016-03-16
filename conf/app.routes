@@ -1,4 +1,8 @@
 # microservice specific routes
 
-GET        /hello-world             controllers.MicroserviceHelloWorld.hello
-GET        /manual-import            controllers.OrdnanceSurveyController.manualImport
+GET           /manual-import                    controllers.OrdnanceSurveyController.manualImport
+
+# ----- Ping -----
+HEAD          /ping                             controllers.PingController.ping()
+GET           /ping                             controllers.PingController.ping()
+
