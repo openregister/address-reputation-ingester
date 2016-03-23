@@ -16,30 +16,36 @@
 
 import play.PlayImport.PlayKeys
 import sbt.Keys._
-import sbt.Tests.{Group, SubProcess}
+import sbt.Tests.{SubProcess, Group}
 import sbt._
-import sbtassembly.AssemblyKeys._
-import sbtassembly.{AssemblyKeys, MergeStrategy, PathList}
+import sbtassembly.{PathList, MergeStrategy, AssemblyKeys}
+import sbtassembly.AssemblyPlugin.defaultShellScript
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 import uk.gov.hmrc.versioning.SbtGitVersioning
+
+
+import AssemblyKeys._
 
 trait MicroService {
 
   import uk.gov.hmrc._
   import DefaultBuildSettings._
+  import uk.gov.hmrc.{SbtBuildInfo, ShellPrompt}
+
   import TestPhases._
-  import uk.gov.hmrc.SbtBuildInfo
+
+import sbtassembly.AssemblyPlugin.defaultShellScript
 
   val appName: String
 
-  lazy val appDependencies: Seq[ModuleID] = ???
-  lazy val plugins: Seq[Plugins] = Seq(play.PlayScala)
-  lazy val playSettings: Seq[Setting[_]] = Seq.empty
+  lazy val appDependencies : Seq[ModuleID] = ???
+  lazy val plugins : Seq[Plugins] = Seq(play.PlayScala)
+  lazy val playSettings : Seq[Setting[_]] = Seq.empty
 
   lazy val microservice = Project(appName, file("."))
-    .enablePlugins(plugins: _*)
-    .settings(playSettings: _*)
+    .enablePlugins(plugins : _*)
+    .settings(playSettings : _*)
     .settings(scalaSettings: _*)
     .settings(scalaVersion := "2.11.7")
     .settings(publishingSettings: _*)
@@ -52,46 +58,38 @@ trait MicroService {
       retrieveManaged := true
     )
     .settings(Provenance.setting)
-    .settings(Repositories.playPublishingSettings: _*)
-
-    .configs(Test)
-    .settings(
-      unmanagedSourceDirectories in Test <<= (baseDirectory in Test) (base => Seq(base / "test" / "unit")),
-      addTestReportOption(Test, "test-reports"))
-
+    .settings(Repositories.playPublishingSettings : _*)
     .configs(IntegrationTest)
     .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
     .settings(
       Keys.fork in IntegrationTest := false,
-      unmanagedSourceDirectories in IntegrationTest <<= (baseDirectory in Test) (base => Seq(base / "test" / "it")),
+      unmanagedSourceDirectories in IntegrationTest <<= (baseDirectory in IntegrationTest)(base => Seq(base / "it")),
       addTestReportOption(IntegrationTest, "int-test-reports"),
       testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
       parallelExecution in IntegrationTest := false)
-
     .settings(SbtBuildInfo(): _*)
     .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
-
     .settings(resolvers += Resolver.bintrayRepo("hmrc", "releases"))
     .settings(mainClass in assembly := Some("play.core.server.NettyServer"))
     .settings(assemblyJarName in assembly := s"${name.value}-${version.value}.tgz")
     .settings(fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value))
     .settings(assemblyMergeStrategy in assembly := {
-      case PathList("javax", "servlet", xs@_*) => MergeStrategy.first
-      case PathList("com", "codahale", "metrics", xs@_*) => MergeStrategy.first
-      case PathList("org", "apache", "commons", "logging", xs@_*) => MergeStrategy.first
-      case PathList("play", "core", "server", xs@_*) => MergeStrategy.first
-      case PathList("org", "slf4j", "impl", xs@_*) => MergeStrategy.first
+      case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
+      case PathList("com", "codahale", "metrics",  xs @ _*)         => MergeStrategy.first
+      case PathList("org", "apache", "commons", "logging",  xs @ _*)         => MergeStrategy.first
+      case PathList("play", "core", "server",   xs @ _*)         => MergeStrategy.first
+      case PathList("org", "slf4j", "impl",   xs @ _*)         => MergeStrategy.first
       case PathList(ps @ _*) if ps.last endsWith ".html" => MergeStrategy.first
       case PathList(ps @ _*) if ps.last endsWith "BuildInfo$.class" => MergeStrategy.first
       case PathList(ps @ _*) if ps.last endsWith "BuildInfo.class" => MergeStrategy.first
-      case "application.conf" => MergeStrategy.concat
-      case "unwanted.txt" => MergeStrategy.discard
+      case "application.conf"                            => MergeStrategy.concat
+      case "unwanted.txt"                                => MergeStrategy.discard
       case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
     })
     .enablePlugins(SbtDistributablesPlugin, SbtGitVersioning)
-}
+  }
 
 private object TestPhases {
 
@@ -106,7 +104,7 @@ private object Repositories {
   import uk.gov.hmrc._
   import PublishingSettings._
 
-  lazy val playPublishingSettings: Seq[sbt.Setting[_]] = sbtrelease.ReleasePlugin.releaseSettings ++ Seq(
+  lazy val playPublishingSettings : Seq[sbt.Setting[_]] = sbtrelease.ReleasePlugin.releaseSettings ++ Seq(
 
     credentials += SbtCredentials,
 
