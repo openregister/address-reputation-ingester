@@ -1,8 +1,9 @@
-# microservice specific routes
+->         /                          health.Routes
 
-GET           /manual-import                    controllers.OrdnanceSurveyController.manualImport
+GET        /admin/metrics             com.kenshoo.play.metrics.MetricsController.metrics
 
 # ----- Ping -----
 HEAD          /ping                             controllers.PingController.ping()
 GET           /ping                             controllers.PingController.ping()
 
+GET           /manual-import                    controllers.OrdnanceSurveyController.manualImport

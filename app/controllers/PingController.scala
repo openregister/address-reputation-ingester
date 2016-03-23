@@ -33,6 +33,6 @@ trait PingController extends BaseController {
   stream.close()
 
   def ping() = Action { request =>
-    Ok(versionInfo).withHeaders(CACHE_CONTROL -> "no-cache,max-age=0,must-revalidate", CONTENT_TYPE -> "application/json")
+    Ok(versionInfo).withHeaders(CONTENT_TYPE -> "application/json")
   }
 }

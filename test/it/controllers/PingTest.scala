@@ -30,21 +30,6 @@ class PingTest extends PlaySpec with EmbeddedMongoSuite with AppServerUnderTest 
     "give version information in the response body" in {
       (get("/ping").json \ "version").as[String] must not be empty
     }
-
-    "give headers that disable caching of the response" in {
-      get("/ping").header("Cache-Control").get mustBe "no-cache,max-age=0,must-revalidate"
-    }
-
-    "give a successful config response" in {
-      get("/config").status mustBe OK
-    }
-  }
-
-  "error resource" must {
-    "give an error response and the server must still be running afterwards" in {
-      get("/error").status mustBe INTERNAL_SERVER_ERROR
-      get("/ping").status mustBe OK
-    }
   }
 
   def appConfiguration: Map[String, String] = Map()
