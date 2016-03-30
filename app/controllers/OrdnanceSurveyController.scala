@@ -17,15 +17,15 @@
 package controllers
 
 import java.io._
+import java.nio.charset.StandardCharsets._
 
 import com.typesafe.config.ConfigFactory
 import play.api.libs.iteratee.Enumerator
-import services.addressimporter.converter.{Extractor, CSVLine}
-import services.addressimporter.ftpdownloader.{RealWorldIO, FtpDownloader}
-import uk.gov.hmrc.play.microservice.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import play.api.mvc._
-import scala.concurrent.{ExecutionContext, Future}
+import services.addressimporter.ftpdownloader.{FtpDownloader, RealWorldIO}
+import uk.co.hmrc.address.osgb.DbAddress
+
+import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 
@@ -34,6 +34,7 @@ object OrdnanceSurveyController extends OrdnanceSurveyController
 trait OrdnanceSurveyController extends Controller {
 
   import services.addressimporter.converter.Extractor
+
   import scala.concurrent.ExecutionContext.Implicits.global
 
 
@@ -66,10 +67,10 @@ trait OrdnanceSurveyController extends Controller {
           ftpClient.ftpDownload(osHomeFolder, tmpZipfilesHome) match {
             case Success((count, subFolder)) =>
 
-              val csvOut = (line: CSVLine) => {
+              val csvOut = (line: DbAddress) => {
                 // scalastyle:off
-                out.write(line.toString.getBytes)
-                out.write("\n".getBytes)
+                out.write(line.toString.getBytes(UTF_8))
+                out.write('\n')
                 out.flush()
               }
               val result = Extractor.extract(new File(tmpZipfilesHome + "/" + subFolder), csvOut)

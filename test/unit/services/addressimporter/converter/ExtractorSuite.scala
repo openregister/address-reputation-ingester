@@ -26,6 +26,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import services.addressimporter.converter.Extractor.{Blpu, Street}
 import services.addressimporter.converter.extractor.{FirstPass, SecondPass}
+import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
 
 import scala.collection.immutable.{HashMap, HashSet}
@@ -33,7 +34,7 @@ import scala.util.Success
 
 class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
 
-  implicit val dummyOut = (out: CSVLine) => {}
+  implicit val dummyOut = (out: DbAddress) => {}
 
   // test data is long so disabe scalastyle check
   // scalastyle:off  line.size.limit
@@ -188,8 +189,8 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
 
     val csvLine: Array[String] = CsvParser.split(new StringReader(data)).next()
 
-    val out = (out: CSVLine) => {
-      assert(out.uprn === 9051119283L, "uprn")
+    val out = (out: DbAddress) => {
+      assert(out.uprn === "9051119283", "uprn")
       assert(out.line1 === "1 UPPER KENNERTY MILL COTTAGES", "Line1")
       assert(out.line2 === "", "Line2")
       assert(out.line3 === "", "Line3")
@@ -217,8 +218,8 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(new StringReader(blpuData)).next()
 
 
-    val out = (out: CSVLine) => {
-      assert(out.uprn === 131041604, "uprn")
+    val out = (out: DbAddress) => {
+      assert(out.uprn === "131041604", "uprn")
       assert(out.line1 === "MAIDENHILL STABLES", "Line1")
       assert(out.line2 === "", "Line2")
       assert(out.line3 === "localityName", "Line3")
@@ -251,8 +252,8 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(new StringReader(blpuData)).next()
 
 
-    val out = (out: CSVLine) => {
-      assert(out.uprn === 131041604, "uprn")
+    val out = (out: DbAddress) => {
+      assert(out.uprn === "131041604", "uprn")
       assert(out.line1 === "1a-2b MAIDENHILL STABLES", "Line1")
       assert(out.line2 === "", "Line2")
       assert(out.line3 === "localityName", "Line3")
@@ -286,8 +287,8 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(new StringReader(blpuData)).next()
 
 
-    val out = (out: CSVLine) => {
-      assert(out.uprn === 131041604, "uprn")
+    val out = (out: DbAddress) => {
+      assert(out.uprn === "131041604", "uprn")
       assert(out.line1 === "", "Line1")
       assert(out.line2 === "", "Line2")
       assert(out.line3 === "localityName", "Line3")

@@ -18,10 +18,11 @@ package services.addressimporter
 
 import java.io._
 
-import play.api.Logger
 import com.typesafe.config.ConfigFactory
-import services.addressimporter.converter.{CSVLine, Extractor}
+import play.api.Logger
+import services.addressimporter.converter.Extractor
 import services.addressimporter.ftpdownloader.{FtpDownloader, RealWorldIO}
+import uk.co.hmrc.address.osgb.DbAddress
 
 import scala.util.{Failure, Success, Try}
 
@@ -61,7 +62,7 @@ object Main extends App {
 
           lazy val outCSV = new PrintWriter(new BufferedWriter(new FileWriter(s"$outCSVFilename/addr_$subFolder.csv"), 1024 * 32))
 
-          val csvOut = (out: CSVLine) => {
+          val csvOut = (out: DbAddress) => {
             // scalastyle:off
             outCSV.println(out.toString)
           }

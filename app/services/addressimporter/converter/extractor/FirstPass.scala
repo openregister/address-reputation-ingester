@@ -19,17 +19,18 @@ package services.addressimporter.converter.extractor
 import org.apache.commons.compress.archivers.zip.ZipFile
 import services.addressimporter.converter.Extractor.{Blpu, Street}
 import services.addressimporter.converter._
+import uk.co.hmrc.address.osgb.DbAddress
 
 import scala.collection.immutable.HashMap
 import scala.util.Try
 
 object FirstPass {
 
-  type CSVOutput = (CSVLine) => Unit
+  type CSVOutput = (DbAddress) => Unit
 
   def exportDPA(dpa: OSDpa)(out: CSVOutput): Unit = {
-    val line = CSVLine(
-      dpa.uprn,
+    val line = DbAddress(
+      dpa.uprn.toString,
       (dpa.subBuildingName + " " + dpa.buildingName).trim,
       (dpa.buildingNumber + " " + dpa.dependentThoroughfareName + " " + dpa.thoroughfareName).trim,
       (dpa.doubleDependentLocality + " " + dpa.dependentLocality).trim,

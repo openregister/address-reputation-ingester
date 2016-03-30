@@ -19,13 +19,14 @@ package services.addressimporter.converter.extractor
 import org.apache.commons.compress.archivers.zip.ZipFile
 import services.addressimporter.converter.Extractor.{Blpu, Street}
 import services.addressimporter.converter._
+import uk.co.hmrc.address.osgb.DbAddress
 
 import scala.collection.immutable.HashMap
 import scala.util.Try
 
 object SecondPass {
 
-  def exportLPI(lpi: OSLpi, blpu: Blpu, streetList: HashMap[Long, Street])(out: (CSVLine) => Unit): Unit = {
+  def exportLPI(lpi: OSLpi, blpu: Blpu, streetList: HashMap[Long, Street])(out: (DbAddress) => Unit): Unit = {
     val street = streetList.getOrElse(lpi.usrn, Street('X', "<SUnknown>", "<SUnknown>", "<TUnknown>"))
 
     def numRange(sNum: String, sSuf: String, eNum: String, eSuf: String): String = {
@@ -52,8 +53,8 @@ object SecondPass {
 
     val line3 = street.localityName
 
-    val line = CSVLine(
-      lpi.uprn,
+    val line = DbAddress(
+      lpi.uprn.toString,
       OSCleanup.removeBannedStreets(line1),
       OSCleanup.removeBannedStreets(line2),
       OSCleanup.removeBannedStreets(line3),
@@ -65,29 +66,26 @@ object SecondPass {
 
 
   def processLine(csvIterator: Iterator[Array[String]], remainingBLPU0: HashMap[Long, Blpu],
-                  streetList: HashMap[Long, Street], out: (CSVLine) => Unit): HashMap[Long, Blpu] = {
+                  streetList: HashMap[Long, Street], out: (DbAddress) => Unit): HashMap[Long, Blpu] = {
     csvIterator.foldLeft(remainingBLPU0) {
       (blpuList, csvLine) =>
-        csvLine(OSCsv.RecordIdentifier_idx) match {
-          case OSLpi.RecordId =>
+        if (csvLine(OSCsv.RecordIdentifier_idx) == OSLpi.RecordId) {
+          val lpi = OSLpi(csvLine)
+          val blpu = blpuList.get(lpi.uprn)
 
-            val lpi = OSLpi(csvLine)
-            val blpu = blpuList.get(lpi.uprn)
+          blpu match {
+            case Some(b) if b.logicalStatus == lpi.logicalStatus =>
+              exportLPI(lpi, b, streetList)(out)
+              blpuList - lpi.uprn
+            case _ => blpuList
+          }
 
-            blpu match {
-              case Some(b) if b.logicalStatus == lpi.logicalStatus =>
-                exportLPI(lpi, b, streetList)(out)
-                blpuList - lpi.uprn
-              case _ => blpuList
-            }
-
-          case _ => blpuList
-        }
+        } else blpuList
     }
   }
 
 
-  def secondPass(zipFiles: Vector[ZipFile], fd: ForwardData, out: (CSVLine) => Unit): Try[HashMap[Long, Blpu]] = Try {
+  def secondPass(zipFiles: Vector[ZipFile], fd: ForwardData, out: (DbAddress) => Unit): Try[HashMap[Long, Blpu]] = Try {
     zipFiles.foldLeft(fd.blpu) {
       case (remainingBLPU0, file) =>
         LoadZip.zipReader(file) {

@@ -21,6 +21,7 @@ import java.io.File
 import org.apache.commons.compress.archivers.zip.ZipFile
 import services.addressimporter.converter.Extractor.{Blpu, Street}
 import services.addressimporter.converter.extractor.{FirstPass, SecondPass}
+import uk.co.hmrc.address.osgb.DbAddress
 
 import scala.collection.immutable.{HashMap, HashSet}
 import scala.util.Try
@@ -36,7 +37,7 @@ object Extractor {
     else Some(file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).map(LoadZip.file2ZipFile).toVector)
 
 
-  def extract(rootDir: File, out: (CSVLine) => Unit): Option[Try[Int]] = {
+  def extract(rootDir: File, out: (DbAddress) => Unit): Option[Try[Int]] = {
     val x = listFiles(rootDir)
       .map { zipFiles =>
         FirstPass.firstPass(zipFiles, out).flatMap {
