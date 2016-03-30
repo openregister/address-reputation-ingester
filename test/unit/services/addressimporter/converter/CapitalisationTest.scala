@@ -18,7 +18,7 @@ package services.addressimporter.converter
 
 import org.scalatest.FunSuite
 
-class CapitalisationSuite extends FunSuite {
+class CapitalisationTest extends FunSuite {
 
   def tryNormaliseAddressLine(expected: String) {
     assert(Capitalisation.normaliseAddressLine(expected.toUpperCase) === expected)
@@ -34,7 +34,14 @@ class CapitalisationSuite extends FunSuite {
     assert(Capitalisation.normaliseAddressLine(" - - - ") === "- - -", "alternating spaces and hyphens")
   }
 
-  test( "Check town names with spaces") {
+
+  test(
+    """Given a town in uppercase or lowercase and includes spaces,
+      when normalised,
+      then the town should be proper case
+      and stop-words should remain lowercase
+      except when they are the first word
+    """) {
     // English
     tryNormaliseAddressLine("Ashby de la Zouch")
     tryNormaliseAddressLine("St. Leonards Hill")
@@ -57,7 +64,13 @@ class CapitalisationSuite extends FunSuite {
     tryNormaliseAddressLine("Port na Cloiche")
   }
 
-  test("Check town names with hyphens") {
+  test(
+    """Given a town in uppercase or lowercase and includes dashes,
+      when normalised,
+      then the town should be proper case
+      and stop-words should remain lowercaseq
+      except when they are the first word
+    """) {
     tryNormaliseAddressLine("55a-57c") // flat ranges are common
     tryNormaliseAddressLine("Brightwell-cum-Sotwell") // OX10 0RZ
     tryNormaliseAddressLine("Chapel-en-le-Frith")
@@ -77,7 +90,11 @@ class CapitalisationSuite extends FunSuite {
     tryNormaliseAddressLine("1 Whip-Ma-Whop-Ma-Gate") // YO1 8BL also
   }
 
-  test( "Check town names with apostrophes") {
+  test(
+    """Given a town in uppercase or lowercase and includes apostrophes,
+      when normalised,
+      then the town should be proper case without caring about the apostrophes
+    """) {
     tryNormaliseAddressLine("Bo'ness")
     tryNormaliseAddressLine("Pentre'r Bryn")
     tryNormaliseAddressLine("Godre'r Graig")
@@ -87,11 +104,20 @@ class CapitalisationSuite extends FunSuite {
     tryNormaliseAddressLine("Well I' Th' Lane") // OL11 1AU/1BL/1BB/2JR
   }
 
-  test( "Check town names with 'special case'") {
+  test(
+    """Given a special case,
+      when normalised,
+      then the name should be presented correctly
+    """) {
     tryNormaliseAddressLine("11 I'Anson Street") // DL3 0RL
   }
 
-  test( "Check town names with contracted prefix") {
+  test(
+    """Given a town in uppercase or lowercase and includes a contracted prefix,
+      when normalised,
+      then the town should be proper case
+      and both letters either side of the apostrophe should be uppercase
+    """) {
     tryNormaliseAddressLine("John O'Groats")
     tryNormaliseAddressLine("Tolleshunt D'Arcy")
     tryNormaliseAddressLine("Kincardine O'Neil")
@@ -99,11 +125,20 @@ class CapitalisationSuite extends FunSuite {
     tryNormaliseAddressLine("Tu Hwnt I'r Bwlch") // LL49 9PA
   }
 
-  test( "Check town names with contracted suffix") {
+  test(
+    """Given a town in uppercase or lowercase and includes a contracted suffix,
+      when normalised,
+      then the town should be proper case
+      and both letters either side of the apostrophe should be uppercase
+    """) {
     tryNormaliseAddressLine("5 Top O'Th' Hill Road") // OL14 6QA
   }
 
-  test("Check organisation names return in proper case") {
+  test(
+    """Given an organisation in upper or lowercase and includes spaces,
+      when normalised,
+      then the name should be proper case
+    """) {
     tryNormaliseAddressLine("R D Taylor & Co Ltd")
   }
 

@@ -20,7 +20,10 @@ import scala.collection.immutable.HashSet
 
 
 object Capitalisation {
-  def normalise(phrase: String):String = {
+
+  def normaliseAddressLine(line: String): String = normalise(line.trim.toLowerCase)
+
+  private def normalise(phrase: String):String = {
     val words: Seq[String] = phrase.split(' ')
 
     if (words.length == 1) asFirstWord(words.head)
@@ -28,10 +31,7 @@ object Capitalisation {
   }
 
 
-  def normaliseAddressLine(line: String): String = normalise(line.trim.toLowerCase)
-
-
-  val stopWords = HashSet(
+  private val stopWords = HashSet(
     // English stop words
     "and", "at", "by", "cum", "in", "next", "of", "on", "the", "to", "under", "upon", "with",
     // "but" isn't included because it's often a proper name too
@@ -43,19 +43,19 @@ object Capitalisation {
     "an", "na", "nam"
   )
 
-  val contractedPrefixes = Set("a'", "d'", "o'")
+  private val contractedPrefixes = Set("a'", "d'", "o'")
 
-  val subwordSpecialCases = Map("i'anson" -> "I'Anson") // DL3 0RL
+  private val subwordSpecialCases = Map("i'anson" -> "I'Anson") // DL3 0RL
 
 
-  def capitaliseRestOfSubwords(word: String): String =
+  private def capitaliseRestOfSubwords(word: String): String =
     if (stopWords.contains(word)) word else capitaliseSpecialCases(word)
 
-  def capitaliseSpecialCases(lcWord: String): String =
+  private def capitaliseSpecialCases(lcWord: String): String =
     subwordSpecialCases.get(lcWord).fold(capitaliseWithContractedPrefix(lcWord)) { specialCase => specialCase }
 
 
-  def capitaliseWithContractedPrefix(word: String): String =
+  private def capitaliseWithContractedPrefix(word: String): String =
     if (word.length < 2) word.capitalize
     else {
       val two = word.take(2)
@@ -63,18 +63,18 @@ object Capitalisation {
       else word.capitalize
     }
 
-  def conjoin(first: String, rest: Seq[String]): String =
+  private def conjoin(first: String, rest: Seq[String]): String =
     if (rest.isEmpty) first
     else first + rest.map(capitaliseRestOfSubwords).mkString("-", "-", "")
 
-  def subwords(phrase: String): Seq[String] = phrase.split('-')
+  private def subwords(phrase: String): Seq[String] = phrase.split('-')
 
-  def asFirstWord(word: String): String = {
+  private def asFirstWord(word: String): String = {
     val sub = subwords(word)
     if (sub.nonEmpty) conjoin(sub.head.capitalize, sub.tail) else "-"
   }
 
-  def asOtherWord(word: String): String = {
+  private def asOtherWord(word: String): String = {
     val sub = subwords(word)
     if (sub.nonEmpty) conjoin(capitaliseRestOfSubwords(sub.head), sub.tail) else "-"
   }
