@@ -19,7 +19,7 @@ package services.addressimporter.converter
 import java.io._
 
 import org.apache.commons.compress.archivers.zip.ZipFile
-import org.sfm.csv.CsvParser
+import uk.co.hmrc.address.services.CsvParser
 
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -40,7 +40,7 @@ object LoadZip {
         val stream = zipFile.getInputStream(entry)
         val data = new InputStreamReader(stream)
 
-        val it = CsvParser.bufferSize(1024 * 32).iterator(data).asScala
+        val it = CsvParser.split(data)
 
         val result = f(it)
 

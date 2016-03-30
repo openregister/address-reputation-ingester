@@ -19,7 +19,6 @@ package services.addressimporter.converter.extractor
 import org.apache.commons.compress.archivers.zip.ZipFile
 import services.addressimporter.converter.Extractor.{Blpu, Street}
 import services.addressimporter.converter._
-import services.addressimporter.converter.extractor.FirstPass.CSVOutput
 
 import scala.collection.immutable.HashMap
 import scala.util.Try
