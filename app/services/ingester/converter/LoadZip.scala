@@ -29,10 +29,10 @@ case class EmptyFileException(msg: String) extends Exception(msg)
 
 object LoadZip {
 
-  def file2ZipFile(f: File): ZipFile = new ZipFile(f)
-
-  def zipReader[T](zipFile: ZipFile)(consumer: (Iterator[Array[String]]) => T): Try[T] = {
+  def zipReader[T](file: File)(consumer: (Iterator[Array[String]]) => T): Try[T] = {
     Try {
+      println(s"Reading from $file")
+      val zipFile = new ZipFile(file)
       val enumeration = zipFile.getEntries
       if (!enumeration.hasMoreElements) {
         throw EmptyFileException("Empty file")
@@ -45,6 +45,7 @@ object LoadZip {
           consumer(it)
         } finally {
           zipEntry.close()
+          zipFile.close()
         }
       }
     }

@@ -16,7 +16,8 @@
 
 package services.ingester.converter.extractor
 
-import org.apache.commons.compress.archivers.zip.ZipFile
+import java.io.File
+
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
 import uk.co.hmrc.address.osgb.DbAddress
@@ -28,11 +29,11 @@ object FirstPass {
 
   type CSVOutput = (DbAddress) => Unit
 
-  def firstPass(zipFiles: Vector[ZipFile], out: CSVOutput): Try[ForwardData] = Try {
-    def findData(f: ZipFile, fd: ForwardData): Try[ForwardData] =
+  def firstPass(files: Vector[File], out: CSVOutput): Try[ForwardData] = Try {
+    def findData(f: File, fd: ForwardData): Try[ForwardData] =
       LoadZip.zipReader(f)(processFile(_, fd.streets, fd.lpiLogicStatus, out))
 
-    zipFiles.foldLeft(ForwardData.empty) {
+    files.foldLeft(ForwardData.empty) {
       case (accFD, f) =>
         val updates = findData(f, accFD)
         accFD.update(updates.get)

@@ -16,11 +16,8 @@
 
 package services.ingester.converter
 
-import java.io.{ByteArrayInputStream, File, InputStream}
-import java.util.Collections
+import java.io.File
 
-import org.apache.commons.compress.archivers.zip.{ZipArchiveEntry, ZipFile}
-import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -42,44 +39,6 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
   }
 
 
-  test("zipreader test") {
-    val mockZipFile = mock[ZipFile]
-
-    val entries: java.util.List[ZipArchiveEntry] = new java.util.ArrayList[ZipArchiveEntry]()
-    entries.add(new ZipArchiveEntry(""))
-
-    val inputStream: InputStream = new ByteArrayInputStream("World".getBytes)
-
-    when(mockZipFile.getEntries) thenReturn Collections.enumeration(entries)
-    when(mockZipFile.getInputStream(any[ZipArchiveEntry])) thenReturn inputStream
-
-
-    val result = LoadZip.zipReader(mockZipFile) { itr =>
-    }
-
-    assert(result.isSuccess)
-  }
-
-
-  test("zipreader test empty zipfile") {
-    val mockZipFile = mock[ZipFile]
-
-    val entries: java.util.List[ZipArchiveEntry] = new java.util.ArrayList[ZipArchiveEntry]()
-
-    val inputStream: InputStream = new ByteArrayInputStream("World".getBytes)
-
-    when(mockZipFile.getEntries) thenReturn Collections.enumeration(entries)
-    when(mockZipFile.getInputStream(any[ZipArchiveEntry])) thenReturn inputStream
-
-
-    val result = LoadZip.zipReader(mockZipFile) { itr =>
-    }
-
-    assert(result.isFailure)
-    result.failed.get shouldBe a[EmptyFileException]
-  }
-
-
   test("Having no files should successfully return nothing") {
     val mockFile = mock[File]
 
@@ -90,6 +49,5 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
 
     assert(result === Success(0))
   }
-
 
 }

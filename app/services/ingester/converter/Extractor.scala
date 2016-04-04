@@ -35,10 +35,9 @@ object Extractor {
 
 
   def extract(rootDir: File, out: (DbAddress) => Unit): Try[Int] = {
-    val files = listFiles(rootDir)
-    val zipFiles = files.map(LoadZip.file2ZipFile).toVector
-    val x = FirstPass.firstPass(zipFiles, out).flatMap {
-      SecondPass.secondPass(zipFiles, _, out)
+    val files = listFiles(rootDir).toVector
+    val x = FirstPass.firstPass(files, out).flatMap {
+      SecondPass.secondPass(files, _, out)
     }
     x.map(x => x.size)
   }

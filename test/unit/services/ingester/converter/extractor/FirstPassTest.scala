@@ -16,14 +16,9 @@
 
 package services.ingester.converter.extractor
 
-import java.io.{ByteArrayInputStream, InputStream, StringReader}
-import java.util.Collections
+import java.io.{File, StringReader}
 
-import org.apache.commons.compress.archivers.zip.{ZipArchiveEntry, ZipFile}
-import org.mockito.Matchers._
-import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.{Matchers, FunSuite}
+import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter.OSDpa
 import uk.co.hmrc.address.osgb.DbAddress
@@ -31,7 +26,7 @@ import uk.co.hmrc.address.services.CsvParser
 
 import scala.collection.immutable.HashMap
 
-class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
+class FirstPassTest extends FunSuite with Matchers {
 
   val dummyOut = (out: DbAddress) => {}
 
@@ -167,40 +162,15 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
 
   test("check 1st pass") {
-    val data =
-      """15,"I",31068,48504236,"A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE","","NEW CUMNOCK","EAST AYRSHIRE","ENG""""
-
-    val mockZipFile = mock[ZipFile]
-
-    val entries: java.util.List[ZipArchiveEntry] = new java.util.ArrayList[ZipArchiveEntry]()
-    entries.add(new ZipArchiveEntry(""))
-
-    val inputStream: InputStream = new ByteArrayInputStream(data.getBytes)
-
-    when(mockZipFile.getEntries) thenReturn Collections.enumeration(entries)
-    when(mockZipFile.getInputStream(any[ZipArchiveEntry])) thenReturn inputStream
-
-    val result = FirstPass.firstPass(Vector(mockZipFile), dummyOut)
-
+    val sample = new File(getClass.getClassLoader.getResource("SX9090-first20.zip").getFile)
+    val result = FirstPass.firstPass(Vector(sample), dummyOut)
     assert(result.isSuccess)
   }
 
 
   test("check 1st pass with invalid csv will generate an error") {
-    val data =
-      """15,"I",31068,48504236"""
-
-    val mockZipFile = mock[ZipFile]
-
-    val entries: java.util.List[ZipArchiveEntry] = new java.util.ArrayList[ZipArchiveEntry]()
-    entries.add(new ZipArchiveEntry(""))
-
-    val inputStream: InputStream = new ByteArrayInputStream(data.getBytes)
-
-    when(mockZipFile.getEntries) thenReturn Collections.enumeration(entries)
-    when(mockZipFile.getInputStream(any[ZipArchiveEntry])) thenReturn inputStream
-
-    val result = FirstPass.firstPass(Vector(mockZipFile), dummyOut)
+    val sample = new File(getClass.getClassLoader.getResource("invalid15.zip").getFile)
+    val result = FirstPass.firstPass(Vector(sample), dummyOut)
 
     assert(result.isFailure)
     assert(result.failed.get.getMessage === "8")

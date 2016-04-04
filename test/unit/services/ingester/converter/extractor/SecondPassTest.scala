@@ -16,13 +16,8 @@
 
 package services.ingester.converter.extractor
 
-import java.io.{ByteArrayInputStream, InputStream, StringReader}
-import java.util.Collections
+import java.io.{File, StringReader}
 
-import org.apache.commons.compress.archivers.zip.{ZipArchiveEntry, ZipFile}
-import org.mockito.Matchers._
-import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter.{OSBlpu, OSLpi}
@@ -31,7 +26,7 @@ import uk.co.hmrc.address.services.CsvParser
 
 import scala.collection.immutable.HashMap
 
-class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
+class SecondPassTest extends FunSuite with Matchers {
 
   val dummyOut = (out: DbAddress) => {}
 
@@ -167,49 +162,21 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
 
   test("check 2nd pass") {
-    val data =
-      """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
-        | """.stripMargin
-
-    val mockZipFile = mock[ZipFile]
-
-    val entries: java.util.List[ZipArchiveEntry] = new java.util.ArrayList[ZipArchiveEntry]()
-    entries.add(new ZipArchiveEntry(""))
-
-    val inputStream: InputStream = new ByteArrayInputStream(data.getBytes)
-
-    when(mockZipFile.getEntries) thenReturn Collections.enumeration(entries)
-    when(mockZipFile.getInputStream(any[ZipArchiveEntry])) thenReturn inputStream
-
+    val sample = new File(getClass.getClassLoader.getResource("SX9090-first20.zip").getFile)
     val fd = ForwardData.empty
 
-    val result = SecondPass.secondPass(Vector(mockZipFile), fd, dummyOut)
-
+    val result = SecondPass.secondPass(Vector(sample), fd, dummyOut)
     assert(result.isSuccess)
   }
 
 
   test("check 2nd with invalid csv will generate an error") {
-    val data =
-      """24,"I",913236
-        | """.stripMargin
-
-    val mockZipFile = mock[ZipFile]
-
-    val entries: java.util.List[ZipArchiveEntry] = new java.util.ArrayList[ZipArchiveEntry]()
-    entries.add(new ZipArchiveEntry(""))
-
-    val inputStream: InputStream = new ByteArrayInputStream(data.getBytes)
-
-    when(mockZipFile.getEntries) thenReturn Collections.enumeration(entries)
-    when(mockZipFile.getInputStream(any[ZipArchiveEntry])) thenReturn inputStream
-
+    val sample = new File(getClass.getClassLoader.getResource("invalid24.zip").getFile)
     val fd = ForwardData.empty
 
-    val result = SecondPass.secondPass(Vector(mockZipFile), fd, dummyOut)
+    val result = SecondPass.secondPass(Vector(sample), fd, dummyOut)
 
     assert(result.isFailure)
     assert(result.failed.get.getMessage === "3")
   }
-
 }

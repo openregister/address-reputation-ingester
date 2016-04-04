@@ -16,7 +16,8 @@
 
 package services.ingester.converter.extractor
 
-import org.apache.commons.compress.archivers.zip.ZipFile
+import java.io.File
+
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
 import uk.co.hmrc.address.osgb.DbAddress
@@ -26,8 +27,8 @@ import scala.util.Try
 
 object SecondPass {
 
-  def secondPass(zipFiles: Vector[ZipFile], fd: ForwardData, out: (DbAddress) => Unit): Try[HashMap[Long, Blpu]] = Try {
-    zipFiles.foldLeft(fd.blpu) {
+  def secondPass(files: Vector[File], fd: ForwardData, out: (DbAddress) => Unit): Try[HashMap[Long, Blpu]] = Try {
+    files.foldLeft(fd.blpu) {
       case (remainingBLPU0, file) =>
         LoadZip.zipReader(file) {
           csvIterator =>
