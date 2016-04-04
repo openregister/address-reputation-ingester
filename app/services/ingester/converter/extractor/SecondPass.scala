@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package services.addressimporter.converter.extractor
+package services.ingester.converter.extractor
 
 import org.apache.commons.compress.archivers.zip.ZipFile
-import services.addressimporter.converter.Extractor.{Blpu, Street}
-import services.addressimporter.converter._
+import services.ingester.converter.Extractor.{Blpu, Street}
+import services.ingester.converter._
 import uk.co.hmrc.address.osgb.DbAddress
 
 import scala.collection.immutable.HashMap
@@ -55,9 +55,9 @@ object SecondPass {
 
     val line = DbAddress(
       "GB" + lpi.uprn.toString,
-      OSCleanup.removeBannedStreets(line1),
-      OSCleanup.removeBannedStreets(line2),
-      OSCleanup.removeBannedStreets(line3),
+      OSCleanup.removeUninterestingStreets(line1),
+      OSCleanup.removeUninterestingStreets(line2),
+      OSCleanup.removeUninterestingStreets(line3),
       street.townName,
       blpu.postcode)
 

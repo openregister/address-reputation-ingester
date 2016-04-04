@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package services.addressimporter.ftpdownloader
+package services.ingester.ftpdownloader
 
 import java.text.SimpleDateFormat
 
@@ -24,7 +24,7 @@ import org.scalatest.Matchers
 
 import scala.util.Try
 
-class FtpDownloaderSuite extends FunSuite with Matchers {
+class FtpDownloaderTest extends FunSuite with Matchers {
 
   val simpleDateFormatter = new SimpleDateFormat("EEE MMM Dd HH:mm:ss zzz yyyy")
 

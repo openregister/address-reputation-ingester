@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package services.addressimporter
+package services.ingester
 
 import java.io._
 
 import com.typesafe.config.ConfigFactory
 import play.api.Logger
-import services.addressimporter.converter.Extractor
-import services.addressimporter.ftpdownloader.{FtpDownloader, RealWorldIO}
+import services.ingester.converter.Extractor
+import services.ingester.ftpdownloader.{FtpDownloader, RealWorldIO}
 import uk.co.hmrc.address.osgb.DbAddress
 
 import scala.util.{Failure, Success, Try}
 
 
-object Main extends App {
+object DownloadToCSV extends App {
 
   val logger = Logger("addressimporter-main")
 
@@ -38,15 +38,14 @@ object Main extends App {
   Try {
     val conf = ConfigFactory.load()
 
-    // os server details
-    val server = conf.getString("app.os.server")
-    val port = conf.getString("app.os.port")
-    val user = conf.getString("app.os.user")
-    val pass = conf.getString("app.os.pass")
-    val osHomeFolder = conf.getString("app.os.homeFolder")
+    // OSGB ftp server details
+    val server = conf.getString("app.ftp.server")
+    val port = conf.getString("app.ftp.port")
+    val user = conf.getString("app.ftp.user")
+    val pass = conf.getString("app.ftp.pass")
 
-    // temp folder details
-    val tmpZipfilesHome = conf.getString("app.temp.folder")
+    val osHomeFolder = conf.getString("app.files.rootFolder")
+    val tmpZipfilesHome = conf.getString("app.files.tempFolder")
 
     // resulting .csv
     val outCSVFilename = conf.getString("app.output.csvFolder")
@@ -86,7 +85,5 @@ object Main extends App {
   val totalTime = (System.currentTimeMillis() - appStart) / 1000
 
   logger.info(s"Total Execution Time: ${totalTime / 60} mins ${totalTime % 60} secs  ")
-
 }
-
 

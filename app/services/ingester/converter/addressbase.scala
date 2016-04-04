@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package services.addressimporter.converter
+package services.ingester.converter
 
-import uk.co.hmrc.address.services.Capitalisation._
+// These case classes represent the data model for the parts of AddressBasePremium
+// (https://www.ordnancesurvey.co.uk/business-and-government/products/addressbase-products.html)
+// that we use. Consult the technical reference docs for more info.
 
 object OSCleanup {
 
   val Uprn_Idx = 3
 
-  def removeBannedStreets(s: String): String = {
+  def removeUninterestingStreets(s: String): String = {
     val wordList = List[String](
-      "From ", "Pump ", "Pumping ", "Mast ", "Hydraulic Ram", "Helipad ", "Across From", "Fire Station",
-      "Awaiting Conversion", "Ppg Sta", "Footway", "Bridge", "Pipeline", "Redevelopment"
+      "from ", "pump ", "pumping ", "mast ", "hydraulic ram", "helipad ", "across from", "fire station",
+      "awaiting conversion", "ppg sta", "footway", "bridge", "pipeline", "redevelopment"
     )
-    if (wordList.exists(w => s.toLowerCase.contains(w.toLowerCase))) "" else s
+    if (wordList.exists(w => s.toLowerCase.contains(w))) "" else s
   }
 
 
@@ -50,6 +52,7 @@ object OSCleanup {
 
 
 object OSCsv {
+  // Up to Epoch-38 is variant 1. Later epochs are variant 2.
   var csvFormat = 2
 
   val RecordIdentifier_idx = 0

@@ -6,4 +6,3 @@ GET        /admin/metrics             com.kenshoo.play.metrics.MetricsController
 HEAD          /ping                             controllers.PingController.ping()
 GET           /ping                             controllers.PingController.ping()
 
-GET           /manual-import                    controllers.OrdnanceSurveyController.manualImport

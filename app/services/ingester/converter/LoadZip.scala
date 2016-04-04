@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package services.addressimporter.converter
+package services.ingester.converter
 
 import java.io._
 
@@ -32,7 +32,7 @@ object LoadZip {
 
   def file2ZipFile(f: File): ZipFile = new ZipFile(f)
 
-  def zipReader[T](zipFile: ZipFile)(f: (Iterator[Array[String]]) => T): Try[T] = {
+  def zipReader[T](zipFile: ZipFile)(consumer: (Iterator[Array[String]]) => T): Try[T] = {
     Try {
       val entryOp = zipFile.getEntries.asScala.toList.headOption
 
@@ -42,7 +42,7 @@ object LoadZip {
 
         val it = CsvParser.split(data)
 
-        val result = f(it)
+        val result = consumer(it)
 
         stream.close()
         result

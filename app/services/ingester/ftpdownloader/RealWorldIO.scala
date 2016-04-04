@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package services.addressimporter.ftpdownloader
+package services.ingester.ftpdownloader
 
 import java.io.{FileOutputStream, BufferedOutputStream, File}
 import org.apache.commons.net.ftp.{FTP, FTPClient}

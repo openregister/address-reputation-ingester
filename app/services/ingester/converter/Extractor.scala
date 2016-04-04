@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package services.addressimporter.converter
+package services.ingester.converter
 
 import java.io.File
 
 import org.apache.commons.compress.archivers.zip.ZipFile
-import services.addressimporter.converter.Extractor.{Blpu, Street}
-import services.addressimporter.converter.extractor.{FirstPass, SecondPass}
+import services.ingester.converter.Extractor.{Blpu, Street}
+import services.ingester.converter.extractor.{FirstPass, SecondPass}
 import uk.co.hmrc.address.osgb.DbAddress
 
 import scala.collection.immutable.{HashMap, HashSet}
@@ -47,21 +47,4 @@ object Extractor {
     x.map(t => t.map(x => x.size))
   }
 }
-
-
-object ForwardData {
-  def empty: ForwardData = ForwardData(HashMap.empty[Long, Blpu], HashSet.empty[Long], HashMap.empty[Long, Street], HashMap.empty[Long, Byte])
-}
-
-case class ForwardData(blpu: HashMap[Long, Blpu], dpa: HashSet[Long], streets: HashMap[Long, Street], lpiLogicStatus: HashMap[Long, Byte]) {
-  def update(fd: ForwardData): ForwardData = {
-    val totalDpa = dpa ++ fd.dpa
-    val totalBlpu = blpu ++: fd.blpu
-    val remainingBlpu = totalDpa.foldLeft(totalBlpu) { (b, d) => b - d }
-    val remainingDpa = totalDpa -- fd.blpu.keySet // just try and keep the memory down, fill not delete everything
-
-    ForwardData(remainingBlpu, remainingDpa, fd.streets, fd.lpiLogicStatus)
-  }
-}
-
 
