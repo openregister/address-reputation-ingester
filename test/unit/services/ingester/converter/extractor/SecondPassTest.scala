@@ -20,13 +20,16 @@ import java.io.{File, StringReader}
 
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter.Extractor.{Blpu, Street}
-import services.ingester.converter.{OSBlpu, OSLpi}
+import services.ingester.converter._
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
 
 import scala.collection.immutable.HashMap
 
 class SecondPassTest extends FunSuite with Matchers {
+
+  // sample data here is in the old format
+  OSCsv.csvFormat = 1
 
   val dummyOut = (out: DbAddress) => {}
 
