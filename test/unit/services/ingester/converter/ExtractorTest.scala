@@ -24,11 +24,8 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import services.ingester.converter.Extractor.Blpu
-import services.ingester.converter.extractor.ForwardData
 import uk.co.hmrc.address.osgb.DbAddress
 
-import scala.collection.immutable.{HashMap, HashSet}
 import scala.util.Success
 
 class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
@@ -91,7 +88,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
 
     val result = Extractor.extract(mockFile, dummyOut)
 
-    assert(result === Some(Success(0)))
+    assert(result === Success(0))
   }
 
 

@@ -26,6 +26,17 @@ import scala.util.Try
 
 object SecondPass {
 
+  def secondPass(zipFiles: Vector[ZipFile], fd: ForwardData, out: (DbAddress) => Unit): Try[HashMap[Long, Blpu]] = Try {
+    zipFiles.foldLeft(fd.blpu) {
+      case (remainingBLPU0, file) =>
+        LoadZip.zipReader(file) {
+          csvIterator =>
+            processLine(csvIterator, remainingBLPU0, fd.streets, out)
+        }.get
+    }
+  }
+
+
   def exportLPI(lpi: OSLpi, blpu: Blpu, streetList: HashMap[Long, Street])(out: (DbAddress) => Unit): Unit = {
     val street = streetList.getOrElse(lpi.usrn, Street('X', "<SUnknown>", "<SUnknown>", "<TUnknown>"))
 
@@ -65,8 +76,8 @@ object SecondPass {
   }
 
 
-  def processLine(csvIterator: Iterator[Array[String]], remainingBLPU0: HashMap[Long, Blpu],
-                  streetList: HashMap[Long, Street], out: (DbAddress) => Unit): HashMap[Long, Blpu] = {
+  private[extractor] def processLine(csvIterator: Iterator[Array[String]], remainingBLPU0: HashMap[Long, Blpu],
+                                     streetList: HashMap[Long, Street], out: (DbAddress) => Unit): HashMap[Long, Blpu] = {
     csvIterator.foldLeft(remainingBLPU0) {
       (blpuList, csvLine) =>
         if (csvLine(OSCsv.RecordIdentifier_idx) == OSLpi.RecordId) {
@@ -83,17 +94,5 @@ object SecondPass {
         } else blpuList
     }
   }
-
-
-  def secondPass(zipFiles: Vector[ZipFile], fd: ForwardData, out: (DbAddress) => Unit): Try[HashMap[Long, Blpu]] = Try {
-    zipFiles.foldLeft(fd.blpu) {
-      case (remainingBLPU0, file) =>
-        LoadZip.zipReader(file) {
-          csvIterator =>
-            processLine(csvIterator, remainingBLPU0, fd.streets, out)
-        }.get
-    }
-  }
-
 
 }

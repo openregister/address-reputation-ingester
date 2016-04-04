@@ -28,6 +28,18 @@ object FirstPass {
 
   type CSVOutput = (DbAddress) => Unit
 
+  def firstPass(zipFiles: Vector[ZipFile], out: CSVOutput): Try[ForwardData] = Try {
+    def findData(f: ZipFile, fd: ForwardData): Try[ForwardData] =
+      LoadZip.zipReader(f)(processFile(_, fd.streets, fd.lpiLogicStatus, out))
+
+    zipFiles.foldLeft(ForwardData.empty) {
+      case (accFD, f) =>
+        val updates = findData(f, accFD)
+        accFD.update(updates.get)
+    }
+  }
+
+
   def exportDPA(dpa: OSDpa)(out: CSVOutput): Unit = {
     val id = "GB" + dpa.uprn.toString
     val line1 = (dpa.subBuildingName + " " + dpa.buildingName).trim
@@ -37,22 +49,12 @@ object FirstPass {
     out(DbAddress(id, line1, line2, line3, dpa.postTown, dpa.postcode))
   }
 
-  def processFile(csvIterator: Iterator[Array[String]], streetsMap: HashMap[Long, Street],
-                  lpiLogicStatusMap: HashMap[Long, Byte], out: CSVOutput): ForwardData = {
+
+  private[extractor] def processFile(csvIterator: Iterator[Array[String]], streetsMap: HashMap[Long, Street],
+                                     lpiLogicStatusMap: HashMap[Long, Byte], out: CSVOutput): ForwardData = {
 
     csvIterator.foldLeft(ForwardData.empty.copy(streets = streetsMap, lpiLogicStatus = lpiLogicStatusMap)) {
       case (fd, csvLine) => processLine(fd, csvLine, out)
-    }
-  }
-
-  def firstPass(zipFiles: Vector[ZipFile], out: CSVOutput): Try[ForwardData] = Try {
-    def findData(f: ZipFile, fd: ForwardData): Try[ForwardData] =
-      LoadZip.zipReader(f)(processFile(_, fd.streets, fd.lpiLogicStatus, out))
-
-    zipFiles.foldLeft(ForwardData.empty) {
-      case (accFD, f) =>
-        val updates = findData(f, accFD)
-        accFD.update(updates.get)
     }
   }
 

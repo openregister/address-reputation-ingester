@@ -21,11 +21,10 @@ import java.io._
 import org.apache.commons.compress.archivers.zip.ZipFile
 import uk.co.hmrc.address.services.CsvParser
 
-import scala.collection.JavaConverters._
 import scala.util.Try
 
 
-case class EmptyFileException(msg: String) extends Throwable(msg)
+case class EmptyFileException(msg: String) extends Exception(msg)
 
 
 object LoadZip {
@@ -34,20 +33,20 @@ object LoadZip {
 
   def zipReader[T](zipFile: ZipFile)(consumer: (Iterator[Array[String]]) => T): Try[T] = {
     Try {
-      val entryOp = zipFile.getEntries.asScala.toList.headOption
+      val enumeration = zipFile.getEntries
+      if (!enumeration.hasMoreElements) {
+        throw EmptyFileException("Empty file")
 
-      val result = entryOp.fold(throw EmptyFileException("Empty file")) { entry =>
-        val stream = zipFile.getInputStream(entry)
-        val data = new InputStreamReader(stream)
-
-        val it = CsvParser.split(data)
-
-        val result = consumer(it)
-
-        stream.close()
-        result
+      } else {
+        val zipEntry = zipFile.getInputStream(enumeration.nextElement())
+        try {
+          val data = new InputStreamReader(zipEntry)
+          val it = CsvParser.split(data)
+          consumer(it)
+        } finally {
+          zipEntry.close()
+        }
       }
-      result
     }
   }
 }

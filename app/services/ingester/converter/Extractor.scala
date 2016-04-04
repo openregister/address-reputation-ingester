@@ -18,12 +18,9 @@ package services.ingester.converter
 
 import java.io.File
 
-import org.apache.commons.compress.archivers.zip.ZipFile
-import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter.extractor.{FirstPass, SecondPass}
 import uk.co.hmrc.address.osgb.DbAddress
 
-import scala.collection.immutable.{HashMap, HashSet}
 import scala.util.Try
 
 object Extractor {
@@ -32,19 +29,18 @@ object Extractor {
 
   case class Street(recordType: Char, streetDescription: String = "", localityName: String = "", townName: String = "")
 
-  def listFiles(file: File): Option[Vector[ZipFile]] =
-    if (!file.isDirectory) None
-    else Some(file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).map(LoadZip.file2ZipFile).toVector)
+  private def listFiles(file: File): List[File] =
+    if (!file.isDirectory) Nil
+    else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
 
 
-  def extract(rootDir: File, out: (DbAddress) => Unit): Option[Try[Int]] = {
-    val x = listFiles(rootDir)
-      .map { zipFiles =>
-        FirstPass.firstPass(zipFiles, out).flatMap {
-          SecondPass.secondPass(zipFiles, _, out)
-        }
-      }
-    x.map(t => t.map(x => x.size))
+  def extract(rootDir: File, out: (DbAddress) => Unit): Try[Int] = {
+    val files = listFiles(rootDir)
+    val zipFiles = files.map(LoadZip.file2ZipFile).toVector
+    val x = FirstPass.firstPass(zipFiles, out).flatMap {
+      SecondPass.secondPass(zipFiles, _, out)
+    }
+    x.map(x => x.size)
   }
 }
 
