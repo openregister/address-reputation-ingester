@@ -16,19 +16,36 @@
 
 package config
 
-import com.typesafe.config.Config
-import play.api.{Application, Configuration, Play}
+import play.api.Play
 import uk.gov.hmrc.play.audit.filters.AuditFilter
+import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.auth.controllers.AuthParamsControllerConfig
-import uk.gov.hmrc.play.config.{AppName, ControllerConfig, RunMode}
-import uk.gov.hmrc.play.http.logging.filters.LoggingFilter
-import uk.gov.hmrc.play.microservice.bootstrap.DefaultMicroserviceGlobal
+import uk.gov.hmrc.play.auth.microservice.connectors.AuthConnector
 import uk.gov.hmrc.play.auth.microservice.filters.AuthorisationFilter
-import net.ceedubs.ficus.Ficus._
+import uk.gov.hmrc.play.config.{ServicesConfig, AppName, ControllerConfig, RunMode}
+import uk.gov.hmrc.play.http.logging.filters.LoggingFilter
 
+
+//object WSHttp extends WSGet with WSPut with WSPost with WSDelete with WSPatch with AppName with RunMode with HttpAuditing {
+//  override val auditConnector = MicroserviceAuditConnector
+//  override val hooks: Seq[HttpHook] = Seq(AuditingHook)
+//}
 
 object ControllerConfiguration extends ControllerConfig {
-  lazy val controllerConfigs = Play.current.configuration.underlying.as[Config]("controllers")
+  lazy val controllerConfigs = Play.current.configuration.underlying.getConfig("controllers")
+}
+
+object MicroserviceLoggingFilter extends LoggingFilter {
+  override def controllerNeedsLogging(controllerName: String) = ControllerConfiguration.paramsForController(controllerName).needsLogging
+}
+
+object MicroserviceAuditConnector extends AuditConnector with RunMode {
+  override lazy val auditingConfig = LoadAuditingConfig(s"$env.auditing")
+}
+
+object MicroserviceAuthConnector extends AuthConnector with ServicesConfig {
+  override val authBaseUrl = baseUrl("auth")
 }
 
 object AuthParamsControllerConfiguration extends AuthParamsControllerConfig {
@@ -40,24 +57,8 @@ object MicroserviceAuditFilter extends AuditFilter with AppName {
   override def controllerNeedsAuditing(controllerName: String):Boolean = ControllerConfiguration.paramsForController(controllerName).needsAuditing
 }
 
-object MicroserviceLoggingFilter extends LoggingFilter {
-  override def controllerNeedsLogging(controllerName: String):Boolean = ControllerConfiguration.paramsForController(controllerName).needsLogging
-}
-
 object MicroserviceAuthFilter extends AuthorisationFilter {
   override lazy val authParamsConfig = AuthParamsControllerConfiguration
   override lazy val authConnector = MicroserviceAuthConnector
   override def controllerNeedsAuth(controllerName: String): Boolean = ControllerConfiguration.paramsForController(controllerName).needsAuth
-}
-
-object MicroserviceGlobal extends DefaultMicroserviceGlobal with RunMode {
-  override val auditConnector = MicroserviceAuditConnector
-
-  override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = app.configuration.getConfig(s"$env.microservice.metrics")
-
-  override val loggingFilter = MicroserviceLoggingFilter
-
-  override val microserviceAuditFilter = MicroserviceAuditFilter
-
-  override val authFilter = Some(MicroserviceAuthFilter)
 }
