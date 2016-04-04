@@ -30,7 +30,7 @@ object FirstPass {
 
   def exportDPA(dpa: OSDpa)(out: CSVOutput): Unit = {
     val line = DbAddress(
-      dpa.uprn.toString,
+      "GB" + dpa.uprn.toString,
       (dpa.subBuildingName + " " + dpa.buildingName).trim,
       (dpa.buildingNumber + " " + dpa.dependentThoroughfareName + " " + dpa.thoroughfareName).trim,
       (dpa.doubleDependentLocality + " " + dpa.dependentLocality).trim,

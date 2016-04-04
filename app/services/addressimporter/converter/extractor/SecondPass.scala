@@ -54,7 +54,7 @@ object SecondPass {
     val line3 = street.localityName
 
     val line = DbAddress(
-      lpi.uprn.toString,
+      "GB" + lpi.uprn.toString,
       OSCleanup.removeBannedStreets(line1),
       OSCleanup.removeBannedStreets(line2),
       OSCleanup.removeBannedStreets(line3),

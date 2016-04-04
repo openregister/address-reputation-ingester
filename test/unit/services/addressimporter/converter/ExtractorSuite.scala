@@ -190,12 +190,10 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
     val csvLine: Array[String] = CsvParser.split(new StringReader(data)).next()
 
     val out = (out: DbAddress) => {
-      assert(out.uprn === "9051119283", "uprn")
-      assert(out.line1 === "1 UPPER KENNERTY MILL COTTAGES", "Line1")
-      assert(out.line2 === "", "Line2")
-      assert(out.line3 === "", "Line3")
-      assert(out.town === "PETERCULTER", "Town")
-      assert(out.postcode === "AB14 0LQ", "Postcode")
+      assert(out.id === "GB9051119283")
+      assert(out.lines === List("1 UPPER KENNERTY MILL COTTAGES"))
+      assert(out.town === "PETERCULTER")
+      assert(out.postcode === "AB14 0LQ")
     }
 
     val dpa = OSDpa(csvLine)
@@ -219,12 +217,10 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
 
 
     val out = (out: DbAddress) => {
-      assert(out.uprn === "131041604", "uprn")
-      assert(out.line1 === "MAIDENHILL STABLES", "Line1")
-      assert(out.line2 === "", "Line2")
-      assert(out.line3 === "localityName", "Line3")
-      assert(out.town === "townName", "Town")
-      assert(out.postcode === "G77 6RT", "Postcode")
+      assert(out.id === "GB131041604")
+      assert(out.lines === List("MAIDENHILL STABLES", "localityName"))
+      assert(out.town === "townName")
+      assert(out.postcode === "G77 6RT")
     }
 
     val osblpu = OSBlpu(csvBlpuLine)
@@ -253,12 +249,10 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
 
 
     val out = (out: DbAddress) => {
-      assert(out.uprn === "131041604", "uprn")
-      assert(out.line1 === "1a-2b MAIDENHILL STABLES", "Line1")
-      assert(out.line2 === "", "Line2")
-      assert(out.line3 === "localityName", "Line3")
-      assert(out.town === "townName", "Town")
-      assert(out.postcode === "G77 6RT", "Postcode")
+      assert(out.id === "GB131041604")
+      assert(out.lines === List("1a-2b MAIDENHILL STABLES", "localityName"))
+      assert(out.town === "townName")
+      assert(out.postcode === "G77 6RT")
     }
 
     val osblpu = OSBlpu(csvBlpuLine)
@@ -288,10 +282,8 @@ class ExtractorSuite extends FunSuite with Matchers with MockitoSugar {
 
 
     val out = (out: DbAddress) => {
-      assert(out.uprn === "131041604", "uprn")
-      assert(out.line1 === "", "Line1")
-      assert(out.line2 === "", "Line2")
-      assert(out.line3 === "localityName", "Line3")
+      assert(out.id === "GB131041604")
+      assert(out.lines === List("localityName"))
       assert(out.town === "townName", "Town")
       assert(out.postcode === "G77 6RT", "Postcode")
     }

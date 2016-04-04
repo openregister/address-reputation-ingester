@@ -16,6 +16,8 @@
 
 package services.addressimporter.converter
 
+import uk.co.hmrc.address.services.Capitalisation._
+
 object OSCleanup {
 
   val Uprn_Idx = 3
@@ -41,10 +43,6 @@ object OSCleanup {
 
     def rmDupSpace: String = {
       s.replaceAll("  ", " ")
-    }
-
-    def capitalisation: String = {
-      Capitalisation.normaliseAddressLine(s)
     }
   }
 
