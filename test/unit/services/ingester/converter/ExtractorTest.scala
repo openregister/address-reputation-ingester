@@ -18,11 +18,14 @@ package services.ingester.converter
 
 import java.io.File
 
+import org.junit.runner.RunWith
 import org.mockito.Mockito._
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import uk.co.hmrc.address.osgb.DbAddress
 
+@RunWith(classOf[JUnitRunner])
 class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
 
   val dummyOut = (out: DbAddress) => {}

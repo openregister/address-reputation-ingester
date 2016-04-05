@@ -19,11 +19,14 @@ package services.ingester.ftpdownloader
 import java.text.SimpleDateFormat
 
 import org.apache.commons.net.ftp.FTPConnectionClosedException
+import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
+import org.scalatest.junit.JUnitRunner
 
 import scala.util.Try
 
+@RunWith(classOf[JUnitRunner])
 class FtpDownloaderTest extends FunSuite with Matchers {
 
   val simpleDateFormatter = new SimpleDateFormat("EEE MMM Dd HH:mm:ss zzz yyyy")
@@ -56,6 +59,7 @@ class FtpDownloaderTest extends FunSuite with Matchers {
     val result = testFtp.ftpDownload("/os-from", "localTemp")
     assert(result.get === ( (true, "Unknown") ))
   }
+
 
   test("check for empty sub folder") {
 

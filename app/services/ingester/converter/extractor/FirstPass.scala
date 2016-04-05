@@ -18,22 +18,21 @@ package services.ingester.converter.extractor
 
 import java.io.File
 
-import scala.collection.mutable
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
-import uk.co.hmrc.address.services.Capitalisation._
 import uk.co.hmrc.address.osgb.Postcode._
+import uk.co.hmrc.address.services.Capitalisation._
 
-import scala.collection._
+import scala.collection.{mutable, _}
 
 class FirstPass(files: Seq[File], out: (DbAddress) => Unit, dt: DiagnosticTimer) {
 
   private[extractor] val blpuTable: mutable.Map[Long, Blpu] = new mutable.HashMap()
   private[extractor] val dpaTable: mutable.Set[Long] = new mutable.HashSet()
   private[extractor] val streetTable: mutable.Map[Long, Street] = new mutable.HashMap()
-//  private[extractor] val lpiLogicStatusTable: mutable.Map[Long, Byte] = new mutable.HashMap()
+  //  private[extractor] val lpiLogicStatusTable: mutable.Map[Long, Byte] = new mutable.HashMap()
 
 
   def firstPass: ForwardData = {
@@ -66,7 +65,10 @@ class FirstPass(files: Seq[File], out: (DbAddress) => Unit, dt: DiagnosticTimer)
 
     csvLine(OSCsv.RecordIdentifier_idx) match {
       case OSHeader.RecordId =>
-        OSCsv.csvFormat = if (csvLine(OSHeader.Version_Idx) == "1.0") 1 else 2
+        if (csvLine(OSHeader.Version_Idx) == "1.0")
+          OSCsv.setCsvFormat(1)
+        else
+          OSCsv.setCsvFormat(2)
 
       case OSBlpu.RecordId if OSBlpu.isSmallPostcode(csvLine) =>
         val blpu = OSBlpu(csvLine)

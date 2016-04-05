@@ -18,6 +18,8 @@ package services.ingester.converter.extractor
 
 import java.io.{File, StringReader}
 
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
@@ -27,10 +29,11 @@ import uk.co.hmrc.address.services.CsvParser
 
 import scala.collection.mutable
 
+@RunWith(classOf[JUnitRunner])
 class SecondPassTest extends FunSuite with Matchers {
 
   // sample data here is in the old format
-  OSCsv.csvFormat = 1
+  OSCsv.setCsvFormat(1)
 
   test("can find a LPI item can find a BLPU item") {
     val lpiData =
