@@ -23,6 +23,8 @@ import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
+import uk.co.hmrc.address.services.Capitalisation._
+import uk.co.hmrc.address.osgb.Postcode._
 
 import scala.collection._
 
@@ -45,11 +47,11 @@ class FirstPass(files: Seq[File], out: (DbAddress) => Unit, dt: DiagnosticTimer)
 
   def exportDPA(dpa: OSDpa)(out: (DbAddress) => Unit): Unit = {
     val id = "GB" + dpa.uprn.toString
-    val line1 = (dpa.subBuildingName + " " + dpa.buildingName).trim
-    val line2 = (dpa.buildingNumber + " " + dpa.dependentThoroughfareName + " " + dpa.thoroughfareName).trim
-    val line3 = (dpa.doubleDependentLocality + " " + dpa.dependentLocality).trim
+    val line1 = normaliseAddressLine(dpa.subBuildingName + " " + dpa.buildingName)
+    val line2 = normaliseAddressLine(dpa.buildingNumber + " " + dpa.dependentThoroughfareName + " " + dpa.thoroughfareName)
+    val line3 = normaliseAddressLine(dpa.doubleDependentLocality + " " + dpa.dependentLocality)
 
-    out(DbAddress(id, line1, line2, line3, dpa.postTown, dpa.postcode))
+    out(DbAddress(id, line1, line2, line3, normaliseAddressLine(dpa.postTown), normalisePostcode(dpa.postcode)))
   }
 
 

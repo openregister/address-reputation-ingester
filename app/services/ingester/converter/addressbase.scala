@@ -31,28 +31,12 @@ object OSCleanup {
     )
     if (wordList.exists(w => s.toLowerCase.contains(w))) "" else s
   }
-
-
-  implicit class StringCleanup(s: String) {
-    def cleanup: String = {
-      val s1 = s.trim
-      if (s1 == "\"\"") ""
-      else {
-        val s2 = if (s1.nonEmpty && s1.head == '"') s1.tail.trim else s1
-        if (s2.nonEmpty && s2.last == '"') s2.init.trim else s2
-      }
-    }
-
-    def rmDupSpace: String = {
-      s.replaceAll("  ", " ")
-    }
-  }
-
 }
 
 
 object OSCsv {
   // Up to Epoch-38 is variant 1. Later epochs are variant 2.
+  // this may well change - see https://jira.tools.tax.service.gov.uk/browse/TXMNT-294
   var csvFormat = 2
 
   val RecordIdentifier_idx = 0
@@ -126,27 +110,27 @@ object OSDpa {
     if (OSCsv.csvFormat == 1)
       OSDpa(
         csv(Uprn_Idx).toLong,
-        csv(V1SubBuildingNameIdx).cleanup,
-        csv(V1BuildingNameIdx).cleanup,
-        csv(V1BuildingNumberIdx).cleanup,
-        csv(V1DependentThoroughfareNameIdx).cleanup,
-        csv(V1ThoroughfareNameIdx).cleanup,
-        csv(V1DoubleDependentLocalityIdx).cleanup,
-        csv(V1DependentLocalityIdx).cleanup,
-        csv(V1PostTownIdx).cleanup,
-        csv(V1PostcodeIdx).cleanup)
+        csv(V1SubBuildingNameIdx).trim,
+        csv(V1BuildingNameIdx).trim,
+        csv(V1BuildingNumberIdx).trim,
+        csv(V1DependentThoroughfareNameIdx).trim,
+        csv(V1ThoroughfareNameIdx).trim,
+        csv(V1DoubleDependentLocalityIdx).trim,
+        csv(V1DependentLocalityIdx).trim,
+        csv(V1PostTownIdx).trim,
+        csv(V1PostcodeIdx).trim)
     else
       OSDpa(
         csv(Uprn_Idx).toLong,
-        csv(V2SubBuildingNameIdx).cleanup,
-        csv(V2BuildingNameIdx).cleanup,
-        csv(V2BuildingNumberIdx).cleanup,
-        csv(V2DependentThoroughfareNameIdx).cleanup,
-        csv(V2ThoroughfareNameIdx).cleanup,
-        csv(V2DoubleDependentLocalityIdx).cleanup,
-        csv(V2DependentLocalityIdx).cleanup,
-        csv(V2PostTownIdx).cleanup,
-        csv(V2PostcodeIdx).cleanup)
+        csv(V2SubBuildingNameIdx).trim,
+        csv(V2BuildingNameIdx).trim,
+        csv(V2BuildingNumberIdx).trim,
+        csv(V2DependentThoroughfareNameIdx).trim,
+        csv(V2ThoroughfareNameIdx).trim,
+        csv(V2DoubleDependentLocalityIdx).trim,
+        csv(V2DependentLocalityIdx).trim,
+        csv(V2PostTownIdx).trim,
+        csv(V2PostcodeIdx).trim)
 }
 
 case class OSDpa(uprn: Long, subBuildingName: String, buildingName: String, buildingNumber: String,
@@ -181,10 +165,10 @@ object OSStreetDescriptor {
 
   def apply(csv: Array[String]): OSStreetDescriptor = OSStreetDescriptor(
     csv(Uprn_Idx).toLong,
-    csv(DescriptionIdx).cleanup,
-    csv(LocalityIdx).cleanup,
-    csv(TownIdx).cleanup.intern,
-    csv(LanguageIdx).cleanup.intern)
+    csv(DescriptionIdx).trim,
+    csv(LocalityIdx).trim,
+    csv(TownIdx).trim.intern,
+    csv(LanguageIdx).trim.intern)
 }
 
 case class OSStreetDescriptor(usrn: Long, description: String, locality: String, town: String, language: String)
@@ -212,16 +196,16 @@ object OSLpi {
   def apply(csv: Array[String]): OSLpi = OSLpi(
     csv(Uprn_Idx).toLong,
     csv(LogicalStatusIdx).head,
-    csv(SaoStartNumberIdx).cleanup,
-    csv(SaoStartSuffixIdx).cleanup,
-    csv(SaoEndNumberIdx).cleanup,
-    csv(SaoEndSuffixIdx).cleanup,
-    csv(SaoTextIdx).cleanup,
-    csv(PaoStartNumberIdx).cleanup,
-    csv(PaoStartSuffixIdx).cleanup,
-    csv(PaoEndNumberIdx).cleanup,
-    csv(PaoEndSuffixIdx).cleanup,
-    csv(PaoTextIdx).cleanup,
+    csv(SaoStartNumberIdx).trim,
+    csv(SaoStartSuffixIdx).trim,
+    csv(SaoEndNumberIdx).trim,
+    csv(SaoEndSuffixIdx).trim,
+    csv(SaoTextIdx).trim,
+    csv(PaoStartNumberIdx).trim,
+    csv(PaoStartSuffixIdx).trim,
+    csv(PaoEndNumberIdx).trim,
+    csv(PaoEndSuffixIdx).trim,
+    csv(PaoTextIdx).trim,
     csv(UsrnIdx).toLong)
 }
 

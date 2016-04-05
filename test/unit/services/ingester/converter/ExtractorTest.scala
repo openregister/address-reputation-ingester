@@ -28,16 +28,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
   val dummyOut = (out: DbAddress) => {}
 
 
-  test("string processing functions ") {
-    import OSCleanup._
-
-    assert("  ".cleanup === "")
-    assert("\"\"".cleanup === "")
-    assert("\"Hello\"".cleanup === "Hello")
-  }
-
-
-  test("Having no files should successfully return nothing") {
+  test("Having no files should not throw any exception") {
     val mockFile = mock[File]
 
     when(mockFile.isDirectory) thenReturn true

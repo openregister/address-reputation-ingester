@@ -23,6 +23,8 @@ import services.ingester.converter._
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
 import scala.collection.mutable
+import uk.co.hmrc.address.services.Capitalisation._
+import uk.co.hmrc.address.osgb.Postcode._
 
 object SecondPass {
 
@@ -64,11 +66,11 @@ object SecondPass {
 
     val line = DbAddress(
       "GB" + lpi.uprn.toString,
-      OSCleanup.removeUninterestingStreets(line1),
-      OSCleanup.removeUninterestingStreets(line2),
-      OSCleanup.removeUninterestingStreets(line3),
-      street.townName,
-      blpu.postcode)
+      normaliseAddressLine(OSCleanup.removeUninterestingStreets(line1)),
+      normaliseAddressLine(OSCleanup.removeUninterestingStreets(line2)),
+      normaliseAddressLine(OSCleanup.removeUninterestingStreets(line3)),
+      normaliseAddressLine(street.townName),
+      normalisePostcode(blpu.postcode))
 
     out(line)
   }

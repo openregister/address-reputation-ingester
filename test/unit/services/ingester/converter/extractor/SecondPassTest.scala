@@ -32,8 +32,6 @@ class SecondPassTest extends FunSuite with Matchers {
   // sample data here is in the old format
   OSCsv.csvFormat = 1
 
-  val dummyOut = (out: DbAddress) => {}
-
   test("can find a LPI item can find a BLPU item") {
     val lpiData =
       """
@@ -45,10 +43,14 @@ class SecondPassTest extends FunSuite with Matchers {
     val blpuMap = mutable.HashMap.empty[Long, Blpu] + (131041604L -> Blpu("AB12 3CD", '1'))
     val streetsMap = mutable.HashMap.empty[Long, Street]
     val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
+    val out = (out: DbAddress) => {
+      assert(out.id === "GB131041604")
+//      assert(out.lines === List("Maidenhill Stables", "xxx")) don't care here
+//      assert(out.town === "townName") don't care here
+      assert(out.postcode === "AB12 3CD")
+    }
 
-    SecondPass.processLine(csv, fd, dummyOut)
-
-    //    assert(result.size === 0)
+    SecondPass.processLine(csv, fd, out)
   }
 
 
@@ -63,11 +65,11 @@ class SecondPassTest extends FunSuite with Matchers {
     val blpuMap = mutable.HashMap.empty[Long, Blpu] + (0L -> Blpu("AB12 3CD", '1'))
     val streetsMap = mutable.HashMap.empty[Long, Street]
     val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
+    val out = (out: DbAddress) => {
+      fail()
+    }
 
-    //    val result: HashMap[Long, Blpu] =
-    SecondPass.processLine(csv, fd, dummyOut)
-
-    //    assert(result.size === 1, "item is not removed")
+    SecondPass.processLine(csv, fd, out)
   }
 
 
@@ -87,15 +89,15 @@ class SecondPassTest extends FunSuite with Matchers {
 
     val out = (out: DbAddress) => {
       assert(out.id === "GB131041604")
-      assert(out.lines === List("MAIDENHILL STABLES", "localityName"))
-      assert(out.town === "townName")
+      assert(out.lines === List("Maidenhill Stables", "Locality-Name"))
+      assert(out.town === "Town-Name")
       assert(out.postcode === "G77 6RT")
     }
 
     val osblpu = OSBlpu(csvBlpuLine)
     val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
 
-    val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "localityName", "townName"))
+    val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "locality-name", "town-name"))
 
     val lpi = OSLpi(csvLpiLine)
     SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
@@ -117,15 +119,15 @@ class SecondPassTest extends FunSuite with Matchers {
 
     val out = (out: DbAddress) => {
       assert(out.id === "GB131041604")
-      assert(out.lines === List("1a-2b MAIDENHILL STABLES", "localityName"))
-      assert(out.town === "townName")
+      assert(out.lines === List("1a-2b Maidenhill Stables", "Locality Name"))
+      assert(out.town === "Town-Name")
       assert(out.postcode === "G77 6RT")
     }
 
     val osblpu = OSBlpu(csvBlpuLine)
     val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
 
-    val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "localityName", "townName"))
+    val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "locality name", "town-name"))
 
     val lpi = OSLpi(csvLpiLine)
     SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
@@ -148,15 +150,15 @@ class SecondPassTest extends FunSuite with Matchers {
 
     val out = (out: DbAddress) => {
       assert(out.id === "GB131041604")
-      assert(out.lines === List("localityName"))
-      assert(out.town === "townName", "Town")
-      assert(out.postcode === "G77 6RT", "Postcode")
+      assert(out.lines === List("Locality Name"))
+      assert(out.town === "Town-Name")
+      assert(out.postcode === "G77 6RT")
     }
 
     val osblpu = OSBlpu(csvBlpuLine)
     val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
 
-    val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "street From Description", "localityName", "townName"))
+    val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "street From Description", "locality name", "town-name"))
 
     val lpi = OSLpi(csvLpiLine)
     SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
@@ -166,6 +168,7 @@ class SecondPassTest extends FunSuite with Matchers {
   test("check 2nd pass") {
     val sample = new File(getClass.getClassLoader.getResource("SX9090-first20.zip").getFile)
     val fd = ForwardData.empty
+    val dummyOut = (out: DbAddress) => {}
 
     SecondPass.secondPass(Vector(sample), fd, dummyOut, new DiagnosticTimer)
   }
@@ -174,6 +177,7 @@ class SecondPassTest extends FunSuite with Matchers {
   test("check 2nd with invalid csv will generate an error") {
     val sample = new File(getClass.getClassLoader.getResource("invalid24.zip").getFile)
     val fd = ForwardData.empty
+    val dummyOut = (out: DbAddress) => {}
 
     val e = intercept[Exception] {
       SecondPass.secondPass(Vector(sample), fd, dummyOut, new DiagnosticTimer)
@@ -185,6 +189,7 @@ class SecondPassTest extends FunSuite with Matchers {
 
   test("check 2nd with nonexistent csv will generate an error") {
     val fd = ForwardData.empty
+    val dummyOut = (out: DbAddress) => {}
 
     val e = intercept[Exception] {
       SecondPass.secondPass(Vector(new File("nonexistent.zip")), fd, dummyOut, new DiagnosticTimer)

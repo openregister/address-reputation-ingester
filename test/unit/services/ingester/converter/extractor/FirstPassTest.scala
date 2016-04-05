@@ -143,8 +143,8 @@ class FirstPassTest extends FunSuite with Matchers {
 
     val out = (out: DbAddress) => {
       assert(out.id === "GB9051119283")
-      assert(out.lines === List("1 UPPER KENNERTY MILL COTTAGES"))
-      assert(out.town === "PETERCULTER")
+      assert(out.lines === List("1 Upper Kennerty Mill Cottages"))
+      assert(out.town === "Peterculter")
       assert(out.postcode === "AB14 0LQ")
     }
 
