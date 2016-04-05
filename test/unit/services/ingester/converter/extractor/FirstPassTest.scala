@@ -43,13 +43,11 @@ class FirstPassTest extends FunSuite with Matchers {
 
     val csv = CsvParser.split(new StringReader(data))
 
-    val streetsMap = HashMap.empty[Long, Street]
-    val lpiLogicStatusMap = HashMap.empty[Long, Byte]
+    val firstPass = new FirstPass(Nil, dummyOut, new DiagnosticTimer)
+    firstPass.processFile(csv, dummyOut)
 
-    val result = FirstPass.processFile(csv, streetsMap, lpiLogicStatusMap, dummyOut)
-
-    assert(result.streets.size === 1)
-    assert(result.streets.headOption === Some((48504236, Street('A', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))))
+    assert(firstPass.streetTable.size === 1)
+    assert(firstPass.streetTable.headOption === Some((48504236, Street('A', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))))
   }
 
 
@@ -63,13 +61,11 @@ class FirstPassTest extends FunSuite with Matchers {
 
     val csv = CsvParser.split(new StringReader(data))
 
-    val streetsMap = HashMap.empty[Long, Street]
-    val lpiLogicStatusMap = HashMap.empty[Long, Byte]
+    val firstPass = new FirstPass(Nil, dummyOut, new DiagnosticTimer)
+    firstPass.processFile(csv, dummyOut)
 
-    val result = FirstPass.processFile(csv, streetsMap, lpiLogicStatusMap, dummyOut)
-
-    assert(result.streets.size === 1)
-    assert(result.streets.headOption === Some((47208194, Street('2', "CWMDUAD TO CYNWYL ELFED", "CWMDUAD", "CARMARTHEN"))))
+    assert(firstPass.streetTable.size === 1)
+    assert(firstPass.streetTable.headOption === Some((47208194, Street('2', "CWMDUAD TO CYNWYL ELFED", "CWMDUAD", "CARMARTHEN"))))
   }
 
   test("Can find StreetDescriptor and Street details") {
@@ -81,13 +77,11 @@ class FirstPassTest extends FunSuite with Matchers {
 
     val csv = CsvParser.split(new StringReader(data))
 
-    val streetsMap = HashMap.empty[Long, Street]
-    val lpiLogicStatusMap = HashMap.empty[Long, Byte]
+    val firstPass = new FirstPass(Nil, dummyOut, new DiagnosticTimer)
+    firstPass.processFile(csv, dummyOut)
 
-    val result = FirstPass.processFile(csv, streetsMap, lpiLogicStatusMap, dummyOut)
-
-    assert(result.streets.size === 1)
-    assert(result.streets.headOption === Some((48504236, Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))))
+    assert(firstPass.streetTable.size === 1)
+    assert(firstPass.streetTable.headOption === Some((48504236, Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))))
   }
 
   test("Can find Street and StreetDescriptor details") {
@@ -99,13 +93,11 @@ class FirstPassTest extends FunSuite with Matchers {
 
     val csv = CsvParser.split(new StringReader(data))
 
-    val streetsMap = HashMap.empty[Long, Street]
-    val lpiLogicStatusMap = HashMap.empty[Long, Byte]
+    val firstPass = new FirstPass(Nil, dummyOut, new DiagnosticTimer)
+    firstPass.processFile(csv, dummyOut)
 
-    val result = FirstPass.processFile(csv, streetsMap, lpiLogicStatusMap, dummyOut)
-
-    assert(result.streets.size === 1)
-    assert(result.streets.headOption === Some((48504236, Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))))
+    assert(firstPass.streetTable.size === 1)
+    assert(firstPass.streetTable.headOption === Some((48504236, Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))))
   }
 
 
@@ -118,13 +110,11 @@ class FirstPassTest extends FunSuite with Matchers {
 
     val csv = CsvParser.split(new StringReader(data))
 
-    val streetsMap = HashMap.empty[Long, Street]
-    val lpiLogicStatusMap = HashMap.empty[Long, Byte]
+    val firstPass = new FirstPass(Nil, dummyOut, new DiagnosticTimer)
+    firstPass.processFile(csv, dummyOut)
 
-    val result = FirstPass.processFile(csv, streetsMap, lpiLogicStatusMap, dummyOut)
-
-    assert(result.blpu.size === 1)
-    assert(result.blpu.headOption === Some((320077134, Blpu("KY10 2PY", '1'))))
+    assert(firstPass.blpuTable.size === 1)
+    assert(firstPass.blpuTable.headOption === Some((320077134, Blpu("KY10 2PY", '1'))))
   }
 
 
@@ -136,14 +126,12 @@ class FirstPassTest extends FunSuite with Matchers {
 
     val csv = CsvParser.split(new StringReader(data))
 
-    val streetsMap = HashMap.empty[Long, Street]
-    val lpiLogicStatusMap = HashMap.empty[Long, Byte]
+    val firstPass = new FirstPass(Nil, dummyOut, new DiagnosticTimer)
+    firstPass.processFile(csv, dummyOut)
 
-    val result = FirstPass.processFile(csv, streetsMap, lpiLogicStatusMap, dummyOut)
-
-    assert(result.dpa.size === 1)
+    assert(firstPass.dpaTable.size === 1)
     val expectedId = 9051119283L
-    assert(result.dpa.headOption === Some(expectedId))
+    assert(firstPass.dpaTable.headOption === Some(expectedId))
   }
 
 
@@ -161,20 +149,21 @@ class FirstPassTest extends FunSuite with Matchers {
     }
 
     val dpa = OSDpa(csvLine)
-    FirstPass.exportDPA(dpa)(out)
+    val firstPass = new FirstPass(Nil, dummyOut, new DiagnosticTimer)
+    firstPass.exportDPA(dpa)(out)
   }
 
 
   test("check 1st pass") {
     val sample = new File(getClass.getClassLoader.getResource("SX9090-first20.zip").getFile)
-    val fd = FirstPass.firstPass(Vector(sample), dummyOut, new DiagnosticTimer)
+    val firstPass = new FirstPass(List(sample), dummyOut, new DiagnosticTimer).firstPass
   }
 
 
   test("check 1st pass with invalid csv will generate an error") {
     val sample = new File(getClass.getClassLoader.getResource("invalid15.zip").getFile)
     val e = intercept[Exception] {
-      FirstPass.firstPass(Vector(sample), dummyOut, new DiagnosticTimer)
+      new FirstPass(List(sample), dummyOut, new DiagnosticTimer).firstPass
     }
     assert(e.getMessage === "8")
   }

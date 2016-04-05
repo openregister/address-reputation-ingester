@@ -43,10 +43,10 @@ final class DiagnosticTimer {
   private def now = System.nanoTime() / DiagnosticTimer.thousand
 
   /** The duration since the timer was started, measured in microseconds. */
-  def duration = new Duration(now - start)
+  def duration: Duration = new Duration(now - start)
 
   /** Gets the duration since the timer was started, formatted for humans to read. */
-  override def toString = duration.toString
+  override def toString: String = duration.toString
 }
 
 object DiagnosticTimer {
@@ -70,25 +70,25 @@ case class Duration(microseconds: Long) extends Ordered[Duration] {
 
   import DiagnosticTimer._
 
-  def +(microseconds: Long) = new Duration(microseconds + this.microseconds)
+  def +(microseconds: Long): Duration = new Duration(microseconds + this.microseconds)
 
-  def +(duration: Duration) = new Duration(this.microseconds + duration.microseconds)
+  def +(duration: Duration): Duration = new Duration(this.microseconds + duration.microseconds)
 
-  def -(duration: Duration) = new Duration(this.microseconds - duration.microseconds)
+  def -(duration: Duration): Duration = new Duration(this.microseconds - duration.microseconds)
 
-  def -(microseconds: Long) = new Duration(this.microseconds - microseconds)
+  def -(microseconds: Long): Duration = new Duration(this.microseconds - microseconds)
 
-  def *(factor: Int) = new Duration(this.microseconds * factor)
+  def *(factor: Int): Duration = new Duration(this.microseconds * factor)
 
-  def /(divisor: Int) = new Duration(this.microseconds / divisor)
+  def /(divisor: Int): Duration = new Duration(this.microseconds / divisor)
 
-  def abs = if (microseconds < 0) new Duration(-microseconds) else this
+  def abs: Duration = if (microseconds < 0) new Duration(-microseconds) else this
 
-  def max(other: Duration) = if (this.microseconds < other.microseconds) other else this
+  def max(other: Duration): Duration = if (this.microseconds < other.microseconds) other else this
 
-  def min(other: Duration) = if (this.microseconds < other.microseconds) this else other
+  def min(other: Duration): Duration = if (this.microseconds < other.microseconds) this else other
 
-  def compare(that: Duration) = this.microseconds.compare(that.microseconds)
+  def compare(that: Duration): Int = this.microseconds.compare(that.microseconds)
 
   override def toString: String =
     if (microseconds >= hundredMillion) {

@@ -18,6 +18,7 @@ package services.ingester.converter.extractor
 
 import java.io.File
 
+import scala.collection.mutable
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
@@ -25,22 +26,24 @@ import uk.co.hmrc.address.osgb.DbAddress
 
 import scala.collection._
 
-object FirstPass {
+class FirstPass(files: Seq[File], out: (DbAddress) => Unit, dt: DiagnosticTimer) {
 
-  type CSVOutput = (DbAddress) => Unit
+  private[extractor] val blpuTable: mutable.Map[Long, Blpu] = new mutable.HashMap()
+  private[extractor] val dpaTable: mutable.Set[Long] = new mutable.HashSet()
+  private[extractor] val streetTable: mutable.Map[Long, Street] = new mutable.HashMap()
+//  private[extractor] val lpiLogicStatusTable: mutable.Map[Long, Byte] = new mutable.HashMap()
 
-  def firstPass(files: Vector[File], out: CSVOutput, dt: DiagnosticTimer): ForwardData = {
-    def findData(f: File, fd: ForwardData): ForwardData =
-      LoadZip.zipReader(f, dt)(processFile(_, fd.streets, fd.lpiLogicStatus, out))
 
-    files.foldLeft(ForwardData.empty) {
-      case (accFD, f) =>
-        accFD ++ findData(f, accFD)
+  def firstPass: ForwardData = {
+    for (file <- files) {
+      LoadZip.zipReader(file, dt)(processFile(_, out))
+      println(sizeInfo)
     }
+    ForwardData(blpuTable, dpaTable, streetTable)
   }
 
 
-  def exportDPA(dpa: OSDpa)(out: CSVOutput): Unit = {
+  def exportDPA(dpa: OSDpa)(out: (DbAddress) => Unit): Unit = {
     val id = "GB" + dpa.uprn.toString
     val line1 = (dpa.subBuildingName + " " + dpa.buildingName).trim
     val line2 = (dpa.buildingNumber + " " + dpa.dependentThoroughfareName + " " + dpa.thoroughfareName).trim
@@ -50,53 +53,56 @@ object FirstPass {
   }
 
 
-  private[extractor] def processFile(csvIterator: Iterator[Array[String]], streetsMap: Map[Long, Street],
-                                     lpiLogicStatusMap: Map[Long, Byte], out: CSVOutput): ForwardData = {
-
-    csvIterator.foldLeft(new ForwardData(streets = new mutable.HashMap() ++ streetsMap, lpiLogicStatus = new mutable.HashMap() ++ lpiLogicStatusMap)) {
-      case (fd, csvLine) => processLine(fd, csvLine, out)
+  private[extractor] def processFile(csvIterator: Iterator[Array[String]], out: (DbAddress) => Unit) {
+    for (csvLine <- csvIterator) {
+      processLine(csvLine, out)
     }
   }
 
 
-  private def processLine(fd: ForwardData, csvLine: Array[String], out: CSVOutput): ForwardData =
-    csvLine(OSCsv.RecordIdentifier_idx) match {
+  private def processLine(csvLine: Array[String], out: (DbAddress) => Unit) {
 
+    csvLine(OSCsv.RecordIdentifier_idx) match {
       case OSHeader.RecordId =>
         OSCsv.csvFormat = if (csvLine(OSHeader.Version_Idx) == "1.0") 1 else 2
-        fd // no change
 
       case OSBlpu.RecordId if OSBlpu.isSmallPostcode(csvLine) =>
         val blpu = OSBlpu(csvLine)
-        fd.addBlpu(blpu.uprn -> Blpu(blpu.postcode, blpu.logicalStatus))
+        blpuTable += blpu.uprn -> Blpu(blpu.postcode, blpu.logicalStatus)
 
       case OSDpa.RecordId =>
         val osDpa = OSDpa(csvLine)
         exportDPA(osDpa)(out)
-        fd.addDpa(osDpa.uprn)
+        dpaTable += osDpa.uprn
 
       case OSStreet.RecordId =>
-        val street = OSStreet(csvLine)
-
-        def updatedStreet(): Street = fd.streets.get(street.usrn).fold(Street(street.recordType)) {
-          aStreet: Street =>
-            Street(street.recordType, aStreet.streetDescription, aStreet.localityName, aStreet.townName)
-        }
-
-        fd.addStreet(street.usrn -> updatedStreet)
+        processStreet(OSStreet(csvLine))
 
       case OSStreetDescriptor.RecordId if OSStreetDescriptor.isEnglish(csvLine) =>
-        val sd = OSStreetDescriptor(csvLine)
+        processStreetDescriptor(OSStreetDescriptor(csvLine))
 
-        def updateStreet(): Street = fd.streets.get(sd.usrn).fold(
-          Street('A', sd.description, sd.locality, sd.town)) {
-          aStreet: Street =>
-            Street(aStreet.recordType, sd.description, sd.locality, sd.town)
-        }
-
-        fd.addStreet(sd.usrn -> updateStreet)
-
-      case _ => fd
+      case _ =>
     }
+  }
 
+  private def processStreet(street: OSStreet): Unit = {
+    val existing = streetTable.get(street.usrn)
+    if (existing.isDefined)
+    // note that this overwrites the pre-existing entry
+      streetTable += street.usrn -> Street(street.recordType, existing.get.streetDescription, existing.get.localityName, existing.get.townName)
+    else
+      streetTable += street.usrn -> Street(street.recordType)
+  }
+
+  private def processStreetDescriptor(sd: OSStreetDescriptor) {
+    val existing = streetTable.get(sd.usrn)
+    if (existing.isDefined)
+    // note that this overwrites the pre-existing entry
+      streetTable += sd.usrn -> Street(existing.get.recordType, sd.description, sd.locality, sd.town)
+    else
+      streetTable += sd.usrn -> Street('A', sd.description, sd.locality, sd.town)
+  }
+
+  def sizeInfo: String =
+    s"FirstPass contains ${blpuTable.size} BLPUs, ${dpaTable.size} DPA UPRNs, ${streetTable.size} streets"
 }

@@ -25,7 +25,7 @@ import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
 
-import scala.collection.immutable.HashMap
+import scala.collection.mutable
 
 class SecondPassTest extends FunSuite with Matchers {
 
@@ -42,10 +42,11 @@ class SecondPassTest extends FunSuite with Matchers {
 
     val csv = CsvParser.split(new StringReader(lpiData))
 
-    val blpuMap = HashMap.empty[Long, Blpu] + (131041604L -> Blpu("AB12 3CD", '1'))
-    val streetsMap = HashMap.empty[Long, Street]
+    val blpuMap = mutable.HashMap.empty[Long, Blpu] + (131041604L -> Blpu("AB12 3CD", '1'))
+    val streetsMap = mutable.HashMap.empty[Long, Street]
+    val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
 
-    SecondPass.processLine(csv, blpuMap, streetsMap, dummyOut)
+    SecondPass.processLine(csv, fd, dummyOut)
 
     //    assert(result.size === 0)
   }
@@ -59,11 +60,12 @@ class SecondPassTest extends FunSuite with Matchers {
 
     val csv = CsvParser.split(lpiData)
 
-    val blpuMap = HashMap.empty[Long, Blpu] + (0L -> Blpu("AB12 3CD", '1'))
-    val streetsMap = HashMap.empty[Long, Street]
+    val blpuMap = mutable.HashMap.empty[Long, Blpu] + (0L -> Blpu("AB12 3CD", '1'))
+    val streetsMap = mutable.HashMap.empty[Long, Street]
+    val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
 
     //    val result: HashMap[Long, Blpu] =
-    SecondPass.processLine(csv, blpuMap, streetsMap, dummyOut)
+    SecondPass.processLine(csv, fd, dummyOut)
 
     //    assert(result.size === 1, "item is not removed")
   }
@@ -93,7 +95,7 @@ class SecondPassTest extends FunSuite with Matchers {
     val osblpu = OSBlpu(csvBlpuLine)
     val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
 
-    val streetsMap = HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "localityName", "townName"))
+    val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "localityName", "townName"))
 
     val lpi = OSLpi(csvLpiLine)
     SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
@@ -123,7 +125,7 @@ class SecondPassTest extends FunSuite with Matchers {
     val osblpu = OSBlpu(csvBlpuLine)
     val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
 
-    val streetsMap = HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "localityName", "townName"))
+    val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "localityName", "townName"))
 
     val lpi = OSLpi(csvLpiLine)
     SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
@@ -154,7 +156,7 @@ class SecondPassTest extends FunSuite with Matchers {
     val osblpu = OSBlpu(csvBlpuLine)
     val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
 
-    val streetsMap = HashMap[Long, Street](48804683L -> Street('A', "street From Description", "localityName", "townName"))
+    val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "street From Description", "localityName", "townName"))
 
     val lpi = OSLpi(csvLpiLine)
     SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
@@ -163,7 +165,7 @@ class SecondPassTest extends FunSuite with Matchers {
 
   test("check 2nd pass") {
     val sample = new File(getClass.getClassLoader.getResource("SX9090-first20.zip").getFile)
-    val fd = new ForwardData()
+    val fd = ForwardData.empty
 
     SecondPass.secondPass(Vector(sample), fd, dummyOut, new DiagnosticTimer)
   }
@@ -171,7 +173,7 @@ class SecondPassTest extends FunSuite with Matchers {
 
   test("check 2nd with invalid csv will generate an error") {
     val sample = new File(getClass.getClassLoader.getResource("invalid24.zip").getFile)
-    val fd = new ForwardData()
+    val fd = ForwardData.empty
 
     val e = intercept[Exception] {
       SecondPass.secondPass(Vector(sample), fd, dummyOut, new DiagnosticTimer)
@@ -182,7 +184,7 @@ class SecondPassTest extends FunSuite with Matchers {
 
 
   test("check 2nd with nonexistent csv will generate an error") {
-    val fd = new ForwardData()
+    val fd = ForwardData.empty
 
     val e = intercept[Exception] {
       SecondPass.secondPass(Vector(new File("nonexistent.zip")), fd, dummyOut, new DiagnosticTimer)

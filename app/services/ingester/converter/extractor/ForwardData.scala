@@ -16,67 +16,14 @@
 
 package services.ingester.converter.extractor
 
+import scala.collection.mutable
 import services.ingester.converter.Extractor.{Blpu, Street}
 
-import scala.collection.mutable
+case class ForwardData(blpu: mutable.Map[Long, Blpu],
+                       dpa: mutable.Set[Long],
+                       streets: mutable.Map[Long, Street])
+//                       lpiLogicStatus: Map[Long, Byte])
 
 object ForwardData {
-  def empty: ForwardData = ForwardData()
+  def empty: ForwardData = ForwardData(new mutable.HashMap[Long, Blpu](), new mutable.HashSet[Long](), new mutable.HashMap[Long, Street]())
 }
-
-case class ForwardData(blpu: mutable.Map[Long, Blpu] = new mutable.HashMap(),
-                       dpa: mutable.Set[Long] = new mutable.HashSet(),
-                       streets: mutable.Map[Long, Street] = new mutable.HashMap(),
-                       lpiLogicStatus: mutable.Map[Long, Byte] = new mutable.HashMap()) {
-
-  def ++(fd: ForwardData): ForwardData = {
-    blpu ++= fd.blpu
-    dpa ++= fd.dpa
-    streets ++= fd.streets
-    lpiLogicStatus ++= fd.lpiLogicStatus
-
-    println(s"Forward data: blpu ${blpu.size}, dpa ${dpa.size}, streets ${fd.streets.size}, lpiLogicStatus ${fd.lpiLogicStatus.size}")
-    this
-  }
-
-  def addBlpus(extraBlpu: mutable.Map[Long, Blpu]): ForwardData = {
-    this.blpu ++= extraBlpu
-    this
-  }
-
-  def addBlpu(extraBlpu: (Long, Blpu)): ForwardData = {
-    this.blpu += extraBlpu
-    this
-  }
-
-  def addDpas(extraDpa: mutable.Set[Long]): ForwardData = {
-    this.dpa ++= extraDpa
-    this
-  }
-
-  def addDpa(extraDpa: Long): ForwardData = {
-    this.dpa += extraDpa
-    this
-  }
-
-  def addStreets(extraStreets: mutable.Map[Long, Street]): ForwardData = {
-    this.streets ++= extraStreets
-    this
-  }
-
-  def addStreet(extraStreet: (Long, Street)): ForwardData = {
-    this.streets += extraStreet
-    this
-  }
-
-  def addLpiLogicStatuses(extraLpi: mutable.Map[Long, Byte]): ForwardData = {
-    this.lpiLogicStatus ++= extraLpi
-    this
-  }
-
-  def addLpiLogicStatus(extraLpi: (Long, Byte)): ForwardData = {
-    this.lpiLogicStatus += extraLpi
-    this
-  }
-}
-

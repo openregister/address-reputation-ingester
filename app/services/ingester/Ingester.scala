@@ -39,19 +39,19 @@ object Ingester extends App {
 
   val bufSize = 32 * 1024
   val outputFile = new File(osRootFolder, "output.csv.gz")
-//  val outfile = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile)))
-//  val outCSV = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outfile), bufSize))
+  val outfile = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile), bufSize))
+  val outCSV = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outfile), bufSize))
 
   val csvOut = (out: DbAddress) => {
     // scalastyle:off
-//    outCSV.println(out.toString)
+    outCSV.println(out.toString)
   }
 
   val result = Extractor.extract(osRootFolder, csvOut)
   println("Result: " + result.toString)
 
-//  outCSV.flush()
-//  outCSV.close()
+  outCSV.flush()
+  outCSV.close()
 
   val totalTime = (System.currentTimeMillis() - appStart) / 1000
   println(s"Total Execution Time: ${totalTime / 60} mins ${totalTime % 60} secs  ")

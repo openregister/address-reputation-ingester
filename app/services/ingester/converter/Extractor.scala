@@ -39,8 +39,10 @@ object Extractor {
   def extract(rootDir: File, out: (DbAddress) => Unit) {
     val dt = new DiagnosticTimer
     val files = listFiles(rootDir).toVector
-    val fd = FirstPass.firstPass(files, out, dt)
+    val fd = new FirstPass(files, out, dt).firstPass
+    println(s"First pass complete at $dt")
     SecondPass.secondPass(files, fd, out, dt)
+    println(s"Finished at $dt")
   }
 }
 

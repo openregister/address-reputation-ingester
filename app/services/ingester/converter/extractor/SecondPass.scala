@@ -22,32 +22,29 @@ import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
+import scala.collection.mutable
 
 object SecondPass {
 
   def secondPass(files: Seq[File], fd: ForwardData, out: (DbAddress) => Unit, dt: DiagnosticTimer) {
-    val blpu = fd.blpu.toMap
-    val streets = fd.streets.toMap
-
     for (file <- files) {
       LoadZip.zipReader(file, dt) {
         csvIterator =>
-          processLine(csvIterator, blpu, streets, out)
+          processLine(csvIterator, fd, out)
       }
     }
   }
 
 
-  private[extractor] def processLine(csvIterator: Iterator[Array[String]], blpuTable: Map[Long, Blpu],
-                                     streetTable: Map[Long, Street], out: (DbAddress) => Unit) {
+  private[extractor] def processLine(csvIterator: Iterator[Array[String]], fd: ForwardData, out: (DbAddress) => Unit) {
     for (csvLine <- csvIterator) {
       if (csvLine(OSCsv.RecordIdentifier_idx) == OSLpi.RecordId) {
         val lpi = OSLpi(csvLine)
-        val blpu = blpuTable.get(lpi.uprn)
+        val blpu = fd.blpu.get(lpi.uprn)
 
         blpu match {
           case Some(b) if b.logicalStatus == lpi.logicalStatus =>
-            exportLPI(lpi, b, streetTable)(out)
+            exportLPI(lpi, b, fd.streets)(out)
 
           case _ =>
         }
@@ -56,19 +53,8 @@ object SecondPass {
   }
 
 
-  def exportLPI(lpi: OSLpi, blpu: Blpu, streetList: Map[Long, Street])(out: (DbAddress) => Unit) {
-    val street = streetList.getOrElse(lpi.usrn, Street('X', "<SUnknown>", "<SUnknown>", "<TUnknown>"))
-
-    def numRange(sNum: String, sSuf: String, eNum: String, eSuf: String): String = {
-      val start = (sNum + sSuf).trim
-      val end = (eNum + eSuf).trim
-      (start, end) match {
-        case ("", "") => ""
-        case (s, "") => s
-        case ("", e) => e
-        case (s, e) => s + "-" + e
-      }
-    }
+  def exportLPI(lpi: OSLpi, blpu: Blpu, streets: mutable.Map[Long, Street])(out: (DbAddress) => Unit) {
+    val street = streets.getOrElse(lpi.usrn, Street('X', "<SUnknown>", "<SUnknown>", "<TUnknown>"))
 
     val line1 = (lpi.saoText + " " + lpi.secondaryNumberRange + " " + lpi.paoText).trim
 
