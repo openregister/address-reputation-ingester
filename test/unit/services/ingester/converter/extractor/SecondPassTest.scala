@@ -33,13 +33,13 @@ class SecondPassTest extends FunSuite with Matchers {
 
   val dummyOut = (out: DbAddress) => {}
 
-  test("can find a LPI item can find a blpu item") {
-    val data =
+  test("can find a LPI item can find a BLPU item") {
+    val lpiData =
       """
         |24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
         | """.stripMargin
 
-    val csv = CsvParser.split(new StringReader(data))
+    val csv = CsvParser.split(new StringReader(lpiData))
 
     val blpuMap = HashMap.empty[Long, Blpu] + (131041604L -> Blpu("AB12 3CD", '1'))
     val streetsMap = HashMap.empty[Long, Street]
@@ -51,12 +51,12 @@ class SecondPassTest extends FunSuite with Matchers {
 
 
   test("can find a LPI item can NOT find a blpu item") {
-    val data =
+    val lpiData =
       """
         |24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
         | """.stripMargin
 
-    val csv = CsvParser.split(new StringReader(data))
+    val csv = CsvParser.split(lpiData)
 
     val blpuMap = HashMap.empty[Long, Blpu] + (0L -> Blpu("AB12 3CD", '1'))
     val streetsMap = HashMap.empty[Long, Street]
@@ -68,19 +68,18 @@ class SecondPassTest extends FunSuite with Matchers {
 
 
   test("Check the exported format of a LPI message ") {
-    val data =
+    val lpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
         | """.stripMargin
 
     val blpuData =
+      // 0   1  2      3         4 5 6         7 8         9        10 11   12          14         15         16  17        18
       """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,1,9063,2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
         | """.stripMargin
 
 
-    val csvLine: Array[String] = CsvParser.split(new StringReader(data)).next()
-
-    val csvBlpuLine: Array[String] = CsvParser.split(new StringReader(blpuData)).next()
-
+    val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
+    val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val out = (out: DbAddress) => {
       assert(out.id === "GB131041604")
@@ -94,13 +93,13 @@ class SecondPassTest extends FunSuite with Matchers {
 
     val streetsMap = HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "localityName", "townName"))
 
-    val lpi = OSLpi(csvLine)
+    val lpi = OSLpi(csvLpiLine)
     SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
   }
 
 
   test("LPI number range") {
-    val data =
+    val lpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
         | """.stripMargin
 
@@ -109,10 +108,8 @@ class SecondPassTest extends FunSuite with Matchers {
         | """.stripMargin
 
 
-    val csvLine: Array[String] = CsvParser.split(new StringReader(data)).next()
-
-    val csvBlpuLine: Array[String] = CsvParser.split(new StringReader(blpuData)).next()
-
+    val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
+    val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val out = (out: DbAddress) => {
       assert(out.id === "GB131041604")
@@ -126,14 +123,14 @@ class SecondPassTest extends FunSuite with Matchers {
 
     val streetsMap = HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "localityName", "townName"))
 
-    val lpi = OSLpi(csvLine)
+    val lpi = OSLpi(csvLpiLine)
     SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
   }
 
 
 
   test("check LPI with a street name that needs to be removed ") {
-    val data =
+    val lpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","MAIDENHILL From STABLES",48804683,"1","","","Y"
         | """.stripMargin
 
@@ -142,10 +139,8 @@ class SecondPassTest extends FunSuite with Matchers {
         | """.stripMargin
 
 
-    val csvLine: Array[String] = CsvParser.split(new StringReader(data)).next()
-
-    val csvBlpuLine: Array[String] = CsvParser.split(new StringReader(blpuData)).next()
-
+    val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
+    val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val out = (out: DbAddress) => {
       assert(out.id === "GB131041604")
@@ -159,7 +154,7 @@ class SecondPassTest extends FunSuite with Matchers {
 
     val streetsMap = HashMap[Long, Street](48804683L -> Street('A', "street From Description", "localityName", "townName"))
 
-    val lpi = OSLpi(csvLine)
+    val lpi = OSLpi(csvLpiLine)
     SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
   }
 
