@@ -20,25 +20,43 @@ import java.io.File
 
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
+import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
-
-import scala.collection.immutable.HashMap
-import scala.util.Try
 
 object SecondPass {
 
-  def secondPass(files: Vector[File], fd: ForwardData, out: (DbAddress) => Unit): Try[HashMap[Long, Blpu]] = Try {
-    files.foldLeft(fd.blpu) {
-      case (remainingBLPU0, file) =>
-        LoadZip.zipReader(file) {
-          csvIterator =>
-            processLine(csvIterator, remainingBLPU0, fd.streets, out)
-        }.get
+  def secondPass(files: Seq[File], fd: ForwardData, out: (DbAddress) => Unit, dt: DiagnosticTimer) {
+    val blpu = fd.blpu.toMap
+    val streets = fd.streets.toMap
+
+    for (file <- files) {
+      LoadZip.zipReader(file, dt) {
+        csvIterator =>
+          processLine(csvIterator, blpu, streets, out)
+      }
     }
   }
 
 
-  def exportLPI(lpi: OSLpi, blpu: Blpu, streetList: HashMap[Long, Street])(out: (DbAddress) => Unit): Unit = {
+  private[extractor] def processLine(csvIterator: Iterator[Array[String]], blpuTable: Map[Long, Blpu],
+                                     streetTable: Map[Long, Street], out: (DbAddress) => Unit) {
+    for (csvLine <- csvIterator) {
+      if (csvLine(OSCsv.RecordIdentifier_idx) == OSLpi.RecordId) {
+        val lpi = OSLpi(csvLine)
+        val blpu = blpuTable.get(lpi.uprn)
+
+        blpu match {
+          case Some(b) if b.logicalStatus == lpi.logicalStatus =>
+            exportLPI(lpi, b, streetTable)(out)
+
+          case _ =>
+        }
+      }
+    }
+  }
+
+
+  def exportLPI(lpi: OSLpi, blpu: Blpu, streetList: Map[Long, Street])(out: (DbAddress) => Unit) {
     val street = streetList.getOrElse(lpi.usrn, Street('X', "<SUnknown>", "<SUnknown>", "<TUnknown>"))
 
     def numRange(sNum: String, sSuf: String, eNum: String, eSuf: String): String = {
@@ -52,16 +70,9 @@ object SecondPass {
       }
     }
 
-    val line1 = (lpi.saoText + " " +
-      numRange(lpi.saoStartNumber, lpi.saoStartSuffix, lpi.saoEndNumber, lpi.saoEndSuffix) + " " +
-      lpi.paoText
-      ).trim
+    val line1 = (lpi.saoText + " " + lpi.secondaryNumberRange + " " + lpi.paoText).trim
 
-
-    def streetDes(s: Street): String = if (s.recordType == '1') s.streetDescription else ""
-
-    val line2 = (numRange(lpi.paoStartNumber, lpi.paoStartSuffix, lpi.paoEndNumber, lpi.paoEndSuffix) + " " +
-      streetDes(street)).trim
+    val line2 = (lpi.primaryNumberRange + " " + street.filteredDescription).trim
 
     val line3 = street.localityName
 
@@ -74,26 +85,6 @@ object SecondPass {
       blpu.postcode)
 
     out(line)
-  }
-
-
-  private[extractor] def processLine(csvIterator: Iterator[Array[String]], remainingBLPU0: HashMap[Long, Blpu],
-                                     streetList: HashMap[Long, Street], out: (DbAddress) => Unit): HashMap[Long, Blpu] = {
-    csvIterator.foldLeft(remainingBLPU0) {
-      (blpuList, csvLine) =>
-        if (csvLine(OSCsv.RecordIdentifier_idx) == OSLpi.RecordId) {
-          val lpi = OSLpi(csvLine)
-          val blpu = blpuList.get(lpi.uprn)
-
-          blpu match {
-            case Some(b) if b.logicalStatus == lpi.logicalStatus =>
-              exportLPI(lpi, b, streetList)(out)
-              blpuList - lpi.uprn
-            case _ => blpuList
-          }
-
-        } else blpuList
-    }
   }
 
 }

@@ -19,9 +19,8 @@ package services.ingester.converter
 import java.io._
 
 import org.apache.commons.compress.archivers.zip.ZipFile
+import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.services.CsvParser
-
-import scala.util.Try
 
 
 case class EmptyFileException(msg: String) extends Exception(msg)
@@ -29,24 +28,26 @@ case class EmptyFileException(msg: String) extends Exception(msg)
 
 object LoadZip {
 
-  def zipReader[T](file: File)(consumer: (Iterator[Array[String]]) => T): Try[T] = {
-    Try {
-      println(s"Reading from $file")
-      val zipFile = new ZipFile(file)
-      val enumeration = zipFile.getEntries
-      if (!enumeration.hasMoreElements) {
-        throw EmptyFileException("Empty file")
+  def zipReader[T](file: File, dt: DiagnosticTimer)(consumer: (Iterator[Array[String]]) => T): T = {
+    println(s"Reading from $file at $dt")
+    innerZipReader(file)(consumer)
+  }
 
-      } else {
-        val zipEntry = zipFile.getInputStream(enumeration.nextElement())
-        try {
-          val data = new InputStreamReader(zipEntry)
-          val it = CsvParser.split(data)
-          consumer(it)
-        } finally {
-          zipEntry.close()
-          zipFile.close()
-        }
+  def innerZipReader[T](file: File)(consumer: (Iterator[Array[String]]) => T): T = {
+    val zipFile = new ZipFile(file)
+    val enumeration = zipFile.getEntries
+    if (!enumeration.hasMoreElements) {
+      throw EmptyFileException("Empty file")
+
+    } else {
+      val zipEntry = zipFile.getInputStream(enumeration.nextElement())
+      try {
+        val data = new InputStreamReader(zipEntry)
+        val it = CsvParser.split(data)
+        consumer(it)
+      } finally {
+        zipEntry.close()
+        zipFile.close()
       }
     }
   }

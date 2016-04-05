@@ -228,4 +228,21 @@ object OSLpi {
 case class OSLpi(uprn: Long, logicalStatus: Char, saoStartNumber: String, saoStartSuffix: String,
                  saoEndNumber: String, saoEndSuffix: String, saoText: String,
                  paoStartNumber: String, paoStartSuffix: String, paoEndNumber: String,
-                 paoEndSuffix: String, paoText: String, usrn: Long)
+                 paoEndSuffix: String, paoText: String, usrn: Long) {
+
+  private def numRange(sNum: String, sSuf: String, eNum: String, eSuf: String) = {
+    val start = (sNum + sSuf).trim
+    val end = (eNum + eSuf).trim
+    (start, end) match {
+      case ("", "") => ""
+      case (s, "") => s
+      case ("", e) => e
+      case (s, e) => s + "-" + e
+    }
+  }
+
+  def primaryNumberRange: String = numRange(paoStartNumber, paoStartSuffix, paoEndNumber, paoEndSuffix)
+
+  def secondaryNumberRange: String = numRange(saoStartNumber, saoStartSuffix, saoEndNumber, saoEndSuffix)
+
+}

@@ -21,6 +21,7 @@ import java.io.{File, StringReader}
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
+import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
 
@@ -166,17 +167,16 @@ class FirstPassTest extends FunSuite with Matchers {
 
   test("check 1st pass") {
     val sample = new File(getClass.getClassLoader.getResource("SX9090-first20.zip").getFile)
-    val result = FirstPass.firstPass(Vector(sample), dummyOut)
-    assert(result.isSuccess)
+    val fd = FirstPass.firstPass(Vector(sample), dummyOut, new DiagnosticTimer)
   }
 
 
   test("check 1st pass with invalid csv will generate an error") {
     val sample = new File(getClass.getClassLoader.getResource("invalid15.zip").getFile)
-    val result = FirstPass.firstPass(Vector(sample), dummyOut)
-
-    assert(result.isFailure)
-    assert(result.failed.get.getMessage === "8")
+    val e = intercept[Exception] {
+      FirstPass.firstPass(Vector(sample), dummyOut, new DiagnosticTimer)
+    }
+    assert(e.getMessage === "8")
   }
 
 }

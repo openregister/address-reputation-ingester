@@ -20,23 +20,22 @@ import java.io.File
 
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
+import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
 
-import scala.collection.immutable.HashMap
-import scala.util.Try
+import scala.collection._
 
 object FirstPass {
 
   type CSVOutput = (DbAddress) => Unit
 
-  def firstPass(files: Vector[File], out: CSVOutput): Try[ForwardData] = Try {
-    def findData(f: File, fd: ForwardData): Try[ForwardData] =
-      LoadZip.zipReader(f)(processFile(_, fd.streets, fd.lpiLogicStatus, out))
+  def firstPass(files: Vector[File], out: CSVOutput, dt: DiagnosticTimer): ForwardData = {
+    def findData(f: File, fd: ForwardData): ForwardData =
+      LoadZip.zipReader(f, dt)(processFile(_, fd.streets, fd.lpiLogicStatus, out))
 
     files.foldLeft(ForwardData.empty) {
       case (accFD, f) =>
-        val updates = findData(f, accFD)
-        accFD.update(updates.get)
+        accFD ++ findData(f, accFD)
     }
   }
 
@@ -51,10 +50,10 @@ object FirstPass {
   }
 
 
-  private[extractor] def processFile(csvIterator: Iterator[Array[String]], streetsMap: HashMap[Long, Street],
-                                     lpiLogicStatusMap: HashMap[Long, Byte], out: CSVOutput): ForwardData = {
+  private[extractor] def processFile(csvIterator: Iterator[Array[String]], streetsMap: Map[Long, Street],
+                                     lpiLogicStatusMap: Map[Long, Byte], out: CSVOutput): ForwardData = {
 
-    csvIterator.foldLeft(ForwardData.empty.copy(streets = streetsMap, lpiLogicStatus = lpiLogicStatusMap)) {
+    csvIterator.foldLeft(new ForwardData(streets = new mutable.HashMap() ++ streetsMap, lpiLogicStatus = new mutable.HashMap() ++ lpiLogicStatusMap)) {
       case (fd, csvLine) => processLine(fd, csvLine, out)
     }
   }
@@ -69,12 +68,12 @@ object FirstPass {
 
       case OSBlpu.RecordId if OSBlpu.isSmallPostcode(csvLine) =>
         val blpu = OSBlpu(csvLine)
-        ForwardData(fd.blpu + (blpu.uprn -> Blpu(blpu.postcode, blpu.logicalStatus)), fd.dpa, fd.streets, fd.lpiLogicStatus)
+        fd.addBlpu(blpu.uprn -> Blpu(blpu.postcode, blpu.logicalStatus))
 
       case OSDpa.RecordId =>
         val osDpa = OSDpa(csvLine)
         exportDPA(osDpa)(out)
-        ForwardData(fd.blpu, fd.dpa + osDpa.uprn, fd.streets, fd.lpiLogicStatus)
+        fd.addDpa(osDpa.uprn)
 
       case OSStreet.RecordId =>
         val street = OSStreet(csvLine)
@@ -84,7 +83,7 @@ object FirstPass {
             Street(street.recordType, aStreet.streetDescription, aStreet.localityName, aStreet.townName)
         }
 
-        ForwardData(fd.blpu, fd.dpa, fd.streets + (street.usrn -> updatedStreet), fd.lpiLogicStatus)
+        fd.addStreet(street.usrn -> updatedStreet)
 
       case OSStreetDescriptor.RecordId if OSStreetDescriptor.isEnglish(csvLine) =>
         val sd = OSStreetDescriptor(csvLine)
@@ -95,7 +94,7 @@ object FirstPass {
             Street(aStreet.recordType, sd.description, sd.locality, sd.town)
         }
 
-        ForwardData(fd.blpu, fd.dpa, fd.streets + (sd.usrn -> updateStreet), fd.lpiLogicStatus)
+        fd.addStreet(sd.usrn -> updateStreet)
 
       case _ => fd
     }

@@ -19,27 +19,28 @@ package services.ingester.converter
 import java.io.File
 
 import services.ingester.converter.extractor.{FirstPass, SecondPass}
+import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
-
-import scala.util.Try
 
 object Extractor {
 
   case class Blpu(postcode: String, logicalStatus: Char)
 
-  case class Street(recordType: Char, streetDescription: String = "", localityName: String = "", townName: String = "")
+  case class Street(recordType: Char, streetDescription: String = "", localityName: String = "", townName: String = "") {
+
+    def filteredDescription: String = if (recordType == '1') streetDescription else ""
+  }
 
   private def listFiles(file: File): List[File] =
     if (!file.isDirectory) Nil
     else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
 
 
-  def extract(rootDir: File, out: (DbAddress) => Unit): Try[Int] = {
+  def extract(rootDir: File, out: (DbAddress) => Unit) {
+    val dt = new DiagnosticTimer
     val files = listFiles(rootDir).toVector
-    val x = FirstPass.firstPass(files, out).flatMap {
-      SecondPass.secondPass(files, _, out)
-    }
-    x.map(x => x.size)
+    val fd = FirstPass.firstPass(files, out, dt)
+    SecondPass.secondPass(files, fd, out, dt)
   }
 }
 

@@ -23,8 +23,6 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import uk.co.hmrc.address.osgb.DbAddress
 
-import scala.util.Success
-
 class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
 
   val dummyOut = (out: DbAddress) => {}
@@ -45,9 +43,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
     when(mockFile.isDirectory) thenReturn true
     when(mockFile.listFiles) thenReturn Array.empty[File]
 
-    val result = Extractor.extract(mockFile, dummyOut)
-
-    assert(result === Success(0))
+    Extractor.extract(mockFile, dummyOut)
   }
 
 }

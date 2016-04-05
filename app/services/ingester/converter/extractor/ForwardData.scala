@@ -18,24 +18,65 @@ package services.ingester.converter.extractor
 
 import services.ingester.converter.Extractor.{Blpu, Street}
 
-import scala.collection.immutable.{HashMap, HashSet}
+import scala.collection.mutable
 
 object ForwardData {
-  def empty: ForwardData = ForwardData(HashMap.empty[Long, Blpu], HashSet.empty[Long], HashMap.empty[Long, Street], HashMap.empty[Long, Byte])
+  def empty: ForwardData = ForwardData()
 }
 
-case class ForwardData(blpu: HashMap[Long, Blpu],
-                       dpa: HashSet[Long],
-                       streets: HashMap[Long, Street],
-                       lpiLogicStatus: HashMap[Long, Byte]) {
+case class ForwardData(blpu: mutable.Map[Long, Blpu] = new mutable.HashMap(),
+                       dpa: mutable.Set[Long] = new mutable.HashSet(),
+                       streets: mutable.Map[Long, Street] = new mutable.HashMap(),
+                       lpiLogicStatus: mutable.Map[Long, Byte] = new mutable.HashMap()) {
 
-  def update(fd: ForwardData): ForwardData = {
-    val totalDpa = dpa ++ fd.dpa
-    val totalBlpu = blpu ++: fd.blpu
-    val remainingBlpu = totalDpa.foldLeft(totalBlpu) { (b, d) => b - d }
-    val remainingDpa = totalDpa -- fd.blpu.keySet // just try and keep the memory down, fill not delete everything
+  def ++(fd: ForwardData): ForwardData = {
+    blpu ++= fd.blpu
+    dpa ++= fd.dpa
+    streets ++= fd.streets
+    lpiLogicStatus ++= fd.lpiLogicStatus
 
-    ForwardData(remainingBlpu, remainingDpa, fd.streets, fd.lpiLogicStatus)
+    println(s"Forward data: blpu ${blpu.size}, dpa ${dpa.size}, streets ${fd.streets.size}, lpiLogicStatus ${fd.lpiLogicStatus.size}")
+    this
+  }
+
+  def addBlpus(extraBlpu: mutable.Map[Long, Blpu]): ForwardData = {
+    this.blpu ++= extraBlpu
+    this
+  }
+
+  def addBlpu(extraBlpu: (Long, Blpu)): ForwardData = {
+    this.blpu += extraBlpu
+    this
+  }
+
+  def addDpas(extraDpa: mutable.Set[Long]): ForwardData = {
+    this.dpa ++= extraDpa
+    this
+  }
+
+  def addDpa(extraDpa: Long): ForwardData = {
+    this.dpa += extraDpa
+    this
+  }
+
+  def addStreets(extraStreets: mutable.Map[Long, Street]): ForwardData = {
+    this.streets ++= extraStreets
+    this
+  }
+
+  def addStreet(extraStreet: (Long, Street)): ForwardData = {
+    this.streets += extraStreet
+    this
+  }
+
+  def addLpiLogicStatuses(extraLpi: mutable.Map[Long, Byte]): ForwardData = {
+    this.lpiLogicStatus ++= extraLpi
+    this
+  }
+
+  def addLpiLogicStatus(extraLpi: (Long, Byte)): ForwardData = {
+    this.lpiLogicStatus += extraLpi
+    this
   }
 }
 

@@ -18,9 +18,9 @@ package services.ingester.converter.extractor
 
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import services.ingester.converter.Extractor.Blpu
+import services.ingester.converter.Extractor.{Street, Blpu}
 
-import scala.collection.immutable.{HashMap, HashSet}
+import scala.collection.mutable
 
 class ForwardDataTest extends FunSuite with Matchers with MockitoSugar {
 
@@ -31,7 +31,7 @@ class ForwardDataTest extends FunSuite with Matchers with MockitoSugar {
 
     val expectedResult = ForwardData.empty
 
-    val result = fd1.update(fd2)
+    val result = fd1 ++ fd2
 
     assert(result === expectedResult)
   }
@@ -41,34 +41,19 @@ class ForwardDataTest extends FunSuite with Matchers with MockitoSugar {
     val fd1 = ForwardData.empty
 
     val blpu1 = 1L -> Blpu("", 'a')
+    val dpa1 = 123L
+    val street1 = Street('Z')
+    val lpi1 = 'x'.toByte
 
-    val fd2 = ForwardData.empty.copy(blpu = HashMap[Long, Blpu](blpu1))
+    val fd2 = new ForwardData(blpu = mutable.Map[Long, Blpu](blpu1), dpa = mutable.Set(dpa1),
+      streets = mutable.Map(101L -> street1), lpiLogicStatus = mutable.Map(0L -> lpi1))
 
-    val result = fd1.update(fd2)
+    val result = fd1 ++ fd2
 
-    val expectedResult = ForwardData.empty.copy(blpu = HashMap[Long, Blpu](blpu1))
-
-    assert(result === expectedResult)
-  }
-
-
-  test("Check the combining two ForwardData will remove item from dpa forward references") {
-    val fd1 = ForwardData.empty.copy(dpa = HashSet[Long](1L))
-
-    val fd2 = ForwardData.empty.copy(blpu = HashMap[Long, Blpu](1L -> Blpu("", 'a')))
-
-    val result = fd1.update(fd2)
-
-    val expectedResult = ForwardData.empty
+    val expectedResult = fd2
 
     assert(result === expectedResult)
   }
 
-
-  test("all things ForwardData") {
-    val fd1 = ForwardData.empty
-
-    assert(fd1.toString === "ForwardData(Map(),Set(),Map(),Map())")
-  }
 
 }
