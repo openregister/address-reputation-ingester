@@ -37,7 +37,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
     when(mockFile.isDirectory) thenReturn true
     when(mockFile.listFiles) thenReturn Array.empty[File]
 
-    Extractor.extract(mockFile, dummyOut)
+    new Extractor().extract(mockFile, dummyOut)
   }
 
 }

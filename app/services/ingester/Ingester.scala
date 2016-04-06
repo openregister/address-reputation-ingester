@@ -47,7 +47,7 @@ object Ingester extends App {
     outCSV.println(out.toString)
   }
 
-  val result = Extractor.extract(osRootFolder, csvOut)
+  val result = new Extractor().extract(osRootFolder, csvOut)
   println("Result: " + result.toString)
 
   outCSV.flush()

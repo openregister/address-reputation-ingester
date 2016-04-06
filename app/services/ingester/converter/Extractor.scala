@@ -23,14 +23,16 @@ import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
 
 object Extractor {
-
   case class Blpu(postcode: String, logicalStatus: Char)
 
   case class Street(recordType: Char, streetDescription: String = "", localityName: String = "", townName: String = "") {
 
     def filteredDescription: String = if (recordType == '1') streetDescription else ""
   }
+}
 
+
+class Extractor {
   private def listFiles(file: File): List[File] =
     if (!file.isDirectory) Nil
     else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
@@ -44,5 +46,9 @@ object Extractor {
     SecondPass.secondPass(files, fd, out, dt)
     println(s"Finished at $dt")
   }
+}
+
+class ExtractorFactory {
+  def extractor = new Extractor
 }
 

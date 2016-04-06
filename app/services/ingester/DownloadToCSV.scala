@@ -66,7 +66,7 @@ object DownloadToCSV extends App {
             outCSV.println(out.toString)
           }
 
-          val result = Extractor.extract(new File(tmpZipfilesHome + "/" + subFolder), csvOut)
+          val result = new Extractor().extract(new File(tmpZipfilesHome + "/" + subFolder), csvOut)
           logger.info("Result: " + result.toString)
 
           outCSV.flush()

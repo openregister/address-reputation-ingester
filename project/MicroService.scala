@@ -72,6 +72,7 @@ trait MicroService {
     .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
 
     .settings(resolvers += Resolver.bintrayRepo("hmrc", "releases"))
+    .settings(resolvers += Resolver.bintrayRepo("hmrc", "release-candidates"))
     .settings(mainClass in assembly := Some("play.core.server.NettyServer"))
     .settings(assemblyJarName in assembly := s"${name.value}-${version.value}.tgz")
     .settings(fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value))
