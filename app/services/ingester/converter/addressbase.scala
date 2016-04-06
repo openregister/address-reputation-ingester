@@ -25,11 +25,54 @@ object OSCleanup {
   val Uprn_Idx = 3
 
   def removeUninterestingStreets(s: String): String = {
-    val wordList = List[String](
+    val containedPhrases = List[String](
       "from ", "pump ", "pumping ", "mast ", "hydraulic ram", "helipad ", "across from", "fire station",
       "awaiting conversion", "ppg sta", "footway", "bridge", "pipeline", "redevelopment"
+      //      " adjacent to ",
+      //      " adj to ",
+      //      " to east of ",
+      //      " to the east of ",
+      //      " to north of ",
+      //      " to the north of ",
+      //      " to rear of ",
+      //      " to the rear of ",
+      //      " to south of ",
+      //      " to the south of ",
+      //      " to west of ",
+      //      " to the west of "
     )
-    if (wordList.exists(w => s.toLowerCase.contains(w))) "" else s
+    val startingPhrases = List[String](
+      //      "access to ",
+      //      "adjacent to ",
+      //      "adj to ",
+      //      "back lane from ",
+      //      "back lane to ",
+      //      "bus shelter ",
+      //      "car park ",
+      //      "drive from ",
+      //      "footpath from ",
+      //      "footpath next ",
+      //      "footpath to ",
+      //      "grass verge ",
+      //      "landlords supply ",
+      //      "landlord's supply ",
+      //      "lane from ",
+      //      "lane to ",
+      //      "path leading from ",
+      //      "path leading to ",
+      //      "public footpath to ",
+      //      "road from ",
+      //      "road to ",
+      //      "site supply to ",
+      //      "street from ",
+      //      "street to ",
+      //      "supply to ",
+      //      "track from ",
+      //      "track to "
+    )
+    val sl = s.toLowerCase
+    if (startingPhrases.exists(w => sl.startsWith(w)) || containedPhrases.exists(w => sl.contains(w))) ""
+    else s
   }
 }
 
@@ -49,27 +92,29 @@ object OSBlpu {
   import OSCleanup._
 
   // scalastyle:off
-  val v1 = OSBlpuIdx(Uprn_Idx,
+  val v1 = OSBlpuIdx(
+    uprn = Uprn_Idx,
     logicalStatus = 4,
-    postalAddrCode = 16,
+    postalCode = 16,
     postcode = 17)
 
-  val v2 = OSBlpuIdx(Uprn_Idx,
+  val v2 = OSBlpuIdx(
+    uprn = Uprn_Idx,
     logicalStatus = 4,
-    postalAddrCode = 19,
+    postalCode = 19,
     postcode = 20)
 
   var idx = v1
 
-  def isSmallPostcode(csv: Array[String]): Boolean = {
-    csv(idx.postalAddrCode) == "S"
+  def isUsefulPostcode(csv: Array[String]): Boolean = {
+    csv(idx.postalCode) != "N" // not a postal address
   }
 
   def apply(csv: Array[String]): OSBlpu =
     OSBlpu(csv(idx.uprn).toLong, csv(idx.logicalStatus).head, csv(idx.postcode))
 }
 
-case class OSBlpuIdx(uprn: Int, logicalStatus: Int, postalAddrCode: Int, postcode: Int)
+case class OSBlpuIdx(uprn: Int, logicalStatus: Int, postalCode: Int, postcode: Int)
 
 case class OSBlpu(uprn: Long, logicalStatus: Char, postcode: String)
 
@@ -192,7 +237,8 @@ case class OSStreetDescriptor(usrn: Long, description: String, locality: String,
 object OSLpi {
   val RecordId = "24"
 
-  val idx = OSLpiIdx(uprn = OSCleanup.Uprn_Idx,
+  val idx = OSLpiIdx(
+    uprn = OSCleanup.Uprn_Idx,
     logicalStatus = 6,
     saoStartNumber = 11,
     saoStartSuffix = 12,

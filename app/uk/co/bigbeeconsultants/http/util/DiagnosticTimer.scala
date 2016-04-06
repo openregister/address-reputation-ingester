@@ -23,6 +23,7 @@
 //-----------------------------------------------------------------------------
 
 // see https://bitbucket.org/rickb777/bee-client
+//scalastyle:off
 
 package uk.co.bigbeeconsultants.http.util
 

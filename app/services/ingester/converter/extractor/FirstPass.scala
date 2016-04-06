@@ -70,7 +70,7 @@ class FirstPass(files: Seq[File], out: (DbAddress) => Unit, dt: DiagnosticTimer)
         else
           OSCsv.setCsvFormat(2)
 
-      case OSBlpu.RecordId if OSBlpu.isSmallPostcode(csvLine) =>
+      case OSBlpu.RecordId if OSBlpu.isUsefulPostcode(csvLine) =>
         val blpu = OSBlpu(csvLine)
         blpuTable += blpu.uprn -> Blpu(blpu.postcode, blpu.logicalStatus)
 
