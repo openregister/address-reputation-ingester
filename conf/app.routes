@@ -7,3 +7,6 @@ HEAD          /ping                             controllers.PingController.ping(
 GET           /ping                             controllers.PingController.ping()
 
 GET           /ingest/:product/:epoch/:variant  controllers.IngestController.ingest(product, epoch, variant)
+
+GET           /admin/cancelTask                 controllers.AdminController.cancelTask()
+GET           /admin/status                     controllers.AdminController.status()

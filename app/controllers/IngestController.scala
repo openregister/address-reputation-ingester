@@ -22,9 +22,8 @@ import config.ConfigHelper._
 import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Request, Result}
-import services.ingester.OutputFileWriterFactory
 import services.ingester.converter.ExtractorFactory
-import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
+import services.ingester.{OutputFileWriterFactory, TaskFactory}
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -37,11 +36,16 @@ object IngestControllerHelper {
 }
 
 object IngestController extends IngestController(IngestControllerHelper.rootFolder,
-  new LoggerFacade(Logger.logger), new OutputFileWriterFactory, new ExtractorFactory)
+  new LoggerFacade(Logger.logger),
+  new OutputFileWriterFactory,
+  new ExtractorFactory,
+  new TaskFactory())
 
-
-class IngestController(rootFolder: File, logger: SimpleLogger, fileWriterFactory: OutputFileWriterFactory,
-                       extractorFactory: ExtractorFactory) extends BaseController {
+class IngestController(rootFolder: File, logger: SimpleLogger,
+                       fileWriterFactory: OutputFileWriterFactory,
+                       extractorFactory: ExtractorFactory,
+                       executorFactory: TaskFactory
+                      ) extends BaseController {
 
   val alphaNumPattern = "[a-z0-9]+".r
 
@@ -55,17 +59,20 @@ class IngestController(rootFolder: File, logger: SimpleLogger, fileWriterFactory
     require(alphaNumPattern.pattern.matcher(epoch).matches())
     require(alphaNumPattern.pattern.matcher(variant).matches())
 
-    val qualifiedDir = new File(rootFolder, s"$product/$epoch/$variant")
+    val qualifiedDir = new File(rootFolder, s"$product/$epoch/$variant/data")
     val outputFile = new File(qualifiedDir, "output.txt.gz")
 
     val fw = fileWriterFactory.writer(outputFile)
 
-    val timer = new DiagnosticTimer
-    val result = extractorFactory.extractor.extract(qualifiedDir, fw.csvOut)
-    logger.info(timer.toString)
+    val status = executorFactory.task.execute((l: SimpleLogger) => {
+      extractorFactory.extractor.extract(qualifiedDir, fw.csvOut, l)
+    }, {
+      logger.info("cleaning up extractor")
+      fw.close()
+    })
 
-    fw.close()
-    NoContent
+    if (status) Ok(s"Ingestion initiated for $product/$epoch/$variant")
+    else BadRequest("Ingester is currently executing")
+
   }
-
 }

@@ -23,13 +23,14 @@ import play.api.Logger
 import services.ingester.converter.Extractor
 import services.ingester.ftpdownloader.{FtpDownloader, RealWorldIO}
 import uk.co.hmrc.address.osgb.DbAddress
+import uk.co.hmrc.logging.LoggerFacade
 
 import scala.util.{Failure, Success, Try}
 
 
 object DownloadToCSV extends App {
 
-  val logger = Logger("addressimporter-main")
+  val logger = new LoggerFacade(Logger("addressimporter-main").logger)
 
   logger.info("Address Importer")
 
@@ -66,7 +67,7 @@ object DownloadToCSV extends App {
             outCSV.println(out.toString)
           }
 
-          val result = new Extractor().extract(new File(tmpZipfilesHome + "/" + subFolder), csvOut)
+          val result = new Extractor().extract(new File(tmpZipfilesHome + "/" + subFolder), csvOut, logger)
           logger.info("Result: " + result.toString)
 
           outCSV.flush()

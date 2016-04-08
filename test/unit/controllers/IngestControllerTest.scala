@@ -18,12 +18,12 @@ package controllers
 
 import java.io.File
 
-import org.mockito.Mockito._
 import org.mockito.Matchers._
+import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.mock.MockitoSugar
 import services.ingester.converter.{Extractor, ExtractorFactory}
-import services.ingester.{OutputFileWriter, OutputFileWriterFactory}
+import services.ingester.{OutputFileWriter, OutputFileWriterFactory, Task, TaskFactory}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.StubLogger
 
@@ -57,7 +57,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
   def parameterTest(product: String, epoch: String, variant: String): Unit = {
     val folder = new File(".")
     val logger = new StubLogger()
-    val ic = new IngestController(folder, logger, null, null)
+    val ic = new IngestController(folder, logger, null, null, null)
 
     intercept[IllegalArgumentException] {
       ic.handleIngest(null, product, epoch, variant)
@@ -71,6 +71,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     """) {
     val fwf = mock[OutputFileWriterFactory]
     val ef = mock[ExtractorFactory]
+    val exf = mock[TaskFactory]
     val folder = new File(".")
     val logger = new StubLogger()
 
@@ -80,8 +81,9 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     when(fwf.writer(any[File])) thenReturn outputFileWriter
     when(ef.extractor) thenReturn mock[Extractor]
     when(outputFileWriter.csvOut) thenReturn stubOut
+    when(exf.task) thenReturn new Task(logger)
 
-    val ic = new IngestController(folder, logger, fwf, ef)
+    val ic = new IngestController(folder, logger, fwf, ef, exf)
 
     val result = ic.handleIngest(null, "abp", "40", "full")
 

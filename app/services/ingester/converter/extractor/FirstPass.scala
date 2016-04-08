@@ -18,6 +18,7 @@ package services.ingester.converter.extractor
 
 import java.io.File
 
+import services.ingester.Task
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
@@ -37,8 +38,10 @@ class FirstPass(files: Seq[File], out: (DbAddress) => Unit, dt: DiagnosticTimer)
 
   def firstPass: ForwardData = {
     for (file <- files) {
-      LoadZip.zipReader(file, dt)(processFile(_, out))
-      println(sizeInfo)
+      Task.executeIteration {
+        LoadZip.zipReader(file, dt)(processFile(_, out))
+        println(sizeInfo)
+      }
     }
     ForwardData(blpuTable, dpaTable, streetTable)
   }

@@ -18,9 +18,11 @@ package services.ingester.converter
 
 import java.io.File
 
+import play.api.Logger
 import services.ingester.converter.extractor.{FirstPass, SecondPass}
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
+import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 
 object Extractor {
   case class Blpu(postcode: String, logicalStatus: Char)
@@ -38,13 +40,13 @@ class Extractor {
     else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
 
 
-  def extract(rootDir: File, out: (DbAddress) => Unit) {
+  def extract(rootDir: File, out: (DbAddress) => Unit, logger: SimpleLogger = new LoggerFacade(Logger.logger)) {
     val dt = new DiagnosticTimer
     val files = listFiles(rootDir).toVector
     val fd = new FirstPass(files, out, dt).firstPass
-    println(s"First pass complete at $dt")
+    logger.info(s"First pass complete at $dt")
     SecondPass.secondPass(files, fd, out, dt)
-    println(s"Finished at $dt")
+    logger.info(s"Finished at $dt")
   }
 }
 

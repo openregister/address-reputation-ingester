@@ -20,8 +20,10 @@ import java.io._
 import java.util.zip.GZIPOutputStream
 
 import com.typesafe.config.ConfigFactory
+import play.api.Logger
 import services.ingester.converter.Extractor
 import uk.co.hmrc.address.osgb.DbAddress
+import uk.co.hmrc.logging.LoggerFacade
 
 object Ingester extends App {
 
