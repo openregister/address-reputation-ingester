@@ -2,6 +2,7 @@
 package config
 
 import play.api._
+import services.ingester.Task
 import uk.gov.hmrc.play.config.RunMode
 import uk.gov.hmrc.play.graphite.GraphiteConfig
 import uk.gov.hmrc.play.microservice.bootstrap.JsonErrorHandling
@@ -20,5 +21,13 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
 
   override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = app.configuration.getConfig(s"$env.metrics")
 
+  override def onStop(app: Application): Unit = {
+    if (Task.currentlyExecuting.get()) Task.cancelTask.set(true)
+    //TODO: need a configurable timeout to avoid spinning forever in case things go wrong
+    while (Task.currentlyExecuting.get) {
+      Logger.info("Waiting for task to finish")
+      Thread.sleep(1000)
+    }
+  }
 }
 

@@ -51,13 +51,11 @@ class Task(logger: SimpleLogger = new LoggerFacade(Logger.logger)) {
     if (Task.currentlyExecuting.compareAndSet(false, true)) {
       f = Future {
         try {
-          //consider uncommenting below for prod, it screws sbt as the process carries on executing
-          //even after you have halted the server with ctrl-D - presumably because the thread is happily continuing
-          //        scala.concurrent.blocking {
-          val timer = new DiagnosticTimer
-          body(logger)
-          logger.info(timer.toString)
-          //        }
+          scala.concurrent.blocking {
+            val timer = new DiagnosticTimer
+            body(logger)
+            logger.info(timer.toString)
+          }
         } catch {
           case ie: InterruptedException => {
             logger.info("Task has been cancelled")
