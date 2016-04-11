@@ -48,7 +48,7 @@ class Extractor(task: Task) {
 
     for (file <- files) {
       if (task.isBusy) {
-        LoadZip.zipReader(file, dt) {
+        LoadZip.zipReader(file, logger) {
           it =>
             fp.processFile(it, out)
             logger.info(fp.sizeInfo)
@@ -60,13 +60,13 @@ class Extractor(task: Task) {
 
     for (file <- files) {
       if (task.isBusy) {
-        LoadZip.zipReader(file, dt) {
+        LoadZip.zipReader(file, logger) {
           it =>
             SecondPass.processFile(it, fd, out)
         }
       }
-      logger.info(s"Finished at $dt")
     }
+    logger.info(s"Finished at $dt")
   }
 }
 

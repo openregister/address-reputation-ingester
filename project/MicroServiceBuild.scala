@@ -42,7 +42,6 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "address-reputation-store" % "0.10.0" withSources()
       excludeAll ExclusionRule(organization = "org.reactivemongo"),
     "org.apache.ftpserver" % "ftpserver" % "1.0.5",
-    "org.apache.commons" % "commons-compress" % "1.10",
     "commons-net" % "commons-net" % "3.4",
     "org.mongodb" %% "casbah" % "3.1.0"
   )

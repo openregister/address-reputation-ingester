@@ -20,17 +20,15 @@ import java.io._
 import java.util.zip.GZIPOutputStream
 
 import com.typesafe.config.ConfigFactory
-import org.slf4j.LoggerFactory
 import services.ingester.converter.Extractor
 import services.ingester.exec.Task
 import uk.co.hmrc.address.osgb.DbAddress
-import uk.co.hmrc.logging.LoggerFacade
+import uk.co.hmrc.logging.Stdout
 
 object Ingester extends App {
 
   val appStart = System.currentTimeMillis()
 
-  val logger = new LoggerFacade(LoggerFactory.getLogger("Ingester"))
   val conf = ConfigFactory.load()
   val home = System.getenv("HOME")
 
@@ -52,7 +50,7 @@ object Ingester extends App {
   }
 
   Task.singleton.start {
-    new Extractor(Task.singleton).extract(osRootFolder, csvOut, logger)
+    new Extractor(Task.singleton).extract(osRootFolder, csvOut, Stdout)
   }
 
   Task.singleton.awaitCompletion()

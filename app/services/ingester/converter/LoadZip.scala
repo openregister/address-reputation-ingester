@@ -17,10 +17,11 @@
 package services.ingester.converter
 
 import java.io._
+import java.util.zip.ZipFile
 
-import org.apache.commons.compress.archivers.zip.ZipFile
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.services.CsvParser
+import uk.co.hmrc.logging.SimpleLogger
 
 
 case class EmptyFileException(msg: String) extends Exception(msg)
@@ -28,14 +29,16 @@ case class EmptyFileException(msg: String) extends Exception(msg)
 
 object LoadZip {
 
-  def zipReader[T](file: File, dt: DiagnosticTimer)(consumer: (Iterator[Array[String]]) => T): T = {
-    println(s"Reading from $file at $dt")
-    innerZipReader(file)(consumer)
+  def zipReader[T](file: File, logger: SimpleLogger)(consumer: (Iterator[Array[String]]) => T): T = {
+    val dt = new DiagnosticTimer
+    val t = innerZipReader(file)(consumer)
+    logger.info(s"Reading from $file took $dt")
+    t
   }
 
   def innerZipReader[T](file: File)(consumer: (Iterator[Array[String]]) => T): T = {
     val zipFile = new ZipFile(file)
-    val enumeration = zipFile.getEntries
+    val enumeration = zipFile.entries
     if (!enumeration.hasMoreElements) {
       throw EmptyFileException("Empty file")
 
