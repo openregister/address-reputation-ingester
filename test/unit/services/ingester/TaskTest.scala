@@ -18,50 +18,64 @@
 
 package services.ingester
 
+import java.util.concurrent.ArrayBlockingQueue
+
+import org.junit.runner.RunWith
 import org.scalatest.FunSuite
-import uk.co.hmrc.logging.{SimpleLogger, StubLogger}
+import org.scalatest.junit.JUnitRunner
+import uk.co.hmrc.logging.StubLogger
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
+@RunWith(classOf[JUnitRunner])
 class TaskTest extends FunSuite {
 
   test(
     """
-      given the execution status is true
       when a request to execute something is issued to the task
-      then return false
+      and then a second request to execute something is issued to the task
+      then the first should return true
+      and the second should return false
     """) {
-    Task.currentlyExecuting.set(true)
     val logger = new StubLogger()
     val task = new Task(logger)
+    val stuff = new ArrayBlockingQueue[Boolean](1)
 
-    val status = task.execute((logger: SimpleLogger) => {
-      logger.info("fric")
-    })
+    val started1 = task.start {
+      stuff.take() // blocks until signalled
+      logger.info("foo")
+    }
 
-    assert(status === false)
+    val started2 = task.start {
+      logger.info("bar")
+    }
+
+    assert(started1 === true)
+    assert(started2 === false)
+
+    assert(task.isBusy)
+
+    stuff.offer(true) // release the lock
+    task.awaitCompletion()
+
+    assert(!task.isBusy)
   }
 
   test(
     """
-      given the execution status is false
       when a request to execute something is issued to the task
-      then return true and log two statements
+      then two log statements are issued
     """) {
-    Task.currentlyExecuting.set(false)
     val logger = new StubLogger()
     val task = new Task(logger)
 
-    val status = task.execute((logger: SimpleLogger) => {
+    val started = task.start {
       logger.info("fric")
-    })
-
-    assert(status === true)
-
-    task.f map { f =>
-      assert(logger.infos.size === 2) // the logger in the body, and the timer in the executor
     }
 
+    assert(started === true)
+
+    task.awaitCompletion()
+
+    assert(logger.infos.size === 2) // the logger in the body, and the timer in the executor
   }
 
   test(
@@ -71,18 +85,17 @@ class TaskTest extends FunSuite {
       and an interrupted exception occurs in the task
       then return true and log one statement
     """) {
-    Task.currentlyExecuting.set(false)
     val logger = new StubLogger()
     val task = new Task(logger)
 
-    val status = task.execute((logger: SimpleLogger) => {
+    val started = task.start {
       throw new InterruptedException("task cancelled")
-    })
-
-    assert(status === true)
-
-    task.f map { f =>
-      assert(logger.infos.size === 1) // the exception handler
     }
+
+    assert(started === true)
+
+    task.awaitCompletion()
+
+    assert(logger.infos.size === 1) // the exception handler
   }
 }

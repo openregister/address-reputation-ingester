@@ -64,8 +64,9 @@ class IngestController(rootFolder: File, logger: SimpleLogger,
 
     val fw = fileWriterFactory.writer(outputFile)
 
-    val status = executorFactory.task.execute((l: SimpleLogger) => {
-      extractorFactory.extractor.extract(qualifiedDir, fw.csvOut, l)
+    val task = executorFactory.task
+    val status = task.start(() => {
+      extractorFactory.extractor(task).extract(qualifiedDir, fw.csvOut, logger)
     }, {
       logger.info("cleaning up extractor")
       fw.close()

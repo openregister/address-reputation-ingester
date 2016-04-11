@@ -18,7 +18,11 @@
 
 package controllers
 
+import java.util.concurrent.ArrayBlockingQueue
+
+import play.api.mvc.{AnyContent, Request}
 import services.ingester.Task
+import uk.co.hmrc.logging.StubLogger
 
 class AdminControllerTest extends org.scalatest.FunSuite {
 
@@ -28,13 +32,10 @@ class AdminControllerTest extends org.scalatest.FunSuite {
       and no task is executing
       then a bad request response is returned
     """) {
-    Task.currentlyExecuting.set(false)
-    val ac = new AdminController()
-    val result = ac.handleCancelTask(null)
-
-    //cleanup side effects globals
-    Task.cancelTask.set(false)
-    Task.currentlyExecuting.set(false)
+    val logger = new StubLogger
+    val ac = new AdminController(new Task(logger))
+    val request: Request[AnyContent] = null
+    val result = ac.handleCancelTask(request)
     assert(result.header.status === 400)
   }
 
@@ -44,13 +45,17 @@ class AdminControllerTest extends org.scalatest.FunSuite {
       and a task is executing
       then a successful response is returned
     """) {
-    Task.currentlyExecuting.set(true)
-    val ac = new AdminController()
-    val result = ac.handleCancelTask(null)
+    val logger = new StubLogger
+    val stuff = new ArrayBlockingQueue[Boolean](1)
+    val task = new Task(logger)
+    task.start {
+      stuff.take() // blocks until signalled
+    }
 
-    //cleanup side effects globals
-    Task.cancelTask.set(false)
-    Task.currentlyExecuting.set(false)
+    val ac = new AdminController(task)
+    val request: Request[AnyContent] = null
+    val result = ac.handleCancelTask(request)
     assert(result.header.status === 200)
+    stuff.offer(true) // release the lock
   }
 }

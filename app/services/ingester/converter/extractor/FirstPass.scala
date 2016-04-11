@@ -28,7 +28,7 @@ import uk.co.hmrc.address.services.Capitalisation._
 
 import scala.collection.{mutable, _}
 
-class FirstPass(files: Seq[File], out: (DbAddress) => Unit, dt: DiagnosticTimer) {
+class FirstPass(files: Seq[File], out: (DbAddress) => Unit, task: Task, dt: DiagnosticTimer) {
 
   private[extractor] val blpuTable: mutable.Map[Long, Blpu] = new mutable.HashMap()
   private[extractor] val dpaTable: mutable.Set[Long] = new mutable.HashSet()
@@ -38,7 +38,7 @@ class FirstPass(files: Seq[File], out: (DbAddress) => Unit, dt: DiagnosticTimer)
 
   def firstPass: ForwardData = {
     for (file <- files) {
-      Task.executeIteration {
+      task.executeIteration {
         LoadZip.zipReader(file, dt)(processFile(_, out))
         println(sizeInfo)
       }

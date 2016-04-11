@@ -28,44 +28,59 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object Task {
-  //TODO: change to enum to reflect different execution states
-  var currentlyExecuting: AtomicBoolean = new AtomicBoolean(false)
-  var cancelTask: AtomicBoolean = new AtomicBoolean(false)
-
-  def executeIteration(body: => Unit): Unit = {
-    if (!cancelTask.get()) {
-      body
-    } else {
-      cancelTask.set(false)
-      throw new InterruptedException("Execution cancelled")
-    }
-  }
+  val singleton = new Task(new LoggerFacade(Logger.logger))
 }
 
 
-class Task(logger: SimpleLogger = new LoggerFacade(Logger.logger)) {
+class Task(logger: SimpleLogger) {
 
-  var f: Future[Unit] = null
+  private[ingester] val currentlyExecuting: AtomicBoolean = new AtomicBoolean(false)
+  private[ingester] val continuing: AtomicBoolean = new AtomicBoolean(false)
 
-  def execute(body: (SimpleLogger) => Unit, cleanup: => Unit = {}): Boolean = {
-    if (Task.currentlyExecuting.compareAndSet(false, true)) {
-      f = Future {
+  def executeIteration(body: => Unit) {
+    if (continuing.get()) {
+      body
+    }
+  }
+
+  def isBusy: Boolean = currentlyExecuting.get
+
+  def awaitCompletion() {
+    while (isBusy)
+      Thread.sleep(5)
+  }
+
+  def abort() {
+    continuing.set(false)
+  }
+
+  def status: String = {
+    // n.b. vals are vital here to avoid race conditions
+    val busy = currentlyExecuting.get
+    val aborting = !continuing.get
+    if (busy && aborting) "busy but aborting"
+    else if (busy) "busy"
+    else "idle"
+  }
+
+  def start(body: => Unit, cleanup: => Unit = {}): Boolean = {
+    if (currentlyExecuting.compareAndSet(false, true)) {
+      continuing.set(true)
+      val f = Future {
+        val timer = new DiagnosticTimer
         try {
           scala.concurrent.blocking {
-            val timer = new DiagnosticTimer
-            body(logger)
-            logger.info(timer.toString)
+            body
+            logger.info(s"Completed after $timer")
           }
         } catch {
-          case ie: InterruptedException => {
-            logger.info("Task has been cancelled")
-          }
+          case ie: InterruptedException =>
+            logger.info(s"Task has been cancelled after $timer")
         }
       } andThen {
-        case r => {
+        case r =>
           cleanup
-          Task.currentlyExecuting.set(false)
-        }
+          currentlyExecuting.set(false)
       }
       true
     } else {
@@ -74,7 +89,8 @@ class Task(logger: SimpleLogger = new LoggerFacade(Logger.logger)) {
   }
 }
 
+
 class TaskFactory {
-  def task: Task = new Task
+  def task: Task = Task.singleton
 }
 

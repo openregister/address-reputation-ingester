@@ -22,9 +22,9 @@ import play.api.mvc.{Action, AnyContent, Request, Result}
 import services.ingester.Task
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-object AdminController extends AdminController
+object AdminController extends AdminController(Task.singleton)
 
-class AdminController extends BaseController {
+class AdminController(task: Task) extends BaseController {
 
   def cancelTask(): Action[AnyContent] = Action {
     request => {
@@ -33,8 +33,8 @@ class AdminController extends BaseController {
   }
 
   def handleCancelTask(request: Request[AnyContent]): Result = {
-    if (Task.currentlyExecuting.get()) {
-      Task.cancelTask.set(true)
+    if (task.isBusy) {
+      task.abort()
       Ok("Interrupt command issued")
     } else {
       BadRequest("Nothing currently executing")
@@ -48,6 +48,6 @@ class AdminController extends BaseController {
   }
 
   def getStatus(request: Request[AnyContent]): Result = {
-    Ok(s"execution status: ${Task.currentlyExecuting}\nexecution interrupt received: ${Task.cancelTask}")
+    Ok(s"execution status: ${task.status}").withHeaders(CONTENT_TYPE -> "text/plain")
   }
 }

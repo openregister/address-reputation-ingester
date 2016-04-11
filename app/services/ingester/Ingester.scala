@@ -20,7 +20,7 @@ import java.io._
 import java.util.zip.GZIPOutputStream
 
 import com.typesafe.config.ConfigFactory
-import play.api.Logger
+import org.slf4j.LoggerFactory
 import services.ingester.converter.Extractor
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.LoggerFacade
@@ -29,6 +29,7 @@ object Ingester extends App {
 
   val appStart = System.currentTimeMillis()
 
+  val logger = new LoggerFacade(LoggerFactory.getLogger("Ingester"))
   val conf = ConfigFactory.load()
   val home = System.getenv("HOME")
 
@@ -49,7 +50,7 @@ object Ingester extends App {
     outCSV.println(out.toString)
   }
 
-  val result = new Extractor().extract(osRootFolder, csvOut)
+  val result = new Extractor(Task.singleton).extract(osRootFolder, csvOut, logger)
   println("Result: " + result.toString)
 
   outCSV.flush()

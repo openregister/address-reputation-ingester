@@ -23,7 +23,9 @@ import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import services.ingester.Task
 import uk.co.hmrc.address.osgb.DbAddress
+import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
 class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
@@ -33,11 +35,13 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
 
   test("Having no files should not throw any exception") {
     val mockFile = mock[File]
+    val logger = new StubLogger
+    val task = new Task(logger)
 
     when(mockFile.isDirectory) thenReturn true
     when(mockFile.listFiles) thenReturn Array.empty[File]
 
-    new Extractor().extract(mockFile, dummyOut)
+    new Extractor(task).extract(mockFile, dummyOut, logger)
   }
 
 }

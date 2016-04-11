@@ -76,12 +76,13 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val logger = new StubLogger()
 
     val stubOut = (dba: DbAddress) => {}
-
+    val task = new Task(logger)
     val outputFileWriter = mock[OutputFileWriter]
+
     when(fwf.writer(any[File])) thenReturn outputFileWriter
-    when(ef.extractor) thenReturn mock[Extractor]
+    when(ef.extractor(task)) thenReturn mock[Extractor]
     when(outputFileWriter.csvOut) thenReturn stubOut
-    when(exf.task) thenReturn new Task(logger)
+    when(exf.task) thenReturn task
 
     val ic = new IngestController(folder, logger, fwf, ef, exf)
 

@@ -18,32 +18,33 @@ package services.ingester.converter
 
 import java.io.File
 
-import play.api.Logger
+import services.ingester.Task
 import services.ingester.converter.extractor.{FirstPass, SecondPass}
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
-import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
+import uk.co.hmrc.logging.SimpleLogger
 
 object Extractor {
+
   case class Blpu(postcode: String, logicalStatus: Char)
 
   case class Street(recordType: Char, streetDescription: String = "", localityName: String = "", townName: String = "") {
-
     def filteredDescription: String = if (recordType == '1') streetDescription else ""
   }
+
 }
 
 
-class Extractor {
+class Extractor(task: Task) {
   private def listFiles(file: File): List[File] =
     if (!file.isDirectory) Nil
     else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
 
 
-  def extract(rootDir: File, out: (DbAddress) => Unit, logger: SimpleLogger = new LoggerFacade(Logger.logger)) {
+  def extract(rootDir: File, out: (DbAddress) => Unit, logger: SimpleLogger) {
     val dt = new DiagnosticTimer
     val files = listFiles(rootDir).toVector
-    val fd = new FirstPass(files, out, dt).firstPass
+    val fd = new FirstPass(files, out, task, dt).firstPass
     logger.info(s"First pass complete at $dt")
     SecondPass.secondPass(files, fd, out, dt)
     logger.info(s"Finished at $dt")
@@ -51,6 +52,6 @@ class Extractor {
 }
 
 class ExtractorFactory {
-  def extractor = new Extractor
+  def extractor(task: Task): Extractor = new Extractor(task)
 }
 
