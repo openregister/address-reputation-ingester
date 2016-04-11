@@ -16,19 +16,16 @@
 
 package services.ingester.converter.extractor
 
-import java.io.File
-
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
 import services.ingester.exec.Task
-import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.osgb.Postcode._
 import uk.co.hmrc.address.services.Capitalisation._
 
 import scala.collection.{mutable, _}
 
-class FirstPass(files: Seq[File], out: (DbAddress) => Unit, task: Task, dt: DiagnosticTimer) {
+class FirstPass(out: (DbAddress) => Unit, task: Task) {
 
   private[extractor] val blpuTable: mutable.Map[Long, Blpu] = new mutable.HashMap()
   private[extractor] val dpaTable: mutable.Set[Long] = new mutable.HashSet()
@@ -37,12 +34,6 @@ class FirstPass(files: Seq[File], out: (DbAddress) => Unit, task: Task, dt: Diag
 
 
   def firstPass: ForwardData = {
-    for (file <- files) {
-      task.executeIteration {
-        LoadZip.zipReader(file, dt)(processFile(_, out))
-        println(sizeInfo)
-      }
-    }
     ForwardData(blpuTable, dpaTable, streetTable)
   }
 
@@ -57,7 +48,7 @@ class FirstPass(files: Seq[File], out: (DbAddress) => Unit, task: Task, dt: Diag
   }
 
 
-  private[extractor] def processFile(csvIterator: Iterator[Array[String]], out: (DbAddress) => Unit) {
+  def processFile(csvIterator: Iterator[Array[String]], out: (DbAddress) => Unit) {
     for (csvLine <- csvIterator) {
       processLine(csvLine, out)
     }

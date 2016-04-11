@@ -44,10 +44,29 @@ class Extractor(task: Task) {
   def extract(rootDir: File, out: (DbAddress) => Unit, logger: SimpleLogger) {
     val dt = new DiagnosticTimer
     val files = listFiles(rootDir).toVector
-    val fd = new FirstPass(files, out, task, dt).firstPass
+    val fp = new FirstPass(out, task)
+
+    for (file <- files) {
+      task.executeIteration {
+        LoadZip.zipReader(file, dt) {
+          it =>
+            fp.processFile(it, out)
+            println(fp.sizeInfo)
+        }
+      }
+    }
+    val fd = fp.firstPass
     logger.info(s"First pass complete at $dt")
-    SecondPass.secondPass(files, fd, out, dt)
-    logger.info(s"Finished at $dt")
+
+    for (file <- files) {
+      task.executeIteration {
+        LoadZip.zipReader(file, dt) {
+          it =>
+            SecondPass.processFile(it, fd, out)
+        }
+      }
+      logger.info(s"Finished at $dt")
+    }
   }
 }
 

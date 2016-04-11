@@ -16,29 +16,17 @@
 
 package services.ingester.converter.extractor
 
-import java.io.File
-
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
-import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
-import scala.collection.mutable
-import uk.co.hmrc.address.services.Capitalisation._
 import uk.co.hmrc.address.osgb.Postcode._
+import uk.co.hmrc.address.services.Capitalisation._
+
+import scala.collection.mutable
 
 object SecondPass {
 
-  def secondPass(files: Seq[File], fd: ForwardData, out: (DbAddress) => Unit, dt: DiagnosticTimer) {
-    for (file <- files) {
-      LoadZip.zipReader(file, dt) {
-        csvIterator =>
-          processLine(csvIterator, fd, out)
-      }
-    }
-  }
-
-
-  private[extractor] def processLine(csvIterator: Iterator[Array[String]], fd: ForwardData, out: (DbAddress) => Unit) {
+  def processFile(csvIterator: Iterator[Array[String]], fd: ForwardData, out: (DbAddress) => Unit) {
     for (csvLine <- csvIterator) {
       if (csvLine(OSCsv.RecordIdentifier_idx) == OSLpi.RecordId) {
         val lpi = OSLpi(csvLine)
