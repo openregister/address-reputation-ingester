@@ -51,8 +51,11 @@ object Ingester extends App {
     outCSV.println(out.toString)
   }
 
-  val result = new Extractor(Task.singleton).extract(osRootFolder, csvOut, logger)
-  println("Result: " + result.toString)
+  Task.singleton.start {
+    new Extractor(Task.singleton).extract(osRootFolder, csvOut, logger)
+  }
+
+  Task.singleton.awaitCompletion()
 
   outCSV.flush()
   outCSV.close()

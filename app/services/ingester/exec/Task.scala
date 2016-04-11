@@ -75,10 +75,8 @@ class Task(logger: SimpleLogger) {
       val f = Future {
         val timer = new DiagnosticTimer
         try {
-          scala.concurrent.blocking {
-            body
-            logger.info(s"Completed after $timer")
-          }
+          body
+          logger.info(s"Completed after $timer")
         } catch {
           case ie: InterruptedException =>
             logger.info(s"Task has been cancelled after $timer")
