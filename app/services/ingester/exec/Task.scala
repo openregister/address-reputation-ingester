@@ -72,11 +72,13 @@ class Task(logger: SimpleLogger) {
 
   def start(body: => Unit, cleanup: => Unit = {}): Boolean = {
     if (executionState.compareAndSet(IDLE, BUSY)) {
-      val f = Future {
+      Future {
         val timer = new DiagnosticTimer
         try {
-          body
-          logger.info(s"Completed after $timer")
+          scala.concurrent.blocking {
+            body
+            logger.info(s"Completed after $timer")
+          }
         } catch {
           case ie: InterruptedException =>
             logger.info(s"Task has been cancelled after $timer")

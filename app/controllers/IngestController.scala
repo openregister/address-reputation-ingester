@@ -22,8 +22,8 @@ import config.ConfigHelper._
 import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Request, Result}
-import services.ingester.converter.ExtractorFactory
 import services.ingester.OutputFileWriterFactory
+import services.ingester.converter.ExtractorFactory
 import services.ingester.exec.TaskFactory
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -66,7 +66,7 @@ class IngestController(rootFolder: File, logger: SimpleLogger,
     val fw = fileWriterFactory.writer(outputFile)
 
     val task = executorFactory.task
-    val status = task.start(() => {
+    val status = task.start({
       extractorFactory.extractor(task).extract(qualifiedDir, fw.csvOut, logger)
     }, {
       logger.info("cleaning up extractor")

@@ -51,7 +51,7 @@ class Extractor(task: Task) {
         LoadZip.zipReader(file, dt) {
           it =>
             fp.processFile(it, out)
-            println(fp.sizeInfo)
+            logger.info(fp.sizeInfo)
         }
       }
     }
