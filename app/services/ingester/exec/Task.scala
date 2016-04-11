@@ -46,12 +46,6 @@ class Task(logger: SimpleLogger) {
 
   private[ingester] val executionState: AtomicInteger = new AtomicInteger(IDLE)
 
-  def executeIteration(body: => Unit) {
-    if (executionState.get() == BUSY) {
-      body
-    }
-  }
-
   def isBusy: Boolean = executionState.get != IDLE
 
   def awaitCompletion() {

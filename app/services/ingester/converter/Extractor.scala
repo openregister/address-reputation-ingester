@@ -47,7 +47,7 @@ class Extractor(task: Task) {
     val fp = new FirstPass(out, task)
 
     for (file <- files) {
-      task.executeIteration {
+      if (task.isBusy) {
         LoadZip.zipReader(file, dt) {
           it =>
             fp.processFile(it, out)
@@ -59,7 +59,7 @@ class Extractor(task: Task) {
     logger.info(s"First pass complete at $dt")
 
     for (file <- files) {
-      task.executeIteration {
+      if (task.isBusy) {
         LoadZip.zipReader(file, dt) {
           it =>
             SecondPass.processFile(it, fd, out)
