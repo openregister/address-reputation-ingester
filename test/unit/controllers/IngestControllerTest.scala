@@ -73,6 +73,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val fwf = mock[OutputFileWriterFactory]
     val ef = mock[ExtractorFactory]
     val exf = mock[TaskFactory]
+    val ex = mock[Extractor]
     val folder = new File(".")
     val logger = new StubLogger()
 
@@ -81,7 +82,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val outputFileWriter = mock[OutputFileWriter]
 
     when(fwf.writer(any[File])) thenReturn outputFileWriter
-    when(ef.extractor(task)) thenReturn mock[Extractor]
+    when(ef.extractor(task)) thenReturn ex
     when(outputFileWriter.csvOut) thenReturn stubOut
     when(exf.task) thenReturn task
 
@@ -89,6 +90,9 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
     val result = ic.handleIngest(null, "abp", "40", "full")
 
+    task.awaitCompletion()
+
+    verify(ex, times(1)).extract(any[File], anyObject(), any[StubLogger])
     assert(result.header.status / 100 === 2)
   }
 }
