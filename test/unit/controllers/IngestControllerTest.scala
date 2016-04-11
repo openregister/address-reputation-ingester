@@ -23,7 +23,8 @@ import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.mock.MockitoSugar
 import services.ingester.converter.{Extractor, ExtractorFactory}
-import services.ingester.{OutputFileWriter, OutputFileWriterFactory, Task, TaskFactory}
+import services.ingester.exec.{Task, TaskFactory}
+import services.ingester.{OutputFileWriter, OutputFileWriterFactory}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.StubLogger
 

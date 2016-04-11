@@ -17,13 +17,14 @@
 package services.ingester.converter.extractor
 
 import java.io.File
+import java.util.concurrent.ArrayBlockingQueue
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuite, Matchers}
-import services.ingester.Task
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
+import services.ingester.exec.Task
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
@@ -177,11 +178,15 @@ class FirstPassTest extends FunSuite with Matchers {
     val sample = new File(getClass.getClassLoader.getResource("invalid15.zip").getFile)
     val logger = new StubLogger
     val task = new Task(logger)
-    task.start({})
+    val stuff = new ArrayBlockingQueue[Boolean](1)
+    task.start {
+      stuff.take() // blocks until signalled
+    }
     val e = intercept[Exception] {
       new FirstPass(List(sample), dummyOut, task, new DiagnosticTimer).firstPass
     }
     assert(e.getMessage === "8")
+    stuff.offer(true) // release the lock
   }
 
 }

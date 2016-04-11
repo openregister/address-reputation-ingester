@@ -18,9 +18,9 @@ package services.ingester.converter.extractor
 
 import java.io.File
 
-import services.ingester.Task
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
+import services.ingester.exec.Task
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.osgb.Postcode._

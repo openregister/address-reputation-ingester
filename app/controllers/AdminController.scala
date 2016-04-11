@@ -19,7 +19,7 @@
 package controllers
 
 import play.api.mvc.{Action, AnyContent, Request, Result}
-import services.ingester.Task
+import services.ingester.exec.Task
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 object AdminController extends AdminController(Task.singleton)

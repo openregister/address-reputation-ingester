@@ -21,6 +21,7 @@ import java.io._
 import com.typesafe.config.ConfigFactory
 import play.api.Logger
 import services.ingester.converter.Extractor
+import services.ingester.exec.Task
 import services.ingester.ftpdownloader.{FtpDownloader, RealWorldIO}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.LoggerFacade

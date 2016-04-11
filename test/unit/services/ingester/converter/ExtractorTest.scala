@@ -23,7 +23,7 @@ import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import services.ingester.Task
+import services.ingester.exec.Task
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.StubLogger
 

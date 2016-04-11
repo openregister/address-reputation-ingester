@@ -18,8 +18,8 @@ package services.ingester.converter
 
 import java.io.File
 
-import services.ingester.Task
 import services.ingester.converter.extractor.{FirstPass, SecondPass}
+import services.ingester.exec.Task
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.SimpleLogger

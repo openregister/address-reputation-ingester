@@ -22,6 +22,7 @@ import java.util.zip.GZIPOutputStream
 import com.typesafe.config.ConfigFactory
 import org.slf4j.LoggerFactory
 import services.ingester.converter.Extractor
+import services.ingester.exec.Task
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.LoggerFacade
 

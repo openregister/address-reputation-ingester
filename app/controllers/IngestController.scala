@@ -23,7 +23,8 @@ import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import services.ingester.converter.ExtractorFactory
-import services.ingester.{OutputFileWriterFactory, TaskFactory}
+import services.ingester.OutputFileWriterFactory
+import services.ingester.exec.TaskFactory
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 

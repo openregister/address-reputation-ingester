@@ -16,9 +16,9 @@
  *
  */
 
-package services.ingester
+package services.ingester.exec
 
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 import play.api.Logger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
@@ -27,6 +27,14 @@ import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+object ExecutionState {
+  // using ints here because of AtomicInteger simplicity
+  final val IDLE = 0
+  final val BUSY = 1
+  final val STOPPING = 2
+}
+
+
 object Task {
   val singleton = new Task(new LoggerFacade(Logger.logger))
 }
@@ -34,16 +42,17 @@ object Task {
 
 class Task(logger: SimpleLogger) {
 
-  private[ingester] val currentlyExecuting: AtomicBoolean = new AtomicBoolean(false)
-  private[ingester] val continuing: AtomicBoolean = new AtomicBoolean(false)
+  import ExecutionState._
+
+  private[ingester] val executionState: AtomicInteger = new AtomicInteger(IDLE)
 
   def executeIteration(body: => Unit) {
-    if (continuing.get()) {
+    if (executionState.get() == BUSY) {
       body
     }
   }
 
-  def isBusy: Boolean = currentlyExecuting.get
+  def isBusy: Boolean = executionState.get != IDLE
 
   def awaitCompletion() {
     while (isBusy)
@@ -51,21 +60,18 @@ class Task(logger: SimpleLogger) {
   }
 
   def abort() {
-    continuing.set(false)
+    executionState.compareAndSet(BUSY, STOPPING)
   }
 
-  def status: String = {
-    // n.b. vals are vital here to avoid race conditions
-    val busy = currentlyExecuting.get
-    val aborting = !continuing.get
-    if (busy && aborting) "busy but aborting"
-    else if (busy) "busy"
-    else "idle"
-  }
+  def status: String =
+    executionState.get match {
+      case BUSY => "busy"
+      case STOPPING => "busy but aborting"
+      case _ => "idle"
+    }
 
   def start(body: => Unit, cleanup: => Unit = {}): Boolean = {
-    if (currentlyExecuting.compareAndSet(false, true)) {
-      continuing.set(true)
+    if (executionState.compareAndSet(IDLE, BUSY)) {
       val f = Future {
         val timer = new DiagnosticTimer
         try {
@@ -80,7 +86,7 @@ class Task(logger: SimpleLogger) {
       } andThen {
         case r =>
           cleanup
-          currentlyExecuting.set(false)
+          executionState.set(IDLE)
       }
       true
     } else {

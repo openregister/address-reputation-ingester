@@ -2,7 +2,7 @@
 package config
 
 import play.api._
-import services.ingester.Task
+import services.ingester.exec.Task
 import uk.gov.hmrc.play.config.RunMode
 import uk.gov.hmrc.play.graphite.GraphiteConfig
 import uk.gov.hmrc.play.microservice.bootstrap.JsonErrorHandling

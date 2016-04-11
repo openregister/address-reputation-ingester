@@ -23,6 +23,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
+import services.ingester.exec.Task
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])

@@ -21,7 +21,7 @@ package controllers
 import java.util.concurrent.ArrayBlockingQueue
 
 import play.api.mvc.{AnyContent, Request}
-import services.ingester.Task
+import services.ingester.exec.Task
 import uk.co.hmrc.logging.StubLogger
 
 class AdminControllerTest extends org.scalatest.FunSuite {
