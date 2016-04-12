@@ -24,7 +24,7 @@ import org.scalatest.FunSuite
 import org.scalatest.mock.MockitoSugar
 import services.ingester.converter.{Extractor, ExtractorFactory}
 import services.ingester.exec.{Task, TaskFactory}
-import services.ingester.{OutputFileWriter, OutputFileWriterFactory}
+import services.ingester.writers.{OutputDBWriter, OutputDBWriterFactory, OutputFileWriter, OutputFileWriterFactory}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.StubLogger
 
@@ -58,10 +58,12 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
   def parameterTest(product: String, epoch: String, variant: String): Unit = {
     val folder = new File(".")
     val logger = new StubLogger()
-    val ic = new IngestController(folder, logger, null, null, null)
+    val writerFactory = mock[OutputFileWriterFactory]
+
+    val ic = new IngestController(folder, logger, null, null, null, null)
 
     intercept[IllegalArgumentException] {
-      ic.handleIngest(null, product, epoch, variant)
+      ic.handleIngest(null, product, epoch, variant, writerFactory)
     }
   }
 
@@ -71,6 +73,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       then a successful response is returned
     """) {
     val fwf = mock[OutputFileWriterFactory]
+    val dbf = mock[OutputDBWriterFactory]
     val ef = mock[ExtractorFactory]
     val exf = mock[TaskFactory]
     val ex = mock[Extractor]
@@ -80,15 +83,17 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val stubOut = (dba: DbAddress) => {}
     val task = new Task(logger)
     val outputFileWriter = mock[OutputFileWriter]
+    val outputDBWriter = mock[OutputDBWriter]
 
-    when(fwf.writer(any[File])) thenReturn outputFileWriter
+    when(fwf.writer(anyString())) thenReturn outputFileWriter
+    when(dbf.writer(anyString())) thenReturn outputDBWriter
     when(ef.extractor(task)) thenReturn ex
-    when(outputFileWriter.csvOut) thenReturn stubOut
+    when(outputFileWriter.output) thenReturn stubOut
     when(exf.task) thenReturn task
 
-    val ic = new IngestController(folder, logger, fwf, ef, exf)
+    val ic = new IngestController(folder, logger, dbf, fwf, ef, exf)
 
-    val result = ic.handleIngest(null, "abp", "40", "full")
+    val result = ic.handleIngest(null, "abp", "40", "full", fwf)
 
     task.awaitCompletion()
 

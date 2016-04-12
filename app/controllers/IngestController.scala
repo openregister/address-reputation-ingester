@@ -22,9 +22,9 @@ import config.ConfigHelper._
 import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Request, Result}
-import services.ingester.OutputFileWriterFactory
 import services.ingester.converter.ExtractorFactory
 import services.ingester.exec.TaskFactory
+import services.ingester.writers.{OutputDBWriterFactory, OutputFileWriterFactory, OutputWriter, OutputWriterFactory}
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -36,41 +36,49 @@ object IngestControllerHelper {
   }
 }
 
-object IngestController extends IngestController(IngestControllerHelper.rootFolder,
+object IngestController extends IngestController(
+  IngestControllerHelper.rootFolder,
   new LoggerFacade(Logger.logger),
+  new OutputDBWriterFactory,
   new OutputFileWriterFactory,
   new ExtractorFactory,
   new TaskFactory())
 
-class IngestController(rootFolder: File, logger: SimpleLogger,
+class IngestController(rootFolder: File,
+                       logger: SimpleLogger,
+                       dbWriterFactory: OutputDBWriterFactory,
                        fileWriterFactory: OutputFileWriterFactory,
                        extractorFactory: ExtractorFactory,
-                       executorFactory: TaskFactory
+                       taskFactory: TaskFactory
                       ) extends BaseController {
 
   val alphaNumPattern = "[a-z0-9]+".r
 
   def ingest(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
     request =>
-      handleIngest(request, product, epoch, variant)
+      handleIngest(request, product, epoch, variant, dbWriterFactory)
   }
 
-  def handleIngest(request: Request[AnyContent], product: String, epoch: String, variant: String): Result = {
+  def ingestToFile(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
+    request =>
+      handleIngest(request, product, epoch, variant, fileWriterFactory)
+  }
+
+  def handleIngest(request: Request[AnyContent], product: String, epoch: String, variant: String, writerFactory: OutputWriterFactory): Result = {
     require(alphaNumPattern.pattern.matcher(product).matches())
     require(alphaNumPattern.pattern.matcher(epoch).matches())
     require(alphaNumPattern.pattern.matcher(variant).matches())
 
     val qualifiedDir = new File(rootFolder, s"$product/$epoch/$variant/data")
-    val outputFile = new File(qualifiedDir, "output.txt.gz")
 
-    val fw = fileWriterFactory.writer(outputFile)
+    val writer = writerFactory.writer(s"${product}_${epoch}")
 
-    val task = executorFactory.task
+    val task = taskFactory.task
     val status = task.start({
-      extractorFactory.extractor(task).extract(qualifiedDir, fw.csvOut, logger)
+      extractorFactory.extractor(task).extract(qualifiedDir, writer.output, logger)
     }, {
       logger.info("cleaning up extractor")
-      fw.close()
+      writer.close()
     })
 
     if (status) Ok(s"Ingestion initiated for $product/$epoch/$variant")

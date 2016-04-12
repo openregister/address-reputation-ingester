@@ -39,7 +39,7 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "play-config" % "2.0.1",
     "uk.gov.hmrc" %% "play-json-logger" % "2.1.1",
     "uk.gov.hmrc" %% "domain" % "3.3.0",
-    "uk.gov.hmrc" %% "address-reputation-store" % "0.10.0" withSources()
+    "uk.gov.hmrc" %% "address-reputation-store" % "0.10.0-2-gc0a3bb8" withSources()
       excludeAll ExclusionRule(organization = "org.reactivemongo"),
     "org.apache.ftpserver" % "ftpserver" % "1.0.5",
     "commons-net" % "commons-net" % "3.4",

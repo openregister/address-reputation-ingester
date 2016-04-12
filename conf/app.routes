@@ -3,10 +3,11 @@
 GET        /admin/metrics             com.kenshoo.play.metrics.MetricsController.metrics
 
 # ----- Ping -----
-HEAD          /ping                             controllers.PingController.ping()
-GET           /ping                             controllers.PingController.ping()
+HEAD          /ping                                         controllers.PingController.ping()
+GET           /ping                                         controllers.PingController.ping()
 
-GET           /ingest/:product/:epoch/:variant  controllers.IngestController.ingest(product, epoch, variant)
+GET           /ingest/:product/:epoch/:variant              controllers.IngestController.ingest(product, epoch, variant)
+GET           /ingestToFile/:product/:epoch/:variant        controllers.IngestController.ingestToFile(product, epoch, variant)
 
-GET           /admin/cancelTask                 controllers.AdminController.cancelTask()
-GET           /admin/status                     controllers.AdminController.status()
+GET           /admin/cancelTask                             controllers.AdminController.cancelTask()
+GET           /admin/status                                 controllers.AdminController.status()

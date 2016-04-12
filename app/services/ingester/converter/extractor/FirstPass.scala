@@ -34,6 +34,7 @@ class FirstPass(out: (DbAddress) => Unit, task: Task) {
 
 
   def firstPass: ForwardData = {
+        //TODO: move to passed in logger
     ForwardData(blpuTable, dpaTable, streetTable)
   }
 
