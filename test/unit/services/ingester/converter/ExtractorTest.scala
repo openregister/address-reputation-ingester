@@ -30,18 +30,50 @@ import uk.co.hmrc.logging.StubLogger
 @RunWith(classOf[JUnitRunner])
 class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
 
-  val dummyOut = (out: DbAddress) => {}
-
 
   test("Having no files should not throw any exception") {
     val mockFile = mock[File]
     val logger = new StubLogger
     val task = new Task(logger)
+    val dummyOut = (out: DbAddress) => {}
 
     when(mockFile.isDirectory) thenReturn true
     when(mockFile.listFiles) thenReturn Array.empty[File]
 
-    new Extractor(task).extract(mockFile, dummyOut, logger)
+    task.start {
+      new Extractor(task, logger).extract(mockFile, dummyOut)
+    }
+    task.awaitCompletion()
+  }
+
+  test(
+    """given a zip archive containing one file,
+       Extractor should iterate over the CSV lines it contains
+    """) {
+    val sample = new File(getClass.getClassLoader.getResource("SX9090-first20.zip").getFile)
+    val logger = new StubLogger
+    val task = new Task(logger)
+
+    val out = (out: DbAddress) => {
+      fail("Not expecting output from this sample data file.")
+    }
+
+    task.start {
+      new Extractor(task, logger).extract(List(sample), out)
+    }
+    task.awaitCompletion()
+
+    assert(logger.infos.map(_.message) === List(
+      "Info:Reading zip entry SX9090-first20.csv...",
+      "Info:Reading from 1 files in {} took {}",
+      "Info:First pass obtained 0 BLPUs, 0 DPA UPRNs, 10 streets",
+      "Info:First pass complete after {}",
+      "Info:Reading zip entry SX9090-first20.csv...",
+      "Info:Reading from 1 files in {} took {}",
+      "Info:",
+      "Info:Finished after {}",
+      "Info:Task completed after {}"
+    ))
   }
 
 }

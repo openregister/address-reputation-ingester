@@ -50,7 +50,7 @@ object Ingester extends App {
   }
 
   Task.singleton.start {
-    new Extractor(Task.singleton).extract(osRootFolder, csvOut, Stdout)
+    new Extractor(Task.singleton, Stdout).extract(osRootFolder, csvOut)
   }
 
   Task.singleton.awaitCompletion()

@@ -75,7 +75,7 @@ class IngestController(rootFolder: File,
 
     val task = taskFactory.task
     val status = task.start({
-      extractorFactory.extractor(task).extract(qualifiedDir, writer.output, logger)
+      extractorFactory.extractor(task, logger).extract(qualifiedDir, writer.output)
     }, {
       logger.info("cleaning up extractor")
       writer.close()

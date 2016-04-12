@@ -25,7 +25,15 @@ import uk.co.hmrc.address.services.Capitalisation._
 
 import scala.collection.{mutable, _}
 
-class FirstPass(out: (DbAddress) => Unit, task: Task) {
+
+trait Pass {
+  def processFile(csvIterator: Iterator[Array[String]], out: (DbAddress) => Unit)
+
+  def sizeInfo: String
+}
+
+
+class FirstPass(out: (DbAddress) => Unit, task: Task) extends Pass {
 
   private[extractor] val blpuTable: mutable.Map[Long, Blpu] = new mutable.HashMap()
   private[extractor] val dpaTable: mutable.Set[Long] = new mutable.HashSet()
@@ -103,5 +111,5 @@ class FirstPass(out: (DbAddress) => Unit, task: Task) {
   }
 
   def sizeInfo: String =
-    s"FirstPass contains ${blpuTable.size} BLPUs, ${dpaTable.size} DPA UPRNs, ${streetTable.size} streets"
+    s"First pass obtained ${blpuTable.size} BLPUs, ${dpaTable.size} DPA UPRNs, ${streetTable.size} streets"
 }

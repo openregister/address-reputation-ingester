@@ -18,7 +18,7 @@ package services.ingester.converter
 
 import java.io.File
 
-import services.ingester.converter.extractor.{FirstPass, SecondPass}
+import services.ingester.converter.extractor.{FirstPass, Pass, SecondPass}
 import services.ingester.exec.Task
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.osgb.DbAddress
@@ -35,46 +35,47 @@ object Extractor {
 }
 
 
-class Extractor(task: Task) {
+class Extractor(task: Task, logger: SimpleLogger) {
   private def listFiles(file: File): List[File] =
     if (!file.isDirectory) Nil
     else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
 
 
-  def extract(rootDir: File, out: (DbAddress) => Unit, logger: SimpleLogger) {
+  def extract(rootDir: File, out: (DbAddress) => Unit) {
+    extract(listFiles(rootDir), out)
+  }
+
+  def extract(files: Seq[File], out: (DbAddress) => Unit) {
     val dt = new DiagnosticTimer
-    val files = listFiles(rootDir).toVector
     val fp = new FirstPass(out, task)
 
-    for (file <- files) {
-      if (task.isBusy) {
-        val zip = LoadZip.zipReader(file, logger)
-        try {
-          fp.processFile(zip.next, out)
-        } finally {
-          zip.close()
-        }
-        logger.info(fp.sizeInfo)
-      }
-    }
+    pass(files, out, fp)
     val fd = fp.firstPass
-    logger.info(s"First pass complete at $dt")
+    logger.info(s"First pass complete after {}", dt)
 
-    for (file <- files) {
-      if (task.isBusy) {
-        val zip = LoadZip.zipReader(file, logger)
-        try {
-          SecondPass.processFile(zip.next, fd, out)
-        } finally {
-          zip.close()
+    val sp = new SecondPass(fd)
+    pass(files, out, sp)
+    logger.info(s"Finished after {}", dt)
+  }
+
+  private def pass(files: Seq[File], out: (DbAddress) => Unit, thisPass: Pass) {
+    for (file <- files
+         if task.isBusy) {
+      val zip = LoadZip.zipReader(file, logger)
+      try {
+        while (zip.hasNext && task.isBusy) {
+          val next = zip.next
+          thisPass.processFile(next, out)
         }
+      } finally {
+        zip.close()
       }
+      logger.info(thisPass.sizeInfo)
     }
-    logger.info(s"Finished at $dt")
   }
 }
 
 class ExtractorFactory {
-  def extractor(task: Task): Extractor = new Extractor(task)
+  def extractor(task: Task, logger: SimpleLogger): Extractor = new Extractor(task, logger)
 }
 

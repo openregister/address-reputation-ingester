@@ -39,7 +39,7 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
   override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = app.configuration.getConfig(s"$env.metrics")
 
   override def onStop(app: Application): Unit = {
-    if (Task.singleton.isBusy) Task.singleton.abort()
+    Task.singleton.abort()
     Task.singleton.awaitCompletion()
   }
 }

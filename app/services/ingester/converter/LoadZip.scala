@@ -38,16 +38,19 @@ class ZipWrapper(zipFile: ZipFile, logger: SimpleLogger) extends Iterator[Zipped
 
   val dt = new DiagnosticTimer
   private var open = true
+  private var files = 0
   private val enumeration = zipFile.entries
 
   if (!enumeration.hasMoreElements) {
     throw EmptyFileException("Empty file")
   }
 
-  override def hasNext: Boolean = enumeration.hasMoreElements
+  override def hasNext: Boolean = open && enumeration.hasMoreElements
 
   override def next: ZippedCsvIterator = {
+    files += 1
     val zipEntry = enumeration.nextElement()
+    logger.info(s"Reading zip entry ${zipEntry.getName}...")
     new ZippedCsvIterator(zipFile.getInputStream(zipEntry), zipEntry, this)
   }
 
@@ -56,9 +59,11 @@ class ZipWrapper(zipFile: ZipFile, logger: SimpleLogger) extends Iterator[Zipped
     if (open) {
       open = false
       zipFile.close()
-      logger.info(s"Reading from ${zipFile.getName} took $dt")
+      logger.info(s"Reading from $files files in {} took {}", zipFile.getName, dt)
     }
   }
+
+  override def toString: String = zipFile.toString
 }
 
 
@@ -86,4 +91,6 @@ class ZippedCsvIterator(is: InputStream, val zipEntry: ZipEntry, container: Clos
       container.close()
     }
   }
+
+  override def toString: String = zipEntry.toString
 }

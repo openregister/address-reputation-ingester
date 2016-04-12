@@ -24,9 +24,9 @@ import uk.co.hmrc.address.services.Capitalisation._
 
 import scala.collection.mutable
 
-object SecondPass {
+class SecondPass(fd: ForwardData) extends Pass {
 
-  def processFile(csvIterator: Iterator[Array[String]], fd: ForwardData, out: (DbAddress) => Unit) {
+  def processFile(csvIterator: Iterator[Array[String]], out: (DbAddress) => Unit) {
     for (csvLine <- csvIterator) {
       if (csvLine(OSCsv.RecordIdentifier_idx) == OSLpi.RecordId) {
         val lpi = OSLpi(csvLine)
@@ -34,7 +34,7 @@ object SecondPass {
 
         blpu match {
           case Some(b) if b.logicalStatus == lpi.logicalStatus =>
-            exportLPI(lpi, b, fd.streets)(out)
+            SecondPass.exportLPI(lpi, b, fd.streets)(out)
 
           case _ =>
         }
@@ -42,6 +42,12 @@ object SecondPass {
     }
   }
 
+
+  def sizeInfo: String = ""
+}
+
+
+object SecondPass {
 
   def exportLPI(lpi: OSLpi, blpu: Blpu, streets: mutable.Map[Long, Street])(out: (DbAddress) => Unit) {
     val street = streets.getOrElse(lpi.usrn, Street('X', "<SUnknown>", "<SUnknown>", "<TUnknown>"))
@@ -62,5 +68,4 @@ object SecondPass {
 
     out(line)
   }
-
 }

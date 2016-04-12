@@ -52,7 +52,7 @@ class SecondPassTest extends FunSuite with Matchers {
       assert(out.postcode === "AB12 3CD")
     }
 
-    SecondPass.processFile(csv, fd, out)
+    new SecondPass(fd).processFile(csv, out)
   }
 
 
@@ -71,7 +71,7 @@ class SecondPassTest extends FunSuite with Matchers {
       fail()
     }
 
-    SecondPass.processFile(csv, fd, out)
+    new SecondPass(fd).processFile(csv, out)
   }
 
 

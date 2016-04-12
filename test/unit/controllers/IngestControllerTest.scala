@@ -87,7 +87,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
     when(fwf.writer(anyString())) thenReturn outputFileWriter
     when(dbf.writer(anyString())) thenReturn outputDBWriter
-    when(ef.extractor(task)) thenReturn ex
+    when(ef.extractor(task, logger)) thenReturn ex
     when(outputFileWriter.output) thenReturn stubOut
     when(exf.task) thenReturn task
 
@@ -97,7 +97,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
     task.awaitCompletion()
 
-    verify(ex, times(1)).extract(any[File], anyObject(), any[StubLogger])
+    verify(ex, times(1)).extract(any[File], anyObject())
     assert(result.header.status / 100 === 2)
   }
 }

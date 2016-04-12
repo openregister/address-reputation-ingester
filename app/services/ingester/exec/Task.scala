@@ -46,10 +46,12 @@ class Task(logger: SimpleLogger) {
 
   private[ingester] val executionState: AtomicInteger = new AtomicInteger(IDLE)
 
-  def isBusy: Boolean = executionState.get != IDLE
+  def isBusy: Boolean = executionState.get == BUSY
+
+  def notIdle: Boolean = executionState.get != IDLE
 
   def awaitCompletion() {
-    while (isBusy)
+    while (notIdle)
       Thread.sleep(5)
   }
 
@@ -71,11 +73,11 @@ class Task(logger: SimpleLogger) {
         try {
           scala.concurrent.blocking {
             body
-            logger.info(s"Completed after $timer")
+            logger.info(s"Task completed after {}", timer)
           }
         } catch {
           case ie: InterruptedException =>
-            logger.info(s"Task has been cancelled after $timer")
+            logger.info(s"Task has been cancelled after {}", timer)
         }
       } andThen {
         case r =>

@@ -81,5 +81,11 @@ class LoadZipTest extends FunSuite with Matchers with MockitoSugar {
 
     assert(!zip.hasNext)
     zip.close()
+
+    assert(logger.infos.map(_.message) === List(
+      "Info:Reading zip entry SX9090-first20.csv...",
+      "Info:Reading zip entry invalid15.csv...",
+      "Info:Reading zip entry invalid24.csv...",
+      "Info:Reading from 3 files in {} took {}"))
   }
 }
