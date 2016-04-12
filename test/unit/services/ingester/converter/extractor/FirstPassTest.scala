@@ -34,8 +34,8 @@ class FirstPassTest extends FunSuite with Matchers {
 
   val dummyOut = (out: DbAddress) => {}
 
-  // test data is long so disabe scalastyle check
-  // scalastyle:off  line.size.limit
+  // test data is long so disable scalastyle check
+  // scalastyle:off
 
   class context(data: String) {
     val csv = CsvParser.split(data)
@@ -43,7 +43,10 @@ class FirstPassTest extends FunSuite with Matchers {
     val task = new Task(logger)
   }
 
-  test("Can find OSStreetDescriptor details") {
+  test(
+    """Given an OS-StreetDescriptor
+       the street table will be augmented correctly
+    """) {
     new context(
       """15,"I",31068,48504236,"A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE","","NEW CUMNOCK","EAST AYRSHIRE","ENG""""
     ) {
@@ -52,12 +55,16 @@ class FirstPassTest extends FunSuite with Matchers {
       firstPass.processFile(csv, dummyOut)
 
       assert(firstPass.streetTable.size === 1)
-      assert(firstPass.streetTable.headOption === Some((48504236, Street('A', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))))
+      assert(firstPass.streetTable.head === 48504236 -> Street('A', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPA UPRNs, 1 streets")
     }
   }
 
-
-  test("Can find StreetDescriptor and Street details and ignore Welsh") {
+  test(
+    """Given an OS-Street and OS-StreetDescriptor including both English and Welsh
+       the street table will be augmented correctly
+       and the Welsh part will be ignored
+    """) {
     new context(
       """
         |11,"I",912885,47208194,2,6825,,,,,0,2008-03-06,,2008-03-06,2004-01-28,237846.00,233160.00,237363.00,229392.00,10
@@ -70,11 +77,15 @@ class FirstPassTest extends FunSuite with Matchers {
       firstPass.processFile(csv, dummyOut)
 
       assert(firstPass.streetTable.size === 1)
-      assert(firstPass.streetTable.headOption === Some((47208194, Street('2', "CWMDUAD TO CYNWYL ELFED", "CWMDUAD", "CARMARTHEN"))))
+      assert(firstPass.streetTable.head === 47208194 -> Street('2', "CWMDUAD TO CYNWYL ELFED", "CWMDUAD", "CARMARTHEN"))
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPA UPRNs, 1 streets")
     }
   }
 
-  test("Can find StreetDescriptor and Street details") {
+  test(
+    """Given an OS-Street and OS-StreetDescriptor
+       the street table will be augmented correctly
+    """) {
     new context(
       """
         |11,"I",31067,48504236,2,9060,4,2015-01-14,,,0,2014-11-20,2015-01-14,2015-01-14,2014-11-20,261812.01,613893.54,261808.05,613853.62,999
@@ -86,11 +97,15 @@ class FirstPassTest extends FunSuite with Matchers {
       firstPass.processFile(csv, dummyOut)
 
       assert(firstPass.streetTable.size === 1)
-      assert(firstPass.streetTable.headOption === Some((48504236, Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))))
+      assert(firstPass.streetTable.head === 48504236 -> Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPA UPRNs, 1 streets")
     }
   }
 
-  test("Can find Street and StreetDescriptor details") {
+  test(
+    """Given an OS-Street and OS-StreetDescriptor in reverse order
+       the street table will be augmented correctly
+    """) {
     new context(
       """
         |15,"I",31068,48504236,"A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE","","NEW CUMNOCK","EAST AYRSHIRE","ENG"
@@ -102,12 +117,16 @@ class FirstPassTest extends FunSuite with Matchers {
       firstPass.processFile(csv, dummyOut)
 
       assert(firstPass.streetTable.size === 1)
-      assert(firstPass.streetTable.headOption === Some((48504236, Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))))
+      assert(firstPass.streetTable.head === 48504236 -> Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPA UPRNs, 1 streets")
     }
   }
 
 
-  test("can find a BLPU item") {
+  test(
+    """Given an OS-BLPU
+       the BLPU table will be augmented correctly
+    """) {
     new context(
       """
         |10,"GeoPlace",9999,2011-07-08,1,2011-07-08,16:00:30,"1.0","F"
@@ -119,34 +138,22 @@ class FirstPassTest extends FunSuite with Matchers {
       firstPass.processFile(csv, dummyOut)
 
       assert(firstPass.blpuTable.size === 1)
-      assert(firstPass.blpuTable.headOption === Some((320077134, Blpu("KY10 2PY", '1'))))
+      assert(firstPass.blpuTable.head === 320077134 -> Blpu("KY10 2PY", '1'))
+      assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPA UPRNs, 0 streets")
     }
   }
 
 
-  test("can find a DPA item") {
+  test(
+    """Given an OS-DPA
+       the DPA table will be augmented correctly
+       and one DPA record will be produced
+    """) {
     new context(
       """
         |28,"I",950823,9051119283,9051309667,35342,"","","","1 UPPER KENNERTY MILL COTTAGES",,"","","","","PETERCULTER","AB14 0LQ","S","","","","","","",2015-05-18,2003-02-03,,2011-03-16,2003-02-03
         | """.stripMargin
     ) {
-
-      val firstPass = new FirstPass(dummyOut, task)
-      firstPass.processFile(csv, dummyOut)
-
-      assert(firstPass.dpaTable.size === 1)
-      val expectedId = 9051119283L
-      assert(firstPass.dpaTable.headOption === Some(expectedId))
-    }
-  }
-
-
-  test("Check the exported format of a DLP message ") {
-    new context(
-      """28,"I",950823,9051119283,9051309667,35342,"","","","1 UPPER KENNERTY MILL COTTAGES",,"","","","","PETERCULTER","AB14 0LQ","S","","","","","","",2015-05-18,2003-02-03,,2011-03-16,2003-02-03 """.stripMargin
-    ) {
-
-      val csvLine: Array[String] = csv.next()
 
       val out = (out: DbAddress) => {
         assert(out.id === "GB9051119283")
@@ -155,9 +162,12 @@ class FirstPassTest extends FunSuite with Matchers {
         assert(out.postcode === "AB14 0LQ")
       }
 
-      val dpa = OSDpa(csvLine)
       val firstPass = new FirstPass(dummyOut, task)
-      firstPass.exportDPA(dpa)(out)
+      firstPass.processFile(csv, out)
+
+      assert(firstPass.dpaTable.size === 1)
+      assert(firstPass.dpaTable.head === 9051119283L)
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 1 DPA UPRNs, 0 streets")
     }
   }
 }

@@ -98,7 +98,7 @@ class FirstPass(out: (DbAddress) => Unit, task: Task) extends Pass {
     // note that this overwrites the pre-existing entry
       streetTable += street.usrn -> Street(street.recordType, existing.get.streetDescription, existing.get.localityName, existing.get.townName)
     else
-      streetTable += street.usrn -> Street(street.recordType)
+      streetTable += street.usrn -> Street(street.recordType, "", "", "")
   }
 
   private def processStreetDescriptor(sd: OSStreetDescriptor) {

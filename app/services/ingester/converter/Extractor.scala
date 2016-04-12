@@ -28,7 +28,7 @@ object Extractor {
 
   case class Blpu(postcode: String, logicalStatus: Char)
 
-  case class Street(recordType: Char, streetDescription: String = "", localityName: String = "", townName: String = "") {
+  case class Street(recordType: Char, streetDescription: String, localityName: String, townName: String) {
     def filteredDescription: String = if (recordType == '1') streetDescription else ""
   }
 

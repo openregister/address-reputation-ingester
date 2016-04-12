@@ -16,8 +16,6 @@
 
 package services.ingester.converter.extractor
 
-import java.io.StringReader
-
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuite, Matchers}
@@ -34,21 +32,25 @@ class SecondPassTest extends FunSuite with Matchers {
   // sample data here is in the old format
   OSCsv.setCsvFormat(1)
 
-  test("can find a LPI item can find a BLPU item") {
+  // test data is long so disable scalastyle check
+  // scalastyle:off
+
+  test(
+    """Given an OS-LPI and a prior BLPU to match
+       Then one record will be produced by processFile
+    """) {
     val lpiData =
       """
         |24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
         | """.stripMargin
 
-    val csv = CsvParser.split(new StringReader(lpiData))
+    val csv = CsvParser.split(lpiData)
 
     val blpuMap = mutable.HashMap.empty[Long, Blpu] + (131041604L -> Blpu("AB12 3CD", '1'))
     val streetsMap = mutable.HashMap.empty[Long, Street]
     val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
     val out = (out: DbAddress) => {
       assert(out.id === "GB131041604")
-      //      assert(out.lines === List("Maidenhill Stables", "xxx")) don't care here
-      //      assert(out.town === "townName") don't care here
       assert(out.postcode === "AB12 3CD")
     }
 
@@ -56,7 +58,10 @@ class SecondPassTest extends FunSuite with Matchers {
   }
 
 
-  test("can find a LPI item can NOT find a blpu item") {
+  test(
+    """Given an OS-LPI without a matching BLPU
+       Then no records will be produced by processFile
+    """) {
     val lpiData =
       """
         |24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
@@ -75,7 +80,10 @@ class SecondPassTest extends FunSuite with Matchers {
   }
 
 
-  test("Check the exported format of a LPI message ") {
+  test(
+    """Given an OS-LPI and a prior BLPU to match
+       Then the exported record will be correct
+    """) {
     val lpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
         | """.stripMargin
@@ -106,7 +114,11 @@ class SecondPassTest extends FunSuite with Matchers {
   }
 
 
-  test("LPI number range") {
+  test(
+    """Given an OS-LPI containing a house number as a range
+       Then one record will be produced by exportLPI
+       And the range will be formatted correctly
+    """) {
     val lpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
         | """.stripMargin
@@ -137,7 +149,10 @@ class SecondPassTest extends FunSuite with Matchers {
 
 
 
-  test("check LPI with a street name that needs to be removed ") {
+  test(
+    """Given an OS-LPI and a prior BLPU to match
+       Then one record will be produced by exportLPI in which the street details are updated by a later record
+    """) {
     val lpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","MAIDENHILL From STABLES",48804683,"1","","","Y"
         | """.stripMargin
@@ -166,25 +181,4 @@ class SecondPassTest extends FunSuite with Matchers {
     SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
   }
 
-
-  //  test("check 2nd pass") {
-  //    val sample = new File(getClass.getClassLoader.getResource("SX9090-first20.zip").getFile)
-  //    val fd = ForwardData.empty
-  //    val dummyOut = (out: DbAddress) => {}
-  //
-  //    SecondPass.processFile(List(sample).iterator, fd, dummyOut)
-  //  }
-  //
-  //
-  //  test("check 2nd with invalid csv will generate an error") {
-  //    val sample = new File(getClass.getClassLoader.getResource("invalid24.zip").getFile)
-  //    val fd = ForwardData.empty
-  //    val dummyOut = (out: DbAddress) => {}
-  //
-  //    val e = intercept[Exception] {
-  //      SecondPass.processFile(Vector(sample), fd, dummyOut)
-  //    }
-  //
-  //    assert(e.getMessage === "3")
-  //  }
 }
