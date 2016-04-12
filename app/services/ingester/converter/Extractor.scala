@@ -48,11 +48,13 @@ class Extractor(task: Task) {
 
     for (file <- files) {
       if (task.isBusy) {
-        LoadZip.zipReader(file, logger) {
-          it =>
-            fp.processFile(it, out)
-            logger.info(fp.sizeInfo)
+        val zip = LoadZip.zipReader(file, logger)
+        try {
+          fp.processFile(zip.next, out)
+        } finally {
+          zip.close()
         }
+        logger.info(fp.sizeInfo)
       }
     }
     val fd = fp.firstPass
@@ -60,9 +62,11 @@ class Extractor(task: Task) {
 
     for (file <- files) {
       if (task.isBusy) {
-        LoadZip.zipReader(file, logger) {
-          it =>
-            SecondPass.processFile(it, fd, out)
+        val zip = LoadZip.zipReader(file, logger)
+        try {
+          SecondPass.processFile(zip.next, fd, out)
+        } finally {
+          zip.close()
         }
       }
     }
