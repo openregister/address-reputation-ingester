@@ -18,7 +18,7 @@
 
 package services.ingester.writers
 
-import com.mongodb.{DBCollection, DBObject}
+import com.mongodb.{BulkWriteOperation, DBCollection, DBObject}
 import com.mongodb.casbah.MongoDB
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -38,18 +38,22 @@ class OutputDBWriterTest extends FunSuite {
     val casbahMongoConnection = mock[CasbahMongoConnection]
     val mongoDB = mock[MongoDB]
     val collection = mock[DBCollection]
+    val bulk = mock[BulkWriteOperation]
     val someDBAddress = mock[DbAddress]
     val logger = new StubLogger()
 
     when(mongoDB.collectionExists(anyString())) thenReturn false
     when(mongoDB.getCollection(anyString())) thenReturn collection
     when(casbahMongoConnection.getConfiguredDb) thenReturn mongoDB
+    when(collection.initializeUnorderedBulkOperation) thenReturn bulk
+    when(someDBAddress.tupled) thenReturn List()
 
-    val outputDBWriter = new OutputDBWriter("", casbahMongoConnection, logger)
+    val outputDBWriter = new OutputDBWriter(10, false, "", casbahMongoConnection, logger)
 
     outputDBWriter.output(someDBAddress)
 
-    verify(collection, times(1)).insert(any[DBObject])
+    //verify(collection, times(1)).insert(any[DBObject])
+    verify(bulk, times(1)).insert(any[DBObject])
   }
 
   test(
@@ -60,13 +64,16 @@ class OutputDBWriterTest extends FunSuite {
     val casbahMongoConnection = mock[CasbahMongoConnection]
     val mongoDB = mock[MongoDB]
     val collection = mock[DBCollection]
+    val bulk = mock[BulkWriteOperation]
     val someDBAddress = mock[DbAddress]
     val logger = new StubLogger()
 
     when(mongoDB.collectionExists(anyString())) thenReturn false
+    when(mongoDB.getCollection(anyString())) thenReturn collection
     when(casbahMongoConnection.getConfiguredDb) thenReturn mongoDB
+    when(collection.initializeUnorderedBulkOperation) thenReturn bulk
 
-    val outputDBWriter = new OutputDBWriter("", casbahMongoConnection, logger)
+    val outputDBWriter = new OutputDBWriter(10, false, "", casbahMongoConnection, logger)
 
     outputDBWriter.close()
 

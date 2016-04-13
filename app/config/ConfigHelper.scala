@@ -32,10 +32,32 @@ object ConfigHelper {
     }
   }
 
+  def mustGetConfigInt(mode: Mode, config: Configuration, key: String): Int = {
+      getConfigInt(mode, config, key).getOrElse {
+      throw new Exception(s"ERROR: Unable to find config item $mode.$key or $key")
+    }
+  }
+
+  def mustGetConfigBoolean(mode: Mode, config: Configuration, key: String): Boolean = {
+    getConfigBoolean(mode, config, key).getOrElse {
+      throw new Exception(s"ERROR: Unable to find config item $mode.$key or $key")
+    }
+  }
+
   def getConfigString(config: Configuration, key: String): Option[String] = config.getString(key)
 
   def getConfigString(mode: Mode, config: Configuration, key: String): Option[String] = {
     val modeKey = s"$mode.$key"
     config.getString(modeKey).orElse(config.getString(key))
+  }
+
+  def getConfigInt(mode: Mode, config: Configuration, key: String): Option[Int] = {
+    val modeKey = s"$mode.$key"
+    config.getInt(modeKey).orElse(config.getInt(key))
+  }
+
+  def getConfigBoolean(mode: Mode, config: Configuration, key: String): Option[Boolean] = {
+    val modeKey = s"$mode.$key"
+    config.getBoolean(modeKey).orElse(config.getBoolean(key))
   }
 }

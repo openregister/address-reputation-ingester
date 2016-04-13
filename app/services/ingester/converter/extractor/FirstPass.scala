@@ -17,7 +17,7 @@
 package services.ingester.converter.extractor
 
 import services.ingester.converter.Extractor.{Blpu, Street}
-import services.ingester.converter._
+import services.ingester.converter.{OSBlpu, _}
 import services.ingester.exec.Task
 import uk.co.hmrc.address.osgb.DbAddress
 
@@ -62,13 +62,11 @@ class FirstPass(out: (DbAddress) => Unit, task: Task) extends Pass {
           OSCsv.setCsvFormat(2)
 
       case OSBlpu.RecordId if OSBlpu.isUsefulPostcode(csvLine) =>
-        val blpu = OSBlpu(csvLine)
-        blpuTable += blpu.uprn -> Blpu(blpu.postcode, blpu.logicalStatus)
+        processBlpu(csvLine)
 
       case OSDpa.RecordId =>
-        val osDpa = OSDpa(csvLine)
-        out(ExportDbAddress.exportDPA(osDpa))
-        dpaTable += osDpa.uprn
+        processDpa(csvLine)
+
 
       case OSStreet.RecordId =>
         processStreet(OSStreet(csvLine))
@@ -78,6 +76,19 @@ class FirstPass(out: (DbAddress) => Unit, task: Task) extends Pass {
 
       case _ =>
     }
+  }
+
+  private def processBlpu(csvLine: Array[String]): Unit = {
+    val blpu = OSBlpu(csvLine)
+    if(dpaTable.contains(blpu.uprn)) dpaTable.remove(blpu.uprn)
+    else blpuTable += blpu.uprn -> Blpu(blpu.postcode, blpu.logicalStatus)
+  }
+
+  private def processDpa(csvLine: Array[String]): Unit = {
+    val osDpa = OSDpa(csvLine)
+    out(ExportDbAddress.exportDPA(osDpa))
+    if (blpuTable.contains(osDpa.uprn)) blpuTable.remove(osDpa.uprn)
+    else dpaTable += osDpa.uprn
   }
 
   private def processStreet(street: OSStreet): Unit = {

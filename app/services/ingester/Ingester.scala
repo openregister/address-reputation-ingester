@@ -49,14 +49,14 @@ object Ingester extends App {
     outCSV.println(out.toString)
   }
 
-  Task.singleton.start {
+  Task.singleton.start ({
     new Extractor(Task.singleton, Stdout).extract(osRootFolder, csvOut)
-  }
+  }, {
+    outCSV.flush()
+    outCSV.close()
+  })
 
   Task.singleton.awaitCompletion()
-
-  outCSV.flush()
-  outCSV.close()
 
   val totalTime = (System.currentTimeMillis() - appStart) / 1000
   println(s"Total Execution Time: ${totalTime / 60} mins ${totalTime % 60} secs  ")

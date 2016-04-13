@@ -40,14 +40,18 @@ class OutputFileWriter(outputFile: File) extends OutputWriter {
   private val outfile = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile), bufSize))
   private val outCSV = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outfile), bufSize))
 
+  private var count = 0
+
   override def output: (DbAddress) => Unit = (out: DbAddress) => {
     // scalastyle:off
     outCSV.println(out.toString)
+    count += 1
   }
 
   override def close(): Unit = {
     outCSV.flush()
     outCSV.close()
+    println(s"*** document count = $count")
   }
 
 }
