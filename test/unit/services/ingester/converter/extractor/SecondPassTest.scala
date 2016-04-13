@@ -37,7 +37,7 @@ class SecondPassTest extends FunSuite with Matchers {
 
   test(
     """Given an OS-LPI and a prior BLPU to match
-       Then one record will be produced by processFile
+       Then one record will be produced by processFile.
     """) {
     val lpiData =
       """
@@ -60,7 +60,7 @@ class SecondPassTest extends FunSuite with Matchers {
 
   test(
     """Given an OS-LPI without a matching BLPU
-       Then no records will be produced by processFile
+       Then no records will be produced by processFile.
     """) {
     val lpiData =
       """
@@ -82,7 +82,7 @@ class SecondPassTest extends FunSuite with Matchers {
 
   test(
     """Given an OS-LPI and a prior BLPU to match
-       Then the exported record will be correct
+       Then the exported record will be correct.
     """) {
     val lpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
@@ -97,27 +97,24 @@ class SecondPassTest extends FunSuite with Matchers {
     val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
-    val out = (out: DbAddress) => {
-      assert(out.id === "GB131041604")
-      assert(out.lines === List("Maidenhill Stables", "Locality-Name"))
-      assert(out.town === "Town-Name")
-      assert(out.postcode === "G77 6RT")
-    }
-
     val osblpu = OSBlpu(csvBlpuLine)
     val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
 
     val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "locality-name", "town-name"))
 
     val lpi = OSLpi(csvLpiLine)
-    SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
+    val out = ExportDbAddress.exportLPI(lpi, blpu, streetsMap)
+    assert(out.id === "GB131041604")
+    assert(out.lines === List("Maidenhill Stables", "Locality-Name"))
+    assert(out.town === "Town-Name")
+    assert(out.postcode === "G77 6RT")
   }
 
 
   test(
     """Given an OS-LPI containing a house number as a range
        Then one record will be produced by exportLPI
-       And the range will be formatted correctly
+       And the range will be formatted correctly.
     """) {
     val lpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
@@ -131,27 +128,25 @@ class SecondPassTest extends FunSuite with Matchers {
     val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
-    val out = (out: DbAddress) => {
-      assert(out.id === "GB131041604")
-      assert(out.lines === List("1a-2b Maidenhill Stables", "Locality Name"))
-      assert(out.town === "Town-Name")
-      assert(out.postcode === "G77 6RT")
-    }
-
     val osblpu = OSBlpu(csvBlpuLine)
     val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
 
     val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "locality name", "town-name"))
 
     val lpi = OSLpi(csvLpiLine)
-    SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
+    val out = ExportDbAddress.exportLPI(lpi, blpu, streetsMap)
+    assert(out.id === "GB131041604")
+    assert(out.lines === List("1a-2b Maidenhill Stables", "Locality Name"))
+    assert(out.town === "Town-Name")
+    assert(out.postcode === "G77 6RT")
   }
 
 
 
   test(
     """Given an OS-LPI and a prior BLPU to match
-       Then one record will be produced by exportLPI in which the street details are updated by a later record
+       And there is a pre-existing street record,
+       Then one record will be produced by exportLPI in which the street details are updated by the street record.
     """) {
     val lpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","MAIDENHILL From STABLES",48804683,"1","","","Y"
@@ -165,20 +160,17 @@ class SecondPassTest extends FunSuite with Matchers {
     val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
-    val out = (out: DbAddress) => {
-      assert(out.id === "GB131041604")
-      assert(out.lines === List("Locality Name"))
-      assert(out.town === "Town-Name")
-      assert(out.postcode === "G77 6RT")
-    }
-
     val osblpu = OSBlpu(csvBlpuLine)
     val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
 
     val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "street From Description", "locality name", "town-name"))
 
     val lpi = OSLpi(csvLpiLine)
-    SecondPass.exportLPI(lpi, blpu, streetsMap)(out)
+    val out = ExportDbAddress.exportLPI(lpi, blpu, streetsMap)
+    assert(out.id === "GB131041604")
+    assert(out.lines === List("Locality Name"))
+    assert(out.town === "Town-Name")
+    assert(out.postcode === "G77 6RT")
   }
 
 }

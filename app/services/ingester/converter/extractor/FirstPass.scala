@@ -20,8 +20,6 @@ import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
 import services.ingester.exec.Task
 import uk.co.hmrc.address.osgb.DbAddress
-import uk.co.hmrc.address.osgb.Postcode._
-import uk.co.hmrc.address.services.Capitalisation._
 
 import scala.collection.{mutable, _}
 
@@ -42,18 +40,8 @@ class FirstPass(out: (DbAddress) => Unit, task: Task) extends Pass {
 
 
   def firstPass: ForwardData = {
-        //TODO: move to passed in logger
+    //TODO: move to passed in logger
     ForwardData(blpuTable, dpaTable, streetTable)
-  }
-
-
-  def exportDPA(dpa: OSDpa)(out: (DbAddress) => Unit): Unit = {
-    val id = "GB" + dpa.uprn.toString
-    val line1 = normaliseAddressLine(dpa.subBuildingName + " " + dpa.buildingName)
-    val line2 = normaliseAddressLine(dpa.buildingNumber + " " + dpa.dependentThoroughfareName + " " + dpa.thoroughfareName)
-    val line3 = normaliseAddressLine(dpa.doubleDependentLocality + " " + dpa.dependentLocality)
-
-    out(DbAddress(id, line1, line2, line3, normaliseAddressLine(dpa.postTown), normalisePostcode(dpa.postcode)))
   }
 
 
@@ -79,7 +67,7 @@ class FirstPass(out: (DbAddress) => Unit, task: Task) extends Pass {
 
       case OSDpa.RecordId =>
         val osDpa = OSDpa(csvLine)
-        exportDPA(osDpa)(out)
+        out(ExportDbAddress.exportDPA(osDpa))
         dpaTable += osDpa.uprn
 
       case OSStreet.RecordId =>
