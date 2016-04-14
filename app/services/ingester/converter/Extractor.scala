@@ -49,10 +49,12 @@ class Extractor(task: Task, logger: SimpleLogger) {
     val dt = new DiagnosticTimer
     val fp = new FirstPass(out, task)
 
+    logger.info(s"Starting first pass through ${files.size} files")
     pass(files, out, fp)
     val fd = fp.firstPass
     logger.info(s"First pass complete after {}", dt)
 
+    logger.info(s"Starting second pass through ${files.size} files")
     val sp = new SecondPass(fd)
     pass(files, out, sp)
     logger.info(s"Finished after {}", dt)
@@ -61,14 +63,20 @@ class Extractor(task: Task, logger: SimpleLogger) {
   private def pass(files: Seq[File], out: OutputWriter, thisPass: Pass) {
     for (file <- files
          if task.isBusy) {
-      val zip = LoadZip.zipReader(file, logger)
+      val dt = new DiagnosticTimer
+      val zip = LoadZip.zipReader(file, (name) => {
+        name.toLowerCase.endsWith(".csv")
+      })
       try {
         while (zip.hasNext && task.isBusy) {
           val next = zip.next
+          val name = next.zipEntry.getName
+          logger.info(s"Reading zip entry $name...")
           thisPass.processFile(next, out)
         }
       } finally {
         zip.close()
+        logger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}", file.getName, dt)
       }
       logger.info(thisPass.sizeInfo)
     }

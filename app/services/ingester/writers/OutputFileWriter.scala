@@ -28,9 +28,7 @@ import uk.co.hmrc.address.osgb.DbAddress
 object OutputFileWriterHelper {
   val home = System.getenv("HOME")
   val outputFolder = new File(mustGetConfigString(current.mode, current.configuration, "app.files.outputFolder").replace("$HOME", home))
-  if (!outputFolder.exists()) {
-    throw new FileNotFoundException(outputFolder.toString)
-  }
+  outputFolder.mkdirs()
 }
 
 

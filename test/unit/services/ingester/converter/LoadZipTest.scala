@@ -22,7 +22,6 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
 class LoadZipTest extends FunSuite with Matchers with MockitoSugar {
@@ -32,8 +31,7 @@ class LoadZipTest extends FunSuite with Matchers with MockitoSugar {
        zipReader should return an iterator over the CSV lines
     """) {
     val sample = new File(getClass.getClassLoader.getResource("SX9090-first20.zip").getFile)
-    val logger = new StubLogger
-    val zip = LoadZip.zipReader(sample, logger)
+    val zip = LoadZip.zipReader(sample)
     assert(zip.hasNext)
     val it = zip.next
     assert(it.zipEntry.getName === "SX9090-first20.csv")
@@ -45,6 +43,7 @@ class LoadZipTest extends FunSuite with Matchers with MockitoSugar {
     assert(!it.hasNext)
 
     assert(!zip.hasNext)
+    assert(zip.nFiles === 1)
     zip.close()
   }
 
@@ -53,8 +52,7 @@ class LoadZipTest extends FunSuite with Matchers with MockitoSugar {
        zipReader should return three iterators over the CSV lines
     """) {
     val sample = new File(getClass.getClassLoader.getResource("3files.zip").getFile)
-    val logger = new StubLogger
-    val zip = LoadZip.zipReader(sample, logger)
+    val zip = LoadZip.zipReader(sample)
     assert(zip.hasNext)
     val it1 = zip.next
     assert(it1.zipEntry.getName === "SX9090-first20.csv")
@@ -80,12 +78,7 @@ class LoadZipTest extends FunSuite with Matchers with MockitoSugar {
     assert(!it3.hasNext)
 
     assert(!zip.hasNext)
+    assert(zip.nFiles === 3)
     zip.close()
-
-    assert(logger.infos.map(_.message) === List(
-      "Info:Reading zip entry SX9090-first20.csv...",
-      "Info:Reading zip entry invalid15.csv...",
-      "Info:Reading zip entry invalid24.csv...",
-      "Info:Reading from 3 files in {} took {}"))
   }
 }

@@ -17,13 +17,11 @@
 package services.ingester
 
 import java.io._
-import java.util.zip.GZIPOutputStream
 
 import com.typesafe.config.ConfigFactory
 import services.ingester.converter.Extractor
 import services.ingester.exec.Task
-import services.ingester.writers.OutputFileWriterFactory
-import uk.co.hmrc.address.osgb.DbAddress
+import services.ingester.writers.OutputFileWriter
 import uk.co.hmrc.logging.Stdout
 
 object Ingester extends App {
@@ -38,15 +36,19 @@ object Ingester extends App {
     throw new FileNotFoundException(osRootFolder.toString)
   }
 
-  val outCSV = new OutputFileWriterFactory().writer("output")
+  val outputFolder = new File(conf.getString("app.files.outputFolder").replace("$HOME", home))
+  outputFolder.mkdirs()
 
-  Task.singleton.start ({
-    new Extractor(Task.singleton, Stdout).extract(osRootFolder, outCSV)
+  val outCSV = new OutputFileWriter(new File(outputFolder, s"output.txt.gz"))
+
+  val task = new Task(Stdout)
+  task.start({
+    new Extractor(task, Stdout).extract(osRootFolder, outCSV)
   }, {
     outCSV.close()
   })
 
-  Task.singleton.awaitCompletion()
+  task.awaitCompletion()
 
   val totalTime = (System.currentTimeMillis() - appStart) / 1000
   println(s"Total Execution Time: ${totalTime / 60} mins ${totalTime % 60} secs  ")

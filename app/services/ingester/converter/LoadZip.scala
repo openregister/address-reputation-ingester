@@ -19,39 +19,49 @@ package services.ingester.converter
 import java.io._
 import java.util.zip.{ZipEntry, ZipFile}
 
-import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.address.services.CsvParser
-import uk.co.hmrc.logging.SimpleLogger
 
 
 case class EmptyFileException(msg: String) extends Exception(msg)
 
 
 object LoadZip {
-  def zipReader(file: File, logger: SimpleLogger): ZipWrapper = new ZipWrapper(file, logger)
+  def zipReader(file: File, accept: (String) => Boolean = (_) => true): ZipWrapper = new ZipWrapper(file, accept)
 }
 
 
-class ZipWrapper(zipFile: ZipFile, logger: SimpleLogger) extends Iterator[ZippedCsvIterator] with Closeable {
+class ZipWrapper(zipFile: ZipFile, accept: (String) => Boolean) extends Iterator[ZippedCsvIterator] with Closeable {
 
-  def this(file: File, logger: SimpleLogger) = this(new ZipFile(file), logger)
+  def this(file: File, accept: (String) => Boolean) = this(new ZipFile(file), accept)
 
-  val dt = new DiagnosticTimer
   private var open = true
   private var files = 0
   private val enumeration = zipFile.entries
+  private var nextCache: Option[ZippedCsvIterator] = None
 
   if (!enumeration.hasMoreElements) {
     throw EmptyFileException("Empty file")
   }
 
-  override def hasNext: Boolean = open && enumeration.hasMoreElements
+  private def lookAhead() {
+    nextCache = None
+    while (enumeration.hasMoreElements && nextCache.isEmpty) {
+      val zipEntry = enumeration.nextElement()
+      if (accept(zipEntry.getName)) {
+        nextCache = Some(new ZippedCsvIterator(zipFile.getInputStream(zipEntry), zipEntry, this))
+      }
+    }
+  }
+
+  lookAhead()
+
+  override def hasNext: Boolean = open && nextCache.isDefined
 
   override def next: ZippedCsvIterator = {
+    val thisNext = nextCache.get
+    lookAhead()
     files += 1
-    val zipEntry = enumeration.nextElement()
-    logger.info(s"Reading zip entry ${zipEntry.getName}...")
-    new ZippedCsvIterator(zipFile.getInputStream(zipEntry), zipEntry, this)
+    thisNext
   }
 
   /** Closes the entire ZIP archive. Should be done exactly once after reading all contents. */
@@ -59,11 +69,12 @@ class ZipWrapper(zipFile: ZipFile, logger: SimpleLogger) extends Iterator[Zipped
     if (open) {
       open = false
       zipFile.close()
-      logger.info(s"Reading from $files files in {} took {}", zipFile.getName, dt)
     }
   }
 
   override def toString: String = zipFile.toString
+
+  def nFiles = files
 }
 
 
@@ -79,6 +90,7 @@ class ZippedCsvIterator(is: InputStream, val zipEntry: ZipEntry, container: Clos
       it.next
     } catch {
       case e: Exception =>
+        e.printStackTrace()
         close()
         throw e
     }

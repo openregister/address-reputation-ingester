@@ -23,7 +23,7 @@ import play.api.Logger
 import services.ingester.converter.Extractor
 import services.ingester.exec.Task
 import services.ingester.ftpdownloader.{FtpDownloader, RealWorldIO}
-import services.ingester.writers.OutputFileWriterFactory
+import services.ingester.writers.OutputFileWriter
 import uk.co.hmrc.logging.LoggerFacade
 
 import scala.util.{Failure, Success, Try}
@@ -46,22 +46,27 @@ object DownloadToCSV extends App {
     val user = conf.getString("app.ftp.user")
     val pass = conf.getString("app.ftp.pass")
 
-    val osHomeFolder = conf.getString("app.files.rootFolder")
+    val home = System.getenv("HOME")
+    val osRootFolder = new File(conf.getString("app.files.rootFolder").replace("$HOME", home))
+    if (!osRootFolder.exists()) {
+      throw new FileNotFoundException(osRootFolder.toString)
+    }
+
     val tmpZipfilesHome = conf.getString("app.files.tempFolder")
 
     // resulting .csv
-    val outCSVFilename = conf.getString("app.output.csvFolder")
-
+    val outputFolder = new File(conf.getString("app.files.outputFolder").replace("$HOME", home))
+    outputFolder.mkdirs()
 
     val ftpClient = new FtpDownloader with RealWorldIO
     ftpClient.FileCreationDelay = 1
 
     ftpClient.login(user, pass, server).map { result =>
-      ftpClient.ftpDownload(osHomeFolder, tmpZipfilesHome) match {
+      ftpClient.ftpDownload(osRootFolder.getPath, tmpZipfilesHome) match {
         case Success((count, subFolder)) =>
           logger.info(s"Downloaded $count files  into subFolder $subFolder")
 
-          val outCSV = new OutputFileWriterFactory().writer("output")
+          val outCSV = new OutputFileWriter(new File(outputFolder, s"output.txt.gz"))
 
           val result = new Extractor(Task.singleton, logger).extract(new File(tmpZipfilesHome + "/" + subFolder), outCSV)
           logger.info("Result: " + result.toString)
