@@ -72,7 +72,7 @@ class OutputDBWriter(bulkSize: Int,
     }
   }
 
-  override def close(): Unit = {
+  override def close() {
     try {
       if (documentCount % bulkSize != 0) bulk.execute()
       collection.createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
@@ -91,7 +91,6 @@ class OutputDBWriter(bulkSize: Int,
     mongoDbConnection.close()
     documentCount = 0
     errored = false
-    ()
   }
 
 }
