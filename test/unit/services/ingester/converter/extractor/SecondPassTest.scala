@@ -21,6 +21,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
+import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
 
@@ -49,9 +50,14 @@ class SecondPassTest extends FunSuite with Matchers {
     val blpuMap = mutable.HashMap.empty[Long, Blpu] + (131041604L -> Blpu("AB12 3CD", '1'))
     val streetsMap = mutable.HashMap.empty[Long, Street]
     val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
-    val out = (out: DbAddress) => {
-      assert(out.id === "GB131041604")
-      assert(out.postcode === "AB12 3CD")
+
+    val out = new OutputWriter {
+      def close() {}
+
+      def output(out: DbAddress) {
+        assert(out.id === "GB131041604")
+        assert(out.postcode === "AB12 3CD")
+      }
     }
 
     new SecondPass(fd).processFile(csv, out)
@@ -72,8 +78,12 @@ class SecondPassTest extends FunSuite with Matchers {
     val blpuMap = mutable.HashMap.empty[Long, Blpu] + (0L -> Blpu("AB12 3CD", '1'))
     val streetsMap = mutable.HashMap.empty[Long, Street]
     val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
-    val out = (out: DbAddress) => {
-      fail()
+    val out = new OutputWriter {
+      def close() {}
+
+      def output(out: DbAddress) {
+        fail()
+      }
     }
 
     new SecondPass(fd).processFile(csv, out)

@@ -51,7 +51,7 @@ class OutputDBWriter(bulkSize: Int,
     collectionName
   }
 
-  override def output: (DbAddress) => Unit = (address: DbAddress) => {
+  override def output(address: DbAddress) {
     try {
       documentCount += 1
 
@@ -66,11 +66,10 @@ class OutputDBWriter(bulkSize: Int,
       }
     } catch {
       case me: MongoException =>
-        logger.info(s"Caught Mongo Exception processing bulk insertion ${me}")
+        logger.info(s"Caught Mongo Exception processing bulk insertion $me")
         errored = true
         throw me
     }
-    ()
   }
 
   override def close(): Unit = {

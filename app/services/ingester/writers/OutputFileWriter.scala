@@ -42,9 +42,9 @@ class OutputFileWriter(outputFile: File) extends OutputWriter {
 
   private var count = 0
 
-  override def output: (DbAddress) => Unit = (out: DbAddress) => {
+  override def output(a: DbAddress) {
     // scalastyle:off
-    outCSV.println(out.toString)
+    outCSV.println(a.toString)
     count += 1
   }
 
@@ -53,7 +53,6 @@ class OutputFileWriter(outputFile: File) extends OutputWriter {
     outCSV.close()
     println(s"*** document count = $count")
   }
-
 }
 
 

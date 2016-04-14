@@ -18,21 +18,21 @@ package services.ingester.converter.extractor
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
 import services.ingester.exec.Task
+import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
-class FirstPassTest extends FunSuite with Matchers {
+class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
   // sample data here is in the old format
   OSCsv.setCsvFormat(1)
-
-  val dummyOut = (out: DbAddress) => {}
 
   // test data is long so disable scalastyle check
   // scalastyle:off
@@ -41,6 +41,7 @@ class FirstPassTest extends FunSuite with Matchers {
     val csv = CsvParser.split(data)
     val logger = new StubLogger
     val task = new Task(logger)
+    val dummyOut = mock[OutputWriter]
   }
 
   test(
@@ -155,11 +156,14 @@ class FirstPassTest extends FunSuite with Matchers {
         | """.stripMargin
     ) {
 
-      val out = (out: DbAddress) => {
-        assert(out.id === "GB9051119283")
-        assert(out.lines === List("1 Upper Kennerty Mill Cottages"))
-        assert(out.town === "Peterculter")
-        assert(out.postcode === "AB14 0LQ")
+      val out = new OutputWriter {
+        def output(out: DbAddress) {
+          assert(out.id === "GB9051119283")
+          assert(out.lines === List("1 Upper Kennerty Mill Cottages"))
+          assert(out.town === "Peterculter")
+          assert(out.postcode === "AB14 0LQ")
+        }
+        def close() {}
       }
 
       val firstPass = new FirstPass(dummyOut, task)

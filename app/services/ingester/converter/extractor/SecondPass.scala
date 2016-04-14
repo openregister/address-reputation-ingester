@@ -17,11 +17,12 @@
 package services.ingester.converter.extractor
 
 import services.ingester.converter._
+import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 
 class SecondPass(fd: ForwardData) extends Pass {
 
-  def processFile(csvIterator: Iterator[Array[String]], out: (DbAddress) => Unit) {
+  def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter) {
     for (csvLine <- csvIterator) {
       if (csvLine(OSCsv.RecordIdentifier_idx) == OSLpi.RecordId) {
         processLPI(csvLine, out)
@@ -29,13 +30,13 @@ class SecondPass(fd: ForwardData) extends Pass {
     }
   }
 
-  private def processLPI(csvLine: Array[String], out: (DbAddress) => Unit): Unit = {
+  private def processLPI(csvLine: Array[String], out: OutputWriter): Unit = {
     val lpi = OSLpi(csvLine)
     val blpu = fd.blpu.get(lpi.uprn)
 
     blpu match {
       case Some(b) if b.logicalStatus == lpi.logicalStatus =>
-        out(ExportDbAddress.exportLPI(lpi, b, fd.streets))
+        out.output(ExportDbAddress.exportLPI(lpi, b, fd.streets))
         // TODO: this results in just accepting the first lpi record processed - really we should
         // be taking a decision in the firstPass which of the lpi records is the most suitable
         fd.blpu.remove(lpi.uprn)

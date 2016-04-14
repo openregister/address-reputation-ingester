@@ -20,8 +20,8 @@ import java.io.File
 
 import services.ingester.converter.extractor.{FirstPass, Pass, SecondPass}
 import services.ingester.exec.Task
+import services.ingester.writers.OutputWriter
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
-import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.SimpleLogger
 
 object Extractor {
@@ -41,11 +41,11 @@ class Extractor(task: Task, logger: SimpleLogger) {
     else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
 
 
-  def extract(rootDir: File, out: (DbAddress) => Unit) {
+  def extract(rootDir: File, out: OutputWriter) {
     extract(listFiles(rootDir), out)
   }
 
-  def extract(files: Seq[File], out: (DbAddress) => Unit) {
+  def extract(files: Seq[File], out: OutputWriter) {
     val dt = new DiagnosticTimer
     val fp = new FirstPass(out, task)
 
@@ -58,7 +58,7 @@ class Extractor(task: Task, logger: SimpleLogger) {
     logger.info(s"Finished after {}", dt)
   }
 
-  private def pass(files: Seq[File], out: (DbAddress) => Unit, thisPass: Pass) {
+  private def pass(files: Seq[File], out: OutputWriter, thisPass: Pass) {
     for (file <- files
          if task.isBusy) {
       val zip = LoadZip.zipReader(file, logger)

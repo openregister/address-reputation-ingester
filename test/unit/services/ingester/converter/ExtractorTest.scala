@@ -24,6 +24,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.exec.Task
+import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.StubLogger
 
@@ -35,7 +36,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
     val mockFile = mock[File]
     val logger = new StubLogger
     val task = new Task(logger)
-    val dummyOut = (out: DbAddress) => {}
+    val dummyOut = mock[OutputWriter]
 
     when(mockFile.isDirectory) thenReturn true
     when(mockFile.listFiles) thenReturn Array.empty[File]
@@ -54,8 +55,11 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
     val logger = new StubLogger
     val task = new Task(logger)
 
-    val out = (out: DbAddress) => {
-      fail("Not expecting output from this sample data file.")
+    val out = new OutputWriter {
+      def output(out: DbAddress) {
+        fail("Not expecting output from this sample data file.")
+      }
+      def close() {}
     }
 
     task.start {

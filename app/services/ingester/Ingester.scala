@@ -22,6 +22,7 @@ import java.util.zip.GZIPOutputStream
 import com.typesafe.config.ConfigFactory
 import services.ingester.converter.Extractor
 import services.ingester.exec.Task
+import services.ingester.writers.OutputFileWriterFactory
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.Stdout
 
@@ -37,22 +38,11 @@ object Ingester extends App {
     throw new FileNotFoundException(osRootFolder.toString)
   }
 
-  val tmpZipfilesHome = conf.getString("app.files.tempFolder")
-
-  val bufSize = 32 * 1024
-  val outputFile = new File(osRootFolder, "output.csv.gz")
-  val outfile = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile), bufSize))
-  val outCSV = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outfile), bufSize))
-
-  val csvOut = (out: DbAddress) => {
-    // scalastyle:off
-    outCSV.println(out.toString)
-  }
+  val outCSV = new OutputFileWriterFactory().writer("output")
 
   Task.singleton.start ({
-    new Extractor(Task.singleton, Stdout).extract(osRootFolder, csvOut)
+    new Extractor(Task.singleton, Stdout).extract(osRootFolder, outCSV)
   }, {
-    outCSV.flush()
     outCSV.close()
   })
 

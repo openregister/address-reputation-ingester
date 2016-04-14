@@ -19,19 +19,19 @@ package services.ingester.converter.extractor
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter.{OSBlpu, _}
 import services.ingester.exec.Task
-import uk.co.hmrc.address.osgb.DbAddress
+import services.ingester.writers.OutputWriter
 
 import scala.collection.{mutable, _}
 
 
 trait Pass {
-  def processFile(csvIterator: Iterator[Array[String]], out: (DbAddress) => Unit)
+  def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter)
 
   def sizeInfo: String
 }
 
 
-class FirstPass(out: (DbAddress) => Unit, task: Task) extends Pass {
+class FirstPass(out: OutputWriter, task: Task) extends Pass {
 
   private[extractor] val blpuTable: mutable.Map[Long, Blpu] = new mutable.HashMap()
   private[extractor] val dpaTable: mutable.Set[Long] = new mutable.HashSet()
@@ -45,14 +45,14 @@ class FirstPass(out: (DbAddress) => Unit, task: Task) extends Pass {
   }
 
 
-  def processFile(csvIterator: Iterator[Array[String]], out: (DbAddress) => Unit) {
+  def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter) {
     for (csvLine <- csvIterator) {
       processLine(csvLine, out)
     }
   }
 
 
-  private def processLine(csvLine: Array[String], out: (DbAddress) => Unit) {
+  private def processLine(csvLine: Array[String], out: OutputWriter) {
 
     csvLine(OSCsv.RecordIdentifier_idx) match {
       case OSHeader.RecordId =>
@@ -79,13 +79,13 @@ class FirstPass(out: (DbAddress) => Unit, task: Task) extends Pass {
 
   private def processBlpu(csvLine: Array[String]): Unit = {
     val blpu = OSBlpu(csvLine)
-    if(dpaTable.contains(blpu.uprn)) dpaTable.remove(blpu.uprn)
+    if (dpaTable.contains(blpu.uprn)) dpaTable.remove(blpu.uprn)
     else blpuTable += blpu.uprn -> Blpu(blpu.postcode, blpu.logicalStatus)
   }
 
   private def processDpa(csvLine: Array[String]): Unit = {
     val osDpa = OSDpa(csvLine)
-    out(ExportDbAddress.exportDPA(osDpa))
+    out.output(ExportDbAddress.exportDPA(osDpa))
     if (blpuTable.contains(osDpa.uprn)) blpuTable.remove(osDpa.uprn)
     else dpaTable += osDpa.uprn
   }

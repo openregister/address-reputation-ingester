@@ -22,7 +22,7 @@ import uk.co.hmrc.address.osgb.DbAddress
 
 trait OutputWriter {
 
-  def output: (DbAddress) => Unit
+  def output(a: DbAddress)
 
   def close(): Unit
 

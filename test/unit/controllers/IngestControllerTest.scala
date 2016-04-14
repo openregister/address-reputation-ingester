@@ -24,8 +24,7 @@ import org.scalatest.FunSuite
 import org.scalatest.mock.MockitoSugar
 import services.ingester.converter.{Extractor, ExtractorFactory}
 import services.ingester.exec.{Task, TaskFactory}
-import services.ingester.writers.{OutputDBWriter, OutputDBWriterFactory, OutputFileWriter, OutputFileWriterFactory}
-import uk.co.hmrc.address.osgb.DbAddress
+import services.ingester.writers._
 import uk.co.hmrc.logging.StubLogger
 
 class IngestControllerTest extends FunSuite with MockitoSugar {
@@ -79,8 +78,6 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val ex = mock[Extractor]
     val folder = new File(".")
     val logger = new StubLogger()
-
-    val stubOut = (dba: DbAddress) => {}
     val task = new Task(logger)
     val outputFileWriter = mock[OutputFileWriter]
     val outputDBWriter = mock[OutputDBWriter]
@@ -88,7 +85,6 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     when(fwf.writer(anyString())) thenReturn outputFileWriter
     when(dbf.writer(anyString())) thenReturn outputDBWriter
     when(ef.extractor(task, logger)) thenReturn ex
-    when(outputFileWriter.output) thenReturn stubOut
     when(exf.task) thenReturn task
 
     val ic = new IngestController(folder, logger, dbf, fwf, ef, exf)

@@ -24,7 +24,7 @@ import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import services.ingester.converter.ExtractorFactory
 import services.ingester.exec.TaskFactory
-import services.ingester.writers.{OutputDBWriterFactory, OutputFileWriterFactory, OutputWriter, OutputWriterFactory}
+import services.ingester.writers.{OutputDBWriterFactory, OutputFileWriterFactory, OutputWriterFactory}
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -52,7 +52,7 @@ class IngestController(rootFolder: File,
                        taskFactory: TaskFactory
                       ) extends BaseController {
 
-  val alphaNumPattern = "[a-z0-9]+".r
+  private val alphaNumPattern = "[a-z0-9]+".r
 
   def ingest(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
     request =>
@@ -64,10 +64,11 @@ class IngestController(rootFolder: File,
       handleIngest(request, product, epoch, variant, fileWriterFactory)
   }
 
-  def handleIngest(request: Request[AnyContent], product: String, epoch: String, variant: String, writerFactory: OutputWriterFactory): Result = {
-    require(alphaNumPattern.pattern.matcher(product).matches())
-    require(alphaNumPattern.pattern.matcher(epoch).matches())
-    require(alphaNumPattern.pattern.matcher(variant).matches())
+  private[controllers] def handleIngest(request: Request[AnyContent], product: String, epoch: String, variant: String,
+                                        writerFactory: OutputWriterFactory): Result = {
+    require(isValidInput(product))
+    require(isValidInput(epoch))
+    require(isValidInput(variant))
 
     val qualifiedDir = new File(rootFolder, s"$product/$epoch/$variant/data")
 
@@ -75,7 +76,7 @@ class IngestController(rootFolder: File,
 
     val task = taskFactory.task
     val status = task.start({
-      extractorFactory.extractor(task, logger).extract(qualifiedDir, writer.output)
+      extractorFactory.extractor(task, logger).extract(qualifiedDir, writer)
     }, {
       logger.info("cleaning up extractor")
       writer.close()
@@ -83,6 +84,9 @@ class IngestController(rootFolder: File,
 
     if (status) Ok(s"Ingestion initiated for $product/$epoch/$variant")
     else BadRequest("Ingester is currently executing")
+  }
 
+  private def isValidInput(param: String): Boolean = {
+    param.length <= 20 && alphaNumPattern.pattern.matcher(param).matches()
   }
 }

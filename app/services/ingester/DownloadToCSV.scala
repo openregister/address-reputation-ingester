@@ -23,7 +23,7 @@ import play.api.Logger
 import services.ingester.converter.Extractor
 import services.ingester.exec.Task
 import services.ingester.ftpdownloader.{FtpDownloader, RealWorldIO}
-import uk.co.hmrc.address.osgb.DbAddress
+import services.ingester.writers.OutputFileWriterFactory
 import uk.co.hmrc.logging.LoggerFacade
 
 import scala.util.{Failure, Success, Try}
@@ -61,17 +61,11 @@ object DownloadToCSV extends App {
         case Success((count, subFolder)) =>
           logger.info(s"Downloaded $count files  into subFolder $subFolder")
 
-          lazy val outCSV = new PrintWriter(new BufferedWriter(new FileWriter(s"$outCSVFilename/addr_$subFolder.csv"), 1024 * 32))
+          val outCSV = new OutputFileWriterFactory().writer("output")
 
-          val csvOut = (out: DbAddress) => {
-            // scalastyle:off
-            outCSV.println(out.toString)
-          }
-
-          val result = new Extractor(Task.singleton, logger).extract(new File(tmpZipfilesHome + "/" + subFolder), csvOut)
+          val result = new Extractor(Task.singleton, logger).extract(new File(tmpZipfilesHome + "/" + subFolder), outCSV)
           logger.info("Result: " + result.toString)
 
-          outCSV.flush()
           outCSV.close()
 
         case Failure(err) =>
