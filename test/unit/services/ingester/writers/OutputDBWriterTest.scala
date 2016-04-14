@@ -39,14 +39,13 @@ class OutputDBWriterTest extends FunSuite {
     val mongoDB = mock[MongoDB]
     val collection = mock[DBCollection]
     val bulk = mock[BulkWriteOperation]
-    val someDBAddress = mock[DbAddress]
+    val someDBAddress = DbAddress("id1", List("1 Foo Rue"), "Puddletown", "FX1 1XF")
     val logger = new StubLogger()
 
     when(mongoDB.collectionExists(anyString())) thenReturn false
     when(mongoDB.getCollection(anyString())) thenReturn collection
     when(casbahMongoConnection.getConfiguredDb) thenReturn mongoDB
     when(collection.initializeUnorderedBulkOperation) thenReturn bulk
-    when(someDBAddress.tupled) thenReturn List()
 
     val outputDBWriter = new OutputDBWriter(10, false, "", casbahMongoConnection, logger)
 

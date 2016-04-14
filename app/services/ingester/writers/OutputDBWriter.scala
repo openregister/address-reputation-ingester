@@ -19,7 +19,7 @@
 package services.ingester.writers
 
 import com.mongodb.casbah.commons.MongoDBObject
-import com.mongodb.{DBCollection, MongoException}
+import com.mongodb.{DBCollection, DBObject, MongoException}
 import config.ConfigHelper._
 import play.api.Logger
 import play.api.Play._
@@ -27,73 +27,6 @@ import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 
-
-class OutputDBWriter(bulkSize: Int,
-                     cleardownOnError: Boolean,
-                     collectionNameRoot: String,
-                     mongoDbConnection: CasbahMongoConnection,
-                     logger: SimpleLogger) extends OutputWriter {
-
-  private var documentCount = 0
-
-  lazy private val collection: DBCollection = mongoDbConnection.getConfiguredDb.getCollection(collectionName)
-  private var bulk = collection.initializeUnorderedBulkOperation
-  private var errored: Boolean = false
-
-  private def collectionName = {
-    var collectionName = collectionNameRoot
-    var iteration = 0
-    while (mongoDbConnection.getConfiguredDb.collectionExists(collectionName)) {
-      iteration += 1
-      collectionName = s"${collectionNameRoot}_$iteration"
-    }
-    logger.info(s"Writing to collection $collectionName")
-    collectionName
-  }
-
-  override def output(address: DbAddress) {
-    try {
-      documentCount += 1
-
-      //use below to insert documents one at a time (and comment out bulk processing\
-      //collection.insert(MongoDBObject(address.tupled))
-
-      bulk.insert(MongoDBObject(address.tupled))
-      if (documentCount % bulkSize == 0) {
-        logger.info("Committing bulk ")
-        bulk.execute()
-        bulk = collection.initializeUnorderedBulkOperation
-      }
-    } catch {
-      case me: MongoException =>
-        logger.info(s"Caught Mongo Exception processing bulk insertion $me")
-        errored = true
-        throw me
-    }
-  }
-
-  override def close() {
-    try {
-      if (documentCount % bulkSize != 0) bulk.execute()
-      collection.createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
-    } catch {
-      case me: MongoException =>
-        logger.info(s"Caught MongoException committing final bulk insert and creating index $me")
-        errored = true
-    }
-
-    if (errored) {
-      logger.info("Error detected while loading data into mongo")
-      if (cleardownOnError) collection.drop()
-    } else {
-      logger.info(s"number of documents loaded $documentCount")
-    }
-    mongoDbConnection.close()
-    documentCount = 0
-    errored = false
-  }
-
-}
 
 class OutputDBWriterFactory extends OutputWriterFactory {
 
@@ -108,5 +41,89 @@ class OutputDBWriterFactory extends OutputWriterFactory {
 }
 
 
+class OutputDBWriter(bulkSize: Int,
+                     cleardownOnError: Boolean,
+                     collectionNameRoot: String,
+                     mongoDbConnection: CasbahMongoConnection,
+                     logger: SimpleLogger) extends OutputWriter {
 
+  private lazy val collection: DBCollection = mongoDbConnection.getConfiguredDb.getCollection(collectionName)
+  private lazy val bulk = new BatchedBulkOperation(bulkSize, {
+    collection
+  })
+
+  private var count = 0
+  private var errored = false
+
+  private def collectionName = {
+    var collectionName = collectionNameRoot
+    var iteration = 0
+    while (mongoDbConnection.getConfiguredDb.collectionExists(collectionName)) {
+      iteration += 1
+      collectionName = s"${collectionNameRoot}_$iteration"
+    }
+    logger.info(s"Writing to collection $collectionName")
+    collectionName
+  }
+
+  override def output(address: DbAddress) {
+    try {
+      bulk.insert(MongoDBObject(address.tupled))
+      count += 1
+    } catch {
+      case me: MongoException =>
+        logger.info(s"Caught Mongo Exception processing bulk insertion $me")
+        errored = true
+        throw me
+    }
+  }
+
+  override def close() {
+    try {
+      bulk.close()
+      collection.createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
+    } catch {
+      case me: MongoException =>
+        logger.info(s"Caught MongoException committing final bulk insert and creating index $me")
+        errored = true
+    }
+
+    if (errored) {
+      logger.info("Error detected while loading data into MongoDB.")
+      if (cleardownOnError) collection.drop()
+    } else {
+      logger.info(s"Loaded $count documents.")
+    }
+    mongoDbConnection.close()
+    errored = false
+  }
+}
+
+
+class BatchedBulkOperation(bulkSize: Int, collection: => DBCollection) {
+  require(bulkSize > 0)
+
+  private var bulk = collection.initializeUnorderedBulkOperation
+  private var count = 0
+
+  private def reset() {
+    bulk = collection.initializeUnorderedBulkOperation
+    count = 0
+  }
+
+  def insert(document: DBObject) {
+    bulk.insert(document)
+    count += 1
+
+    if (count == bulkSize) {
+      bulk.execute()
+      reset()
+    }
+  }
+
+  def close() {
+    if (count > 0) bulk.execute()
+    reset()
+  }
+}
 

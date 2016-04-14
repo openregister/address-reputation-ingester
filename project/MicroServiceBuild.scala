@@ -41,9 +41,9 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "domain" % "3.3.0",
     "uk.gov.hmrc" %% "address-reputation-store" % "0.10.0-2-gc0a3bb8" withSources()
       excludeAll ExclusionRule(organization = "org.reactivemongo"),
-    "org.apache.ftpserver" % "ftpserver" % "1.0.5",
-    "commons-net" % "commons-net" % "3.4",
-    "org.mongodb" %% "casbah" % "3.1.0"
+    "org.mongodb" %% "casbah" % "3.1.0",
+    "ch.qos.logback" % "logback-classic" % "1.1.7",
+    "ch.qos.logback" % "logback-core" % "1.1.7"
   )
 
   trait TestDependencies {
