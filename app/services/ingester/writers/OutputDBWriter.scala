@@ -32,7 +32,7 @@ class OutputDBWriter(bulkSize: Int,
                      cleardownOnError: Boolean,
                      collectionNameRoot: String,
                      mongoDbConnection: CasbahMongoConnection,
-                     logger: SimpleLogger = new LoggerFacade(Logger.logger)) extends OutputWriter {
+                     logger: SimpleLogger) extends OutputWriter {
 
   private var documentCount = 0
 
@@ -45,9 +45,9 @@ class OutputDBWriter(bulkSize: Int,
     var iteration = 0
     while (mongoDbConnection.getConfiguredDb.collectionExists(collectionName)) {
       iteration += 1
-      collectionName = s"${collectionNameRoot}_${iteration}"
+      collectionName = s"${collectionNameRoot}_$iteration"
     }
-    logger.info(s"Writing to collection ${collectionName}")
+    logger.info(s"Writing to collection $collectionName")
     collectionName
   }
 
@@ -79,7 +79,7 @@ class OutputDBWriter(bulkSize: Int,
       collection.createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
     } catch {
       case me: MongoException =>
-        logger.info(s"Caught MongoException committing final bulk insert and creating index ${me}")
+        logger.info(s"Caught MongoException committing final bulk insert and creating index $me")
         errored = true
     }
 
@@ -100,10 +100,13 @@ class OutputDBWriter(bulkSize: Int,
 class OutputDBWriterFactory extends OutputWriterFactory {
 
   private val mongoDbUri = mustGetConfigString(current.mode, current.configuration, "mongodb.uri")
-  private val bulkSize = mustGetConfigInt(current.mode, current.configuration, "mongodb.bulkSize")
-  private var cleardownOnError = mustGetConfigBoolean(current.mode, current.configuration, "mongodb.cleardownOnError")
+  private val bulkSize = mustGetConfigString(current.mode, current.configuration, "mongodb.bulkSize").toInt
+  private val cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
 
-  def writer(collectionNameRoot: String): OutputWriter = new OutputDBWriter(bulkSize, cleardownOnError, collectionNameRoot, new CasbahMongoConnection(mongoDbUri))
+  def writer(collectionNameRoot: String): OutputWriter =
+    new OutputDBWriter(bulkSize, cleardownOnError, collectionNameRoot,
+      new CasbahMongoConnection(mongoDbUri),
+      new LoggerFacade(Logger.logger))
 }
 
 

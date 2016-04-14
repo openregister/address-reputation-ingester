@@ -67,7 +67,6 @@ class FirstPass(out: (DbAddress) => Unit, task: Task) extends Pass {
       case OSDpa.RecordId =>
         processDpa(csvLine)
 
-
       case OSStreet.RecordId =>
         processStreet(OSStreet(csvLine))
 

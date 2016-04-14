@@ -22,7 +22,6 @@ import uk.co.hmrc.address.osgb.DbAddress
 class SecondPass(fd: ForwardData) extends Pass {
 
   def processFile(csvIterator: Iterator[Array[String]], out: (DbAddress) => Unit) {
-    var count = 0
     for (csvLine <- csvIterator) {
       if (csvLine(OSCsv.RecordIdentifier_idx) == OSLpi.RecordId) {
         processLPI(csvLine, out)
@@ -37,8 +36,8 @@ class SecondPass(fd: ForwardData) extends Pass {
     blpu match {
       case Some(b) if b.logicalStatus == lpi.logicalStatus =>
         out(ExportDbAddress.exportLPI(lpi, b, fd.streets))
-        //TODO: this results in just accepting the first lpi record processed - really we should
-        //be taking a decision in the firstPass which of the lpi records it the most suitable
+        // TODO: this results in just accepting the first lpi record processed - really we should
+        // be taking a decision in the firstPass which of the lpi records is the most suitable
         fd.blpu.remove(lpi.uprn)
 
       case _ =>

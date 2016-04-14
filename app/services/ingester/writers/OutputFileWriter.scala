@@ -58,5 +58,5 @@ class OutputFileWriter(outputFile: File) extends OutputWriter {
 
 
 class OutputFileWriterFactory extends OutputWriterFactory {
-  override def writer(fileRoot: String): OutputWriter = new OutputFileWriter(new File(OutputFileWriterHelper.outputFolder, s"${fileRoot}.txt.gz"))
+  override def writer(fileRoot: String): OutputWriter = new OutputFileWriter(new File(OutputFileWriterHelper.outputFolder, s"$fileRoot.txt.gz"))
 }
