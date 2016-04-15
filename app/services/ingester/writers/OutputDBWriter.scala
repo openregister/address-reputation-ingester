@@ -56,8 +56,8 @@ class OutputDBWriter(bulkSize: Int,
   private var errored = false
 
   private def collectionName = {
-    var collectionName = collectionNameRoot
     var iteration = 0
+    var collectionName = s"${collectionNameRoot}_$iteration"
     while (mongoDbConnection.getConfiguredDb.collectionExists(collectionName)) {
       iteration += 1
       collectionName = s"${collectionNameRoot}_$iteration"

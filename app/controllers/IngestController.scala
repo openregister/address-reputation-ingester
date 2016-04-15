@@ -69,7 +69,7 @@ class IngestController(rootFolder: File,
     require(isAlphaNumeric(epoch))
     require(isAlphaNumeric(variant))
 
-    val qualifiedDir = new File(rootFolder, s"$product/$epoch/$variant/data")
+    val qualifiedDir = new File(rootFolder, s"$product/$epoch/$variant")
 
     val writer = writerFactory.writer(s"${product}_${epoch}")
 
@@ -82,6 +82,6 @@ class IngestController(rootFolder: File,
     })
 
     if (status) Ok(s"Ingestion initiated for $product/$epoch/$variant")
-    else BadRequest("Ingester is currently executing")
+    else Conflict(task.status)
   }
 }

@@ -42,6 +42,7 @@ class Extractor(task: Task, logger: SimpleLogger) {
 
 
   def extract(rootDir: File, out: OutputWriter) {
+    logger.info(s"Ingesting from $rootDir")
     extract(listFiles(rootDir), out)
   }
 

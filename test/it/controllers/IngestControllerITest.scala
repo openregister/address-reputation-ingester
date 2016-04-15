@@ -33,7 +33,15 @@ class IngestControllerITest extends PlaySpec with EmbeddedMongoSuite with AppSer
     "app.files.outputFolder" -> "/var/tmp"
   )
 
-  "ingest resource happy journey" must {
+  override def beforeAppServerStarts() {
+    setUpFixtures()
+  }
+
+  override def afterAppServerStops() {
+    tearDownFixtures()
+  }
+
+  "ingest resource happy journey - to file" must {
     """
        * observe quiet status
        * start ingest
@@ -41,8 +49,6 @@ class IngestControllerITest extends PlaySpec with EmbeddedMongoSuite with AppSer
        * await termination
        * observe quiet status
     """ in {
-      setUpFixtures()
-
       verifyOK("/admin/status", "idle")
 
       val step2 = get("/ingest/to/file/abp/123456/test")
@@ -56,10 +62,51 @@ class IngestControllerITest extends PlaySpec with EmbeddedMongoSuite with AppSer
 
       val outFile = new File("/var/tmp/abp_123456.txt.gz")
       outFile.exists() mustBe true
-
-      tearDownFixtures()
     }
   }
+
+  // TODO this fails due to a losing race condition - fix it!
+//  "ingest resource conflicted journey - to file" must {
+//    """
+//       * observe quiet status
+//       * start ingest
+//       * fail to start another ingest due to conflict
+//    """ in {
+//      verifyOK("/admin/status", "idle")
+//
+//      val step2 = get("/ingest/to/file/abp/123456/test")
+//      step2.status mustBe OK
+//
+//      val step3 = get("/ingest/to/file/abp/123456/test")
+//      step3.status mustBe CONFLICT
+//    }
+//  }
+
+
+  "ingest resource happy journey - to Mongo" must {
+    """
+       * observe quiet status
+       * start ingest
+       * observe busy status
+       * await termination
+       * observe quiet status
+    """ in {
+      verifyOK("/admin/status", "idle")
+
+      val step2 = get("/ingest/to/db/abp/123456/test")
+      step2.status mustBe OK
+
+      verifyOK("/admin/status", "busy ingesting")
+
+      waitWhile("/admin/status", "busy ingesting")
+
+      verifyOK("/admin/status", "idle")
+
+      val collection = casbahMongoConnection().getConfiguredDb("abp_123456_0")
+      collection.size mustBe 29 // see similar tests in ExtractorTest
+    }
+  }
+
 
   private def verifyOK(path: String, expected: String) {
     val step = get(path)
