@@ -44,7 +44,8 @@ private object AppDependencies {
     "org.mongodb" %% "casbah" % "3.1.0",
     "ch.qos.logback" % "logback-classic" % "1.1.7",
     "ch.qos.logback" % "logback-core" % "1.1.7",
-    "org.slf4j" % "jcl-over-slf4j" % "1.7.21"
+    "org.slf4j" % "jcl-over-slf4j" % "1.7.21",
+    "com.github.lookfirst" % "sardine" % "5.7"
   )
 
   trait TestDependencies {
