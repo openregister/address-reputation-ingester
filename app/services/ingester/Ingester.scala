@@ -42,7 +42,7 @@ object Ingester extends App {
   val outCSV = new OutputFileWriter(new File(outputFolder, s"output.txt.gz"))
 
   val task = new Task(Stdout)
-  task.start({
+  task.start("ingesting", {
     new Extractor(task, Stdout).extract(osRootFolder, outCSV)
   }, {
     outCSV.close()

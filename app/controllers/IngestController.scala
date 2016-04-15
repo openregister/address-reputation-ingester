@@ -53,7 +53,7 @@ class IngestController(rootFolder: File,
                        taskFactory: TaskFactory
                       ) extends BaseController {
 
-  def ingest(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
+  def ingestToDB(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
     request =>
       handleIngest(request, product, epoch, variant, dbWriterFactory)
   }
@@ -74,7 +74,7 @@ class IngestController(rootFolder: File,
     val writer = writerFactory.writer(s"${product}_${epoch}")
 
     val task = taskFactory.task
-    val status = task.start({
+    val status = task.start("ingesting", {
       extractorFactory.extractor(task, logger).extract(qualifiedDir, writer)
     }, {
       logger.info("cleaning up extractor")

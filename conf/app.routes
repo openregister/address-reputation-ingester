@@ -6,8 +6,8 @@ GET        /admin/metrics             com.kenshoo.play.metrics.MetricsController
 HEAD          /ping                                         controllers.PingController.ping()
 GET           /ping                                         controllers.PingController.ping()
 
-GET           /ingest/:product/:epoch/:variant              controllers.IngestController.ingest(product, epoch, variant)
-GET           /ingestToFile/:product/:epoch/:variant        controllers.IngestController.ingestToFile(product, epoch, variant)
+GET           /ingest/to/db/:product/:epoch/:variant        controllers.IngestController.ingestToDB(product, epoch, variant)
+GET           /ingest/to/file/:product/:epoch/:variant      controllers.IngestController.ingestToFile(product, epoch, variant)
 
 GET           /admin/cancelTask                             controllers.AdminController.cancelTask()
 GET           /admin/status                                 controllers.AdminController.status()

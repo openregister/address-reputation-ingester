@@ -48,9 +48,9 @@ class AdminControllerTest extends org.scalatest.FunSuite {
     val logger = new StubLogger
     val stuff = new ArrayBlockingQueue[Boolean](1)
     val task = new Task(logger)
-    task.start {
+    task.start("thinking", {
       stuff.take() // blocks until signalled
-    }
+    })
 
     val ac = new AdminController(task)
     val request: Request[AnyContent] = null

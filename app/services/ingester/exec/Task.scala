@@ -45,6 +45,7 @@ class Task(logger: SimpleLogger) {
   import ExecutionState._
 
   private[ingester] val executionState: AtomicInteger = new AtomicInteger(IDLE)
+  private var doing = "" // n.b. not being used for thread interlocking
 
   def isBusy: Boolean = executionState.get == BUSY
 
@@ -61,13 +62,14 @@ class Task(logger: SimpleLogger) {
 
   def status: String =
     executionState.get match {
-      case BUSY => "busy"
-      case STOPPING => "busy but aborting"
+      case BUSY => s"busy$doing"
+      case STOPPING => s"aborting$doing"
       case _ => "idle"
     }
 
-  def start(body: => Unit, cleanup: => Unit = {}): Boolean = {
+  def start(work: String, body: => Unit, cleanup: => Unit = {}): Boolean = {
     if (executionState.compareAndSet(IDLE, BUSY)) {
+      doing = " " + work.trim
       Future {
         val timer = new DiagnosticTimer
         try {
@@ -83,6 +85,7 @@ class Task(logger: SimpleLogger) {
         case r =>
           cleanup
           executionState.set(IDLE)
+          doing = ""
       }
       true
     } else {

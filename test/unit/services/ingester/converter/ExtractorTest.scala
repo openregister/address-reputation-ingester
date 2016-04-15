@@ -43,9 +43,9 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
     when(mockFile.isDirectory) thenReturn true
     when(mockFile.listFiles) thenReturn Array.empty[File]
 
-    task.start {
+    task.start("testing", {
       new Extractor(task, logger).extract(mockFile, dummyOut)
-    }
+    })
     task.awaitCompletion()
   }
 
@@ -68,9 +68,9 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
       def close() {closed = true}
     }
 
-    task.start {
+    task.start("testing", {
       new Extractor(task, logger).extract(List(sample), out)
-    }
+    })
     task.awaitCompletion()
 
     assert(logger.infos.map(_.message) === List(

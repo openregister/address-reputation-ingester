@@ -40,24 +40,28 @@ class TaskTest extends FunSuite {
     val task = new Task(logger)
     val stuff = new ArrayBlockingQueue[Boolean](1)
 
-    val started1 = task.start {
+    assert(task.status === "idle")
+
+    val started1 = task.start("thinking", {
       stuff.take() // blocks until signalled
       logger.info("foo")
-    }
+    })
 
-    val started2 = task.start {
+    val started2 = task.start("cogitating", {
       logger.info("bar")
-    }
+    })
 
     assert(started1 === true)
     assert(started2 === false)
 
     assert(task.isBusy)
+    assert(task.status === "busy thinking")
 
     stuff.offer(true) // release the lock
     task.awaitCompletion()
 
     assert(!task.isBusy)
+    assert(task.status === "idle")
   }
 
   test(
@@ -68,9 +72,9 @@ class TaskTest extends FunSuite {
     val logger = new StubLogger()
     val task = new Task(logger)
 
-    val started = task.start {
+    val started = task.start("thinking", {
       logger.info("fric")
-    }
+    })
 
     assert(started === true)
 
@@ -89,9 +93,9 @@ class TaskTest extends FunSuite {
     val logger = new StubLogger()
     val task = new Task(logger)
 
-    val started = task.start {
+    val started = task.start("thinking", {
       throw new InterruptedException("task cancelled")
-    }
+    })
 
     assert(started === true)
 

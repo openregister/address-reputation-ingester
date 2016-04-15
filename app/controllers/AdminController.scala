@@ -48,6 +48,6 @@ class AdminController(task: Task) extends BaseController {
   }
 
   def getStatus(request: Request[AnyContent]): Result = {
-    Ok(s"execution status: ${task.status}").withHeaders(CONTENT_TYPE -> "text/plain")
+    Ok(task.status).withHeaders(CONTENT_TYPE -> "text/plain")
   }
 }

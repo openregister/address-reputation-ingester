@@ -16,13 +16,13 @@
 
 package helper
 
-import org.scalatest.{Args, Status, Suite, SuiteMixin}
+import org.scalatest._
 import org.scalatestplus.play.ServerProvider
 import play.api.libs.ws.WS
 import play.api.test.Helpers._
 import play.api.test.{FakeApplication, Helpers, TestServer}
 
-trait AppServerUnderTest extends SuiteMixin with ServerProvider {
+trait AppServerUnderTest extends SuiteMixin with ServerProvider with SequentialNestedSuiteExecution {
   this: Suite =>
 
   def embeddedMongoSettings: Map[String, String]
