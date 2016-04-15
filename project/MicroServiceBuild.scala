@@ -30,7 +30,7 @@ private object AppDependencies {
   import play.core.PlayVersion
 
   val compile = Seq(
-    ws,
+    ws excludeAll ExclusionRule(organization = "commons-logging"),
     "uk.gov.hmrc" %% "play-reactivemongo" % "4.7.1",
     "uk.gov.hmrc" %% "microservice-bootstrap" % "4.2.1",
     "uk.gov.hmrc" %% "play-authorisation" % "3.1.0",
@@ -43,7 +43,8 @@ private object AppDependencies {
       excludeAll ExclusionRule(organization = "org.reactivemongo"),
     "org.mongodb" %% "casbah" % "3.1.0",
     "ch.qos.logback" % "logback-classic" % "1.1.7",
-    "ch.qos.logback" % "logback-core" % "1.1.7"
+    "ch.qos.logback" % "logback-core" % "1.1.7",
+    "org.slf4j" % "jcl-over-slf4j" % "1.7.21"
   )
 
   trait TestDependencies {
