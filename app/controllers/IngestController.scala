@@ -19,6 +19,7 @@ package controllers
 import java.io.{File, FileNotFoundException}
 
 import config.ConfigHelper._
+import controllers.SimpleValidator.isAlphaNumeric
 import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Request, Result}
@@ -52,8 +53,6 @@ class IngestController(rootFolder: File,
                        taskFactory: TaskFactory
                       ) extends BaseController {
 
-  private val alphaNumPattern = "[a-z0-9]+".r
-
   def ingest(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
     request =>
       handleIngest(request, product, epoch, variant, dbWriterFactory)
@@ -66,9 +65,9 @@ class IngestController(rootFolder: File,
 
   private[controllers] def handleIngest(request: Request[AnyContent], product: String, epoch: String, variant: String,
                                         writerFactory: OutputWriterFactory): Result = {
-    require(isValidInput(product))
-    require(isValidInput(epoch))
-    require(isValidInput(variant))
+    require(isAlphaNumeric(product))
+    require(isAlphaNumeric(epoch))
+    require(isAlphaNumeric(variant))
 
     val qualifiedDir = new File(rootFolder, s"$product/$epoch/$variant/data")
 
@@ -84,9 +83,5 @@ class IngestController(rootFolder: File,
 
     if (status) Ok(s"Ingestion initiated for $product/$epoch/$variant")
     else BadRequest("Ingester is currently executing")
-  }
-
-  private def isValidInput(param: String): Boolean = {
-    param.length <= 20 && alphaNumPattern.pattern.matcher(param).matches()
   }
 }

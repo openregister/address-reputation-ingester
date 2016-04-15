@@ -18,7 +18,6 @@ package services.ingester.converter.extractor
 
 import services.ingester.converter._
 import services.ingester.writers.OutputWriter
-import uk.co.hmrc.address.osgb.DbAddress
 
 class SecondPass(fd: ForwardData) extends Pass {
 
