@@ -33,11 +33,10 @@ class AdminController(task: Task) extends BaseController {
   }
 
   def handleCancelTask(request: Request[AnyContent]): Result = {
-    if (task.isBusy) {
-      task.abort()
-      Ok("Interrupt command issued")
+    if (task.abort()) {
+      Ok(task.status)
     } else {
-      BadRequest("Nothing currently executing")
+      BadRequest(task.status)
     }
   }
 

@@ -56,7 +56,7 @@ class Task(logger: SimpleLogger) {
       Thread.sleep(5)
   }
 
-  def abort() {
+  def abort(): Boolean = {
     executionState.compareAndSet(BUSY, STOPPING)
   }
 

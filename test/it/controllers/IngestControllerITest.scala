@@ -49,6 +49,8 @@ class IngestControllerITest extends PlaySpec with EmbeddedMongoSuite with AppSer
        * await termination
        * observe quiet status
     """ in {
+      waitWhile("/admin/status", "busy ingesting")
+
       verifyOK("/admin/status", "idle")
 
       val step2 = get("/ingest/to/file/abp/123456/test")
@@ -65,22 +67,22 @@ class IngestControllerITest extends PlaySpec with EmbeddedMongoSuite with AppSer
     }
   }
 
-  // TODO this fails due to a losing race condition - fix it!
-//  "ingest resource conflicted journey - to file" must {
-//    """
-//       * observe quiet status
-//       * start ingest
-//       * fail to start another ingest due to conflict
-//    """ in {
-//      verifyOK("/admin/status", "idle")
-//
-//      val step2 = get("/ingest/to/file/abp/123456/test")
-//      step2.status mustBe OK
-//
-//      val step3 = get("/ingest/to/file/abp/123456/test")
-//      step3.status mustBe CONFLICT
-//    }
-//  }
+
+  "ingest resource conflicted journey - to file" must {
+    """
+       * observe quiet status
+       * start ingest
+       * fail to start another ingest due to conflict
+    """ in {
+      verifyOK("/admin/status", "idle")
+
+      val step2 = get("/ingest/to/file/abp/123456/test?bulkSize=1&loopDelay=30")
+      step2.status mustBe OK
+
+      val step3 = get("/ingest/to/file/abp/123456/test")
+      step3.status mustBe CONFLICT
+    }
+  }
 
 
   "ingest resource happy journey - to Mongo" must {
@@ -91,9 +93,11 @@ class IngestControllerITest extends PlaySpec with EmbeddedMongoSuite with AppSer
        * await termination
        * observe quiet status
     """ in {
+      waitWhile("/admin/status", "busy ingesting")
+
       verifyOK("/admin/status", "idle")
 
-      val step2 = get("/ingest/to/db/abp/123456/test")
+      val step2 = get("/ingest/to/db/abp/123456/test?bulkSize=5&loopDelay=0")
       step2.status mustBe OK
 
       verifyOK("/admin/status", "busy ingesting")

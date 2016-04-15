@@ -62,7 +62,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val ic = new IngestController(folder, logger, null, null, null, null)
 
     intercept[IllegalArgumentException] {
-      ic.handleIngest(null, product, epoch, variant, writerFactory)
+      ic.handleIngest(null, product, epoch, variant, WriterSettings.default, writerFactory)
     }
   }
 
@@ -82,14 +82,14 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val outputFileWriter = mock[OutputFileWriter]
     val outputDBWriter = mock[OutputDBWriter]
 
-    when(fwf.writer(anyString())) thenReturn outputFileWriter
-    when(dbf.writer(anyString())) thenReturn outputDBWriter
+    when(fwf.writer(anyString, any[WriterSettings])) thenReturn outputFileWriter
+    when(dbf.writer(anyString, any[WriterSettings])) thenReturn outputDBWriter
     when(ef.extractor(task, logger)) thenReturn ex
     when(exf.task) thenReturn task
 
     val ic = new IngestController(folder, logger, dbf, fwf, ef, exf)
 
-    val result = ic.handleIngest(null, "abp", "40", "full", fwf)
+    val result = ic.handleIngest(null, "abp", "40", "full", WriterSettings.default, fwf)
 
     task.awaitCompletion()
 

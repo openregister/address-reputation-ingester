@@ -19,13 +19,13 @@ package controllers
 import java.io.{File, FileNotFoundException}
 
 import config.ConfigHelper._
-import controllers.SimpleValidator.isAlphaNumeric
+import controllers.SimpleValidator._
 import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import services.ingester.converter.ExtractorFactory
 import services.ingester.exec.TaskFactory
-import services.ingester.writers.{OutputDBWriterFactory, OutputFileWriterFactory, OutputWriterFactory}
+import services.ingester.writers.{OutputDBWriterFactory, OutputFileWriterFactory, OutputWriterFactory, WriterSettings}
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -53,17 +53,27 @@ class IngestController(rootFolder: File,
                        taskFactory: TaskFactory
                       ) extends BaseController {
 
-  def ingestToDB(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
+  def ingestToDB(product: String, epoch: String, variant: String,
+                 bulkSizeStr: String, loopDelayStr: String): Action[AnyContent] = Action {
     request =>
-      handleIngest(request, product, epoch, variant, dbWriterFactory)
+      val bulkSize = defaultTo(bulkSizeStr, "1")
+      val loopDelay = defaultTo(loopDelayStr, "0")
+
+      require(isNumeric(bulkSize))
+      require(isNumeric(loopDelay))
+
+      val settings = WriterSettings(constrainRange(bulkSize.toInt, 1, 10000), constrainRange(loopDelay.toInt, 0, 100000))
+      handleIngest(request, product, epoch, variant, settings, dbWriterFactory)
   }
 
   def ingestToFile(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
     request =>
-      handleIngest(request, product, epoch, variant, fileWriterFactory)
+      val settings = WriterSettings(1, 0)
+      handleIngest(request, product, epoch, variant, settings, fileWriterFactory)
   }
 
   private[controllers] def handleIngest(request: Request[AnyContent], product: String, epoch: String, variant: String,
+                                        settings: WriterSettings,
                                         writerFactory: OutputWriterFactory): Result = {
     require(isAlphaNumeric(product))
     require(isAlphaNumeric(epoch))
@@ -71,7 +81,7 @@ class IngestController(rootFolder: File,
 
     val qualifiedDir = new File(rootFolder, s"$product/$epoch/$variant")
 
-    val writer = writerFactory.writer(s"${product}_${epoch}")
+    val writer = writerFactory.writer(s"${product}_${epoch}", settings)
 
     val task = taskFactory.task
     val status = task.start("ingesting", {

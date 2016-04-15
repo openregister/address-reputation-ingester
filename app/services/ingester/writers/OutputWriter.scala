@@ -29,5 +29,12 @@ trait OutputWriter {
 }
 
 trait OutputWriterFactory {
-  def writer(root: String): OutputWriter
+  def writer(root: String, settings: WriterSettings): OutputWriter
+}
+
+
+case class WriterSettings(bulkSize: Int, loopDelay: Int)
+
+object WriterSettings {
+  val default = WriterSettings(1, 0)
 }

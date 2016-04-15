@@ -47,7 +47,7 @@ class OutputDBWriterTest extends FunSuite {
     when(casbahMongoConnection.getConfiguredDb) thenReturn mongoDB
     when(collection.initializeUnorderedBulkOperation) thenReturn bulk
 
-    val outputDBWriter = new OutputDBWriter(10, false, "", casbahMongoConnection, logger)
+    val outputDBWriter = new OutputDBWriter(false, "", casbahMongoConnection, WriterSettings(10, 0), logger)
 
     outputDBWriter.output(someDBAddress)
 
@@ -71,7 +71,7 @@ class OutputDBWriterTest extends FunSuite {
     when(casbahMongoConnection.getConfiguredDb) thenReturn mongoDB
     when(collection.initializeUnorderedBulkOperation) thenReturn bulk
 
-    val outputDBWriter = new OutputDBWriter(10, false, "", casbahMongoConnection, logger)
+    val outputDBWriter = new OutputDBWriter(false, "", casbahMongoConnection, WriterSettings(10, 0), logger)
 
     outputDBWriter.close()
 

@@ -31,24 +31,24 @@ import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 class OutputDBWriterFactory extends OutputWriterFactory {
 
   private val mongoDbUri = mustGetConfigString(current.mode, current.configuration, "mongodb.uri")
-  private val bulkSize = mustGetConfigString(current.mode, current.configuration, "mongodb.bulkSize").toInt
   private val cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
 
-  def writer(collectionNameRoot: String): OutputWriter =
-    new OutputDBWriter(bulkSize, cleardownOnError, collectionNameRoot,
+  def writer(collectionNameRoot: String, settings: WriterSettings): OutputWriter =
+    new OutputDBWriter(cleardownOnError, collectionNameRoot,
       new CasbahMongoConnection(mongoDbUri),
+      settings,
       new LoggerFacade(Logger.logger))
 }
 
 
-class OutputDBWriter(bulkSize: Int,
-                     cleardownOnError: Boolean,
+class OutputDBWriter(cleardownOnError: Boolean,
                      collectionNameRoot: String,
                      mongoDbConnection: CasbahMongoConnection,
+                     settings: WriterSettings,
                      logger: SimpleLogger) extends OutputWriter {
 
   private lazy val collection: DBCollection = mongoDbConnection.getConfiguredDb.getCollection(collectionName)
-  private lazy val bulk = new BatchedBulkOperation(bulkSize, {
+  private lazy val bulk = new BatchedBulkOperation(settings, {
     collection
   })
 
@@ -100,8 +100,8 @@ class OutputDBWriter(bulkSize: Int,
 }
 
 
-class BatchedBulkOperation(bulkSize: Int, collection: => DBCollection) {
-  require(bulkSize > 0)
+class BatchedBulkOperation(settings: WriterSettings, collection: => DBCollection) {
+  require(settings.bulkSize > 0)
 
   private var bulk = collection.initializeUnorderedBulkOperation
   private var count = 0
@@ -115,8 +115,9 @@ class BatchedBulkOperation(bulkSize: Int, collection: => DBCollection) {
     bulk.insert(document)
     count += 1
 
-    if (count == bulkSize) {
+    if (count == settings.bulkSize) {
       bulk.execute()
+      Thread.sleep(settings.loopDelay)
       reset()
     }
   }
