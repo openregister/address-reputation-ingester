@@ -103,8 +103,11 @@ class OutputDBWriter(cleardownOnError: Boolean,
 
   private def completeTheCollection() {
     bulk.close()
+
     collection.createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
-    collection.insert(List(MongoDBObject("_id" -> "metadata", "completedAt" -> new Date())).asJava)
+
+    val metadata = MongoDBObject("_id" -> "metadata", "completedAt" -> new Date())
+    collection.insert(List(metadata).asJava)
   }
 }
 
