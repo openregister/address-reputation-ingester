@@ -18,14 +18,18 @@
 
 package services.ingester.writers
 
+import java.util.Date
+
 import com.mongodb.casbah.commons.MongoDBObject
-import com.mongodb.{DBCollection, DBObject, MongoException}
+import com.mongodb._
 import config.ConfigHelper._
 import play.api.Logger
 import play.api.Play._
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
+
+import scala.collection.JavaConverters._
 
 
 class OutputDBWriterFactory extends OutputWriterFactory {
@@ -80,8 +84,7 @@ class OutputDBWriter(cleardownOnError: Boolean,
 
   override def close() {
     try {
-      bulk.close()
-      collection.createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
+      completeTheCollection()
     } catch {
       case me: MongoException =>
         logger.info(s"Caught MongoException committing final bulk insert and creating index $me")
@@ -96,6 +99,12 @@ class OutputDBWriter(cleardownOnError: Boolean,
     }
     mongoDbConnection.close()
     errored = false
+  }
+
+  private def completeTheCollection() {
+    bulk.close()
+    collection.createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
+    collection.insert(List(MongoDBObject("_id" -> "metadata", "completedAt" -> new Date())).asJava)
   }
 }
 

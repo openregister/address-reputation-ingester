@@ -18,8 +18,9 @@
 
 package services.ingester.writers
 
-import com.mongodb.{BulkWriteOperation, DBCollection, DBObject}
+import com.mongodb.{BulkWriteOperation, DBCollection, DBObject, InsertOptions}
 import com.mongodb.casbah.MongoDB
+import com.mongodb.casbah.commons.MongoDBObject
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar.mock
@@ -27,6 +28,7 @@ import org.scalatest.FunSuite
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger
+import java.util
 
 class OutputDBWriterTest extends FunSuite {
 
@@ -55,10 +57,13 @@ class OutputDBWriterTest extends FunSuite {
     verify(bulk, times(1)).insert(any[DBObject])
   }
 
+
   test(
     """
       when close is called on the writer
-      then close is called on the mongoDB instance
+      then a completion timestamp document is written to the output collection
+      and an index is created for the postcode field
+      and then close is called on the mongoDB instance
     """) {
     val casbahMongoConnection = mock[CasbahMongoConnection]
     val mongoDB = mock[MongoDB]
@@ -75,6 +80,8 @@ class OutputDBWriterTest extends FunSuite {
 
     outputDBWriter.close()
 
+    verify(collection).insert(any[util.List[DBObject]])
+    verify(collection).createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
     verify(casbahMongoConnection, times(1)).close()
   }
 

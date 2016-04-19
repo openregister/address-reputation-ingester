@@ -19,7 +19,9 @@ package controllers
 import java.io.File
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import java.nio.file.{Files, Paths}
+import java.util.Date
 
+import com.mongodb.casbah.commons.MongoDBObject
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
@@ -92,7 +94,10 @@ class IngestControllerITest extends PlaySpec with EmbeddedMongoSuite with AppSer
        * observe busy status
        * await termination
        * observe quiet status
+       * verify that the collection metadata contains completedAt with a sensible value
     """ in {
+      val start = System.currentTimeMillis()
+
       waitWhile("/admin/status", "busy ingesting")
 
       verifyOK("/admin/status", "idle")
@@ -107,7 +112,13 @@ class IngestControllerITest extends PlaySpec with EmbeddedMongoSuite with AppSer
       verifyOK("/admin/status", "idle")
 
       val collection = casbahMongoConnection().getConfiguredDb("abp_123456_0")
-      collection.size mustBe 29 // see similar tests in ExtractorTest
+      collection.size mustBe 30 // 29 records plus 1 metadata
+      // (see similar tests in ExtractorTest)
+
+      val metadata = collection.findOne(MongoDBObject("_id" -> "metadata")).get
+      val completedAt = metadata.get("completedAt").asInstanceOf[Date].getTime
+      assert(start <= completedAt)
+      assert(completedAt <= System.currentTimeMillis())
     }
   }
 
