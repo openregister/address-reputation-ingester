@@ -46,7 +46,8 @@ class FirstPass(out: OutputWriter, task: Task) extends Pass {
 
 
   def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter) {
-    for (csvLine <- csvIterator) {
+    for (csvLine <- csvIterator
+         if task.isBusy) {
       processLine(csvLine, out)
     }
   }

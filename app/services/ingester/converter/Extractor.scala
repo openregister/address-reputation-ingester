@@ -56,7 +56,7 @@ class Extractor(task: Task, logger: SimpleLogger) {
     logger.info(s"First pass complete after {}", dt)
 
     logger.info(s"Starting second pass through ${files.size} files")
-    val sp = new SecondPass(fd)
+    val sp = new SecondPass(fd, task)
     pass(files, out, sp)
     logger.info(s"Finished after {}", dt)
   }

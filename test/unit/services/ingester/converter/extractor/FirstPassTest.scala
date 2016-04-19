@@ -53,8 +53,11 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
     ) {
 
       val firstPass = new FirstPass(dummyOut, task)
-      firstPass.processFile(csv, dummyOut)
+      task.start("testing", {
+        firstPass.processFile(csv, dummyOut)
+      })
 
+      task.awaitCompletion()
       assert(firstPass.streetTable.size === 1)
       assert(firstPass.streetTable.head === 48504236 -> Street('A', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPA UPRNs, 1 streets")
@@ -75,8 +78,11 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
     ) {
 
       val firstPass = new FirstPass(dummyOut, task)
-      firstPass.processFile(csv, dummyOut)
+      task.start("testing", {
+        firstPass.processFile(csv, dummyOut)
+      })
 
+      task.awaitCompletion()
       assert(firstPass.streetTable.size === 1)
       assert(firstPass.streetTable.head === 47208194 -> Street('2', "CWMDUAD TO CYNWYL ELFED", "CWMDUAD", "CARMARTHEN"))
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPA UPRNs, 1 streets")
@@ -95,8 +101,11 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
     ) {
 
       val firstPass = new FirstPass(dummyOut, task)
-      firstPass.processFile(csv, dummyOut)
+      task.start("testing", {
+        firstPass.processFile(csv, dummyOut)
+      })
 
+      task.awaitCompletion()
       assert(firstPass.streetTable.size === 1)
       assert(firstPass.streetTable.head === 48504236 -> Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPA UPRNs, 1 streets")
@@ -115,8 +124,11 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
     ) {
 
       val firstPass = new FirstPass(dummyOut, task)
-      firstPass.processFile(csv, dummyOut)
+      task.start("testing", {
+        firstPass.processFile(csv, dummyOut)
+      })
 
+      task.awaitCompletion()
       assert(firstPass.streetTable.size === 1)
       assert(firstPass.streetTable.head === 48504236 -> Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPA UPRNs, 1 streets")
@@ -136,8 +148,11 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
     ) {
 
       val firstPass = new FirstPass(dummyOut, task)
-      firstPass.processFile(csv, dummyOut)
+      task.start("testing", {
+        firstPass.processFile(csv, dummyOut)
+      })
 
+      task.awaitCompletion()
       assert(firstPass.blpuTable.size === 1)
       assert(firstPass.blpuTable.head === 320077134 -> Blpu("KY10 2PY", '1'))
       assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPA UPRNs, 0 streets")
@@ -163,15 +178,39 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
           assert(out.town === "Peterculter")
           assert(out.postcode === "AB14 0LQ")
         }
+
         def close() {}
       }
 
       val firstPass = new FirstPass(dummyOut, task)
-      firstPass.processFile(csv, out)
+      task.start("testing", {
+        firstPass.processFile(csv, out)
+      })
 
+      task.awaitCompletion()
       assert(firstPass.dpaTable.size === 1)
       assert(firstPass.dpaTable.head === 9051119283L)
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 1 DPA UPRNs, 0 streets")
     }
   }
+
+  test(
+    """Given that the task is in a stopping state
+       then no records will be processed
+    """) {
+    new context(
+      """15,"I",31068,48504236,"A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE","","NEW CUMNOCK","EAST AYRSHIRE","ENG""""
+    ) {
+
+      val firstPass = new FirstPass(dummyOut, task)
+      task.start("testing", {
+        task.abort()
+        firstPass.processFile(csv, dummyOut)
+      })
+
+      task.awaitCompletion()
+      assert(firstPass.streetTable.size === 0)
+    }
+  }
+
 }

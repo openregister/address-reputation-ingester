@@ -21,9 +21,11 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
+import services.ingester.exec.Task
 import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
+import uk.co.hmrc.logging.StubLogger
 
 import scala.collection.mutable
 
@@ -36,31 +38,86 @@ class SecondPassTest extends FunSuite with Matchers {
   // test data is long so disable scalastyle check
   // scalastyle:off
 
+  class context {
+    val logger = new StubLogger
+    val task = new Task(logger)
+  }
+
   test(
     """Given an OS-LPI and a prior BLPU to match
        Then one record will be produced by processFile.
     """) {
-    val lpiData =
-      """
-        |24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
-        | """.stripMargin
+    new context {
+      val lpiData =
+        """
+          |24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
+          | """.stripMargin
 
-    val csv = CsvParser.split(lpiData)
+      val csv = CsvParser.split(lpiData)
 
-    val blpuMap = mutable.HashMap.empty[Long, Blpu] + (131041604L -> Blpu("AB12 3CD", '1'))
-    val streetsMap = mutable.HashMap.empty[Long, Street]
-    val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
+      val blpuMap = mutable.HashMap.empty[Long, Blpu] + (131041604L -> Blpu("AB12 3CD", '1'))
+      val streetsMap = mutable.HashMap.empty[Long, Street]
+      val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
 
-    val out = new OutputWriter {
-      def close() {}
+      val out = new OutputWriter {
+        var count = 0
 
-      def output(out: DbAddress) {
-        assert(out.id === "GB131041604")
-        assert(out.postcode === "AB12 3CD")
+        def close() {}
+
+        def output(out: DbAddress) {
+          assert(out.id === "GB131041604")
+          assert(out.postcode === "AB12 3CD")
+          count += 1
+        }
       }
-    }
 
-    new SecondPass(fd).processFile(csv, out)
+      val sp = new SecondPass(fd, task)
+      task.start("testing", {
+        sp.processFile(csv, out)
+      })
+
+      task.awaitCompletion()
+      assert(out.count === 1)
+    }
+  }
+
+
+  test(
+    """Given an OS-LPI and a prior BLPU to match,
+       And the task is aborting
+       Then no records will be produced by processFile.
+    """) {
+    new context {
+      val lpiData =
+        """
+          |24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
+          | """.stripMargin
+
+      val csv = CsvParser.split(lpiData)
+
+      val blpuMap = mutable.HashMap.empty[Long, Blpu] + (131041604L -> Blpu("AB12 3CD", '1'))
+      val streetsMap = mutable.HashMap.empty[Long, Street]
+      val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
+
+      val out = new OutputWriter {
+        var count = 0
+
+        def close() {}
+
+        def output(out: DbAddress) {
+          count += 1
+        }
+      }
+
+      val sp = new SecondPass(fd, task)
+      task.start("testing", {
+        task.abort()
+        sp.processFile(csv, out)
+      })
+
+      task.awaitCompletion()
+      assert(out.count === 0)
+    }
   }
 
 
@@ -68,25 +125,36 @@ class SecondPassTest extends FunSuite with Matchers {
     """Given an OS-LPI without a matching BLPU
        Then no records will be produced by processFile.
     """) {
-    val lpiData =
-      """
-        |24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
-        | """.stripMargin
+    new context {
 
-    val csv = CsvParser.split(lpiData)
+      val lpiData =
+        """
+          |24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
+          | """.stripMargin
 
-    val blpuMap = mutable.HashMap.empty[Long, Blpu] + (0L -> Blpu("AB12 3CD", '1'))
-    val streetsMap = mutable.HashMap.empty[Long, Street]
-    val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
-    val out = new OutputWriter {
-      def close() {}
+      val csv = CsvParser.split(lpiData)
 
-      def output(out: DbAddress) {
-        fail()
+      val blpuMap = mutable.HashMap.empty[Long, Blpu] + (0L -> Blpu("AB12 3CD", '1'))
+      val streetsMap = mutable.HashMap.empty[Long, Street]
+      val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
+      val out = new OutputWriter {
+        var count = 0
+
+        def close() {}
+
+        def output(out: DbAddress) {
+          count += 1
+        }
       }
-    }
 
-    new SecondPass(fd).processFile(csv, out)
+      val sp = new SecondPass(fd, task)
+      task.start("testing", {
+        sp.processFile(csv, out)
+      })
+
+      task.awaitCompletion()
+      assert(out.count === 0)
+    }
   }
 
 

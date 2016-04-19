@@ -54,6 +54,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
     """given a zip archive containing one file,
        Extractor should iterate over the CSV lines it contains
     """) {
+
     val sample = new File(getClass.getClassLoader.getResource("SX9090-first3600.zip").getFile)
     val logger = new StubLogger
     val task = new Task(logger)

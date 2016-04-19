@@ -29,6 +29,7 @@ import services.ingester.writers.{OutputDBWriterFactory, OutputFileWriterFactory
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
+
 object IngestControllerHelper {
   val home = System.getenv("HOME")
   val rootFolder = new File(mustGetConfigString(current.mode, current.configuration, "app.files.rootFolder").replace("$HOME", home))
@@ -37,6 +38,7 @@ object IngestControllerHelper {
   }
 }
 
+
 object IngestController extends IngestController(
   IngestControllerHelper.rootFolder,
   new LoggerFacade(Logger.logger),
@@ -44,6 +46,7 @@ object IngestController extends IngestController(
   new OutputFileWriterFactory,
   new ExtractorFactory,
   new TaskFactory())
+
 
 class IngestController(rootFolder: File,
                        logger: SimpleLogger,
@@ -91,7 +94,7 @@ class IngestController(rootFolder: File,
       writer.close()
     })
 
-    if (status) Ok(s"Ingestion initiated for $product/$epoch/$variant")
+    if (status) Ok(s"Ingestion has started for $product/$epoch/$variant")
     else Conflict(task.status)
   }
 }
