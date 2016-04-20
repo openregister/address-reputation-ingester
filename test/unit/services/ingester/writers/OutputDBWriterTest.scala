@@ -18,27 +18,27 @@
 
 package services.ingester.writers
 
-import com.mongodb.{BulkWriteOperation, DBCollection, DBObject, InsertOptions}
+import java.util
+
+import com.mongodb._
 import com.mongodb.casbah.MongoDB
 import com.mongodb.casbah.commons.MongoDBObject
+import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar.mock
 import org.scalatest.FunSuite
+import org.scalatest.junit.JUnitRunner
+import org.scalatest.mock.MockitoSugar.mock
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger
-import java.util
-
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class OutputDBWriterTest extends FunSuite {
 
   test(
     """
-      when a dbaddress is passed to the writer
+      when a DbAddress is passed to the writer
       then an insert is invoked
     """) {
     val casbahMongoConnection = mock[CasbahMongoConnection]

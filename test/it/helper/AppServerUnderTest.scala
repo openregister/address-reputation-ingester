@@ -68,18 +68,23 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with SequentialN
 
   def get(p: String): WSResponse = request("GET", p)
 
-  def verifyOK(path: String, expected: String) {
+  def verifyOK(path: String, expectedBody: String, expectedContent: String = "text/plain") {
+    verify(path, OK, expectedBody, expectedContent)
+  }
+
+  def verify(path: String, expectedStatus: Int, expectedBody: String, expectedContent: String = "text/plain") {
     val step = get(path)
-    assert(step.status === OK)
-    assert(step.body === expected)
+    assert(step.status === expectedStatus)
+    assert(step.header("Content-Type") === Some(expectedContent))
+    assert(step.body === expectedBody)
   }
 
   @tailrec
-  final def waitWhile(path: String, expected: String): Boolean = {
+  final def waitWhile(path: String, currentBody: String): Boolean = {
     Thread.sleep(200)
     val step = get(path)
-    if (step.status != OK || step.body != expected) true
-    else waitWhile(path, expected)
+    if (step.status != OK || step.body != currentBody) true
+    else waitWhile(path, currentBody)
   }
 
 }

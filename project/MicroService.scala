@@ -41,7 +41,7 @@ trait MicroService {
     .enablePlugins(plugins: _*)
     .settings(playSettings: _*)
     .settings(scalaSettings: _*)
-    .settings(scalaVersion := "2.11.7")
+    .settings(scalaVersion := "2.11.8")
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
     .settings(

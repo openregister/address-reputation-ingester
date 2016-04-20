@@ -39,7 +39,7 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "play-config" % "2.0.1",
     "uk.gov.hmrc" %% "play-json-logger" % "2.1.1",
     "uk.gov.hmrc" %% "domain" % "3.3.0",
-    "uk.gov.hmrc" %% "address-reputation-store" % "0.10.0-5-g015c985" withSources()
+    "uk.gov.hmrc" %% "address-reputation-store" % "0.10.0-6-g50a9828" withSources()
       excludeAll ExclusionRule(organization = "org.reactivemongo"),
     "org.mongodb" %% "casbah" % "3.1.0",
     "ch.qos.logback" % "logback-classic" % "1.1.7",

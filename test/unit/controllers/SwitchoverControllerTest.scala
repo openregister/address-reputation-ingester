@@ -16,17 +16,17 @@
 
 package controllers
 
-import java.io.File
-
+import com.mongodb.casbah.{MongoCollection, MongoDB}
+import com.mongodb.casbah.commons.MongoDBObject
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
+import org.mockito.Matchers._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
-import services.ingester.exec.{Task, TaskFactory}
-import services.ingester.writers._
 import uk.co.hmrc.address.admin.StoredMetadataItem
+import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger
 
 
@@ -60,9 +60,10 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
   def parameterTest(product: String, epoch: String, index: String): Unit = {
     val logger = new StubLogger()
     val storedItem = new StoredMetadataStub()
+    val mongo = mock[CasbahMongoConnection]
     val request = FakeRequest()
 
-    val sc = new SwitchoverController(Map("abi" -> storedItem))
+    val sc = new SwitchoverController(mongo, Map("abi" -> storedItem))
 
     intercept[IllegalArgumentException] {
       sc.handleSwitch(request, product, epoch, index)
@@ -71,33 +72,80 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
   test(
     """
-      when valid paramaters are passed to ingest
+      given that the intended collection exists and contains the containedAt metadata
+      when valid parameters are passed to ingest
       then a successful response is returned
+      and the stored metadata item for the product in question is set to the new collection name
     """) {
-    val fwf = mock[OutputFileWriterFactory]
-    val dbf = mock[OutputDBWriterFactory]
-    val exf = mock[TaskFactory]
-    val folder = new File(".")
-    val logger = new StubLogger()
-    val task = new Task(logger)
     val request = FakeRequest()
-
-    when(exf.task) thenReturn task
     val storedItem = new StoredMetadataStub()
+    val mongo = mock[CasbahMongoConnection]
+    val db = mock[MongoDB]
+    val collection = mock[MongoCollection]
 
-    val sc = new SwitchoverController(Map("abp" -> storedItem))
+    when(mongo.getConfiguredDb) thenReturn db
+    when(db.collectionExists("abp_40_9")) thenReturn true
+    when(db.apply("abp_40_9")) thenReturn collection
+    when(collection.findOneByID("metadata")) thenReturn Some(MongoDBObject())
 
+    val sc = new SwitchoverController(mongo, Map("abp" -> storedItem))
     val result = sc.handleSwitch(request, "abp", "40", "9")
 
-    task.awaitCompletion()
-
     assert(result.header.status / 100 === 2)
+    assert(storedItem.get === "abp_40_9")
+  }
+
+  test(
+    """
+      given that the intended collection does not exist
+      when valid parameters are passed to ingest
+      then a bad-request response is returned
+      and the stored metadata item for the product in question is left unchanged
+    """) {
+    val request = FakeRequest()
+    val storedItem = new StoredMetadataStub()
+    val db = mock[MongoDB]
+    val mongo = mock[CasbahMongoConnection]
+
+    when(mongo.getConfiguredDb) thenReturn db
+    when(db.collectionExists(anyString)) thenReturn false
+
+    val sc = new SwitchoverController(mongo, Map("abp" -> storedItem))
+    val result = sc.handleSwitch(request, "abp", "40", "9")
+
+    assert(result.header.status === 400)
+    assert(storedItem.get === "the initial value")
+  }
+
+  test(
+    """
+      given that the intended collection exists but does not contain the metadata containedAt
+      when valid parameters are passed to ingest
+      then a conflict response is returned
+      and the stored metadata item for the product in question is left unchanged
+    """) {
+    val request = FakeRequest()
+    val storedItem = new StoredMetadataStub()
+    val mongo = mock[CasbahMongoConnection]
+    val db = mock[MongoDB]
+    val collection = mock[MongoCollection]
+
+    when(mongo.getConfiguredDb) thenReturn db
+    when(db.collectionExists("abp_40_9")) thenReturn true
+    when(db.apply("abp_40_9")) thenReturn collection
+    when(collection.findOneByID("metadata")) thenReturn None
+
+    val sc = new SwitchoverController(mongo, Map("abp" -> storedItem))
+    val result = sc.handleSwitch(request, "abp", "40", "9")
+
+    assert(result.header.status === 409)
+    assert(storedItem.get === "the initial value")
   }
 }
 
 
 class StoredMetadataStub extends StoredMetadataItem {
-  private var _value = ""
+  private var _value = "the initial value"
 
   override def get: String = _value
 

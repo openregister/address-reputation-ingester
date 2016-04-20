@@ -27,11 +27,12 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object SwitchoverController extends SwitchoverController(
+  ApplicationGlobal.mongoConnection,
   new MetadataStoreFactory().newStore(ApplicationGlobal.mongoConnection)
 )
 
 
-class SwitchoverController(metadata: Map[String, StoredMetadataItem]) extends BaseController {
+class SwitchoverController(mongoDbConnection: CasbahMongoConnection, metadata: Map[String, StoredMetadataItem]) extends BaseController {
 
   def switchTo(product: String, epoch: String, index: String): Action[AnyContent] = Action {
     request =>
@@ -53,10 +54,19 @@ class SwitchoverController(metadata: Map[String, StoredMetadataItem]) extends Ba
 
     // this metadata key/value is checked by all address-lookup nodes once every few minutes
     val newName = s"${product}_${epoch}_${index}"
-    addressBaseCollectionName.set(newName)
 
-    //    metadataStore.adminCollection
-    Ok(s"Ingestion initiated for $product/$epoch/../$index")
+    val db = mongoDbConnection.getConfiguredDb
+    if (!db.collectionExists(newName)) {
+      BadRequest(s"$newName: collection was not found.").withHeaders(CONTENT_TYPE -> "text/plain")
+    }
+    else if (db(newName).findOneByID("metadata").isEmpty) {
+      Conflict(s"$newName: collection is still being written.").withHeaders(CONTENT_TYPE -> "text/plain")
+    }
+    else {
+      addressBaseCollectionName.set(newName)
+
+      Ok(s"Switched over to $product/$epoch index $index.").withHeaders(CONTENT_TYPE -> "text/plain")
+    }
   }
 }
 

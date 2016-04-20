@@ -51,24 +51,22 @@ class OutputDBWriter(cleardownOnError: Boolean,
                      settings: WriterSettings,
                      logger: SimpleLogger) extends OutputWriter {
 
-  private lazy val collection: DBCollection = mongoDbConnection.getConfiguredDb.getCollection(collectionName)
-  private lazy val bulk = new BatchedBulkOperation(settings, {
-    collection
-  })
-
-  private var count = 0
-  private var errored = false
-
-  private def collectionName = {
+  private val collectionName = {
     var iteration = 0
     var collectionName = s"${collectionNameRoot}_$iteration"
     while (mongoDbConnection.getConfiguredDb.collectionExists(collectionName)) {
       iteration += 1
       collectionName = s"${collectionNameRoot}_$iteration"
     }
-    logger.info(s"Writing to collection $collectionName")
+    logger.info(s"Writing new collection '$collectionName'")
     collectionName
   }
+
+  private val collection: DBCollection = mongoDbConnection.getConfiguredDb.getCollection(collectionName)
+  private val bulk = new BatchedBulkOperation(settings, collection)
+
+  private var count = 0
+  private var errored = false
 
   override def output(address: DbAddress) {
     try {
@@ -112,7 +110,7 @@ class OutputDBWriter(cleardownOnError: Boolean,
 }
 
 
-class BatchedBulkOperation(settings: WriterSettings, collection: => DBCollection) {
+class BatchedBulkOperation(settings: WriterSettings, collection: DBCollection) {
   require(settings.bulkSize > 0)
 
   private var bulk = collection.initializeUnorderedBulkOperation
