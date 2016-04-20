@@ -18,14 +18,22 @@
 
 package config
 
+import play.api.Play._
 import play.api._
 import services.ingester.exec.Task
 import uk.gov.hmrc.play.config.RunMode
 import uk.gov.hmrc.play.graphite.GraphiteConfig
 import uk.gov.hmrc.play.microservice.bootstrap.JsonErrorHandling
 import uk.gov.hmrc.play.microservice.bootstrap.Routing.RemovingOfTrailingSlashes
+import config.ConfigHelper._
+import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 
 object ApplicationGlobal extends GlobalSettings with GraphiteConfig with RemovingOfTrailingSlashes with JsonErrorHandling with RunMode {
+
+  lazy val mongoConnection = {
+    val mongoDbUri = mustGetConfigString(current.mode, current.configuration, "mongodb.uri")
+    new CasbahMongoConnection(mongoDbUri)
+  }
 
   override def onStart(app: Application) {
     val config = app.configuration
@@ -41,6 +49,7 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
   override def onStop(app: Application): Unit = {
     Task.singleton.abort()
     Task.singleton.awaitCompletion()
+    mongoConnection.close()
   }
 }
 

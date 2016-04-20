@@ -26,9 +26,7 @@ import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
 
-import scala.annotation.tailrec
-
-class IngestControllerITest extends PlaySpec with EmbeddedMongoSuite with AppServerUnderTest {
+class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServerUnderTest {
 
   def appConfiguration: Map[String, String] = Map(
     "app.files.rootFolder" -> "/var/tmp",
@@ -122,20 +120,6 @@ class IngestControllerITest extends PlaySpec with EmbeddedMongoSuite with AppSer
     }
   }
 
-
-  private def verifyOK(path: String, expected: String) {
-    val step = get(path)
-    step.status mustBe OK
-    step.body mustBe expected
-  }
-
-  @tailrec
-  private def waitWhile(path: String, expected: String): Boolean = {
-    Thread.sleep(200)
-    val step = get(path)
-    if (step.status != OK || step.body != expected) true
-    else waitWhile(path, expected)
-  }
 
   private def setUpFixtures() {
     val sample = getClass.getClassLoader.getResourceAsStream("SX9090-first3600.zip")

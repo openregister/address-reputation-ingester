@@ -20,7 +20,7 @@ import helper.{EmbeddedMongoSuite, AppServerUnderTest}
 import org.scalatestplus.play._
 import play.api.test.Helpers._
 
-class PingTest extends PlaySpec with EmbeddedMongoSuite with AppServerUnderTest {
+class PingIT extends PlaySpec with EmbeddedMongoSuite with AppServerUnderTest {
 
   "ping resource" must {
     "give a successful response" in {

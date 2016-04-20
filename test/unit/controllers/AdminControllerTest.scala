@@ -20,10 +20,14 @@ package controllers
 
 import java.util.concurrent.ArrayBlockingQueue
 
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import play.api.mvc.{AnyContent, Request}
+import play.api.test.FakeRequest
 import services.ingester.exec.Task
 import uk.co.hmrc.logging.StubLogger
 
+@RunWith(classOf[JUnitRunner])
 class AdminControllerTest extends org.scalatest.FunSuite {
 
   test(
@@ -34,7 +38,7 @@ class AdminControllerTest extends org.scalatest.FunSuite {
     """) {
     val logger = new StubLogger
     val ac = new AdminController(new Task(logger))
-    val request: Request[AnyContent] = null
+    val request = FakeRequest()
     val result = ac.handleCancelTask(request)
     assert(result.header.status === 400)
   }
@@ -53,7 +57,7 @@ class AdminControllerTest extends org.scalatest.FunSuite {
     })
 
     val ac = new AdminController(task)
-    val request: Request[AnyContent] = null
+    val request = FakeRequest()
     val result = ac.handleCancelTask(request)
     assert(result.header.status === 200)
     stuff.offer(true) // release the lock

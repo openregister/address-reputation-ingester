@@ -30,6 +30,10 @@ import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger
 import java.util
 
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
+
+@RunWith(classOf[JUnitRunner])
 class OutputDBWriterTest extends FunSuite {
 
   test(

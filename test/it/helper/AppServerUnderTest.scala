@@ -18,9 +18,11 @@ package helper
 
 import org.scalatest._
 import org.scalatestplus.play.ServerProvider
-import play.api.libs.ws.WS
+import play.api.libs.ws.{WS, WSResponse}
 import play.api.test.Helpers._
 import play.api.test.{FakeApplication, Helpers, TestServer}
+
+import scala.annotation.tailrec
 
 trait AppServerUnderTest extends SuiteMixin with ServerProvider with SequentialNestedSuiteExecution {
   this: Suite =>
@@ -60,11 +62,24 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with SequentialN
     }
   }
 
-  def request(method: String, p: String) = {
+  def request(method: String, p: String): WSResponse = {
     await(WS.url(appEndpoint + p).withMethod(method).withHeaders("User-Agent" -> "xyz").execute())
   }
 
-  def get(p: String) = request("GET", p)
+  def get(p: String): WSResponse = request("GET", p)
 
+  def verifyOK(path: String, expected: String) {
+    val step = get(path)
+    assert(step.status === OK)
+    assert(step.body === expected)
+  }
+
+  @tailrec
+  final def waitWhile(path: String, expected: String): Boolean = {
+    Thread.sleep(200)
+    val step = get(path)
+    if (step.status != OK || step.body != expected) true
+    else waitWhile(path, expected)
+  }
 
 }

@@ -22,6 +22,7 @@ import java.util.Date
 
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb._
+import config.ApplicationGlobal
 import config.ConfigHelper._
 import play.api.Logger
 import play.api.Play._
@@ -34,12 +35,11 @@ import scala.collection.JavaConverters._
 
 class OutputDBWriterFactory extends OutputWriterFactory {
 
-  private val mongoDbUri = mustGetConfigString(current.mode, current.configuration, "mongodb.uri")
   private val cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
 
   def writer(collectionNameRoot: String, settings: WriterSettings): OutputWriter =
     new OutputDBWriter(cleardownOnError, collectionNameRoot,
-      new CasbahMongoConnection(mongoDbUri),
+      ApplicationGlobal.mongoConnection,
       settings,
       new LoggerFacade(Logger.logger))
 }

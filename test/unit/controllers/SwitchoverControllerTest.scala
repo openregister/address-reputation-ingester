@@ -19,27 +19,26 @@ package controllers
 import java.io.File
 
 import org.junit.runner.RunWith
-import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
-import services.ingester.converter.{Extractor, ExtractorFactory}
 import services.ingester.exec.{Task, TaskFactory}
 import services.ingester.writers._
+import uk.co.hmrc.address.admin.StoredMetadataItem
 import uk.co.hmrc.logging.StubLogger
 
-@RunWith(classOf[JUnitRunner])
-class IngestControllerTest extends FunSuite with MockitoSugar {
 
+@RunWith(classOf[JUnitRunner])
+class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
   test(
     """
        when an invalid product is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("$%", "40", "full")
+    parameterTest("$%", "40", "12")
   }
 
   test(
@@ -47,7 +46,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
        when an invalid epoch is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("abi", "(*", "full")
+    parameterTest("abi", "(*", "12")
   }
 
   test(
@@ -55,19 +54,18 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
        when an invalid variant is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("abi", "40", ")(")
+    parameterTest("abi", "40", "aa")
   }
 
-  def parameterTest(product: String, epoch: String, variant: String): Unit = {
-    val folder = new File(".")
+  def parameterTest(product: String, epoch: String, index: String): Unit = {
     val logger = new StubLogger()
-    val writerFactory = mock[OutputFileWriterFactory]
+    val storedItem = new StoredMetadataStub()
     val request = FakeRequest()
 
-    val ic = new IngestController(folder, logger, null, null, null, null)
+    val sc = new SwitchoverController(Map("abi" -> storedItem))
 
     intercept[IllegalArgumentException] {
-      ic.handleIngest(request, product, epoch, variant, WriterSettings.default, writerFactory)
+      sc.handleSwitch(request, product, epoch, index)
     }
   }
 
@@ -78,28 +76,34 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     """) {
     val fwf = mock[OutputFileWriterFactory]
     val dbf = mock[OutputDBWriterFactory]
-    val ef = mock[ExtractorFactory]
     val exf = mock[TaskFactory]
-    val ex = mock[Extractor]
-    val request = FakeRequest()
     val folder = new File(".")
     val logger = new StubLogger()
     val task = new Task(logger)
-    val outputFileWriter = mock[OutputFileWriter]
-    val outputDBWriter = mock[OutputDBWriter]
+    val request = FakeRequest()
 
-    when(fwf.writer(anyString, any[WriterSettings])) thenReturn outputFileWriter
-    when(dbf.writer(anyString, any[WriterSettings])) thenReturn outputDBWriter
-    when(ef.extractor(task, logger)) thenReturn ex
     when(exf.task) thenReturn task
+    val storedItem = new StoredMetadataStub()
 
-    val ic = new IngestController(folder, logger, dbf, fwf, ef, exf)
+    val sc = new SwitchoverController(Map("abp" -> storedItem))
 
-    val result = ic.handleIngest(request, "abp", "40", "full", WriterSettings.default, fwf)
+    val result = sc.handleSwitch(request, "abp", "40", "9")
 
     task.awaitCompletion()
 
-    verify(ex, times(1)).extract(any[File], anyObject())
     assert(result.header.status / 100 === 2)
   }
+}
+
+
+class StoredMetadataStub extends StoredMetadataItem {
+  private var _value = ""
+
+  override def get: String = _value
+
+  override def set(value: String) {
+    _value = value
+  }
+
+  override def reset() {}
 }

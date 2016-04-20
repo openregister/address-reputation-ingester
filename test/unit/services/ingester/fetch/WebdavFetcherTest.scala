@@ -8,10 +8,13 @@ import java.nio.file.{Files, Path, Paths}
 import scala.collection.JavaConversions._
 import org.mockito.Mockito._
 import com.github.sardine.{DavResource, Sardine}
+import org.junit.runner.RunWith
 import org.scalatest.Matchers
+import org.scalatest.junit.JUnitRunner
 import org.scalatestplus.play.PlaySpec
 import org.specs2.mock.Mockito
 
+@RunWith(classOf[JUnitRunner])
 class WebdavFetcherTest extends PlaySpec with Mockito {
 
   "fetch all" should {
