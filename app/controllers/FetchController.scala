@@ -22,9 +22,10 @@ class FetchController(taskFactory: TaskFactory,
 
   def fetch(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
     val task = taskFactory.task
-    val started = task.start(s"fetching $product/$epoch/$variant", {
-      webdavFetcher.fetchAll(url, username, password,
-        Paths.get(outputDirectory.toString, product, epoch, variant))
+    val path = s"$product/$epoch/$variant"
+    val started = task.start(s"fetching $path", {
+      val dir = outputDirectory.resolve(path)
+      webdavFetcher.fetchAll(url, username, password, dir)
     })
     if (started) Ok(task.status) else Conflict(task.status)
   }

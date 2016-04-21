@@ -72,6 +72,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     }
   }
 
+  // scalastyle:off
   class context {
     val request = FakeRequest()
     val logger = new StubLogger()

@@ -87,4 +87,12 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with SequentialN
     else waitWhile(path, currentBody)
   }
 
+  @tailrec
+  final def waitUntil(path: String, currentBody: String): Boolean = {
+    Thread.sleep(200)
+    val step = get(path)
+    if (step.status == OK && step.body == currentBody) true
+    else waitUntil(path, currentBody)
+  }
+
 }

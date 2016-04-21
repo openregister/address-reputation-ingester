@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package controllers
 
@@ -14,32 +29,7 @@ import uk.co.hmrc.logging.StubLogger
 
 class FetchControllerTest extends PlaySpec with Mockito with OneAppPerSuite {
 
-  class MockTask extends Task(new StubLogger()) {
-
-    var theBody = {}
-    var theCleanup = {}
-    var started = false
-
-    override def status = "complete"
-
-    override def isBusy: Boolean = false
-
-    override def notIdle: Boolean = false
-
-    override def awaitCompletion(): Unit = {}
-
-    override def abort(): Boolean = true
-
-    override def start(work: String, body: => Unit, cleanup: => Unit): Boolean = {
-      theBody = body
-      theCleanup = cleanup
-      started = true
-      started
-    }
-
-  }
-
-  trait action {
+  trait context {
     val testTask = new Task(new StubLogger())
     val taskFactory = new TaskFactory {
       override def task = testTask
@@ -55,12 +45,11 @@ class FetchControllerTest extends PlaySpec with Mockito with OneAppPerSuite {
     def teardown() {
       Files.delete(outputDirectory)
     }
-
   }
 
-  "fetch" should {
 
-    "download files using webdav" in new action {
+  "fetch" should {
+    "download files using webdav" in new context {
       val product = "product"
       val epoch = "epoch"
       val variant = "variant"
@@ -70,7 +59,5 @@ class FetchControllerTest extends PlaySpec with Mockito with OneAppPerSuite {
       verify(webdavFetcher).fetchAll(url, username, password, Paths.get(outputDirectory.toString, product, epoch, variant))
       teardown()
     }
-
   }
-
 }
