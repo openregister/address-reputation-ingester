@@ -75,7 +75,8 @@ class IngestController(rootFolder: File,
       handleIngest(request, product, epoch, variant, settings, fileWriterFactory)
   }
 
-  private[controllers] def handleIngest(request: Request[AnyContent], product: String, epoch: String, variant: String,
+  private[controllers] def handleIngest(request: Request[AnyContent],
+                                        product: String, epoch: String, variant: String,
                                         settings: WriterSettings,
                                         writerFactory: OutputWriterFactory): Result = {
     require(isAlphaNumeric(product))
@@ -87,7 +88,7 @@ class IngestController(rootFolder: File,
     val writer = writerFactory.writer(s"${product}_${epoch}", settings)
 
     val task = taskFactory.task
-    val status = task.start("ingesting", {
+    val status = task.start(s"ingesting $product/$epoch/$variant", {
       extractorFactory.extractor(task, logger).extract(qualifiedDir, writer)
     }, {
       logger.info("cleaning up extractor")

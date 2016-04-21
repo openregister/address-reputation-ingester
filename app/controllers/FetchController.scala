@@ -3,7 +3,7 @@ package controllers
 
 import java.nio.file.{Files, Path, Paths}
 
-import play.api.mvc.Action
+import play.api.mvc.{Action, AnyContent}
 import services.ingester.exec.TaskFactory
 import services.ingester.fetch.WebdavFetcher
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -20,9 +20,9 @@ class FetchController(taskFactory: TaskFactory,
                       password: String,
                       outputDirectory: Path) extends BaseController {
 
-  def fetch(product: String, epoch: String, variant: String) = Action {
+  def fetch(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
     val task = taskFactory.task
-    val started = task.start(s"Fetching $product/$epoch/$variant", {
+    val started = task.start(s"fetching $product/$epoch/$variant", {
       webdavFetcher.fetchAll(url, username, password,
         Paths.get(outputDirectory.toString, product, epoch, variant))
     })
