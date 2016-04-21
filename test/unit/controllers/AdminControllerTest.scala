@@ -26,6 +26,8 @@ import play.api.mvc.{AnyContent, Request}
 import play.api.test.FakeRequest
 import services.ingester.exec.Task
 import uk.co.hmrc.logging.StubLogger
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
 
 @RunWith(classOf[JUnitRunner])
 class AdminControllerTest extends org.scalatest.FunSuite {
@@ -39,7 +41,10 @@ class AdminControllerTest extends org.scalatest.FunSuite {
     val logger = new StubLogger
     val ac = new AdminController(new Task(logger))
     val request = FakeRequest()
-    val result = ac.handleCancelTask(request)
+
+    val futureResult = call(ac.cancelTask(), request)
+
+    val result = await(futureResult)
     assert(result.header.status === 400)
   }
 
@@ -58,7 +63,10 @@ class AdminControllerTest extends org.scalatest.FunSuite {
 
     val ac = new AdminController(task)
     val request = FakeRequest()
-    val result = ac.handleCancelTask(request)
+
+    val futureResult = call(ac.cancelTask(), request)
+
+    val result = await(futureResult)
     assert(result.header.status === 200)
     stuff.offer(true) // release the lock
   }

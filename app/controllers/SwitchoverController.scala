@@ -57,17 +57,19 @@ class SwitchoverController(mongoDbConnection: CasbahMongoConnection, metadata: M
 
     val db = mongoDbConnection.getConfiguredDb
     if (!db.collectionExists(newName)) {
-      BadRequest(s"$newName: collection was not found.").withHeaders(CONTENT_TYPE -> "text/plain")
+      BadRequest(s"$newName: collection was not found.").withHeaders(textPlain)
     }
     else if (db(newName).findOneByID("metadata").isEmpty) {
-      Conflict(s"$newName: collection is still being written.").withHeaders(CONTENT_TYPE -> "text/plain")
+      Conflict(s"$newName: collection is still being written.").withHeaders(textPlain)
     }
     else {
       addressBaseCollectionName.set(newName)
 
-      Ok(s"Switched over to $product/$epoch index $index.").withHeaders(CONTENT_TYPE -> "text/plain")
+      Ok(s"Switched over to $product/$epoch index $index.").withHeaders(textPlain)
     }
   }
+
+  private val textPlain = CONTENT_TYPE -> "text/plain"
 }
 
 
