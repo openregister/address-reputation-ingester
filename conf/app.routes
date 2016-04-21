@@ -13,3 +13,9 @@ GET   /switch/to/:product/:epoch/:index             controllers.SwitchoverContro
 
 GET   /admin/cancelTask                             controllers.AdminController.cancelTask()
 GET   /admin/status                                 controllers.AdminController.status()
+
+GET   /fetch/:product/:epoch/:variant               controllers.FetchController.fetch(product, epoch, variant)
+
+GET   /admin/cancelTask                             controllers.AdminController.cancelTask()
+GET   /admin/status                                 controllers.AdminController.status()
+

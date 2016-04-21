@@ -7,6 +7,8 @@ import com.github.sardine.Sardine
 
 import scala.collection.JavaConversions._
 
+object WebdavFetcher extends WebdavFetcher
+
 class WebdavFetcher {
 
   def fetchAll(url: String, username: String, password: String, outputDirectory: Path): Long = {
