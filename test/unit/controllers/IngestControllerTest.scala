@@ -25,6 +25,7 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import services.ingester.converter.{Extractor, ExtractorFactory}
 import services.ingester.exec.{Task, TaskFactory}
 import services.ingester.writers._
@@ -71,35 +72,58 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     }
   }
 
-  test(
-    """
-      when valid paramaters are passed to ingest
-      then a successful response is returned
-    """) {
-    val fwf = mock[OutputFileWriterFactory]
-    val dbf = mock[OutputDBWriterFactory]
+  class context {
+    val request = FakeRequest()
+    val logger = new StubLogger()
+    val task = new Task(logger)
     val ef = mock[ExtractorFactory]
     val exf = mock[TaskFactory]
     val ex = mock[Extractor]
-    val request = FakeRequest()
-    val folder = new File(".")
-    val logger = new StubLogger()
-    val task = new Task(logger)
+    val dbf = mock[OutputDBWriterFactory]
+    val fwf = mock[OutputFileWriterFactory]
     val outputFileWriter = mock[OutputFileWriter]
     val outputDBWriter = mock[OutputDBWriter]
+    val folder = new File(".")
 
     when(fwf.writer(anyString, any[WriterSettings])) thenReturn outputFileWriter
     when(dbf.writer(anyString, any[WriterSettings])) thenReturn outputDBWriter
     when(ef.extractor(task, logger)) thenReturn ex
     when(exf.task) thenReturn task
+  }
 
-    val ic = new IngestController(folder, logger, dbf, fwf, ef, exf)
+  test(
+    """
+      when valid paramaters are passed to ingestToDB
+      then a successful response is returned
+    """) {
+    new context {
+      val ic = new IngestController(folder, logger, dbf, fwf, ef, exf)
 
-    val result = ic.handleIngest(request, "abp", "40", "full", WriterSettings.default, fwf)
+      val futureResult = call(ic.ingestToDB("abp", "40", "full", "1", "0"), request)
 
-    task.awaitCompletion()
+      task.awaitCompletion()
+      val result = await(futureResult)
 
-    verify(ex, times(1)).extract(any[File], anyObject())
-    assert(result.header.status / 100 === 2)
+      verify(ex, times(1)).extract(any[File], anyObject())
+      assert(result.header.status / 100 === 2)
+    }
+  }
+
+  test(
+    """
+      when valid paramaters are passed to ingestToFile
+      then a successful response is returned
+    """) {
+    new context {
+      val ic = new IngestController(folder, logger, dbf, fwf, ef, exf)
+
+      val futureResult = call(ic.ingestToFile("abp", "40", "full"), request)
+
+      task.awaitCompletion()
+      val result = await(futureResult)
+
+      verify(ex, times(1)).extract(any[File], anyObject())
+      assert(result.header.status / 100 === 2)
+    }
   }
 }
