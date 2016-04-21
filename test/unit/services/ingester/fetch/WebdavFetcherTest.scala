@@ -11,6 +11,7 @@ import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatestplus.play.PlaySpec
 import org.specs2.mock.Mockito
+import uk.co.hmrc.logging.StubLogger
 
 import scala.collection.JavaConversions._
 
@@ -18,6 +19,7 @@ import scala.collection.JavaConversions._
 class WebdavFetcherTest extends PlaySpec with Mockito {
 
   class Context(resourceFolder: String) {
+    val logger = new StubLogger()
     val outputDirectory = Files.createTempDirectory("webdav-fetcher-test")
     val sardine = mock[Sardine]
     val url = "http://somedavserver.com/prod/rel/variant/"
@@ -42,7 +44,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
         f =>
           when(sardine.get(toUrl(url, f))).thenReturn(new FileInputStream(f))
       }
-      val fetcher = new WebdavFetcher() {
+      val fetcher = new WebdavFetcher(logger) {
         override def begin(username: String, password: String): Sardine = sardine
       }
       // when
@@ -51,6 +53,11 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       total must be(files.map(_.length()).sum)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       outputDirectory.toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
+      logger.infos.map(_.message).toSet must be(Set(
+        "Info:Fetched foo.txt",
+        "Info:Fetched bar.txt",
+        "Info:Fetched baz.txt"
+      ))
       // finally
       teardown()
     }

@@ -4,12 +4,11 @@ package services.ingester.fetch
 import java.nio.file._
 
 import com.github.sardine.{DavResource, Sardine}
+import uk.co.hmrc.logging.SimpleLogger
 
 import scala.collection.JavaConverters._
 
-object WebdavFetcher extends WebdavFetcher
-
-class WebdavFetcher {
+class WebdavFetcher(logger: SimpleLogger) {
 
   def fetchAll(url: String, username: String, password: String, outputDirectory: Path): Long = {
     val sardine = begin(username, password)
@@ -26,6 +25,7 @@ class WebdavFetcher {
     try {
       val bytesCopied = Files.copy(in, outputDirectory.resolve(res.getName))
       Files.createFile(outputDirectory.resolve(res.getName + ".done"))
+      logger.info("Fetched " + res.getName)
       bytesCopied
     } finally {
       in.close()
