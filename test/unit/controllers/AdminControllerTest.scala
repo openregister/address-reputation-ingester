@@ -22,12 +22,10 @@ import java.util.concurrent.ArrayBlockingQueue
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import play.api.mvc.{AnyContent, Request}
-import play.api.test.FakeRequest
-import services.ingester.exec.Task
-import uk.co.hmrc.logging.StubLogger
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import services.ingester.exec.Task
+import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
 class AdminControllerTest extends org.scalatest.FunSuite {
