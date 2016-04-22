@@ -33,14 +33,6 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
     "app.files.outputFolder" -> "/var/tmp"
   )
 
-  override def beforeAppServerStarts() {
-    setUpFixtures()
-  }
-
-  override def afterAppServerStops() {
-    tearDownFixtures()
-  }
-
   "ingest resource happy journey - to file" must {
     """
        * observe quiet status
@@ -117,7 +109,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
   }
 
 
-  private def setUpFixtures() {
+  override def beforeAppServerStarts() {
     val sample = getClass.getClassLoader.getResourceAsStream("SX9090-first3600.zip")
     val rootFolder = Paths.get("/var/tmp/abp/123456/test")
     rootFolder.toFile.mkdirs()
@@ -125,7 +117,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
     sample.close()
   }
 
-  private def tearDownFixtures() {
+  override def afterAppServerStops() {
     val inFile = new File("/var/tmp/abp/123456/test/SX9090-first3600.zip")
     inFile.delete()
     val outFile = new File("/var/tmp/abp_123456.txt.gz")

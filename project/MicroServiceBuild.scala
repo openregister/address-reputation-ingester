@@ -15,6 +15,8 @@
  */
 
 import sbt._
+import play.PlayImport._
+import play.core.PlayVersion
 
 object MicroServiceBuild extends Build with MicroService {
   import scala.util.Properties.envOrElse
@@ -22,12 +24,7 @@ object MicroServiceBuild extends Build with MicroService {
   val appName = "address-reputation-ingester"
   val appVersion = envOrElse("ADDRESS_REPUTATION_INGESTER_VERSION", "999-SNAPSHOT")
 
-  override lazy val appDependencies: Seq[ModuleID] = AppDependencies()
-}
-
-private object AppDependencies {
-  import play.PlayImport._
-  import play.core.PlayVersion
+  override lazy val appDependencies: Seq[ModuleID] = compile ++ testDependencies ++ itDependencies
 
   val compile = Seq(
     ws excludeAll ExclusionRule(organization = "commons-logging"),
@@ -48,36 +45,19 @@ private object AppDependencies {
     "com.github.lookfirst" % "sardine" % "5.7"
   )
 
-  trait TestDependencies {
-    val scope = "test"
+  private def baseTestDependencies(scope: String) = Seq(
+    "org.scalatest" %% "scalatest" % "2.2.4" % scope,
+    "org.scalamock" %% "scalamock-scalatest-support" % "3.2" % scope,
+    "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2" % scope,
+    "org.pegdown" % "pegdown" % "1.4.2" % scope,
+    "uk.gov.hmrc" %% "hmrctest" % "1.4.0" % scope,
+    "org.scalatestplus" %% "play" % "1.2.0" % scope,
+    "org.mockito" % "mockito-all" % "1.10.19" % scope,
+    "com.pyruby" % "java-stub-server" % "0.14" % scope)
 
-    def test: Seq[ModuleID]
+  val testDependencies = baseTestDependencies("test")
 
-    lazy val baseTestDependencies = Seq(
-      "org.scalatest" %% "scalatest" % "2.2.4" % scope,
-      "org.scalamock" %% "scalamock-scalatest-support" % "3.2" % scope,
-      "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2" % scope,
-      "org.pegdown" % "pegdown" % "1.4.2" % scope,
-      "uk.gov.hmrc" %% "hmrctest" % "1.4.0" % scope,
-      "org.scalatestplus" %% "play" % "1.2.0" % scope,
-      "org.jsoup" % "jsoup" % "1.7.3" % scope,
-      "org.mockito" % "mockito-all" % "1.10.19" % scope)
-  }
-
-  object Test {
-    def apply() = new TestDependencies {
-      override lazy val test = baseTestDependencies
-    }.test
-  }
-
-  object IntegrationTest {
-    def apply() = new TestDependencies {
-      override val scope = "it"
-      override val test = baseTestDependencies ++ Seq(
-        "com.typesafe.play" %% "play-test" % PlayVersion.current % scope)
-    }.test
-  }
-
-  def apply() = compile ++ Test() ++ IntegrationTest()
+  val itDependencies = baseTestDependencies("it") ++
+    Seq("com.typesafe.play" %% "play-test" % PlayVersion.current % "it")
 }
 
