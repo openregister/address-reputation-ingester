@@ -21,7 +21,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
-import services.ingester.exec.Worker
+import services.ingester.exec.{Task, Worker}
 import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
@@ -110,10 +110,11 @@ class SecondPassTest extends FunSuite with Matchers {
       }
 
       val sp = new SecondPass(fd, task)
-      task.start("testing", {
-        task.abort()
-        sp.processFile(csv, out)
-      })
+      task.start(Task("testing", {
+        continuer =>
+          task.abort()
+          sp.processFile(csv, out)
+      }))
 
       task.awaitCompletion()
       assert(out.count === 0)
@@ -148,9 +149,10 @@ class SecondPassTest extends FunSuite with Matchers {
       }
 
       val sp = new SecondPass(fd, task)
-      task.start("testing", {
-        sp.processFile(csv, out)
-      })
+      task.start(Task("testing", {
+        continuer =>
+          sp.processFile(csv, out)
+      }))
 
       task.awaitCompletion()
       assert(out.count === 0)

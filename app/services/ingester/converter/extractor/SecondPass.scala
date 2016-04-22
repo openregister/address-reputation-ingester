@@ -20,11 +20,11 @@ import services.ingester.converter._
 import services.ingester.exec.Worker
 import services.ingester.writers.OutputWriter
 
-class SecondPass(fd: ForwardData, task: Worker) extends Pass {
+class SecondPass(fd: ForwardData, worker: Worker) extends Pass {
 
   def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter) {
     for (csvLine <- csvIterator
-         if task.isBusy) {
+         if worker.isBusy) {
       if (csvLine(OSCsv.RecordIdentifier_idx) == OSLpi.RecordId) {
         processLPI(csvLine, out)
       }

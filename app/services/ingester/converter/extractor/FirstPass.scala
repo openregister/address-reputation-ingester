@@ -31,7 +31,7 @@ trait Pass {
 }
 
 
-class FirstPass(out: OutputWriter, task: Worker) extends Pass {
+class FirstPass(out: OutputWriter, worker: Worker) extends Pass {
 
   private[extractor] val blpuTable: mutable.Map[Long, Blpu] = new mutable.HashMap()
   private[extractor] val dpaTable: mutable.Set[Long] = new mutable.HashSet()
@@ -47,7 +47,7 @@ class FirstPass(out: OutputWriter, task: Worker) extends Pass {
 
   def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter) {
     for (csvLine <- csvIterator
-         if task.isBusy) {
+         if worker.isBusy) {
       processLine(csvLine, out)
     }
   }

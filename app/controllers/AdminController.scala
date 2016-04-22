@@ -24,7 +24,7 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 object AdminController extends AdminController(Worker.singleton)
 
-class AdminController(task: Worker) extends BaseController {
+class AdminController(worker: Worker) extends BaseController {
 
   def cancelTask(): Action[AnyContent] = Action {
     request => {
@@ -33,10 +33,10 @@ class AdminController(task: Worker) extends BaseController {
   }
 
   def handleCancelTask(request: Request[AnyContent]): Result = {
-    if (task.abort()) {
-      Ok(task.status)
+    if (worker.abort()) {
+      Ok(worker.status)
     } else {
-      BadRequest(task.status)
+      BadRequest(worker.status)
     }
   }
 
@@ -47,6 +47,6 @@ class AdminController(task: Worker) extends BaseController {
   }
 
   def getStatus(request: Request[AnyContent]): Result = {
-    Ok(task.status).withHeaders(CONTENT_TYPE -> "text/plain")
+    Ok(worker.status).withHeaders(CONTENT_TYPE -> "text/plain")
   }
 }

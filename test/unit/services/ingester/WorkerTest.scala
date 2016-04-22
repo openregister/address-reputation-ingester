@@ -23,7 +23,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
-import services.ingester.exec.Worker
+import services.ingester.exec.{Task, Worker}
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
@@ -31,54 +31,58 @@ class WorkerTest extends FunSuite {
 
   test(
     """
-      when a request to execute something is issued to the task
-      and then a second request to execute something is issued to the task
+      when a request to execute something is issued to the worker
+      and then a second request to execute something is issued to the worker
       then the first should return true
       and the second should return false
     """) {
     val logger = new StubLogger()
-    val task = new Worker(logger)
+    val worker = new Worker(logger)
     val stuff = new ArrayBlockingQueue[Boolean](1)
 
-    assert(task.status === "idle")
+    assert(worker.status === "idle")
 
-    val started1 = task.start("thinking", {
-      stuff.take() // blocks until signalled
-      logger.info("foo")
-    })
+    val started1 = worker.start(
+      Task("thinking", {
+        continuer =>
+          stuff.take() // blocks until signalled
+          logger.info("foo")
+      }))
 
-    val started2 = task.start("cogitating", {
-      logger.info("bar")
-    })
+    val started2 = worker.start(
+      Task("cogitating", {
+        continuer => logger.info("bar")
+      }))
 
     assert(started1 === true)
     assert(started2 === false)
 
-    assert(task.isBusy)
-    assert(task.status === "busy thinking")
+    assert(worker.isBusy)
+    assert(worker.status === "busy thinking")
 
     stuff.offer(true) // release the lock
-    task.awaitCompletion()
+    worker.awaitCompletion()
 
-    assert(!task.isBusy)
-    assert(task.status === "idle")
+    assert(!worker.isBusy)
+    assert(worker.status === "idle")
   }
 
   test(
     """
-      when a request to execute something is issued to the task
+      when a request to execute something is issued to the worker
       then two log statements are issued
     """) {
     val logger = new StubLogger()
-    val task = new Worker(logger)
+    val worker = new Worker(logger)
 
-    val started = task.start("thinking", {
-      logger.info("fric")
-    })
+    val started = worker.start(
+      Task("thinking", {
+        continuer => logger.info("fric")
+      }))
 
     assert(started === true)
 
-    task.awaitCompletion()
+    worker.awaitCompletion()
 
     assert(logger.infos.size === 2) // the logger in the body, and the timer in the executor
   }
@@ -86,20 +90,21 @@ class WorkerTest extends FunSuite {
   test(
     """
       given the execution status is false
-      when a request to execute something is issued to the task
-      and an interrupted exception occurs in the task
+      when a request to execute something is issued to the worker
+      and an interrupted exception occurs in the worker
       then return true and log one statement
     """) {
     val logger = new StubLogger()
-    val task = new Worker(logger)
+    val worker = new Worker(logger)
 
-    val started = task.start("thinking", {
-      throw new InterruptedException("task cancelled")
-    })
+    val started = worker.start(
+      Task("thinking", {
+        continuer => throw new InterruptedException("worker cancelled")
+      }))
 
     assert(started === true)
 
-    task.awaitCompletion()
+    worker.awaitCompletion()
 
     assert(logger.infos.size === 1) // the exception handler
   }

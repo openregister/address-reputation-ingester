@@ -23,23 +23,23 @@ import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
 import org.specs2.mock.Mockito
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.ingester.exec.{Worker, TaskFactory}
+import services.ingester.exec.{Worker, WorkerFactory}
 import services.ingester.fetch.WebdavFetcher
 import uk.co.hmrc.logging.StubLogger
 
 class FetchControllerTest extends PlaySpec with Mockito with OneAppPerSuite {
 
   trait context {
-    val testTask = new Worker(new StubLogger())
-    val taskFactory = new TaskFactory {
-      override def task = testTask
+    val testWorker = new Worker(new StubLogger())
+    val workerFactory = new WorkerFactory {
+      override def worker = testWorker
     }
     val webdavFetcher = mock[WebdavFetcher]
     val url = "http://localhost/webdav"
     val username = "foo"
     val password = "bar"
     val outputDirectory: Path = Files.createTempDirectory("fetch-controller-test")
-    val controller = new FetchController(taskFactory, webdavFetcher, url, username, password, outputDirectory)
+    val controller = new FetchController(workerFactory, webdavFetcher, url, username, password, outputDirectory)
     val req = FakeRequest()
 
     def teardown() {
@@ -55,7 +55,7 @@ class FetchControllerTest extends PlaySpec with Mockito with OneAppPerSuite {
       val variant = "variant"
       val res = call(controller.fetch(product, epoch, variant), req)
       status(res) must be (200)
-      testTask.awaitCompletion()
+      testWorker.awaitCompletion()
       verify(webdavFetcher).fetchAll(url, username, password, Paths.get(outputDirectory.toString, product, epoch, variant))
       teardown()
     }

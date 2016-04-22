@@ -35,12 +35,22 @@ object ExecutionState {
 }
 
 
+trait Continuer {
+  def isBusy: Boolean
+}
+
+
+case class Task(description: String,
+                action: (Continuer) => Unit,
+                cleanup: () => Unit = () => {})
+
+
 object Worker {
   val singleton = new Worker(new LoggerFacade(Logger.logger))
 }
 
 
-class Worker(logger: SimpleLogger) {
+class Worker(logger: SimpleLogger) extends Continuer {
 
   import ExecutionState._
 
@@ -68,13 +78,17 @@ class Worker(logger: SimpleLogger) {
     }
 
   def start(work: String, body: => Unit, cleanup: => Unit = {}): Boolean = {
+    start(Task(work, c => body, () => cleanup))
+  }
+
+  def start(task: Task): Boolean = {
     if (executionState.compareAndSet(IDLE, BUSY)) {
-      doing = " " + work.trim
+      doing = " " + task.description.trim
       Future {
         val timer = new DiagnosticTimer
         try {
           scala.concurrent.blocking {
-            body
+            task.action(this)
             logger.info(s"Task completed after {}", timer)
           }
         } catch {
@@ -83,7 +97,7 @@ class Worker(logger: SimpleLogger) {
         }
       } andThen {
         case r =>
-          cleanup
+          task.cleanup()
           executionState.set(IDLE)
           doing = ""
       }
@@ -95,7 +109,7 @@ class Worker(logger: SimpleLogger) {
 }
 
 
-class TaskFactory {
-  def task: Worker = Worker.singleton
+class WorkerFactory {
+  def worker: Worker = Worker.singleton
 }
 

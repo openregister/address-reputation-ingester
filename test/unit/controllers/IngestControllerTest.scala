@@ -27,7 +27,7 @@ import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.ingester.converter.{Extractor, ExtractorFactory}
-import services.ingester.exec.{Worker, TaskFactory}
+import services.ingester.exec.{Worker, WorkerFactory}
 import services.ingester.writers._
 import uk.co.hmrc.logging.StubLogger
 
@@ -76,9 +76,9 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
   class context {
     val request = FakeRequest()
     val logger = new StubLogger()
-    val task = new Worker(logger)
+    val worker = new Worker(logger)
     val ef = mock[ExtractorFactory]
-    val exf = mock[TaskFactory]
+    val exf = mock[WorkerFactory]
     val ex = mock[Extractor]
     val dbf = mock[OutputDBWriterFactory]
     val fwf = mock[OutputFileWriterFactory]
@@ -88,8 +88,8 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
     when(fwf.writer(anyString, any[WriterSettings])) thenReturn outputFileWriter
     when(dbf.writer(anyString, any[WriterSettings])) thenReturn outputDBWriter
-    when(ef.extractor(task, logger)) thenReturn ex
-    when(exf.task) thenReturn task
+    when(ef.extractor(worker, logger)) thenReturn ex
+    when(exf.worker) thenReturn worker
   }
 
   test(
@@ -102,7 +102,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       val futureResult = call(ic.ingestToDB("abp", "40", "full", "1", "0"), request)
 
-      task.awaitCompletion()
+      worker.awaitCompletion()
       val result = await(futureResult)
 
       verify(ex, times(1)).extract(any[File], anyObject())
@@ -120,7 +120,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       val futureResult = call(ic.ingestToFile("abp", "40", "full"), request)
 
-      task.awaitCompletion()
+      worker.awaitCompletion()
       val result = await(futureResult)
 
       verify(ex, times(1)).extract(any[File], anyObject())

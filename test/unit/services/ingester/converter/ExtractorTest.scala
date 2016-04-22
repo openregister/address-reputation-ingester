@@ -37,16 +37,16 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
   test("Having no files should not throw any exception") {
     val mockFile = mock[File]
     val logger = new StubLogger
-    val task = new Worker(logger)
+    val worker = new Worker(logger)
     val dummyOut = mock[OutputWriter]
 
     when(mockFile.isDirectory) thenReturn true
     when(mockFile.listFiles) thenReturn Array.empty[File]
 
-    task.start("testing", {
-      new Extractor(task, logger).extract(mockFile, dummyOut)
+    worker.start("testing", {
+      new Extractor(worker, logger).extract(mockFile, dummyOut)
     })
-    task.awaitCompletion()
+    worker.awaitCompletion()
   }
 
 
@@ -57,7 +57,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
 
     val sample = new File(getClass.getClassLoader.getResource("SX9090-first3600.zip").getFile)
     val logger = new StubLogger
-    val task = new Worker(logger)
+    val worker = new Worker(logger)
     val addressesProduced = new mutable.ListBuffer[DbAddress]()
     var closed = false
 
@@ -66,13 +66,15 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
         addressesProduced += a
       }
 
-      def close() {closed = true}
+      def close() {
+        closed = true
+      }
     }
 
-    task.start("testing", {
-      new Extractor(task, logger).extract(List(sample), out)
+    worker.start("testing", {
+      new Extractor(worker, logger).extract(List(sample), out)
     })
-    task.awaitCompletion()
+    worker.awaitCompletion()
 
     assert(logger.infos.map(_.message) === List(
       "Info:Starting first pass through 1 files",
@@ -148,7 +150,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
     // 21,"I",3534,10023118563,1,2,2010-03-04,,291389.00,091904.00,1,1110,2010-03-04,,2013-02-11,2010-03-04,"M","EX2 9DP",10
     // 24,"I",3535,10023118563,"1110L000164998","ENG",1,2010-03-04,,2010-03-04,2010-03-04,,"",,"","",,"",,"","CHAPEL COURT",14200165,"1","","","N"
     // 32,"I",3536,10023118563,"1110C000059540","PP","AddressBase Premium Classification Scheme",1.0,2010-03-04,,2010-03-04,2010-03-04
-    assert(addressesProduced(27) === DbAddress("GB10023118563",List("Chapel Court", "Church Road", "St Thomas"),"Exeter","EX2 9DP"))
+    assert(addressesProduced(27) === DbAddress("GB10023118563", List("Chapel Court", "Church Road", "St Thomas"), "Exeter", "EX2 9DP"))
 
     // 11,"I",3257,14200708,1,1110,2,1990-01-01,1,8,0,2004-12-08,,2007-07-19,2004-12-08,291536.00,092922.00,291712.00,093103.00,10
     // 15,"I",3258,14200708,"RICHMOND ROAD","","EXETER","DEVON","ENG"

@@ -35,7 +35,7 @@ object Extractor {
 }
 
 
-class Extractor(task: Worker, logger: SimpleLogger) {
+class Extractor(worker: Worker, logger: SimpleLogger) {
   private def listFiles(file: File): List[File] =
     if (!file.isDirectory) Nil
     else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
@@ -48,7 +48,7 @@ class Extractor(task: Worker, logger: SimpleLogger) {
 
   def extract(files: Seq[File], out: OutputWriter) {
     val dt = new DiagnosticTimer
-    val fp = new FirstPass(out, task)
+    val fp = new FirstPass(out, worker)
 
     logger.info(s"Starting first pass through ${files.size} files")
     pass(files, out, fp)
@@ -56,20 +56,20 @@ class Extractor(task: Worker, logger: SimpleLogger) {
     logger.info(s"First pass complete after {}", dt)
 
     logger.info(s"Starting second pass through ${files.size} files")
-    val sp = new SecondPass(fd, task)
+    val sp = new SecondPass(fd, worker)
     pass(files, out, sp)
     logger.info(s"Finished after {}", dt)
   }
 
   private def pass(files: Seq[File], out: OutputWriter, thisPass: Pass) {
     for (file <- files
-         if task.isBusy) {
+         if worker.isBusy) {
       val dt = new DiagnosticTimer
       val zip = LoadZip.zipReader(file, (name) => {
         name.toLowerCase.endsWith(".csv")
       })
       try {
-        while (zip.hasNext && task.isBusy) {
+        while (zip.hasNext && worker.isBusy) {
           val next = zip.next
           val name = next.zipEntry.getName
           logger.info(s"Reading zip entry $name...")
@@ -85,6 +85,6 @@ class Extractor(task: Worker, logger: SimpleLogger) {
 }
 
 class ExtractorFactory {
-  def extractor(task: Worker, logger: SimpleLogger): Extractor = new Extractor(task, logger)
+  def extractor(worker: Worker, logger: SimpleLogger): Extractor = new Extractor(worker, logger)
 }
 

@@ -24,7 +24,7 @@ import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import services.ingester.converter.ExtractorFactory
-import services.ingester.exec.TaskFactory
+import services.ingester.exec.WorkerFactory
 import services.ingester.writers.{OutputDBWriterFactory, OutputFileWriterFactory, OutputWriterFactory, WriterSettings}
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -45,7 +45,7 @@ object IngestController extends IngestController(
   new OutputDBWriterFactory,
   new OutputFileWriterFactory,
   new ExtractorFactory,
-  new TaskFactory())
+  new WorkerFactory())
 
 
 class IngestController(rootFolder: File,
@@ -53,7 +53,7 @@ class IngestController(rootFolder: File,
                        dbWriterFactory: OutputDBWriterFactory,
                        fileWriterFactory: OutputFileWriterFactory,
                        extractorFactory: ExtractorFactory,
-                       taskFactory: TaskFactory
+                       taskFactory: WorkerFactory
                       ) extends BaseController {
 
   def ingestToDB(product: String, epoch: String, variant: String,
@@ -87,15 +87,15 @@ class IngestController(rootFolder: File,
 
     val writer = writerFactory.writer(s"${product}_${epoch}", settings)
 
-    val task = taskFactory.task
-    val status = task.start(s"ingesting $product/$epoch/$variant", {
-      extractorFactory.extractor(task, logger).extract(qualifiedDir, writer)
+    val worker = taskFactory.worker
+    val status = worker.start(s"ingesting $product/$epoch/$variant", {
+      extractorFactory.extractor(worker, logger).extract(qualifiedDir, writer)
     }, {
       logger.info("cleaning up extractor")
       writer.close()
     })
 
     if (status) Ok(s"Ingestion has started for $product/$epoch/$variant")
-    else Conflict(task.status)
+    else Conflict(worker.status)
   }
 }
