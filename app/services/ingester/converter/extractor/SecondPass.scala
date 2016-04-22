@@ -17,14 +17,14 @@
 package services.ingester.converter.extractor
 
 import services.ingester.converter._
-import services.ingester.exec.Worker
+import services.ingester.exec.Continuer
 import services.ingester.writers.OutputWriter
 
-class SecondPass(fd: ForwardData, worker: Worker) extends Pass {
+class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
 
   def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter) {
     for (csvLine <- csvIterator
-         if worker.isBusy) {
+         if continuer.isBusy) {
       if (csvLine(OSCsv.RecordIdentifier_idx) == OSLpi.RecordId) {
         processLPI(csvLine, out)
       }

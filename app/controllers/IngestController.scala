@@ -24,7 +24,7 @@ import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import services.ingester.converter.ExtractorFactory
-import services.ingester.exec.WorkerFactory
+import services.ingester.exec.{Task, WorkerFactory}
 import services.ingester.writers.{OutputDBWriterFactory, OutputFileWriterFactory, OutputWriterFactory, WriterSettings}
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -88,12 +88,16 @@ class IngestController(rootFolder: File,
     val writer = writerFactory.writer(s"${product}_${epoch}", settings)
 
     val worker = taskFactory.worker
-    val status = worker.start(s"ingesting $product/$epoch/$variant", {
-      extractorFactory.extractor(worker, logger).extract(qualifiedDir, writer)
-    }, {
-      logger.info("cleaning up extractor")
-      writer.close()
-    })
+    val status = worker.push(
+      Task(s"ingesting $product/$epoch/$variant", {
+        continuer =>
+          extractorFactory.extractor(continuer, logger).extract(qualifiedDir, writer)
+      },
+        () => {
+          logger.info("cleaning up extractor")
+          writer.close()
+        })
+    )
 
     if (status) Ok(s"Ingestion has started for $product/$epoch/$variant")
     else Conflict(worker.status)

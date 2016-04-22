@@ -31,7 +31,7 @@ class FetchController(taskFactory: WorkerFactory,
   def fetch(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
     val worker = taskFactory.worker
     val path = s"$product/$epoch/$variant"
-    val started = worker.start(s"fetching $path", {
+    val started = worker.push(s"fetching $path", {
       val dir = outputDirectory.resolve(path)
       webdavFetcher.fetchAll(url, username, password, dir)
     })

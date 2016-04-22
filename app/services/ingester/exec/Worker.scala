@@ -19,13 +19,11 @@
 package services.ingester.exec
 
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.{BlockingQueue, LinkedTransferQueue}
 
 import play.api.Logger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 object ExecutionState {
   // using ints here because of AtomicInteger simplicity
@@ -45,26 +43,58 @@ case class Task(description: String,
                 cleanup: () => Unit = () => {})
 
 
-object Worker {
-  val singleton = new Worker(new LoggerFacade(Logger.logger))
+object WorkQueue {
+  val singleton = new WorkQueue(new LoggerFacade(Logger.logger))
 }
 
 
-class Worker(logger: SimpleLogger) extends Continuer {
+class WorkQueue(logger: SimpleLogger) {
+  private val queue = new LinkedTransferQueue[Task]()
+  private val worker = new Worker(queue, logger)
+  worker.setDaemon(true)
+  worker.start()
+
+  def push(work: String, body: => Unit, cleanup: => Unit = {}): Boolean = {
+    push(Task(work, c => body, () => cleanup))
+  }
+
+  def push(task: Task): Boolean = {
+    queue.offer(task)
+  }
+
+  def status: String = worker.status
+
+  def isBusy: Boolean = worker.isBusy
+
+  def notIdle: Boolean = worker.notIdle
+
+  def abort(): Boolean = worker.abort()
+
+  // used only in special cases, so a simple spin-lock is fine
+  def awaitCompletion() {
+    while (notIdle)
+      Thread.sleep(5)
+  }
+
+  // for application / test shutdown only
+  def terminate() {
+    worker.running = false
+  }
+}
+
+
+private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) extends Thread with Continuer {
 
   import ExecutionState._
 
-  private[ingester] val executionState: AtomicInteger = new AtomicInteger(IDLE)
+  private[exec] var running = true
+
+  private val executionState = new AtomicInteger(IDLE)
   private var doing = "" // n.b. not being used for thread interlocking
 
   def isBusy: Boolean = executionState.get == BUSY
 
   def notIdle: Boolean = executionState.get != IDLE
-
-  def awaitCompletion() {
-    while (notIdle)
-      Thread.sleep(5)
-  }
 
   def abort(): Boolean = {
     executionState.compareAndSet(BUSY, STOPPING)
@@ -77,39 +107,45 @@ class Worker(logger: SimpleLogger) extends Continuer {
       case _ => "idle"
     }
 
-  def start(work: String, body: => Unit, cleanup: => Unit = {}): Boolean = {
-    start(Task(work, c => body, () => cleanup))
+  override def run() {
+    while (running) {
+      doNextTask()
+    }
   }
 
-  def start(task: Task): Boolean = {
-    if (executionState.compareAndSet(IDLE, BUSY)) {
-      doing = " " + task.description.trim
-      Future {
-        val timer = new DiagnosticTimer
-        try {
-          scala.concurrent.blocking {
-            task.action(this)
-            logger.info(s"Task completed after {}", timer)
-          }
-        } catch {
-          case ie: InterruptedException =>
-            logger.info(s"Task has been cancelled after {}", timer)
-        }
-      } andThen {
-        case r =>
-          task.cleanup()
-          executionState.set(IDLE)
-          doing = ""
+  private def doNextTask() {
+    val task = queue.take() // blocks until there is something to do
+    executionState.compareAndSet(IDLE, BUSY)
+    try {
+      runTask(task)
+    } catch {
+      case i: InterruptedException =>
+        throw i // for terminating the containing thread
+      case e: Exception =>
+        logger.warn(status, e)
+    } finally {
+      if (queue.isEmpty) {
+        executionState.set(IDLE)
       }
-      true
-    } else {
-      false
+    }
+  }
+
+  private def runTask(task: Task) {
+    val info = task.description.trim
+    doing = " " + info
+    try {
+      val timer = new DiagnosticTimer
+      task.action(this)
+      logger.info(s"$info - completed after {}", timer)
+    } finally {
+      task.cleanup()
+      doing = ""
     }
   }
 }
 
 
 class WorkerFactory {
-  def worker: Worker = Worker.singleton
+  def worker: WorkQueue = WorkQueue.singleton
 }
 

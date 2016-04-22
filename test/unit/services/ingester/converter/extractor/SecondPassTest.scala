@@ -16,12 +16,16 @@
 
 package services.ingester.converter.extractor
 
+import java.util.concurrent.SynchronousQueue
+
 import org.junit.runner.RunWith
+import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
-import services.ingester.exec.{Task, Worker}
+import services.ingester.exec.{Continuer, WorkQueue}
 import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
@@ -30,7 +34,7 @@ import uk.co.hmrc.logging.StubLogger
 import scala.collection.mutable
 
 @RunWith(classOf[JUnitRunner])
-class SecondPassTest extends FunSuite with Matchers {
+class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
   // sample data here is in the old format
   OSCsv.setCsvFormat(1)
@@ -40,7 +44,9 @@ class SecondPassTest extends FunSuite with Matchers {
 
   class context {
     val logger = new StubLogger
-    val task = new Worker(logger)
+    val worker = new WorkQueue(logger)
+    val continuer = mock[Continuer]
+    val lock = new SynchronousQueue[Boolean]()
   }
 
   test(
@@ -71,12 +77,16 @@ class SecondPassTest extends FunSuite with Matchers {
         }
       }
 
-      val sp = new SecondPass(fd, task)
-      task.start("testing", {
+      when(continuer.isBusy) thenReturn true
+
+      val sp = new SecondPass(fd, continuer)
+      worker.push("testing", {
+        lock.offer(true)
         sp.processFile(csv, out)
       })
 
-      task.awaitCompletion()
+      lock.take()
+      worker.awaitCompletion()
       assert(out.count === 1)
     }
   }
@@ -109,14 +119,16 @@ class SecondPassTest extends FunSuite with Matchers {
         }
       }
 
-      val sp = new SecondPass(fd, task)
-      task.start(Task("testing", {
-        continuer =>
-          task.abort()
-          sp.processFile(csv, out)
-      }))
+      when(continuer.isBusy) thenReturn false
 
-      task.awaitCompletion()
+      val sp = new SecondPass(fd, continuer)
+      worker.push("testing", {
+        lock.offer(true)
+        sp.processFile(csv, out)
+      })
+
+      lock.take()
+      worker.awaitCompletion()
       assert(out.count === 0)
     }
   }
@@ -148,13 +160,16 @@ class SecondPassTest extends FunSuite with Matchers {
         }
       }
 
-      val sp = new SecondPass(fd, task)
-      task.start(Task("testing", {
-        continuer =>
-          sp.processFile(csv, out)
-      }))
+      when(continuer.isBusy) thenReturn true
 
-      task.awaitCompletion()
+      val sp = new SecondPass(fd, continuer)
+      worker.push("testing", {
+        lock.offer(true)
+        sp.processFile(csv, out)
+      })
+
+      lock.take()
+      worker.awaitCompletion()
       assert(out.count === 0)
     }
   }

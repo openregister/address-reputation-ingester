@@ -24,7 +24,7 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.ingester.exec.Worker
+import services.ingester.exec.WorkQueue
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
@@ -37,7 +37,7 @@ class AdminControllerTest extends org.scalatest.FunSuite {
       then a bad request response is returned
     """) {
     val logger = new StubLogger
-    val ac = new AdminController(new Worker(logger))
+    val ac = new AdminController(new WorkQueue(logger))
     val request = FakeRequest()
 
     val futureResult = call(ac.cancelTask(), request)
@@ -54,8 +54,8 @@ class AdminControllerTest extends org.scalatest.FunSuite {
     """) {
     val logger = new StubLogger
     val stuff = new ArrayBlockingQueue[Boolean](1)
-    val task = new Worker(logger)
-    task.start("thinking", {
+    val task = new WorkQueue(logger)
+    task.push("thinking", {
       stuff.take() // blocks until signalled
     })
 

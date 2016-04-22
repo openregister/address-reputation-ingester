@@ -18,15 +18,15 @@
 
 package config
 
+import config.ConfigHelper._
 import play.api.Play._
 import play.api._
-import services.ingester.exec.Worker
+import services.ingester.exec.WorkQueue
+import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.gov.hmrc.play.config.RunMode
 import uk.gov.hmrc.play.graphite.GraphiteConfig
 import uk.gov.hmrc.play.microservice.bootstrap.JsonErrorHandling
 import uk.gov.hmrc.play.microservice.bootstrap.Routing.RemovingOfTrailingSlashes
-import config.ConfigHelper._
-import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 
 object ApplicationGlobal extends GlobalSettings with GraphiteConfig with RemovingOfTrailingSlashes with JsonErrorHandling with RunMode {
 
@@ -47,8 +47,9 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
   override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = app.configuration.getConfig(s"$env.metrics")
 
   override def onStop(app: Application): Unit = {
-    Worker.singleton.abort()
-    Worker.singleton.awaitCompletion()
+    WorkQueue.singleton.abort()
+    WorkQueue.singleton.awaitCompletion()
+    WorkQueue.singleton.terminate()
     mongoConnection.close()
   }
 }

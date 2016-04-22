@@ -23,14 +23,14 @@ import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
 import org.specs2.mock.Mockito
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.ingester.exec.{Worker, WorkerFactory}
+import services.ingester.exec.{WorkQueue, WorkerFactory}
 import services.ingester.fetch.WebdavFetcher
 import uk.co.hmrc.logging.StubLogger
 
 class FetchControllerTest extends PlaySpec with Mockito with OneAppPerSuite {
 
   trait context {
-    val testWorker = new Worker(new StubLogger())
+    val testWorker = new WorkQueue(new StubLogger())
     val workerFactory = new WorkerFactory {
       override def worker = testWorker
     }
@@ -54,7 +54,7 @@ class FetchControllerTest extends PlaySpec with Mockito with OneAppPerSuite {
       val epoch = "epoch"
       val variant = "variant"
       val res = call(controller.fetch(product, epoch, variant), req)
-      status(res) must be (200)
+      status(res) must be(200)
       testWorker.awaitCompletion()
       verify(webdavFetcher).fetchAll(url, username, password, Paths.get(outputDirectory.toString, product, epoch, variant))
       teardown()

@@ -19,7 +19,7 @@ package services.ingester.converter
 import java.io.File
 
 import services.ingester.converter.extractor.{FirstPass, Pass, SecondPass}
-import services.ingester.exec.Worker
+import services.ingester.exec.{Continuer, WorkQueue, Worker}
 import services.ingester.writers.OutputWriter
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.logging.SimpleLogger
@@ -35,7 +35,7 @@ object Extractor {
 }
 
 
-class Extractor(worker: Worker, logger: SimpleLogger) {
+class Extractor(continuer: Continuer, logger: SimpleLogger) {
   private def listFiles(file: File): List[File] =
     if (!file.isDirectory) Nil
     else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
@@ -48,7 +48,7 @@ class Extractor(worker: Worker, logger: SimpleLogger) {
 
   def extract(files: Seq[File], out: OutputWriter) {
     val dt = new DiagnosticTimer
-    val fp = new FirstPass(out, worker)
+    val fp = new FirstPass(out, continuer)
 
     logger.info(s"Starting first pass through ${files.size} files")
     pass(files, out, fp)
@@ -56,20 +56,20 @@ class Extractor(worker: Worker, logger: SimpleLogger) {
     logger.info(s"First pass complete after {}", dt)
 
     logger.info(s"Starting second pass through ${files.size} files")
-    val sp = new SecondPass(fd, worker)
+    val sp = new SecondPass(fd, continuer)
     pass(files, out, sp)
     logger.info(s"Finished after {}", dt)
   }
 
   private def pass(files: Seq[File], out: OutputWriter, thisPass: Pass) {
     for (file <- files
-         if worker.isBusy) {
+         if continuer.isBusy) {
       val dt = new DiagnosticTimer
       val zip = LoadZip.zipReader(file, (name) => {
         name.toLowerCase.endsWith(".csv")
       })
       try {
-        while (zip.hasNext && worker.isBusy) {
+        while (zip.hasNext && continuer.isBusy) {
           val next = zip.next
           val name = next.zipEntry.getName
           logger.info(s"Reading zip entry $name...")
@@ -85,6 +85,6 @@ class Extractor(worker: Worker, logger: SimpleLogger) {
 }
 
 class ExtractorFactory {
-  def extractor(worker: Worker, logger: SimpleLogger): Extractor = new Extractor(worker, logger)
+  def extractor(continuer: Continuer, logger: SimpleLogger): Extractor = new Extractor(continuer, logger)
 }
 

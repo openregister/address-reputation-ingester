@@ -27,9 +27,9 @@ import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.ingester.converter.{Extractor, ExtractorFactory}
-import services.ingester.exec.{Worker, WorkerFactory}
+import services.ingester.exec.{Continuer, WorkQueue, WorkerFactory}
 import services.ingester.writers._
-import uk.co.hmrc.logging.StubLogger
+import uk.co.hmrc.logging.{SimpleLogger, StubLogger}
 
 @RunWith(classOf[JUnitRunner])
 class IngestControllerTest extends FunSuite with MockitoSugar {
@@ -76,20 +76,21 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
   class context {
     val request = FakeRequest()
     val logger = new StubLogger()
-    val worker = new Worker(logger)
     val ef = mock[ExtractorFactory]
-    val exf = mock[WorkerFactory]
     val ex = mock[Extractor]
     val dbf = mock[OutputDBWriterFactory]
     val fwf = mock[OutputFileWriterFactory]
     val outputFileWriter = mock[OutputFileWriter]
     val outputDBWriter = mock[OutputDBWriter]
     val folder = new File(".")
+    val testWorker = new WorkQueue(new StubLogger())
+    val workerFactory = new WorkerFactory {
+      override def worker = testWorker
+    }
 
     when(fwf.writer(anyString, any[WriterSettings])) thenReturn outputFileWriter
     when(dbf.writer(anyString, any[WriterSettings])) thenReturn outputDBWriter
-    when(ef.extractor(worker, logger)) thenReturn ex
-    when(exf.worker) thenReturn worker
+    when(ef.extractor(any[Continuer], any[SimpleLogger])) thenReturn ex
   }
 
   test(
@@ -98,11 +99,12 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       then a successful response is returned
     """) {
     new context {
-      val ic = new IngestController(folder, logger, dbf, fwf, ef, exf)
+      val ic = new IngestController(folder, logger, dbf, fwf, ef, workerFactory)
 
       val futureResult = call(ic.ingestToDB("abp", "40", "full", "1", "0"), request)
 
-      worker.awaitCompletion()
+      Thread.sleep(10) // smelly race condition
+      testWorker.awaitCompletion()
       val result = await(futureResult)
 
       verify(ex, times(1)).extract(any[File], anyObject())
@@ -116,11 +118,12 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       then a successful response is returned
     """) {
     new context {
-      val ic = new IngestController(folder, logger, dbf, fwf, ef, exf)
+      val ic = new IngestController(folder, logger, dbf, fwf, ef, workerFactory)
 
       val futureResult = call(ic.ingestToFile("abp", "40", "full"), request)
 
-      worker.awaitCompletion()
+      Thread.sleep(10) // smelly race condition
+      testWorker.awaitCompletion()
       val result = await(futureResult)
 
       verify(ex, times(1)).extract(any[File], anyObject())

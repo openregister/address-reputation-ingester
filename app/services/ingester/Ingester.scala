@@ -20,7 +20,7 @@ import java.io._
 
 import com.typesafe.config.ConfigFactory
 import services.ingester.converter.Extractor
-import services.ingester.exec.{Task, Worker}
+import services.ingester.exec.{Task, WorkQueue}
 import services.ingester.writers.OutputFileWriter
 import uk.co.hmrc.logging.Stdout
 
@@ -41,12 +41,12 @@ object Ingester extends App {
 
   val outCSV = new OutputFileWriter(new File(outputFolder, s"output.txt.gz"))
 
-  val worker = new Worker(Stdout)
-  worker.start("ingesting", {
-    new Extractor(worker, Stdout).extract(osRootFolder, outCSV)
+  val worker = new WorkQueue(Stdout)
+  worker.push(Task("ingesting", {
+    continuer => new Extractor(continuer, Stdout).extract(osRootFolder, outCSV)
   }, {
-    outCSV.close()
-  })
+    () => outCSV.close()
+  }))
 
   worker.awaitCompletion()
 

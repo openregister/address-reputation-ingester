@@ -58,23 +58,6 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
   }
 
 
-  "ingest resource conflicted journey - to file" must {
-    """
-       * observe quiet status
-       * start ingest
-       * fail to start another ingest due to conflict
-    """ in {
-      waitUntil("/admin/status", "idle")
-
-      val step2 = get("/ingest/to/file/abp/123456/test?bulkSize=1&loopDelay=30")
-      step2.status mustBe OK
-
-      val step3 = get("/ingest/to/file/abp/123456/test")
-      step3.status mustBe CONFLICT
-    }
-  }
-
-
   "ingest resource happy journey - to Mongo" must {
     """
        * observe quiet status
