@@ -21,7 +21,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
-import services.ingester.exec.Task
+import services.ingester.exec.Worker
 import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
@@ -40,7 +40,7 @@ class SecondPassTest extends FunSuite with Matchers {
 
   class context {
     val logger = new StubLogger
-    val task = new Task(logger)
+    val task = new Worker(logger)
   }
 
   test(

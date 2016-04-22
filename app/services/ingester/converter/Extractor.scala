@@ -19,7 +19,7 @@ package services.ingester.converter
 import java.io.File
 
 import services.ingester.converter.extractor.{FirstPass, Pass, SecondPass}
-import services.ingester.exec.Task
+import services.ingester.exec.Worker
 import services.ingester.writers.OutputWriter
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.logging.SimpleLogger
@@ -35,7 +35,7 @@ object Extractor {
 }
 
 
-class Extractor(task: Task, logger: SimpleLogger) {
+class Extractor(task: Worker, logger: SimpleLogger) {
   private def listFiles(file: File): List[File] =
     if (!file.isDirectory) Nil
     else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
@@ -85,6 +85,6 @@ class Extractor(task: Task, logger: SimpleLogger) {
 }
 
 class ExtractorFactory {
-  def extractor(task: Task, logger: SimpleLogger): Extractor = new Extractor(task, logger)
+  def extractor(task: Worker, logger: SimpleLogger): Extractor = new Extractor(task, logger)
 }
 

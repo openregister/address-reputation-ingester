@@ -27,7 +27,7 @@ import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.ingester.converter.{Extractor, ExtractorFactory}
-import services.ingester.exec.{Task, TaskFactory}
+import services.ingester.exec.{Worker, TaskFactory}
 import services.ingester.writers._
 import uk.co.hmrc.logging.StubLogger
 
@@ -76,7 +76,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
   class context {
     val request = FakeRequest()
     val logger = new StubLogger()
-    val task = new Task(logger)
+    val task = new Worker(logger)
     val ef = mock[ExtractorFactory]
     val exf = mock[TaskFactory]
     val ex = mock[Extractor]

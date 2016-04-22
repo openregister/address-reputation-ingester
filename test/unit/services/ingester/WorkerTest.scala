@@ -23,11 +23,11 @@ import java.util.concurrent.ArrayBlockingQueue
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
-import services.ingester.exec.Task
+import services.ingester.exec.Worker
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
-class TaskTest extends FunSuite {
+class WorkerTest extends FunSuite {
 
   test(
     """
@@ -37,7 +37,7 @@ class TaskTest extends FunSuite {
       and the second should return false
     """) {
     val logger = new StubLogger()
-    val task = new Task(logger)
+    val task = new Worker(logger)
     val stuff = new ArrayBlockingQueue[Boolean](1)
 
     assert(task.status === "idle")
@@ -70,7 +70,7 @@ class TaskTest extends FunSuite {
       then two log statements are issued
     """) {
     val logger = new StubLogger()
-    val task = new Task(logger)
+    val task = new Worker(logger)
 
     val started = task.start("thinking", {
       logger.info("fric")
@@ -91,7 +91,7 @@ class TaskTest extends FunSuite {
       then return true and log one statement
     """) {
     val logger = new StubLogger()
-    val task = new Task(logger)
+    val task = new Worker(logger)
 
     val started = task.start("thinking", {
       throw new InterruptedException("task cancelled")

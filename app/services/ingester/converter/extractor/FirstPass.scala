@@ -18,7 +18,7 @@ package services.ingester.converter.extractor
 
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter.{OSBlpu, _}
-import services.ingester.exec.Task
+import services.ingester.exec.Worker
 import services.ingester.writers.OutputWriter
 
 import scala.collection.{mutable, _}
@@ -31,7 +31,7 @@ trait Pass {
 }
 
 
-class FirstPass(out: OutputWriter, task: Task) extends Pass {
+class FirstPass(out: OutputWriter, task: Worker) extends Pass {
 
   private[extractor] val blpuTable: mutable.Map[Long, Blpu] = new mutable.HashMap()
   private[extractor] val dpaTable: mutable.Set[Long] = new mutable.HashSet()

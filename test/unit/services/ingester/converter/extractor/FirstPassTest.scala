@@ -22,7 +22,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
-import services.ingester.exec.Task
+import services.ingester.exec.Worker
 import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
@@ -40,7 +40,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
   class context(data: String) {
     val csv = CsvParser.split(data)
     val logger = new StubLogger
-    val task = new Task(logger)
+    val task = new Worker(logger)
     val dummyOut = mock[OutputWriter]
   }
 

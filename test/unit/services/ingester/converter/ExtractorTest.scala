@@ -23,7 +23,7 @@ import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import services.ingester.exec.Task
+import services.ingester.exec.Worker
 import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.StubLogger
@@ -37,7 +37,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
   test("Having no files should not throw any exception") {
     val mockFile = mock[File]
     val logger = new StubLogger
-    val task = new Task(logger)
+    val task = new Worker(logger)
     val dummyOut = mock[OutputWriter]
 
     when(mockFile.isDirectory) thenReturn true
@@ -57,7 +57,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
 
     val sample = new File(getClass.getClassLoader.getResource("SX9090-first3600.zip").getFile)
     val logger = new StubLogger
-    val task = new Task(logger)
+    val task = new Worker(logger)
     val addressesProduced = new mutable.ListBuffer[DbAddress]()
     var closed = false
 

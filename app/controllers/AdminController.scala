@@ -19,12 +19,12 @@
 package controllers
 
 import play.api.mvc.{Action, AnyContent, Request, Result}
-import services.ingester.exec.Task
+import services.ingester.exec.Worker
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-object AdminController extends AdminController(Task.singleton)
+object AdminController extends AdminController(Worker.singleton)
 
-class AdminController(task: Task) extends BaseController {
+class AdminController(task: Worker) extends BaseController {
 
   def cancelTask(): Action[AnyContent] = Action {
     request => {

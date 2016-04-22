@@ -35,12 +35,12 @@ object ExecutionState {
 }
 
 
-object Task {
-  val singleton = new Task(new LoggerFacade(Logger.logger))
+object Worker {
+  val singleton = new Worker(new LoggerFacade(Logger.logger))
 }
 
 
-class Task(logger: SimpleLogger) {
+class Worker(logger: SimpleLogger) {
 
   import ExecutionState._
 
@@ -96,6 +96,6 @@ class Task(logger: SimpleLogger) {
 
 
 class TaskFactory {
-  def task: Task = Task.singleton
+  def task: Worker = Worker.singleton
 }
 

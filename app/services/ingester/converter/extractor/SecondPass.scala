@@ -17,10 +17,10 @@
 package services.ingester.converter.extractor
 
 import services.ingester.converter._
-import services.ingester.exec.Task
+import services.ingester.exec.Worker
 import services.ingester.writers.OutputWriter
 
-class SecondPass(fd: ForwardData, task: Task) extends Pass {
+class SecondPass(fd: ForwardData, task: Worker) extends Pass {
 
   def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter) {
     for (csvLine <- csvIterator

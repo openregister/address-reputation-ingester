@@ -23,14 +23,14 @@ import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
 import org.specs2.mock.Mockito
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.ingester.exec.{Task, TaskFactory}
+import services.ingester.exec.{Worker, TaskFactory}
 import services.ingester.fetch.WebdavFetcher
 import uk.co.hmrc.logging.StubLogger
 
 class FetchControllerTest extends PlaySpec with Mockito with OneAppPerSuite {
 
   trait context {
-    val testTask = new Task(new StubLogger())
+    val testTask = new Worker(new StubLogger())
     val taskFactory = new TaskFactory {
       override def task = testTask
     }

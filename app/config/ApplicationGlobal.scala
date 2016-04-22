@@ -20,7 +20,7 @@ package config
 
 import play.api.Play._
 import play.api._
-import services.ingester.exec.Task
+import services.ingester.exec.Worker
 import uk.gov.hmrc.play.config.RunMode
 import uk.gov.hmrc.play.graphite.GraphiteConfig
 import uk.gov.hmrc.play.microservice.bootstrap.JsonErrorHandling
@@ -47,8 +47,8 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
   override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = app.configuration.getConfig(s"$env.metrics")
 
   override def onStop(app: Application): Unit = {
-    Task.singleton.abort()
-    Task.singleton.awaitCompletion()
+    Worker.singleton.abort()
+    Worker.singleton.awaitCompletion()
     mongoConnection.close()
   }
 }
