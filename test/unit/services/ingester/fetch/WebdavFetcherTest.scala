@@ -2,7 +2,7 @@
 package services.ingester.fetch
 
 import java.io.{File, FileInputStream}
-import java.net.URI
+import java.net.{URI, URL}
 import java.nio.file.{Files, Path}
 
 import com.github.sardine.{DavResource, Sardine}
@@ -22,7 +22,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
     val logger = new StubLogger()
     val outputDirectory = Files.createTempDirectory("webdav-fetcher-test")
     val sardine = mock[Sardine]
-    val url = "http://somedavserver.com/prod/rel/variant/"
+    val url = "http://somedavserver.com/path/prod/rel/variant/"
     val files = new File(getClass.getResource(resourceFolder).toURI).listFiles().to[Seq]
     val resources = files.map(toDavResource(_, url))
 
@@ -65,9 +65,15 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
 
   private def toDavResource(f: File, url: String): DavResource = {
     val res = mock[DavResource]
-    when(res.getHref) thenReturn new URI(toUrl(url, f))
+    when(res.getHref) thenReturn toUri(url, f)
     when(res.getName) thenReturn f.getName
     res
+  }
+
+  private def toUri(url: String, f: File) = {
+    val u = new URL(url)
+    val s = s"${u.getPath}${f.getName}"
+    new URI(s)
   }
 
   private def toUrl(url: String, f: File) = s"${url}${f.getName}"

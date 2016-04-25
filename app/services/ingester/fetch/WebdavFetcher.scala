@@ -1,6 +1,7 @@
 
 package services.ingester.fetch
 
+import java.net.URL
 import java.nio.file._
 
 import com.github.sardine.{DavResource, Sardine}
@@ -14,14 +15,16 @@ class WebdavFetcher(logger: SimpleLogger) {
     val sardine = begin(username, password)
     val resources = sardine.list(url).asScala.toSeq
     val map = resources.map {
-      fetchOneFile(_, sardine, outputDirectory)
+      fetchOneFile(url, _, sardine, outputDirectory)
     }
     map.sum
   }
 
-  private def fetchOneFile(res: DavResource, sardine: Sardine, outputDirectory: Path) = {
-    val resUrl = res.getHref.toURL
-    val in = sardine.get(resUrl.toExternalForm)
+  private def fetchOneFile(url: String, res: DavResource, sardine: Sardine, outputDirectory: Path) = {
+    val href = res.getHref
+    val myUrl = new URL(url)
+    val absoluteUrl = new URL(myUrl.getProtocol, myUrl.getHost, myUrl.getPort, href.getPath)
+    val in = sardine.get(absoluteUrl.toExternalForm)
     try {
       val bytesCopied = Files.copy(in, outputDirectory.resolve(res.getName))
       Files.createFile(outputDirectory.resolve(res.getName + ".done"))
