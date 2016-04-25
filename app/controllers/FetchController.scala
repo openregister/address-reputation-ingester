@@ -7,7 +7,7 @@ import config.ConfigHelper._
 import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent}
-import services.ingester.exec.{Task, WorkerFactory}
+import services.ingester.exec.WorkerFactory
 import services.ingester.fetch.WebdavFetcher
 import uk.co.hmrc.logging.LoggerFacade
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -33,7 +33,7 @@ class FetchController(taskFactory: WorkerFactory,
     val path = s"$product/$epoch/$variant"
     val started = worker.push(s"fetching $path", {
       val dir = outputDirectory.resolve(path)
-      webdavFetcher.fetchAll(url, username, password, dir)
+      webdavFetcher.fetchAll(s"$url/$path", username, password, dir)
     })
     if (started) Ok(worker.status) else Conflict(worker.status)
   }
