@@ -12,9 +12,12 @@ import scala.collection.JavaConverters._
 class WebdavFetcher(logger: SimpleLogger) {
 
   def fetchAll(url: String, username: String, password: String, outputDirectory: Path): Long = {
+    if (!Files.exists(outputDirectory)) {
+      Files.createDirectories(outputDirectory)
+    }
     val sardine = begin(username, password)
     val resources = sardine.list(url).asScala.toSeq
-    val map = resources.map {
+    val map = resources.filterNot(_.isDirectory).map {
       fetchOneFile(url, _, sardine, outputDirectory)
     }
     map.sum
@@ -26,7 +29,8 @@ class WebdavFetcher(logger: SimpleLogger) {
     val absoluteUrl = new URL(myUrl.getProtocol, myUrl.getHost, myUrl.getPort, href.getPath)
     val in = sardine.get(absoluteUrl.toExternalForm)
     try {
-      val bytesCopied = Files.copy(in, outputDirectory.resolve(res.getName))
+      val out = outputDirectory.resolve(res.getName)
+      val bytesCopied = Files.copy(in, out)
       Files.createFile(outputDirectory.resolve(res.getName + ".done"))
       logger.info("Fetched " + res.getName)
       bytesCopied
