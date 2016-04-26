@@ -16,7 +16,7 @@
 
 package services.ingester.fetch
 
-import java.net.{URI, URL}
+import java.net.URL
 import java.util
 import javax.xml.namespace.QName
 
@@ -26,7 +26,7 @@ import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatestplus.play.PlaySpec
 import org.specs2.mock.Mockito
-import uk.co.hmrc.logging.{Stdout, StubLogger}
+import uk.co.hmrc.logging.StubLogger
 
 import scala.collection.JavaConverters._
 
@@ -38,6 +38,9 @@ class WebdavFinderTest extends PlaySpec with Mockito {
   class Context {
     val logger = new StubLogger()
     val sardine = mock[Sardine]
+    val sardineFactory = mock[SardineFactory2]
+    when(sardineFactory.begin("foo", "bar")) thenReturn sardine
+
     val root = "http://somedavserver.com/webdav"
     val productResources = List[DavResource](
       dir("/webdav/", "webdav"),
@@ -86,6 +89,11 @@ class WebdavFinderTest extends PlaySpec with Mockito {
       file("/webdav/abp/39/full/DVD2.zip", "DVD2.zip", "application/zip"),
       file("/webdav/abp/39/full/DVD2.txt", "DVD2.txt", "text/plain")
     )
+    val badFile39Resources = List[DavResource](
+      dir("/webdav/abp/39/full/", "full"),
+      file("/webdav/abp/39/full/DVD1.zip", "DVD1.zip", "application/zip"),
+      file("/webdav/abp/39/full/DVD2.txt", "DVD2.txt", "text/plain")
+    )
     val file40Resources = List[DavResource](
       dir("/webdav/abp/40/full/", "full"),
       file("/webdav/abp/40/full/DVD1.zip", "DVD1.zip", "application/zip"),
@@ -95,7 +103,7 @@ class WebdavFinderTest extends PlaySpec with Mockito {
 
   "find available" should {
     """
-      discover two products each with some epochs
+      discover one products with two epochs
       and ignore any unimportant files
     """ in {
       new Context {
@@ -111,9 +119,7 @@ class WebdavFinderTest extends PlaySpec with Mockito {
         when(sardine.list(root + "/abp/38/full/")) thenReturn file38Resources.asJava
         when(sardine.list(root + "/abp/39/full/")) thenReturn file39Resources.asJava
         when(sardine.list(root + "/abp/40/full/")) thenReturn file40Resources.asJava
-        val finder = new WebdavFinder(logger) {
-          override def begin(username: String, password: String): Sardine = sardine
-        }
+        val finder = new WebdavFinder(logger, new SardineWrapper(logger, sardineFactory))
         // when
         val list = finder.findAvailable(root + "/", "foo", "bar")
         // then
@@ -124,19 +130,36 @@ class WebdavFinderTest extends PlaySpec with Mockito {
         // finally
       }
     }
+
+    """
+      discover one products with one epoch
+      and ignore any unimportant files
+    """ in {
+      new Context {
+        // given
+        when(sardine.list(root + "/")) thenReturn productResources.asJava
+        when(sardine.list(root + "/abi/")) thenReturn abiEpochResources.asJava
+        when(sardine.list(root + "/abp/")) thenReturn abpEpochResources.asJava
+        when(sardine.list(root + "/abp/37/")) thenReturn abpE37VariantResources.asJava
+        when(sardine.list(root + "/abp/38/")) thenReturn abpE38VariantResources.asJava
+        when(sardine.list(root + "/abp/39/")) thenReturn abpE39VariantResources.asJava
+        when(sardine.list(root + "/abp/40/")) thenReturn abpE40VariantResources.asJava
+        when(sardine.list(root + "/abp/37/full/")) thenReturn file37Resources.asJava
+        when(sardine.list(root + "/abp/38/full/")) thenReturn file38Resources.asJava
+        when(sardine.list(root + "/abp/39/full/")) thenReturn badFile39Resources.asJava
+        when(sardine.list(root + "/abp/40/full/")) thenReturn file40Resources.asJava
+        val finder = new WebdavFinder(logger, new SardineWrapper(logger, sardineFactory))
+        // when
+        val list = finder.findAvailable(root + "/", "foo", "bar")
+        // then
+        list must be(List(
+          OSGBProduct("abp", 38, List(new URL(root + "/abp/38/full/DVD1.zip")))
+        ))
+        // finally
+      }
+    }
   }
 
-  private def davFile(uri: String, name: String, contentType: String): DavResource = {
-    val res = mock[DavResource]
-    when(res.getPath) thenReturn uri
-    when(res.getHref) thenReturn new URI(uri)
-    when(res.getName) thenReturn name
-    when(res.isDirectory) thenReturn false
-    when(res.getContentType) thenReturn contentType
-    res
-  }
-
-  //  private def toUrl(url: String, f: File) = s"$url${f.getName}"
 }
 
 
@@ -160,18 +183,3 @@ object StubDavResource {
   }
 }
 
-
-// for manual test/development
-object WebdavFinderEssay {
-  val finder = new WebdavFinder(Stdout)
-
-  def main(args: Array[String]) {
-    if (args.length > 2) {
-      val top = finder.exploreRemoteTree(args(0), args(1), args(2))
-      Stdout.info(top.toString)
-    } else if (args.length > 0) {
-      val top = finder.exploreRemoteTree(args(0), "", "")
-      Stdout.info(top.toString)
-    }
-  }
-}
