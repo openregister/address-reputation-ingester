@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package services.ingester.fetch
 
@@ -23,7 +38,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
     val outputDirectory = Files.createTempDirectory("webdav-fetcher-test")
     val sardine = mock[Sardine]
     val url = "http://somedavserver.com/path/prod/rel/variant/"
-    val files = new File(getClass.getResource(resourceFolder).toURI).listFiles().to[Seq]
+    val files = new File(getClass.getResource(resourceFolder).toURI).listFiles().toList
     val resources = files.map(toDavResource(_, url))
 
     def teardown(): Unit = {
@@ -39,10 +54,10 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
   "fetch all" should {
     "copy files to output directory" in new Context("/webdav") {
       // given
-      when(sardine.list(url)).thenReturn(resources.toList)
+      when(sardine.list(url)) thenReturn resources
       files.foreach {
         f =>
-          when(sardine.get(toUrl(url, f))).thenReturn(new FileInputStream(f))
+          when(sardine.get(toUrl(url, f))) thenReturn new FileInputStream(f)
       }
       val fetcher = new WebdavFetcher(logger) {
         override def begin(username: String, password: String): Sardine = sardine
