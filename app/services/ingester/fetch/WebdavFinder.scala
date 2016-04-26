@@ -47,9 +47,8 @@ class WebdavFinder(logger: SimpleLogger, sardine: SardineWrapper) {
     if (fullFolder.isEmpty) None
     else {
       val possibleDownloads: List[WebDavFile] = filterZipsWithTxt(fullFolder.head.files)
-      val possibleUrls = possibleDownloads.map(_.url)
-      if (possibleUrls.isEmpty) None
-      else Some(OSGBProduct(product, e.fullName.toInt, possibleUrls))
+      if (possibleDownloads.isEmpty) None
+      else Some(OSGBProduct(product, e.fullName.toInt, possibleDownloads))
     }
   }
 
@@ -65,5 +64,5 @@ class WebdavFinder(logger: SimpleLogger, sardine: SardineWrapper) {
 }
 
 
-case class OSGBProduct(productName: String, epoch: Int, zips: List[URL])
+case class OSGBProduct(productName: String, epoch: Int, zips: List[WebDavFile])
 

@@ -123,9 +123,12 @@ class WebdavFinderTest extends PlaySpec with Mockito {
         // when
         val list = finder.findAvailable(new URL(root + "/"), "foo", "bar")
         // then
+        val zip38 = WebDavFile(new URL(root + "/abp/38/full/DVD1.zip"), "DVD1.zip", false, false, true, Nil)
+        val zip39a = WebDavFile(new URL(root + "/abp/39/full/DVD1.zip"), "DVD1.zip", false, false, true, Nil)
+        val zip39b = WebDavFile(new URL(root + "/abp/39/full/DVD2.zip"), "DVD2.zip", false, false, true, Nil)
         list must be(List(
-          OSGBProduct("abp", 38, List(new URL(root + "/abp/38/full/DVD1.zip"))),
-          OSGBProduct("abp", 39, List(new URL(root + "/abp/39/full/DVD1.zip"), new URL(root + "/abp/39/full/DVD2.zip")))
+          OSGBProduct("abp", 38, List(zip38)),
+          OSGBProduct("abp", 39, List(zip39a, zip39b))
         ))
         // finally
       }
@@ -152,8 +155,9 @@ class WebdavFinderTest extends PlaySpec with Mockito {
         // when
         val list = finder.findAvailable(new URL(root + "/"), "foo", "bar")
         // then
+        val zip38 = WebDavFile(new URL(root + "/abp/38/full/DVD1.zip"), "DVD1.zip", false, false, true, Nil)
         list must be(List(
-          OSGBProduct("abp", 38, List(new URL(root + "/abp/38/full/DVD1.zip")))
+          OSGBProduct("abp", 38, List(zip38))
         ))
         // finally
       }

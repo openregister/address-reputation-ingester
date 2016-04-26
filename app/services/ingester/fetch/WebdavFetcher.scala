@@ -16,7 +16,7 @@ class WebdavFetcher(logger: SimpleLogger, factory: SardineFactory2) {
       Files.createDirectories(outputDirectory)
     }
     val sardine = factory.begin(username, password)
-    val resources = sardine.list(url).asScala.toSeq
+    val resources = sardine.list(url).asScala
     val map = resources.filterNot(_.isDirectory).map {
       fetchOneFile(url, _, sardine, outputDirectory)
     }
