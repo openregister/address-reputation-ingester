@@ -9,13 +9,13 @@ import uk.co.hmrc.logging.SimpleLogger
 
 import scala.collection.JavaConverters._
 
-class WebdavFetcher(logger: SimpleLogger) {
+class WebdavFetcher(logger: SimpleLogger, factory: SardineFactory2) {
 
   def fetchAll(url: String, username: String, password: String, outputDirectory: Path): Long = {
     if (!Files.exists(outputDirectory)) {
       Files.createDirectories(outputDirectory)
     }
-    val sardine = begin(username, password)
+    val sardine = factory.begin(username, password)
     val resources = sardine.list(url).asScala.toSeq
     val map = resources.filterNot(_.isDirectory).map {
       fetchOneFile(url, _, sardine, outputDirectory)
@@ -38,11 +38,5 @@ class WebdavFetcher(logger: SimpleLogger) {
       in.close()
     }
   }
-
-  // test seam
-  def begin(username: String, password: String): Sardine = {
-    com.github.sardine.SardineFactory.begin(username, password)
-  }
-
 }
 

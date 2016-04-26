@@ -8,13 +8,13 @@ import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent}
 import services.ingester.exec.WorkerFactory
-import services.ingester.fetch.WebdavFetcher
+import services.ingester.fetch.{SardineFactory2, WebdavFetcher}
 import uk.co.hmrc.logging.LoggerFacade
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 object FetchController extends FetchController(
   new WorkerFactory(),
-  new WebdavFetcher(new LoggerFacade(Logger.logger)),
+  new WebdavFetcher(new LoggerFacade(Logger.logger), new SardineFactory2),
   mustGetConfigString(current.mode, current.configuration, "app.remote.server"),
   mustGetConfigString(current.mode, current.configuration, "app.remote.user"),
   mustGetConfigString(current.mode, current.configuration, "app.remote.pass"),

@@ -23,7 +23,7 @@ import uk.co.hmrc.logging.SimpleLogger
 
 class WebdavFinder(logger: SimpleLogger, sardine: SardineWrapper) {
 
-  def findAvailable(url: String, username: String, password: String): List[OSGBProduct] = {
+  def findAvailable(url: URL, username: String, password: String): List[OSGBProduct] = {
     val file = sardine.exploreRemoteTree(url, username, password)
     extractUsableProducts(file)
   }

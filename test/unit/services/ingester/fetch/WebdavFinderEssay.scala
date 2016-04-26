@@ -16,6 +16,8 @@
 
 package services.ingester.fetch
 
+import java.net.URL
+
 import uk.co.hmrc.logging.Stdout
 
 // for manual test/development
@@ -24,10 +26,10 @@ object WebdavFinderEssay {
 
   def main(args: Array[String]) {
     if (args.length > 2) {
-      val top = finder.exploreRemoteTree(args(0), args(1), args(2))
+      val top = finder.exploreRemoteTree(new URL(args(0)), args(1), args(2))
       Stdout.info(top.toString)
     } else if (args.length > 0) {
-      val top = finder.exploreRemoteTree(args(0), "", "")
+      val top = finder.exploreRemoteTree(new URL(args(0)), "", "")
       Stdout.info(top.toString)
     }
   }

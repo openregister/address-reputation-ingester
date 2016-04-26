@@ -37,6 +37,9 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
     val logger = new StubLogger()
     val outputDirectory = Files.createTempDirectory("webdav-fetcher-test")
     val sardine = mock[Sardine]
+    val sardineFactory = mock[SardineFactory2]
+    when(sardineFactory.begin("foo", "bar")) thenReturn sardine
+
     val url = "http://somedavserver.com/path/prod/rel/variant/"
     val files = new File(getClass.getResource(resourceFolder).toURI).listFiles().toList
     val resources = files.map(toDavResource(_, url))
@@ -59,9 +62,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
         f =>
           when(sardine.get(toUrl(url, f))) thenReturn new FileInputStream(f)
       }
-      val fetcher = new WebdavFetcher(logger) {
-        override def begin(username: String, password: String): Sardine = sardine
-      }
+      val fetcher = new WebdavFetcher(logger, sardineFactory)
       // when
       val total = fetcher.fetchAll(url, "foo", "bar", outputDirectory)
       // then
@@ -91,6 +92,6 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
     new URI(s)
   }
 
-  private def toUrl(url: String, f: File) = s"${url}${f.getName}"
+  private def toUrl(url: String, f: File) = s"$url${f.getName}"
 
 }

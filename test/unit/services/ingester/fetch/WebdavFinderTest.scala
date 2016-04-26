@@ -41,7 +41,7 @@ class WebdavFinderTest extends PlaySpec with Mockito {
     val sardineFactory = mock[SardineFactory2]
     when(sardineFactory.begin("foo", "bar")) thenReturn sardine
 
-    val root = "http://somedavserver.com/webdav"
+    val root = "http://somedavserver.com:81/webdav"
     val productResources = List[DavResource](
       dir("/webdav/", "webdav"),
       dir("/webdav/abi/", "abi"),
@@ -121,7 +121,7 @@ class WebdavFinderTest extends PlaySpec with Mockito {
         when(sardine.list(root + "/abp/40/full/")) thenReturn file40Resources.asJava
         val finder = new WebdavFinder(logger, new SardineWrapper(logger, sardineFactory))
         // when
-        val list = finder.findAvailable(root + "/", "foo", "bar")
+        val list = finder.findAvailable(new URL(root + "/"), "foo", "bar")
         // then
         list must be(List(
           OSGBProduct("abp", 38, List(new URL(root + "/abp/38/full/DVD1.zip"))),
@@ -150,7 +150,7 @@ class WebdavFinderTest extends PlaySpec with Mockito {
         when(sardine.list(root + "/abp/40/full/")) thenReturn file40Resources.asJava
         val finder = new WebdavFinder(logger, new SardineWrapper(logger, sardineFactory))
         // when
-        val list = finder.findAvailable(root + "/", "foo", "bar")
+        val list = finder.findAvailable(new URL(root + "/"), "foo", "bar")
         // then
         list must be(List(
           OSGBProduct("abp", 38, List(new URL(root + "/abp/38/full/DVD1.zip")))

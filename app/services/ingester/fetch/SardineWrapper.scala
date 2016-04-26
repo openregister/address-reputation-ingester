@@ -25,26 +25,25 @@ import scala.collection.JavaConverters._
 
 class SardineWrapper(logger: SimpleLogger, factory: SardineFactory2) {
 
-  def exploreRemoteTree(url: String, username: String, password: String): WebDavFile = {
+  def exploreRemoteTree(url: URL, username: String, password: String): WebDavFile = {
     val sardine = factory.begin(username, password)
-    val u = new URL(url)
-    val s = u.getProtocol + "://" + u.getAuthority
+    val s = url.getProtocol + "://" + url.getAuthority
     exploreRemoteTree(s, url, sardine)
   }
 
-  private def exploreRemoteTree(base: String, url: String, sardine: Sardine): WebDavFile = {
-    val url1 = new URL(url)
-    var result = WebDavFile(url1, "", true, false, false, Nil)
+  private def exploreRemoteTree(base: String, url: URL, sardine: Sardine): WebDavFile = {
+    val href = url.toString
+    var result = WebDavFile(url, "", true, false, false, Nil)
     val buffer = new scala.collection.mutable.ListBuffer[WebDavFile]()
 
-    val resources: List[DavResource] = sardine.list(url).asScala.toList
+    val resources: List[DavResource] = sardine.list(href).asScala.toList
     for (res <- resources) {
       val u = base + res.getHref
-      if (u == url && res.isDirectory) {
-        result = WebDavFile(url1, res.getName, res.isDirectory, false, false, Nil)
+      if (u == href && res.isDirectory) {
+        result = WebDavFile(url, res.getName, res.isDirectory, false, false, Nil)
       } else if (res.isDirectory) {
         val x = base + res.getPath
-        buffer += exploreRemoteTree(base, x, sardine)
+        buffer += exploreRemoteTree(base, new URL(x), sardine)
       } else {
         buffer += WebDavFile(new URL(u), res.getName, res.isDirectory,
           res.getContentType == "text/plain",

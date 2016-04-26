@@ -39,7 +39,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
     val sardineFactory = mock[SardineFactory2]
     when(sardineFactory.begin("foo", "bar")) thenReturn sardine
 
-    val base = "http://somedavserver.com/webdav"
+    val base = "http://somedavserver.com:81/webdav"
     val productResources = List[DavResource](
       dir("/webdav/", "webdav"),
       dir("/webdav/abi/", "abi"),
@@ -88,7 +88,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         when(sardine.list(base + "/abp/39/full/")) thenReturn file39Resources.asJava
         val finder = new SardineWrapper(logger, sardineFactory)
         // when
-        val root = finder.exploreRemoteTree(base + "/", "foo", "bar")
+        val root = finder.exploreRemoteTree(new URL(base + "/"), "foo", "bar")
         // then
         root must be(WebDavFile(new URL(base + "/"), "webdav", true, false, false, List(
           WebDavFile(new URL(base + "/abi/"), "abi", true, false, false, Nil),
