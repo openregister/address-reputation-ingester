@@ -38,7 +38,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
     val outputDirectory = Files.createTempDirectory("webdav-fetcher-test")
     val sardine = mock[Sardine]
     val sardineFactory = mock[SardineFactory2]
-    when(sardineFactory.begin("foo", "bar")) thenReturn sardine
+    when(sardineFactory.begin("user", "pass")) thenReturn sardine
 
     val url = "http://somedavserver.com/path/prod/rel/variant/"
     val files = new File(getClass.getResource(resourceFolder).toURI).listFiles().toList
@@ -60,11 +60,43 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       when(sardine.list(url)) thenReturn resources
       files.foreach {
         f =>
-          when(sardine.get(toUrl(url, f))) thenReturn new FileInputStream(f)
+          val s = s"$url${f.getName}"
+          when(sardine.get(s)) thenReturn new FileInputStream(f)
       }
       val fetcher = new WebdavFetcher(logger, sardineFactory)
       // when
-      val total = fetcher.fetchAll(url, "foo", "bar", outputDirectory)
+      val total = fetcher.fetchAll(url, "user", "pass", outputDirectory)
+      // then
+      total must be(files.map(_.length()).sum)
+      val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
+      outputDirectory.toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
+      logger.infos.map(_.message).toSet must be(Set(
+        "Info:Fetched foo.txt",
+        "Info:Fetched bar.txt",
+        "Info:Fetched baz.txt"
+      ))
+      // finally
+      teardown()
+    }
+  }
+
+  "fetch list" should {
+    "copy files to output directory" in new Context("/webdav") {
+      // given
+      when(sardine.list(url)) thenReturn resources
+      files.foreach {
+        f =>
+          val s = s"$url${f.getName}"
+          when(sardine.get(s)) thenReturn new FileInputStream(f)
+      }
+      val webDavFiles = files.map {
+        f =>
+          WebDavFile(new URL(s"$url${f.getName}"), f.getName, false, false, true, Nil)
+      }
+      val product = OSGBProduct("abp", 39, webDavFiles)
+      val fetcher = new WebdavFetcher(logger, sardineFactory)
+      // when
+      val total = fetcher.fetchList(product, "user", "pass", outputDirectory)
       // then
       total must be(files.map(_.length()).sum)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
@@ -91,7 +123,5 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
     val s = s"${u.getPath}${f.getName}"
     new URI(s)
   }
-
-  private def toUrl(url: String, f: File) = s"$url${f.getName}"
 
 }
