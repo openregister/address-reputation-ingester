@@ -18,7 +18,7 @@
 
 package controllers
 
-import java.util.concurrent.{ArrayBlockingQueue, SynchronousQueue}
+import java.util.concurrent.SynchronousQueue
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
