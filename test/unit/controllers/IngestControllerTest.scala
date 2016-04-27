@@ -109,6 +109,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       verify(ex, times(1)).extract(any[File], anyObject())
       assert(response.header.status / 100 === 2)
+      testWorker.terminate()
     }
   }
 
@@ -125,9 +126,11 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       val response = await(futureResponse)
       testWorker.awaitCompletion()
+      testWorker.terminate()
 
       verify(ex, times(1)).extract(any[File], anyObject())
       assert(response.header.status / 100 === 2)
+      testWorker.terminate()
     }
   }
 }

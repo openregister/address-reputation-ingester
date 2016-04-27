@@ -117,4 +117,52 @@ class WorkerTest extends FunSuite {
     // the exception handler
     assert(logger.warns.size === 1, logger.all.mkString(",\n"))
   }
+
+  test(
+    """
+      given the execution status is idle
+      when the worker thread is terminated
+      then its thread terminates
+    """) {
+    println("********** WT4 **********")
+    val logger = new StubLogger()
+    val worker = new WorkQueue(logger)
+
+    worker.terminate()
+
+    var patience = 100
+    while (!worker.hasTerminated && patience > 0) {
+      Thread.sleep(100)
+      patience -= 1
+    }
+    assert(patience != 0, "Ran out of patience waiting for termination")
+    assert(logger.infos.size === 1, logger.all.mkString(",\n"))
+  }
+
+  test(
+    """
+      given the execution status is busy
+      when the worker thread is terminated
+      then its thread terminates
+    """) {
+    println("********** WT4 **********")
+    val logger = new StubLogger()
+    val worker = new WorkQueue(logger)
+    val lock1 = new SynchronousQueue[Boolean]()
+
+    worker.push("thinking", {
+      lock1.offer(true)
+    })
+
+    worker.terminate()
+    lock1.take()
+
+    var patience = 100
+    while (!worker.hasTerminated && patience > 0) {
+      Thread.sleep(100)
+      patience -= 1
+    }
+    assert(patience != 0, "Ran out of patience waiting for termination")
+    assert(logger.infos.size === 2, logger.all.mkString(",\n"))
+  }
 }

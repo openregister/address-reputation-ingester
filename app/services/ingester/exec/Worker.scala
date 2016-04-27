@@ -25,11 +25,14 @@ import play.api.Logger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 
+import scala.util.control.NonFatal
+
 object ExecutionState {
   // using ints here because of AtomicInteger simplicity
   final val IDLE = 0
   final val BUSY = 1
   final val STOPPING = 2
+  final val TERMINATED = 3
 }
 
 
@@ -44,8 +47,8 @@ case class Task(description: String,
 
 
 object WorkQueue {
-  val singleton: WorkQueue = throw new RuntimeException()
-//  val singleton: WorkQueue = new WorkQueue(new LoggerFacade(Logger.logger))
+//  val singleton: WorkQueue = throw new RuntimeException()
+    val singleton: WorkQueue = new WorkQueue(new LoggerFacade(Logger.logger))
 }
 
 
@@ -69,6 +72,8 @@ class WorkQueue(logger: SimpleLogger) {
 
   def notIdle: Boolean = worker.notIdle
 
+  def hasTerminated: Boolean = worker.hasTerminated
+
   def abort(): Boolean = worker.abort()
 
   // used only in special cases, so a simple spin-lock is fine
@@ -80,6 +85,7 @@ class WorkQueue(logger: SimpleLogger) {
   // for application / test shutdown only
   def terminate() {
     worker.running = false
+    push(Task("shutting down", { c => abort() }))
   }
 }
 
@@ -97,6 +103,8 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
 
   def notIdle: Boolean = executionState.get != IDLE
 
+  def hasTerminated: Boolean = executionState.get == TERMINATED
+
   def abort(): Boolean = {
     executionState.compareAndSet(BUSY, STOPPING)
   }
@@ -109,8 +117,13 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
     }
 
   override def run() {
-    while (running) {
-      doNextTask()
+    try {
+      while (running) {
+        doNextTask()
+      }
+    } finally {
+      executionState.set(TERMINATED)
+      logger.info("Worker thread has terminated.")
     }
   }
 
@@ -120,9 +133,7 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
     try {
       runTask(task)
     } catch {
-      case i: InterruptedException =>
-        throw i // for terminating the containing thread
-      case e: Exception =>
+      case NonFatal(e) =>
         logger.warn(status, e)
     } finally {
       if (queue.isEmpty) {

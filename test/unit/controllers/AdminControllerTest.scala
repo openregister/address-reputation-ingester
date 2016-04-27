@@ -39,13 +39,15 @@ class AdminControllerTest extends FunSuite {
     """) {
     println("********** ACT1 **********")
     val logger = new StubLogger
-    val ac = new AdminController(new WorkQueue(logger))
+    val worker = new WorkQueue(logger)
+    val ac = new AdminController(worker)
     val request = FakeRequest()
 
     val futureResponse = call(ac.cancelTask(), request)
 
     val response = await(futureResponse)
     assert(response.header.status === 400)
+    worker.terminate()
   }
 
   test(
@@ -57,14 +59,14 @@ class AdminControllerTest extends FunSuite {
     println("********** ACT2 **********")
     val logger = new StubLogger
     val stuff = new SynchronousQueue[Boolean]()
-    val task = new WorkQueue(logger)
-    task.push("thinking", {
+    val worker = new WorkQueue(logger)
+    worker.push("thinking", {
       stuff.take() // blocks until signalled
       stuff.take() // blocks until signalled
     })
 
     stuff.offer(true) // release the lock first time
-    val ac = new AdminController(task)
+    val ac = new AdminController(worker)
     val request = FakeRequest()
 
     val futureResponse = call(ac.cancelTask(), request)
@@ -72,5 +74,6 @@ class AdminControllerTest extends FunSuite {
     val response = await(futureResponse)
     assert(response.header.status === 200)
     stuff.offer(true) // release the lock second time
+    worker.terminate()
   }
 }

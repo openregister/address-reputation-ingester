@@ -44,6 +44,7 @@ class FetchControllerTest extends FunSuite with Mockito {
 
     def teardown() {
       Files.delete(outputDirectory)
+      testWorker.terminate()
     }
   }
 

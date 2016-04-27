@@ -36,6 +36,7 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
   }
 
   override def onStart(app: Application) {
+    println("########## onStart ##########")
     val config = app.configuration
     val appName = config.getString("appName").getOrElse("APP NAME NOT SET")
     Logger.info(s"Starting microservice : $appName : in mode : ${app.mode}")
@@ -47,8 +48,7 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
   override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = app.configuration.getConfig(s"$env.metrics")
 
   override def onStop(app: Application): Unit = {
-    WorkQueue.singleton.abort()
-    WorkQueue.singleton.awaitCompletion()
+    println("########## onStop ##########")
     WorkQueue.singleton.terminate()
     mongoConnection.close()
   }
