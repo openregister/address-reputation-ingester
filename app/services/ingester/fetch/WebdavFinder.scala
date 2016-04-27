@@ -22,14 +22,17 @@ import uk.co.hmrc.logging.SimpleLogger
 
 
 class WebdavFinder(logger: SimpleLogger, sardine: SardineWrapper) {
+  val knownProducts = List("abi", "abp")
 
   def findAvailable(url: URL, username: String, password: String): List[OSGBProduct] = {
-    val file = sardine.exploreRemoteTree(url, username, password)
-    extractUsableProducts(file)
+    val tree = sardine.exploreRemoteTree(url, username, password)
+    extractUsableProducts(tree)
   }
 
   private def extractUsableProducts(file: WebDavFile): List[OSGBProduct] = {
-    extractUsableProductFor("abi", file) ++ extractUsableProductFor("abp", file)
+    knownProducts.flatMap {
+      extractUsableProductFor(_, file)
+    }
   }
 
   private def extractUsableProductFor(product: String, file: WebDavFile): List[OSGBProduct] = {
@@ -42,13 +45,13 @@ class WebdavFinder(logger: SimpleLogger, sardine: SardineWrapper) {
     }
   }
 
-  private def extractOne(product: String, e: WebDavFile): Option[OSGBProduct] = {
-    val fullFolder = e.files.filter(_.fullName == "full")
+  private def extractOne(product: String, epoch: WebDavFile): Option[OSGBProduct] = {
+    val fullFolder = epoch.files.filter(_.fullName == "full")
     if (fullFolder.isEmpty) None
     else {
       val possibleDownloads: List[WebDavFile] = filterZipsWithTxt(fullFolder.head.files)
       if (possibleDownloads.isEmpty) None
-      else Some(OSGBProduct(product, e.fullName.toInt, possibleDownloads))
+      else Some(OSGBProduct(product, epoch.fullName.toInt, possibleDownloads))
     }
   }
 
@@ -57,9 +60,12 @@ class WebdavFinder(logger: SimpleLogger, sardine: SardineWrapper) {
     val allPairsExist = names.forall {
       n =>
         files.exists(f => f.isPlainText && f.name == n) &&
-        files.exists(f => f.isZipFile && f.name == n)
+          files.exists(f => f.isZipFile && f.name == n)
     }
-    if (allPairsExist) files.filter(_.isZipFile) else Nil
+    if (allPairsExist)
+      files.filter(_.isZipFile)
+    else
+      Nil
   }
 }
 

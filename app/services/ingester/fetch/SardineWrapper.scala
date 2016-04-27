@@ -45,14 +45,27 @@ class SardineWrapper(logger: SimpleLogger, factory: SardineFactory2) {
         val x = base + res.getPath
         buffer += exploreRemoteTree(base, new URL(x), sardine)
       } else {
-        buffer += WebDavFile(new URL(u), res.getName, res.isDirectory,
-          res.getContentType == "text/plain",
-          res.getContentType == "application/zip",
-          Nil)
+        buffer += WebDavFile(new URL(u), res.getName, res.isDirectory, isTxtFile(res), isZipFile(res), Nil)
       }
     }
 
     result.copy(files = buffer.toList)
+  }
+
+  private def isTxtFile(res: DavResource): Boolean = {
+    res.getContentType == "text/plain" ||
+      (res.getContentType == "application/octet-stream" && extn(res.getName) == ".txt")
+  }
+
+  private def isZipFile(res: DavResource): Boolean = {
+    res.getContentType == "application/zip" ||
+      (res.getContentType == "application/octet-stream" && extn(res.getName) == ".zip")
+  }
+
+  private def extn(filename: String) = {
+    val dot = filename.lastIndexOf('.')
+    if (dot < 0) ""
+    else filename.substring(dot)
   }
 }
 
@@ -72,7 +85,8 @@ case class WebDavFile(url: URL, fullName: String,
   private def indentedString(i: String): String = {
     val slash = if (isDirectory) "/" else ""
     val zip = if (isZipFile) " (zip)" else ""
-    s"$i$fullName$slash$zip" +
+    val txt = if (isPlainText) " (txt)" else ""
+    s"$i$fullName$slash$txt$zip" +
       files.map(_.indentedString(i + "  ")).mkString("\n", "", "")
   }
 }

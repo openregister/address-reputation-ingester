@@ -21,16 +21,16 @@ import java.net.URL
 import uk.co.hmrc.logging.Stdout
 
 // for manual test/development
-object WebdavFinderEssay {
-  val sardine = new SardineWrapper(Stdout, new SardineFactory2)
-  val finder = new WebdavFinder(Stdout, sardine)
+object SardineWrapperEssay {
+  val finder = new SardineWrapper(Stdout, new SardineFactory2)
 
   def main(args: Array[String]) {
-    val products = if (args.length > 2) {
-      finder.findAvailable(new URL(args(0)), args(1), args(2))
+    if (args.length > 2) {
+      val top = finder.exploreRemoteTree(new URL(args(0)), args(1), args(2))
+      Stdout.info(top.toString)
     } else if (args.length > 0) {
-      finder.findAvailable(new URL(args(0)), "", "")
-    } else Nil
-    Stdout.info(products.map(_.toString).mkString("\n"))
+      val top = finder.exploreRemoteTree(new URL(args(0)), "", "")
+      Stdout.info(top.toString)
+    }
   }
 }
