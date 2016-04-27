@@ -86,7 +86,9 @@ class WorkQueue(logger: SimpleLogger) {
   // for application / test shutdown only
   def terminate() {
     worker.running = false
-    push(Task("shutting down", { c => abort() }))
+    abort()
+    // push a 'poison' task that may never get execcuted
+    push(Task("shutting down", { c => }))
   }
 }
 

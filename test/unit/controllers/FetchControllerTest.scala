@@ -61,7 +61,8 @@ class FetchControllerTest extends FunSuite with Mockito {
       assert(response.header.status === 200)
 
       testWorker.awaitCompletion()
-      verify(webdavFetcher).fetchAll(s"$url/$product/$epoch/$variant", username, password, Paths.get(outputDirectory.toString, product, epoch, variant))
+      val dir = outputDirectory.resolve(s"$product/$epoch/$variant")
+      verify(webdavFetcher).fetchAll(s"$url/$product/$epoch/$variant", username, password, dir)
       teardown()
     }
   }

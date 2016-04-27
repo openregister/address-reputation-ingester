@@ -62,19 +62,11 @@ class AdminControllerTest extends FunSuite {
     val worker = new WorkQueue(logger)
     worker.push(Task("thinking", {
       c =>
-      Thread.sleep(100)
-      println("I'm blue !!!")
-      Thread.sleep(100)
-      stuff.take() // blocks until signalled
-      println("I'm green !!!")
-      Thread.sleep(100)
-      stuff.take() // blocks until signalled
-      println("I'm a teapot !!!")
+        stuff.take() // blocks until signalled
+        stuff.take() // blocks until signalled
     }))
 
     stuff.put(true) // release the lock first time
-    Thread.sleep(100)
-    println("Is he blue ???")
     val ac = new AdminController(worker)
     val request = FakeRequest()
 
@@ -84,7 +76,6 @@ class AdminControllerTest extends FunSuite {
     assert(response.header.status === 200)
     stuff.put(true) // release the lock second time
     worker.awaitCompletion()
-    println("Is he green ???")
     worker.terminate()
   }
 }

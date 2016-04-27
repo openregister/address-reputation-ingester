@@ -145,7 +145,7 @@ class WorkerTest extends FunSuite {
       when the worker thread is terminated
       then its thread terminates
     """) {
-    println("********** WT4 **********")
+    println("********** WT5 **********")
     val logger = new StubLogger()
     val worker = new WorkQueue(logger)
     val lock1 = new SynchronousQueue[Boolean]()
