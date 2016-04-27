@@ -81,7 +81,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val sp = new SecondPass(fd, continuer)
       worker.push("testing", {
-        lock.offer(true)
+        lock.put(true)
         sp.processFile(csv, out)
       })
 
@@ -123,7 +123,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val sp = new SecondPass(fd, continuer)
       worker.push("testing", {
-        lock.offer(true)
+        lock.put(true)
         sp.processFile(csv, out)
       })
 
@@ -164,7 +164,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val sp = new SecondPass(fd, continuer)
       worker.push("testing", {
-        lock.offer(true)
+        lock.put(true)
         sp.processFile(csv, out)
       })
 

@@ -84,7 +84,7 @@ class WorkerTest extends FunSuite {
 
     worker.push("thinking", {
       logger.info("fric")
-      lock1.offer(true)
+      lock1.put(true)
     })
 
     lock1.take()
@@ -107,7 +107,7 @@ class WorkerTest extends FunSuite {
     val lock1 = new SynchronousQueue[Boolean]()
 
     worker.push("thinking", {
-      lock1.offer(true)
+      lock1.put(true)
       throw new Exception("worker broke")
     })
 
@@ -151,7 +151,7 @@ class WorkerTest extends FunSuite {
     val lock1 = new SynchronousQueue[Boolean]()
 
     worker.push("thinking", {
-      lock1.offer(true)
+      lock1.put(true)
     })
 
     worker.terminate()

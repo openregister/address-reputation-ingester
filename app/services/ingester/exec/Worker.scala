@@ -63,7 +63,8 @@ class WorkQueue(logger: SimpleLogger) {
   }
 
   def push(task: Task): Boolean = {
-    queue.offer(task)
+    queue.put(task)
+    true
   }
 
   def status: String = worker.status

@@ -25,7 +25,7 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.ingester.exec.WorkQueue
+import services.ingester.exec.{Task, WorkQueue}
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
@@ -60,12 +60,21 @@ class AdminControllerTest extends FunSuite {
     val logger = new StubLogger
     val stuff = new SynchronousQueue[Boolean]()
     val worker = new WorkQueue(logger)
-    worker.push("thinking", {
+    worker.push(Task("thinking", {
+      c =>
+      Thread.sleep(100)
+      println("I'm blue !!!")
+      Thread.sleep(100)
       stuff.take() // blocks until signalled
+      println("I'm green !!!")
+      Thread.sleep(100)
       stuff.take() // blocks until signalled
-    })
+      println("I'm a teapot !!!")
+    }))
 
-    stuff.offer(true) // release the lock first time
+    stuff.put(true) // release the lock first time
+    Thread.sleep(100)
+    println("Is he blue ???")
     val ac = new AdminController(worker)
     val request = FakeRequest()
 
@@ -73,7 +82,9 @@ class AdminControllerTest extends FunSuite {
 
     val response = await(futureResponse)
     assert(response.header.status === 200)
-    stuff.offer(true) // release the lock second time
+    stuff.put(true) // release the lock second time
+    worker.awaitCompletion()
+    println("Is he green ???")
     worker.terminate()
   }
 }

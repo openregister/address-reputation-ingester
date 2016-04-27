@@ -52,7 +52,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
       worker.push(Task("testing", {
         c =>
           new Extractor(c, logger).extract(mockFile, dummyOut)
-          lock.offer(true)
+          lock.put(true)
       }))
 
       lock.take()
@@ -83,7 +83,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
       worker.push(Task("testing", {
         c =>
           new Extractor(c, logger).extract(List(sample), out)
-          lock.offer(true)
+          lock.put(true)
       }))
 
       lock.take()

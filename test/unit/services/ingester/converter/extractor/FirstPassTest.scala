@@ -60,7 +60,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val firstPass = new FirstPass(dummyOut, continuer)
       worker.push("testing", {
-        lock.offer(true)
+        lock.put(true)
         firstPass.processFile(csv, dummyOut)
       })
 
@@ -88,7 +88,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val firstPass = new FirstPass(dummyOut, continuer)
       worker.push("testing", {
-        lock.offer(true)
+        lock.put(true)
         firstPass.processFile(csv, dummyOut)
       })
 
@@ -114,7 +114,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val firstPass = new FirstPass(dummyOut, continuer)
       worker.push("testing", {
-        lock.offer(true)
+        lock.put(true)
         firstPass.processFile(csv, dummyOut)
       })
 
@@ -140,7 +140,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val firstPass = new FirstPass(dummyOut, continuer)
       worker.push("testing", {
-        lock.offer(true)
+        lock.put(true)
         firstPass.processFile(csv, dummyOut)
       })
 
@@ -167,7 +167,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val firstPass = new FirstPass(dummyOut, continuer)
       worker.push("testing", {
-        lock.offer(true)
+        lock.put(true)
         firstPass.processFile(csv, dummyOut)
       })
 
@@ -205,7 +205,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val firstPass = new FirstPass(dummyOut, continuer)
       worker.push("testing", {
-        lock.offer(true)
+        lock.put(true)
         firstPass.processFile(csv, out)
       })
 
@@ -228,7 +228,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val firstPass = new FirstPass(dummyOut, continuer)
       worker.push("testing", {
-        lock.offer(true)
+        lock.put(true)
         worker.abort()
         firstPass.processFile(csv, dummyOut)
       })
