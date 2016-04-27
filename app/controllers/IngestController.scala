@@ -53,7 +53,7 @@ class IngestController(rootFolder: File,
                        dbWriterFactory: OutputDBWriterFactory,
                        fileWriterFactory: OutputFileWriterFactory,
                        extractorFactory: ExtractorFactory,
-                       taskFactory: WorkerFactory
+                       workerFactory: WorkerFactory
                       ) extends BaseController {
 
   def ingestToDB(product: String, epoch: String, variant: String,
@@ -87,7 +87,7 @@ class IngestController(rootFolder: File,
 
     val writer = writerFactory.writer(s"${product}_${epoch}", settings)
 
-    val worker = taskFactory.worker
+    val worker = workerFactory.worker
     val status = worker.push(
       Task(s"ingesting $product/$epoch/$variant", {
         continuer =>

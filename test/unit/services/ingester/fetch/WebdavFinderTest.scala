@@ -106,6 +106,7 @@ class WebdavFinderTest extends PlaySpec with Mockito {
       discover one products with two epochs
       and ignore any unimportant files
     """ in {
+      println("********** WFT1 **********")
       new Context {
         // given
         when(sardine.list(root + "/")) thenReturn productResources.asJava
@@ -138,6 +139,7 @@ class WebdavFinderTest extends PlaySpec with Mockito {
       discover one products with one epoch
       and ignore any unimportant files
     """ in {
+      println("********** WFT2 **********")
       new Context {
         // given
         when(sardine.list(root + "/")) thenReturn productResources.asJava

@@ -98,6 +98,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       when valid paramaters are passed to ingestToDB
       then a successful response is returned
     """) {
+    println("********** ICT1 **********")
     new context {
       val ic = new IngestController(folder, logger, dbf, fwf, ef, workerFactory)
 
@@ -116,6 +117,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       when valid paramaters are passed to ingestToFile
       then a successful response is returned
     """) {
+    println("********** ICT2 **********")
     new context {
       val ic = new IngestController(folder, logger, dbf, fwf, ef, workerFactory)
 

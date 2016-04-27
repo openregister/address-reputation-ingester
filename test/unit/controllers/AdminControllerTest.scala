@@ -36,6 +36,7 @@ class AdminControllerTest extends org.scalatest.FunSuite {
       and no task is executing
       then a bad request response is returned
     """) {
+    println("********** ACT1 **********")
     val logger = new StubLogger
     val ac = new AdminController(new WorkQueue(logger))
     val request = FakeRequest()
@@ -52,6 +53,7 @@ class AdminControllerTest extends org.scalatest.FunSuite {
       and a task is executing
       then a successful response is returned
     """) {
+    println("********** ACT2 **********")
     val logger = new StubLogger
     val stuff = new SynchronousQueue[Boolean]()
     val task = new WorkQueue(logger)

@@ -87,6 +87,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       then a successful response is returned
       and the stored metadata item for the product in question is set to the new collection name
     """) {
+    println("********** SCT1 **********")
     new context {
       when(db.collectionExists("abp_40_9")) thenReturn true
       when(db.apply("abp_40_9")) thenReturn collection
@@ -108,6 +109,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       then a bad-request response is returned
       and the stored metadata item for the product in question is left unchanged
     """) {
+    println("********** SCT2 **********")
     new context {
       when(db.collectionExists(anyString)) thenReturn false
 
@@ -127,6 +129,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       then a conflict response is returned
       and the stored metadata item for the product in question is left unchanged
     """) {
+    println("********** SCT3 **********")
     new context {
       when(db.collectionExists("abp_40_9")) thenReturn true
       when(db.apply("abp_40_9")) thenReturn collection
