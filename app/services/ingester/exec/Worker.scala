@@ -44,7 +44,8 @@ case class Task(description: String,
 
 
 object WorkQueue {
-  val singleton = new WorkQueue(new LoggerFacade(Logger.logger))
+  val singleton: WorkQueue = throw new RuntimeException()
+//  val singleton: WorkQueue = new WorkQueue(new LoggerFacade(Logger.logger))
 }
 
 

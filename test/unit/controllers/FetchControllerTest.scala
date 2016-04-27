@@ -19,7 +19,7 @@ package controllers
 import java.nio.file.{Files, Path, Paths}
 
 import org.mockito.Mockito._
-import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
+import org.scalatest.FunSuite
 import org.specs2.mock.Mockito
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -27,7 +27,7 @@ import services.ingester.exec.{WorkQueue, WorkerFactory}
 import services.ingester.fetch.WebdavFetcher
 import uk.co.hmrc.logging.StubLogger
 
-class FetchControllerTest extends PlaySpec with Mockito with OneAppPerSuite {
+class FetchControllerTest extends FunSuite with Mockito {
 
   trait context {
     val testWorker = new WorkQueue(new StubLogger())
@@ -48,22 +48,20 @@ class FetchControllerTest extends PlaySpec with Mockito with OneAppPerSuite {
   }
 
 
-  "fetch" should {
-    "download files using webdav" in {
-      println("********** FCT **********")
-      new context {
-        val product = "product"
-        val epoch = "epoch"
-        val variant = "variant"
-        val futureResponse = call(controller.fetch(product, epoch, variant), req)
+  test("fetch should download files using webdav") {
+    println("********** FCT **********")
+    new context {
+      val product = "product"
+      val epoch = "epoch"
+      val variant = "variant"
+      val futureResponse = call(controller.fetch(product, epoch, variant), req)
 
-        val response = await(futureResponse)
-        response.header.status must be(200)
+      val response = await(futureResponse)
+      assert(response.header.status === 200)
 
-        testWorker.awaitCompletion()
-        verify(webdavFetcher).fetchAll(s"$url/$product/$epoch/$variant", username, password, Paths.get(outputDirectory.toString, product, epoch, variant))
-        teardown()
-      }
+      testWorker.awaitCompletion()
+      verify(webdavFetcher).fetchAll(s"$url/$product/$epoch/$variant", username, password, Paths.get(outputDirectory.toString, product, epoch, variant))
+      teardown()
     }
   }
 }

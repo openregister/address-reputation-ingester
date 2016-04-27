@@ -21,6 +21,7 @@ package controllers
 import java.util.concurrent.SynchronousQueue
 
 import org.junit.runner.RunWith
+import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -28,7 +29,7 @@ import services.ingester.exec.WorkQueue
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
-class AdminControllerTest extends org.scalatest.FunSuite {
+class AdminControllerTest extends FunSuite {
 
   test(
     """
