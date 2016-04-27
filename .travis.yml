@@ -2,7 +2,7 @@
 sudo: false
 language: scala
 scala:
-  - 2.11.7
+  - 2.11.8
 
 jdk:
   - oraclejdk8
@@ -15,4 +15,6 @@ notifications:
   email:
     - andy.hicks@digital.hmrc.gov.uk
     - richard.beton@digital.hmrc.gov.uk
+    - christopher.townson@digital.hmrc.gov.uk
+    - franek.richardson@digital.hmrc.gov.uk
 
