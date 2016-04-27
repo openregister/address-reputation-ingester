@@ -149,7 +149,7 @@ class WebdavFinderTest extends PlaySpec with Mockito {
         when(sardine.list(root + "/abp/40/")) thenReturn abpE40VariantResources.asJava
         when(sardine.list(root + "/abp/37/full/")) thenReturn file37Resources.asJava
         when(sardine.list(root + "/abp/38/full/")) thenReturn file38Resources.asJava
-        when(sardine.list(root + "/abp/39/full/")) thenReturn badFile39Resources.asJava
+        when(sardine.list(root + "/abp/39W/full/")) thenReturn badFile39Resources.asJava
         when(sardine.list(root + "/abp/40/full/")) thenReturn file40Resources.asJava
         val finder = new WebdavFinder(logger, new SardineWrapper(logger, sardineFactory))
         // when

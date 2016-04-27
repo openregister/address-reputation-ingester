@@ -53,8 +53,11 @@ class FetchControllerTest extends PlaySpec with Mockito with OneAppPerSuite {
       val product = "product"
       val epoch = "epoch"
       val variant = "variant"
-      val res = call(controller.fetch(product, epoch, variant), req)
-      status(res) must be(200)
+      val futureResponse = call(controller.fetch(product, epoch, variant), req)
+
+      val response = await(futureResponse)
+      response.header.status must be(200)
+
       testWorker.awaitCompletion()
       verify(webdavFetcher).fetchAll(s"$url/$product/$epoch/$variant", username, password, Paths.get(outputDirectory.toString, product, epoch, variant))
       teardown()

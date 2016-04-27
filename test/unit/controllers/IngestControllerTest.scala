@@ -101,14 +101,13 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     new context {
       val ic = new IngestController(folder, logger, dbf, fwf, ef, workerFactory)
 
-      val futureResult = call(ic.ingestToDB("abp", "40", "full", "1", "0"), request)
+      val futureResponse = call(ic.ingestToDB("abp", "40", "full", "1", "0"), request)
 
-      Thread.sleep(10) // smelly race condition
+      val response = await(futureResponse)
       testWorker.awaitCompletion()
-      val result = await(futureResult)
 
       verify(ex, times(1)).extract(any[File], anyObject())
-      assert(result.header.status / 100 === 2)
+      assert(response.header.status / 100 === 2)
     }
   }
 
@@ -120,14 +119,13 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     new context {
       val ic = new IngestController(folder, logger, dbf, fwf, ef, workerFactory)
 
-      val futureResult = call(ic.ingestToFile("abp", "40", "full"), request)
+      val futureResponse = call(ic.ingestToFile("abp", "40", "full"), request)
 
-      Thread.sleep(10) // smelly race condition
+      val response = await(futureResponse)
       testWorker.awaitCompletion()
-      val result = await(futureResult)
 
       verify(ex, times(1)).extract(any[File], anyObject())
-      assert(result.header.status / 100 === 2)
+      assert(response.header.status / 100 === 2)
     }
   }
 }

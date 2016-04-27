@@ -18,7 +18,7 @@
 
 package controllers
 
-import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.{ArrayBlockingQueue, SynchronousQueue}
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
@@ -40,10 +40,10 @@ class AdminControllerTest extends org.scalatest.FunSuite {
     val ac = new AdminController(new WorkQueue(logger))
     val request = FakeRequest()
 
-    val futureResult = call(ac.cancelTask(), request)
+    val futureResponse = call(ac.cancelTask(), request)
 
-    val result = await(futureResult)
-    assert(result.header.status === 400)
+    val response = await(futureResponse)
+    assert(response.header.status === 400)
   }
 
   test(
@@ -53,19 +53,21 @@ class AdminControllerTest extends org.scalatest.FunSuite {
       then a successful response is returned
     """) {
     val logger = new StubLogger
-    val stuff = new ArrayBlockingQueue[Boolean](1)
+    val stuff = new SynchronousQueue[Boolean]()
     val task = new WorkQueue(logger)
     task.push("thinking", {
       stuff.take() // blocks until signalled
+      stuff.take() // blocks until signalled
     })
 
+    stuff.offer(true) // release the lock first time
     val ac = new AdminController(task)
     val request = FakeRequest()
 
-    val futureResult = call(ac.cancelTask(), request)
+    val futureResponse = call(ac.cancelTask(), request)
 
-    val result = await(futureResult)
-    assert(result.header.status === 200)
-    stuff.offer(true) // release the lock
+    val response = await(futureResponse)
+    assert(response.header.status === 200)
+    stuff.offer(true) // release the lock second time
   }
 }

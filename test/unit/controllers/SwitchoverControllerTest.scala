@@ -93,10 +93,10 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn Some(MongoDBObject())
 
       val sc = new SwitchoverController(mongo, Map("abp" -> storedItem))
-      val futureResult = call(sc.switchTo("abp", "40", "9"), request)
+      val futureResponse = call(sc.switchTo("abp", "40", "9"), request)
 
-      val result = await(futureResult)
-      assert(result.header.status / 100 === 2)
+      val response = await(futureResponse)
+      assert(response.header.status / 100 === 2)
       assert(storedItem.get === "abp_40_9")
     }
   }
@@ -112,10 +112,10 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(db.collectionExists(anyString)) thenReturn false
 
       val sc = new SwitchoverController(mongo, Map("abp" -> storedItem))
-      val futureResult = call(sc.switchTo("abp", "40", "9"), request)
+      val futureResponse = call(sc.switchTo("abp", "40", "9"), request)
 
-      val result = await(futureResult)
-      assert(result.header.status === 400)
+      val response = await(futureResponse)
+      assert(response.header.status === 400)
       assert(storedItem.get === "the initial value")
     }
   }
@@ -133,10 +133,10 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn None
 
       val sc = new SwitchoverController(mongo, Map("abp" -> storedItem))
-      val futureResult = call(sc.switchTo("abp", "40", "9"), request)
+      val futureResponse = call(sc.switchTo("abp", "40", "9"), request)
 
-      val result = await(futureResult)
-      assert(result.header.status === 409)
+      val response = await(futureResponse)
+      assert(response.header.status === 409)
       assert(storedItem.get === "the initial value")
     }
   }
