@@ -80,14 +80,14 @@ class WorkerTest extends FunSuite {
     println("********** WT2 **********")
     val logger = new StubLogger()
     val worker = new WorkQueue(logger)
-    val lock1 = new SynchronousQueue[Boolean]()
+    val lock = new SynchronousQueue[Boolean]()
 
     worker.push("thinking", {
       logger.info("fric")
-      lock1.put(true)
+      lock.put(true)
     })
 
-    lock1.take()
+    lock.take()
     worker.awaitCompletion()
 
     // the logger in the body, and the timer in the executor
@@ -104,14 +104,14 @@ class WorkerTest extends FunSuite {
     println("********** WT3 **********")
     val logger = new StubLogger()
     val worker = new WorkQueue(logger)
-    val lock1 = new SynchronousQueue[Boolean]()
+    val lock = new SynchronousQueue[Boolean]()
 
     worker.push("thinking", {
-      lock1.put(true)
+      lock.put(true)
       throw new Exception("worker broke")
     })
 
-    lock1.take()
+    lock.take()
     worker.awaitCompletion()
 
     // the exception handler
@@ -148,14 +148,16 @@ class WorkerTest extends FunSuite {
     println("********** WT5 **********")
     val logger = new StubLogger()
     val worker = new WorkQueue(logger)
-    val lock1 = new SynchronousQueue[Boolean]()
+    val lock = new SynchronousQueue[Boolean]()
 
     worker.push("thinking", {
-      lock1.put(true)
+      lock.put(true)
+      lock.put(true)
     })
 
+    lock.take()
     worker.terminate()
-    lock1.take()
+    lock.take()
 
     var patience = 100
     while (!worker.hasTerminated && patience > 0) {

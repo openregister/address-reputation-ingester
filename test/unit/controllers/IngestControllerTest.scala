@@ -17,6 +17,7 @@
 package controllers
 
 import java.io.File
+import java.util.concurrent.SynchronousQueue
 
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
@@ -87,6 +88,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val workerFactory = new WorkerFactory {
       override def worker = testWorker
     }
+    val lock = new SynchronousQueue[Boolean]()
 
     when(fwf.writer(anyString, any[WriterSettings])) thenReturn outputFileWriter
     when(dbf.writer(anyString, any[WriterSettings])) thenReturn outputDBWriter
@@ -95,7 +97,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
   test(
     """
-      when valid paramaters are passed to ingestToDB
+      when valid parameters are passed to ingestToDB
       then a successful response is returned
     """) {
     println("********** ICT1 **********")
@@ -103,6 +105,12 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       val ic = new IngestController(folder, logger, dbf, fwf, ef, workerFactory)
 
       val futureResponse = call(ic.ingestToDB("abp", "40", "full", "1", "0"), request)
+
+      // push a second task, so ensuring the first will always get run
+      testWorker.push("thinking", {
+        lock.put(true)
+      })
+      lock.take()
 
       val response = await(futureResponse)
       testWorker.awaitCompletion()
@@ -115,7 +123,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
   test(
     """
-      when valid paramaters are passed to ingestToFile
+      when valid parameters are passed to ingestToFile
       then a successful response is returned
     """) {
     println("********** ICT2 **********")
@@ -123,6 +131,12 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       val ic = new IngestController(folder, logger, dbf, fwf, ef, workerFactory)
 
       val futureResponse = call(ic.ingestToFile("abp", "40", "full"), request)
+
+      // push a second task, so ensuring the first will always get run
+      testWorker.push("thinking", {
+        lock.put(true)
+      })
+      lock.take()
 
       val response = await(futureResponse)
       testWorker.awaitCompletion()
