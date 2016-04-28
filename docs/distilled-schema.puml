@@ -1,0 +1,166 @@
+@startuml
+
+title <b>Simplified AddressBasePremium</b>\nCSV Schema
+
+note "circles indicates primary identifiers\ntriangle: indicates reference identifier\nsquare: indicates technical field\nquestion mark: optional value" as N2
+
+class date_fields << (D,orchid) >> {
+ start_date
+ end_date?
+ last_update_date
+ entry_date
+}
+
+class Application_cross_reference {
+ -record_identifier: 23
+}
+
+class Successor {
+ -record_identifier: 30
+}
+
+class Classification {
+ -record_identifier: 32
+ -change_type
+ -processing_order
+ +UPRN
+ class_key
+ classification_code
+ class_scheme
+ scheme_version
+ date_fields
+}
+
+class Organisation {
+ -record_identifier: 31
+}
+
+class Metadata {
+ -record_identifier: 29
+}
+
+class Header {
+ -record_identifier: 10
+}
+
+class Trailer {
+ -record_identifier: 99
+}
+
+class Street << (S,yellow) >> {
+ -record_identifier: 11
+ -change_type
+ -processing_order
+ +USRN
+ record_type_code
+ swa_org_ref_naming_code
+ state_code?
+ state_date?
+ street_surface_code?
+ street_classification?
+ version: int
+ date_fields
+ start_xy: bng
+ latitude_longitude_ etrs89
+ end_xy: bng
+ tolerance: metres
+}
+
+class Street_descriptor << (S,yellow) >> {
+ -record_identifier: 15
+ -change_type
+ -processing_order
+ ~USRN
+ description
+ locality?
+ town_name?
+ administrative_area
+ language_code
+ date_fields
+}
+
+class BLPU << (B,#88FF88) >> {
+ -record_identifier: 21
+ -change_type
+ -processing_order
+ +UPRN
+ logical_status_code
+ state_code?
+ state_date?
+ ~parent_uprn?
+ coordinate_xy: bng
+ latitude_longitude: etrs89
+ representative_point_code
+ ~local_custodian_code: int
+ country: char
+ date_fields
+ addressbase_postal_code
+ postcode_locator: char
+ number_of_child_records: int
+}
+
+note left: Basic land and property unit
+
+class Land_and_property_identifier {
+ -record_identifier: 24
+ -change_type
+ -processing_order
+ +UPRN
+ +LPI_key
+ language_code
+ date_fields
+ sao_start_number?
+ sao_start_suffix?
+ sao_end_number?
+ sao_end_suffix?
+ sao_text?
+ pao_start_number?
+ pao_start_suffix?
+ pao_end_number?
+ pao_end_suffix?
+ pao_text?
+ usrn_match_indicator_code
+ area_name?
+ vertical_level?
+ official_flag_code?
+}
+
+class Delivery_point_address {
+ -record_identifier: 28
+ -change_type
+ -processing_order
+ +UPRN
+ +UDPRN
+ organisation_name?
+ department_name?
+ sub_building_name?
+ building_name?
+ building_number?
+ dependent_thoroughfare?
+ thoroughfare?
+ double_dependent_locality?
+ dependent_locality?
+ post_town
+ postcode
+ postcode_type_code
+ delivery_point_suffix_code
+ welsh_dependent_thoroughfare?
+ welsh_thoroughfare?
+ welsh_double_dependent_locality?
+ welsh_dependent_locality?
+ welsh_post_town?
+ po_box_number?
+ date_fields
+}
+
+BLPU "1" -- "1?" Delivery_point_address
+BLPU "1" -- "1+" Land_and_property_identifier
+Street "1" -- "1+" Land_and_property_identifier
+Street "1" -- "1+" Street_descriptor
+BLPU "1" -- "1+" Classification
+BLPU "1" -- "*" Application_cross_reference
+BLPU "1" -- "*" Successor
+BLPU "1" -- "*" Organisation
+
+hide class methods
+@enduml
