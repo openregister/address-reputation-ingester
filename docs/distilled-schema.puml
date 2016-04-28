@@ -153,14 +153,14 @@ class Delivery_point_address {
  date_fields
 }
 
-BLPU "1" -- "1?" Delivery_point_address
-BLPU "1" -- "1+" Land_and_property_identifier
-Street "1" -- "1+" Land_and_property_identifier
-Street "1" -- "1+" Street_descriptor
-BLPU "1" -- "1+" Classification
-BLPU "1" -- "*" Application_cross_reference
-BLPU "1" -- "*" Successor
-BLPU "1" -- "*" Organisation
+BLPU "1" -- "0..1" Delivery_point_address
+BLPU "1" -- "1..*" Land_and_property_identifier
+Street "1" -- "1..*" Land_and_property_identifier
+Street "1" -- "1..*" Street_descriptor
+BLPU "1" -- "1..*" Classification
+BLPU "1" -- "0..*" Application_cross_reference
+BLPU "1" -- "0..*" Successor
+BLPU "1" -- "0..*" Organisation
 
 hide class methods
 @enduml
