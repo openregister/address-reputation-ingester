@@ -16,36 +16,59 @@
 
 package services.ingester.converter.extractor
 
+import services.ingester.converter.Extractor.Blpu
 import services.ingester.converter._
 import services.ingester.exec.Continuer
 import services.ingester.writers.OutputWriter
 
 class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
 
+  private var dpaCount = 0
+  private var lpiCount = 0
+
+
   def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter) {
     for (csvLine <- csvIterator
          if continuer.isBusy) {
-      if (csvLine(OSCsv.RecordIdentifier_idx) == OSLpi.RecordId) {
-        processLPI(csvLine, out)
+      csvLine(OSCsv.RecordIdentifier_idx) match {
+        case OSHeader.RecordId =>
+          if (csvLine(OSHeader.Version_Idx) == "1.0")
+            OSCsv.setCsvFormat(1)
+          else
+            OSCsv.setCsvFormat(2)
+
+        case OSLpi.RecordId => processLPI(csvLine, out)
+
+        case OSDpa.RecordId => processDPA(csvLine, out)
+
+        case _ =>
       }
     }
   }
 
   private def processLPI(csvLine: Array[String], out: OutputWriter): Unit = {
     val lpi = OSLpi(csvLine)
-    val blpu = fd.blpu.get(lpi.uprn)
 
-    blpu match {
-      case Some(b) if b.logicalStatus == lpi.logicalStatus =>
-        out.output(ExportDbAddress.exportLPI(lpi, b, fd.streets))
-        // TODO: this results in just accepting the first lpi record processed - really we should
-        // be taking a decision in the firstPass which of the lpi records is the most suitable
-        fd.blpu.remove(lpi.uprn)
+    if (!fd.dpa.contains(lpi.uprn)) {
+      if (fd.blpu.containsKey(lpi.uprn)) {
+        val packedBlpu = fd.blpu.get(lpi.uprn)
+        val blpu = Blpu.unpack(packedBlpu)
 
-      case _ =>
+        if (blpu.logicalStatus == lpi.logicalStatus) {
+          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets))
+          lpiCount += 1
+          fd.blpu.remove(lpi.uprn) // need to decide which lpi to use in the firstPass using logic - not first in gets in
+        }
+      }
     }
   }
 
-  def sizeInfo: String = ""
+  private def processDPA(csvLine: Array[String], out: OutputWriter): Unit = {
+    val dpa = OSDpa(csvLine)
+    out.output(ExportDbAddress.exportDPA(dpa))
+    dpaCount += 1
+  }
+
+  def sizeInfo: String = s"Second pass processed $dpaCount DPAs, $lpiCount LPIs"
 }
 

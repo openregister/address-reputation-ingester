@@ -16,14 +16,39 @@
 
 package services.ingester.converter.extractor
 
-import scala.collection.mutable
-import services.ingester.converter.Extractor.{Blpu, Street}
+import java.io.File
+import java.lang.{Long => JLong}
+import java.util
 
-case class ForwardData(blpu: mutable.Map[Long, Blpu],
-                       dpa: mutable.Set[Long],
-                       streets: mutable.Map[Long, Street])
-//                       lpiLogicStatus: Map[Long, Byte])
+import net.openhft.chronicle.map.ChronicleMapBuilder
+import net.openhft.chronicle.set.ChronicleSetBuilder
+
+class ForwardData(
+                   val blpu: util.Map[JLong, String],
+                   val dpa: util.Set[JLong],
+                   val streets: util.Map[JLong, String]) {
+  def sizeInfo: String =
+    s"${blpu.size} BLPUs, ${dpa.size} DPAs, ${streets.size} streets"
+}
+
 
 object ForwardData {
-  def empty: ForwardData = ForwardData(new mutable.HashMap[Long, Blpu](), new mutable.HashSet[Long](), new mutable.HashMap[Long, Street]())
+
+  def simpleInstance(): ForwardData = new ForwardData(
+    new util.HashMap[JLong, String](),
+    new util.HashSet[JLong](),
+    new util.HashMap[JLong, String]()
+  )
+
+  def chronicleInMemory(): ForwardData = new ForwardData(
+    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(35000000).averageValueSize(10).create(),
+    ChronicleSetBuilder.of(classOf[JLong]).entries(35000000).create(),
+    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(1500000).averageValueSize(20).create()
+  )
+
+  def chronicleWithFile(): ForwardData = new ForwardData(
+    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(35000000).averageValueSize(10).createPersistedTo(File.createTempFile("blpu", ".dat")),
+    ChronicleSetBuilder.of(classOf[JLong]).entries(35000000).createPersistedTo(File.createTempFile("dpa", ".dat")),
+    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(1500000).averageValueSize(20).createPersistedTo(File.createTempFile("streets", ".dat"))
+  )
 }

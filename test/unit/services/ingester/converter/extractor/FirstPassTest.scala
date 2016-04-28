@@ -19,11 +19,10 @@ package services.ingester.converter.extractor
 import java.util.concurrent.SynchronousQueue
 
 import org.junit.runner.RunWith
+import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import org.mockito.Mockito._
-import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
 import services.ingester.exec.{Continuer, WorkQueue}
 import services.ingester.writers.OutputWriter
@@ -66,9 +65,9 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       lock.take()
       worker.awaitCompletion()
-      assert(firstPass.streetTable.size === 1)
-      assert(firstPass.streetTable.head === 48504236 -> Street('A', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))
-      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPA UPRNs, 1 streets")
+      assert(firstPass.forwardData.streets.size === 1)
+      assert(firstPass.forwardData.streets.get(48504236L) === "A|A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE||NEW CUMNOCK")
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets")
     }
   }
 
@@ -94,9 +93,9 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       lock.take()
       worker.awaitCompletion()
-      assert(firstPass.streetTable.size === 1)
-      assert(firstPass.streetTable.head === 47208194 -> Street('2', "CWMDUAD TO CYNWYL ELFED", "CWMDUAD", "CARMARTHEN"))
-      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPA UPRNs, 1 streets")
+      assert(firstPass.forwardData.streets.size === 1)
+      assert(firstPass.forwardData.streets.get(47208194L) === "2|CWMDUAD TO CYNWYL ELFED|CWMDUAD|CARMARTHEN")
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets")
     }
   }
 
@@ -120,9 +119,9 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       lock.take()
       worker.awaitCompletion()
-      assert(firstPass.streetTable.size === 1)
-      assert(firstPass.streetTable.head === 48504236 -> Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))
-      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPA UPRNs, 1 streets")
+      assert(firstPass.forwardData.streets.size === 1)
+      assert(firstPass.forwardData.streets.get(48504236L) === "2|A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE||NEW CUMNOCK")
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets")
     }
   }
 
@@ -146,9 +145,9 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       lock.take()
       worker.awaitCompletion()
-      assert(firstPass.streetTable.size === 1)
-      assert(firstPass.streetTable.head === 48504236 -> Street('2', "A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE", "", "NEW CUMNOCK"))
-      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPA UPRNs, 1 streets")
+      assert(firstPass.forwardData.streets.size === 1)
+      assert(firstPass.forwardData.streets.get(48504236L) === "2|A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE||NEW CUMNOCK")
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets")
     }
   }
 
@@ -173,9 +172,9 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       lock.take()
       worker.awaitCompletion()
-      assert(firstPass.blpuTable.size === 1)
-      assert(firstPass.blpuTable.head === 320077134 -> Blpu("KY10 2PY", '1'))
-      assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPA UPRNs, 0 streets")
+      assert(firstPass.forwardData.blpu.size === 1)
+      assert(firstPass.forwardData.blpu.get(320077134L) === "KY10 2PY|1")
+      assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPAs, 0 streets")
     }
   }
 
@@ -211,9 +210,9 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       lock.take()
       worker.awaitCompletion()
-      assert(firstPass.dpaTable.size === 1)
-      assert(firstPass.dpaTable.head === 9051119283L)
-      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 1 DPA UPRNs, 0 streets")
+      assert(firstPass.forwardData.dpa.size === 1)
+      assert(firstPass.forwardData.dpa.contains(9051119283L))
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 1 DPAs, 0 streets")
     }
   }
 
@@ -235,7 +234,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
 
       lock.take()
       worker.awaitCompletion()
-      assert(firstPass.streetTable.size === 0)
+      assert(firstPass.forwardData.streets.size === 0)
     }
   }
 

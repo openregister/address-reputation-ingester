@@ -20,8 +20,8 @@ package services.ingester.writers
 
 import java.util.Date
 
-import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb._
+import com.mongodb.casbah.commons.MongoDBObject
 import config.ApplicationGlobal
 import config.ConfigHelper._
 import play.api.Logger
@@ -70,7 +70,7 @@ class OutputDBWriter(cleardownOnError: Boolean,
 
   override def output(address: DbAddress) {
     try {
-      bulk.insert(MongoDBObject(address.tupled))
+      bulk.insert(address.id, MongoDBObject(address.tupled))
       count += 1
     } catch {
       case me: MongoException =>
@@ -81,12 +81,14 @@ class OutputDBWriter(cleardownOnError: Boolean,
   }
 
   override def close() {
-    try {
-      completeTheCollection()
-    } catch {
-      case me: MongoException =>
-        logger.info(s"Caught MongoException committing final bulk insert and creating index $me")
-        errored = true
+    if (!errored) {
+      try {
+        completeTheCollection()
+      } catch {
+        case me: MongoException =>
+          logger.info(s"Caught MongoException committing final bulk insert and creating index $me")
+          errored = true
+      }
     }
 
     if (errored) {
@@ -95,7 +97,6 @@ class OutputDBWriter(cleardownOnError: Boolean,
     } else {
       logger.info(s"Loaded $count documents.")
     }
-    mongoDbConnection.close()
     errored = false
   }
 
@@ -121,7 +122,8 @@ class BatchedBulkOperation(settings: WriterSettings, collection: DBCollection) {
     count = 0
   }
 
-  def insert(document: DBObject) {
+  def insert(id: String, document: DBObject) {
+    //bulk.find(MongoDBObject("_id" -> id)).upsert().update(MongoDBObject("$setOnInsert" -> document))
     bulk.insert(document)
     count += 1
 

@@ -86,7 +86,6 @@ class OutputDBWriterTest extends FunSuite {
 
     verify(collection).insert(any[util.List[DBObject]])
     verify(collection).createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
-    verify(casbahMongoConnection, times(1)).close()
   }
 
 }

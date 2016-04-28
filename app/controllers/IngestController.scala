@@ -25,7 +25,7 @@ import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import services.ingester.converter.ExtractorFactory
 import services.ingester.exec.{Task, WorkerFactory}
-import services.ingester.writers.{OutputDBWriterFactory, OutputFileWriterFactory, OutputWriterFactory, WriterSettings}
+import services.ingester.writers._
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -44,6 +44,7 @@ object IngestController extends IngestController(
   new LoggerFacade(Logger.logger),
   new OutputDBWriterFactory,
   new OutputFileWriterFactory,
+  new OutputNullWriterFactory,
   new ExtractorFactory,
   new WorkerFactory())
 
@@ -52,20 +53,18 @@ class IngestController(rootFolder: File,
                        logger: SimpleLogger,
                        dbWriterFactory: OutputDBWriterFactory,
                        fileWriterFactory: OutputFileWriterFactory,
+                       nullWriterFactory: OutputNullWriterFactory,
                        extractorFactory: ExtractorFactory,
                        workerFactory: WorkerFactory
                       ) extends BaseController {
 
   def ingestToDB(product: String, epoch: String, variant: String,
-                 bulkSizeStr: String, loopDelayStr: String): Action[AnyContent] = Action {
+                 bulkSizeStr: Option[Int], loopDelayStr: Option[Int]): Action[AnyContent] = Action {
     request =>
-      val bulkSize = defaultTo(bulkSizeStr, "1")
-      val loopDelay = defaultTo(loopDelayStr, "0")
+      val bulkSize = bulkSizeStr getOrElse 1
+      val loopDelay = loopDelayStr getOrElse 0
 
-      require(isNumeric(bulkSize))
-      require(isNumeric(loopDelay))
-
-      val settings = WriterSettings(constrainRange(bulkSize.toInt, 1, 10000), constrainRange(loopDelay.toInt, 0, 100000))
+      val settings = WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
       handleIngest(request, product, epoch, variant, settings, dbWriterFactory)
   }
 
@@ -73,6 +72,12 @@ class IngestController(rootFolder: File,
     request =>
       val settings = WriterSettings(1, 0)
       handleIngest(request, product, epoch, variant, settings, fileWriterFactory)
+  }
+
+  def ingestToNull(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
+    request =>
+      val settings = WriterSettings(1, 0)
+      handleIngest(request, product, epoch, variant, settings, nullWriterFactory)
   }
 
   private[controllers] def handleIngest(request: Request[AnyContent],

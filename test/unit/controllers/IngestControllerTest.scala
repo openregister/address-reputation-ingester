@@ -66,7 +66,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val writerFactory = mock[OutputFileWriterFactory]
     val request = FakeRequest()
 
-    val ic = new IngestController(folder, logger, null, null, null, null)
+    val ic = new IngestController(folder, logger, null, null, null, null, null)
 
     intercept[IllegalArgumentException] {
       ic.handleIngest(request, product, epoch, variant, WriterSettings.default, writerFactory)
@@ -81,8 +81,10 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val ex = mock[Extractor]
     val dbf = mock[OutputDBWriterFactory]
     val fwf = mock[OutputFileWriterFactory]
+    val nwf = mock[OutputNullWriterFactory]
     val outputFileWriter = mock[OutputFileWriter]
     val outputDBWriter = mock[OutputDBWriter]
+    val outputNullWriter = mock[OutputNullWriter]
     val folder = new File(".")
     val testWorker = new WorkQueue(new StubLogger())
     val workerFactory = new WorkerFactory {
@@ -102,9 +104,9 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     """) {
     println("********** ICT1 **********")
     new context {
-      val ic = new IngestController(folder, logger, dbf, fwf, ef, workerFactory)
+      val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
 
-      val futureResponse = call(ic.ingestToDB("abp", "40", "full", "1", "0"), request)
+      val futureResponse = call(ic.ingestToDB("abp", "40", "full", Some(1), Some(0)), request)
 
       // push a second task, so ensuring the first will always get run
       testWorker.push("thinking", {
@@ -128,7 +130,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     """) {
     println("********** ICT2 **********")
     new context {
-      val ic = new IngestController(folder, logger, dbf, fwf, ef, workerFactory)
+      val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
 
       val futureResponse = call(ic.ingestToFile("abp", "40", "full"), request)
 

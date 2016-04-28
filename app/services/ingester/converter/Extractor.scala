@@ -19,17 +19,38 @@ package services.ingester.converter
 import java.io.File
 
 import services.ingester.converter.extractor.{FirstPass, Pass, SecondPass}
-import services.ingester.exec.{Continuer, WorkQueue, Worker}
+import services.ingester.exec.Continuer
 import services.ingester.writers.OutputWriter
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.logging.SimpleLogger
+import config.Divider
 
 object Extractor {
 
-  case class Blpu(postcode: String, logicalStatus: Char)
+  case class Blpu(postcode: String, logicalStatus: Char) {
+    def pack: String = s"$postcode|$logicalStatus"
+  }
+
+  object Blpu {
+    def unpack(pack: String): Blpu = {
+      val fields = Divider.qsplit(pack, '|')
+      val logicalStatus = if (fields(1).length > 0) fields(1).charAt(0) else '\u0000'
+      Blpu(fields.head, logicalStatus)
+    }
+  }
 
   case class Street(recordType: Char, streetDescription: String, localityName: String, townName: String) {
     def filteredDescription: String = if (recordType == '1') streetDescription else ""
+
+    def pack: String = s"$recordType|$streetDescription|$localityName|$townName"
+  }
+
+  object Street {
+    def unpack(pack: String): Street = {
+      val fields = Divider.qsplit(pack, '|')
+      val recordType = if (fields.head.length > 0) fields.head.charAt(0) else '\u0000'
+      Street(recordType, fields(1), fields(2), fields(3))
+    }
   }
 
 }

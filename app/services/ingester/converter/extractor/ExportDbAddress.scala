@@ -16,13 +16,11 @@
 
 package services.ingester.converter.extractor
 
-import services.ingester.converter.Extractor.{Blpu, Street}
+import services.ingester.converter.Extractor.Street
 import services.ingester.converter.{OSCleanup, OSDpa, OSLpi}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.osgb.Postcode._
 import uk.co.hmrc.address.services.Capitalisation._
-
-import scala.collection.mutable
 
 private[extractor] object ExportDbAddress {
 
@@ -36,8 +34,9 @@ private[extractor] object ExportDbAddress {
   }
 
 
-  def exportLPI(lpi: OSLpi, blpu: Blpu, streets: mutable.Map[Long, Street]): DbAddress = {
-    val street = streets.getOrElse(lpi.usrn, Street('X', "<SUnknown>", "<SUnknown>", "<TUnknown>"))
+  def exportLPI(lpi: OSLpi, postcode: String, streets: java.util.Map[java.lang.Long, String]): DbAddress = {
+    val streetString = if (streets.containsKey(lpi.usrn)) streets.get(lpi.usrn) else "X|<SUnknown>|<SUnknown>|<TUnknown>"
+    val street = Street.unpack(streetString)
 
     val line1 = (lpi.saoText + " " + lpi.secondaryNumberRange + " " + lpi.paoText).trim
 
@@ -51,6 +50,6 @@ private[extractor] object ExportDbAddress {
       normaliseAddressLine(OSCleanup.removeUninterestingStreets(line2)),
       normaliseAddressLine(OSCleanup.removeUninterestingStreets(line3)),
       normaliseAddressLine(street.townName),
-      normalisePostcode(blpu.postcode))
+      normalisePostcode(postcode))
   }
 }

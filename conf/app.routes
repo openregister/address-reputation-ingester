@@ -6,8 +6,9 @@ GET   /admin/metrics             com.kenshoo.play.metrics.MetricsController.metr
 HEAD  /ping                                         controllers.PingController.ping()
 GET   /ping                                         controllers.PingController.ping()
 
-GET   /ingest/to/db/:product/:epoch/:variant        controllers.IngestController.ingestToDB(product, epoch, variant, bulkSize, loopDelay)
+GET   /ingest/to/db/:product/:epoch/:variant        controllers.IngestController.ingestToDB(product, epoch, variant, bulkSize: Option[Int], loopDelay: Option[Int])
 GET   /ingest/to/file/:product/:epoch/:variant      controllers.IngestController.ingestToFile(product, epoch, variant)
+GET   /ingest/to/null/:product/:epoch/:variant      controllers.IngestController.ingestToNull(product, epoch, variant)
 
 GET   /switch/to/:product/:epoch/:index             controllers.SwitchoverController.switchTo(product, epoch, index)
 

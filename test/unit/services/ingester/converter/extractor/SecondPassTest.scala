@@ -19,6 +19,7 @@ package services.ingester.converter.extractor
 import java.util.concurrent.SynchronousQueue
 
 import org.junit.runner.RunWith
+import org.mockito.ArgumentCaptor
 import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
@@ -30,8 +31,6 @@ import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
 import uk.co.hmrc.logging.StubLogger
-
-import scala.collection.mutable
 
 @RunWith(classOf[JUnitRunner])
 class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
@@ -61,9 +60,8 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      val blpuMap = mutable.HashMap.empty[Long, Blpu] + (131041604L -> Blpu("AB12 3CD", '1'))
-      val streetsMap = mutable.HashMap.empty[Long, Street]
-      val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
+      val fd = ForwardData.simpleInstance()
+      fd.blpu.put(131041604L, Blpu("AB12 3CD", '1').pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -105,9 +103,8 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      val blpuMap = mutable.HashMap.empty[Long, Blpu] + (131041604L -> Blpu("AB12 3CD", '1'))
-      val streetsMap = mutable.HashMap.empty[Long, Street]
-      val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
+      val fd = ForwardData.simpleInstance()
+      fd.blpu.put(131041604L, Blpu("AB12 3CD", '1').pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -147,9 +144,9 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      val blpuMap = mutable.HashMap.empty[Long, Blpu] + (0L -> Blpu("AB12 3CD", '1'))
-      val streetsMap = mutable.HashMap.empty[Long, Street]
-      val fd = ForwardData(blpuMap, new mutable.HashSet(), streetsMap)
+      val fd = ForwardData.simpleInstance()
+      fd.blpu.put(0L, Blpu("AB12 3CD", '1').pack)
+
       val out = new OutputWriter {
         var count = 0
 
@@ -195,10 +192,11 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val osblpu = OSBlpu(csvBlpuLine)
     val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
 
-    val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "locality-name", "town-name"))
+    val streetsMap = new java.util.HashMap[java.lang.Long, String]()
+    streetsMap.put(48804683L, Street('A', "streetDescription", "locality-name", "town-name").pack)
 
     val lpi = OSLpi(csvLpiLine)
-    val out = ExportDbAddress.exportLPI(lpi, blpu, streetsMap)
+    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap)
     assert(out.id === "GB131041604")
     assert(out.lines === List("Maidenhill Stables", "Locality-Name"))
     assert(out.town === "Town-Name")
@@ -226,10 +224,11 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val osblpu = OSBlpu(csvBlpuLine)
     val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
 
-    val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "streetDescription", "locality name", "town-name"))
+    val streetsMap = new java.util.HashMap[java.lang.Long, String]()
+    streetsMap.put(48804683L, Street('A', "streetDescription", "locality name", "town-name").pack)
 
     val lpi = OSLpi(csvLpiLine)
-    val out = ExportDbAddress.exportLPI(lpi, blpu, streetsMap)
+    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap)
     assert(out.id === "GB131041604")
     assert(out.lines === List("1a-2b Maidenhill Stables", "Locality Name"))
     assert(out.town === "Town-Name")
@@ -258,14 +257,127 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val osblpu = OSBlpu(csvBlpuLine)
     val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
 
-    val streetsMap = mutable.HashMap[Long, Street](48804683L -> Street('A', "street From Description", "locality name", "town-name"))
+    val streetsMap = new java.util.HashMap[java.lang.Long, String]()
+    streetsMap.put(48804683L, Street('A', "street From Description", "locality name", "town-name").pack)
 
     val lpi = OSLpi(csvLpiLine)
-    val out = ExportDbAddress.exportLPI(lpi, blpu, streetsMap)
+    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap)
     assert(out.id === "GB131041604")
     assert(out.lines === List("Locality Name"))
     assert(out.town === "Town-Name")
     assert(out.postcode === "G77 6RT")
   }
 
+  test(
+    """Given an OS-LPI and a prior BLPU to match
+       And there is an LPI record for the same uprn
+       And there is a DPA record for the same uprn
+       Then the DPA record will be output
+    """) {
+    val osHeader =
+      """10,"NAG Hub - GeoPlace",9999,2016-02-19,0,2016-02-19,23:47:05,"2.0","F"
+        | """.stripMargin
+    val lpiData =
+      """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","MAIDENHILL From STABLES",48804683,"1","","","Y"
+        | """.stripMargin
+    val blpuData =
+      """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,50.7337174,-3.4940473,1,9063,"E",2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
+        | """.stripMargin
+    val dpaData =
+      """28,"I",109437,131041604,50308610,"","","","39D",,"","POLSLOE ROAD","","","EXETER","EX1 2DN","S","1R","","","","","","",2016-01-18,2012-04-23,,2016-02-10,2012-03-19
+        | """.stripMargin
+
+
+    val csvOSHeaderLine: Array[String] = CsvParser.split(osHeader).next()
+    val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
+    val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
+    val csvDpaLine: Array[String] = CsvParser.split(dpaData).next()
+
+    val osblpu = OSBlpu(csvBlpuLine)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
+
+    val boolTrue: Boolean = true
+    val boolFalse: Boolean = false
+
+    val fd = ForwardData.simpleInstance()
+    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus).pack)
+    fd.dpa.add(131041604L)
+
+    val continuer = mock[Continuer]
+
+    when(continuer.isBusy) thenReturn boolTrue
+
+    val secondPass = new SecondPass(fd, continuer)
+    val iterator = Iterator(csvOSHeaderLine, csvLpiLine, csvBlpuLine, csvDpaLine)
+
+    val outputWriter = mock[OutputWriter]
+
+    secondPass.processFile(iterator, outputWriter)
+
+    val argCap = ArgumentCaptor.forClass(classOf[DbAddress]);
+    verify(outputWriter).output(argCap.capture())
+
+    val dbAdd = argCap.getValue
+    assert(dbAdd.id === "GB131041604")
+    assert(dbAdd.town === "Exeter")
+    assert(dbAdd.postcode === "EX1 2DN")
+  }
+
+  test(
+    """Given an OS-LPI and a prior BLPU to match
+       And there is an LPI record for the same uprn
+       And there is a second LPI record for the same uprn
+       And there is are pre-existing street records,
+       And there is no DPA record for the same uprn
+       Then the first LPI record will be output
+    """) {
+    val osHeader =
+      """10,"NAG Hub - GeoPlace",9999,2016-02-19,0,2016-02-19,23:47:05,"2.0","F"
+        | """.stripMargin
+    val firstLpiData =
+      """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","LPI ONE",48804683,"1","","","Y"
+        | """.stripMargin
+    val secondLpiData =
+      """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","LPI TWO",58804683,"1","","","Y"
+        | """.stripMargin
+    val blpuData =
+      """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,50.7337174,-3.4940473,1,9063,"E",2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
+        | """.stripMargin
+
+
+    val csvOSHeaderLine: Array[String] = CsvParser.split(osHeader).next()
+    val csvFirstLpiLine: Array[String] = CsvParser.split(firstLpiData).next()
+    val csvSecondLpiLine: Array[String] = CsvParser.split(secondLpiData).next()
+    val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
+
+    val osblpu = OSBlpu(csvBlpuLine)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
+
+
+    val boolTrue: Boolean = true
+
+    val fd = ForwardData.simpleInstance()
+    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus).pack)
+    fd.streets.put(48804683L, Street('A', "lpi-one", "lpi-locality-one", "lpi-town-one").pack)
+    fd.streets.put(58804683L, Street('A', "lpi-two", "lpi-locality-two", "lpi-town-two").pack)
+
+    val continuer = mock[Continuer]
+
+    when(continuer.isBusy) thenReturn boolTrue
+
+    val secondPass = new SecondPass(fd, continuer)
+    val iterator = Iterator(csvOSHeaderLine, csvFirstLpiLine, csvSecondLpiLine, csvBlpuLine)
+
+    val outputWriter = mock[OutputWriter]
+
+    secondPass.processFile(iterator, outputWriter)
+
+    val argCap = ArgumentCaptor.forClass(classOf[DbAddress]);
+    verify(outputWriter).output(argCap.capture())
+
+    val dbAdd = argCap.getValue
+    assert(dbAdd.id === "GB131041604")
+    assert(dbAdd.town === "Lpi-Town-One")
+    assert(dbAdd.postcode === "G77 6RT")
+  }
 }

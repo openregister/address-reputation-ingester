@@ -21,7 +21,7 @@ import services.ingester.converter.{OSBlpu, _}
 import services.ingester.exec.Continuer
 import services.ingester.writers.OutputWriter
 
-import scala.collection.{mutable, _}
+import scala.collection._
 
 
 trait Pass {
@@ -33,16 +33,16 @@ trait Pass {
 
 class FirstPass(out: OutputWriter, continuer: Continuer) extends Pass {
 
-  private[extractor] val blpuTable: mutable.Map[Long, Blpu] = new mutable.HashMap()
-  private[extractor] val dpaTable: mutable.Set[Long] = new mutable.HashSet()
-  private[extractor] val streetTable: mutable.Map[Long, Street] = new mutable.HashMap()
-  //  private[extractor] val lpiLogicStatusTable: mutable.Map[Long, Byte] = new mutable.HashMap()
+  // The simple 'normal' collections
+  //  val forwardData = ForwardData.simpleInstance()
 
+  // The enhanced Chronicle collections
+  val forwardData = ForwardData.chronicleInMemory()
 
-  def firstPass: ForwardData = {
-    //TODO: move to passed in logger
-    ForwardData(blpuTable, dpaTable, streetTable)
-  }
+  //For development only (runs slower and leaves temp files behind)
+  //  val forwardData = ForwardData.chronicleWithFile()
+
+  def firstPass: ForwardData = forwardData
 
 
   def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter) {
@@ -80,35 +80,33 @@ class FirstPass(out: OutputWriter, continuer: Continuer) extends Pass {
 
   private def processBlpu(csvLine: Array[String]): Unit = {
     val blpu = OSBlpu(csvLine)
-    if (dpaTable.contains(blpu.uprn)) dpaTable.remove(blpu.uprn)
-    else blpuTable += blpu.uprn -> Blpu(blpu.postcode, blpu.logicalStatus)
+    forwardData.blpu.put(blpu.uprn, Blpu(blpu.postcode, blpu.logicalStatus).pack)
   }
 
   private def processDpa(csvLine: Array[String]): Unit = {
     val osDpa = OSDpa(csvLine)
-    out.output(ExportDbAddress.exportDPA(osDpa))
-    if (blpuTable.contains(osDpa.uprn)) blpuTable.remove(osDpa.uprn)
-    else dpaTable += osDpa.uprn
+    forwardData.dpa.add(osDpa.uprn)
   }
 
   private def processStreet(street: OSStreet): Unit = {
-    val existing = streetTable.get(street.usrn)
-    if (existing.isDefined)
-    // note that this overwrites the pre-existing entry
-      streetTable += street.usrn -> Street(street.recordType, existing.get.streetDescription, existing.get.localityName, existing.get.townName)
-    else
-      streetTable += street.usrn -> Street(street.recordType, "", "", "")
+    if (forwardData.streets.containsKey(street.usrn)) {
+      val existingStreetStr = forwardData.streets.get(street.usrn)
+      val existingStreet = Street.unpack(existingStreetStr)
+      forwardData.streets.put(street.usrn, Street(street.recordType, existingStreet.streetDescription, existingStreet.localityName, existingStreet.townName).pack)
+    } else {
+      forwardData.streets.put(street.usrn, Street(street.recordType, "", "", "").pack)
+    }
   }
 
   private def processStreetDescriptor(sd: OSStreetDescriptor) {
-    val existing = streetTable.get(sd.usrn)
-    if (existing.isDefined)
-    // note that this overwrites the pre-existing entry
-      streetTable += sd.usrn -> Street(existing.get.recordType, sd.description, sd.locality, sd.town)
-    else
-      streetTable += sd.usrn -> Street('A', sd.description, sd.locality, sd.town)
+    if (forwardData.streets.containsKey(sd.usrn)) {
+      val existingStreetStr = forwardData.streets.get(sd.usrn)
+      val existingStreet = Street.unpack(existingStreetStr)
+      forwardData.streets.put(sd.usrn, Street(existingStreet.recordType, sd.description, sd.locality, sd.town).pack)
+    } else {
+      forwardData.streets.put(sd.usrn, Street('A', sd.description, sd.locality, sd.town).pack)
+    }
   }
 
-  def sizeInfo: String =
-    s"First pass obtained ${blpuTable.size} BLPUs, ${dpaTable.size} DPA UPRNs, ${streetTable.size} streets"
+  def sizeInfo: String = s"First pass obtained ${forwardData.sizeInfo}"
 }
