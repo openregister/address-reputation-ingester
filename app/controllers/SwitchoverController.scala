@@ -48,13 +48,15 @@ class SwitchoverController(workerFactory: WorkerFactory,
   }
 
   private[controllers] def queueSwitch(model: StateModel) {
-    if (!model.hasFailed) {
-      workerFactory.worker.push(
-        Task(s"switching to ${model.collectionName.get}", {
-          continuer =>
+    workerFactory.worker.push(
+      Task(s"switching to ${model.collectionName.get}", {
+        continuer =>
+          if (!model.hasFailed) {
             switch(model)
-        }))
-    }
+          } else {
+            model.statusLogger.put("Switchover was skipped.")
+          }
+      }))
   }
 
   private[controllers] def switch(model: StateModel) {

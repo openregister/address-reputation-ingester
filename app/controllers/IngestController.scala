@@ -59,37 +59,26 @@ class IngestController(rootFolder: File,
                        workerFactory: WorkerFactory
                       ) extends BaseController {
 
-  def ingestToDB(product: String, epoch: Int, variant: String,
-                 bulkSizeStr: Option[Int], loopDelayStr: Option[Int]): Action[AnyContent] = Action {
+  def ingestTo(target: String, product: String, epoch: Int, variant: String,
+               bulkSizeStr: Option[Int], loopDelayStr: Option[Int]): Action[AnyContent] = Action {
     request =>
       val bulkSize = bulkSizeStr getOrElse 1
       val loopDelay = loopDelayStr getOrElse 0
+      require(isAlphaNumeric(target))
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
+
+      val writerFactory = target match {
+        case "db" => dbWriterFactory
+        case "file" => fileWriterFactory
+        case "null" => nullWriterFactory
+        case _ =>
+          throw new IllegalArgumentException(target + " no supported.")
+      }
 
       val settings = WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
       val model = new StateModel(product, epoch, variant, None, logger)
-      queueIngest(model, settings, dbWriterFactory)
-  }
-
-  def ingestToFile(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
-    request =>
-      require(isAlphaNumeric(product))
-      require(isAlphaNumeric(variant))
-
-      val settings = WriterSettings(1, 0)
-      val model = new StateModel(product, epoch, variant, None, logger)
-      queueIngest(model, settings, fileWriterFactory)
-  }
-
-  def ingestToNull(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
-    request =>
-      require(isAlphaNumeric(product))
-      require(isAlphaNumeric(variant))
-
-      val settings = WriterSettings(1, 0)
-      val model = new StateModel(product, epoch, variant, None, logger)
-      queueIngest(model, settings, nullWriterFactory)
+      queueIngest(model, settings, writerFactory)
   }
 
   private[controllers] def queueIngest(model: StateModel,
@@ -102,7 +91,11 @@ class IngestController(rootFolder: File,
     workerFactory.worker.push(
       Task(s"ingesting ${model.pathSegment}", {
         continuer =>
-          extractorFactory.extractor(continuer, model).extract(qualifiedDir, writer)
+          if (!model.hasFailed) {
+            extractorFactory.extractor(continuer, model).extract(qualifiedDir, writer)
+          } else {
+            model.statusLogger.put("Ingest was skipped.")
+          }
       },
         () => {
           logger.info("cleaning up extractor")

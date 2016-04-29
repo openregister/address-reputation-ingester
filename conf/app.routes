@@ -10,9 +10,7 @@ GET   /go/:product/:epoch/:variant                  controllers.GoController.go(
 
 GET   /fetch/:product/:epoch/:variant               controllers.FetchController.fetch(product, epoch: Int, variant)
 
-GET   /ingest/to/db/:product/:epoch/:variant        controllers.IngestController.ingestToDB(product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int])
-GET   /ingest/to/file/:product/:epoch/:variant      controllers.IngestController.ingestToFile(product, epoch: Int, variant)
-GET   /ingest/to/null/:product/:epoch/:variant      controllers.IngestController.ingestToNull(product, epoch: Int, variant)
+GET   /ingest/to/:target/:product/:epoch/:variant   controllers.IngestController.ingestTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int])
 
 GET   /switch/to/:product/:epoch/:index             controllers.SwitchoverController.switchTo(product, epoch: Int, index: Int)
 

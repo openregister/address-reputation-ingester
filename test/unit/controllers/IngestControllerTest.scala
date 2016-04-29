@@ -38,10 +38,18 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
   test(
     """
+       when an invalid target is passed to ingest
+       then an exception is thrown
+    """) {
+    parameterTest("$%", "abp", 40, "full")
+  }
+
+  test(
+    """
        when an invalid product is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("$%", 40, "full")
+    parameterTest("null", "$%", 40, "full")
   }
 
   test(
@@ -49,10 +57,10 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
        when an invalid variant is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("abi", 40, ")(")
+    parameterTest("null", "abi", 40, ")(")
   }
 
-  def parameterTest(product: String, epoch: Int, variant: String): Unit = {
+  def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
     val folder = new File(".")
     val logger = new StubLogger()
     val writerFactory = mock[OutputFileWriterFactory]
@@ -62,15 +70,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val ic = new IngestController(folder, logger, null, null, null, null, null)
 
     intercept[IllegalArgumentException] {
-      await(call(ic.ingestToDB(product, epoch, variant, None, None), request))
-    }
-
-    intercept[IllegalArgumentException] {
-      await(call(ic.ingestToFile(product, epoch, variant), request))
-    }
-
-    intercept[IllegalArgumentException] {
-      await(call(ic.ingestToNull(product, epoch, variant), request))
+      await(call(ic.ingestTo(target, product, epoch, variant, None, None), request))
     }
   }
 
@@ -105,7 +105,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     new context {
       val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
 
-      val futureResponse = call(ic.ingestToDB("abp", 40, "full", Some(1), Some(0)), request)
+      val futureResponse = call(ic.ingestTo("db", "abp", 40, "full", Some(1), Some(0)), request)
 
       val response = await(futureResponse)
       testWorker.awaitCompletion()
@@ -124,7 +124,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     new context {
       val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
 
-      val futureResponse = call(ic.ingestToFile("abp", 40, "full"), request)
+      val futureResponse = call(ic.ingestTo("file", "abp", 40, "full", None, None), request)
 
       val response = await(futureResponse)
       testWorker.awaitCompletion()
@@ -132,6 +132,32 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       verify(ex, times(1)).extract(any[File], anyObject())
       assert(response.header.status / 100 === 2)
+      testWorker.terminate()
+    }
+  }
+
+  test(
+    """
+      given a StateModel that is in a failed state
+      when the inner queueSwitch method is called
+      then no task is queued
+      and the state model stays in its current state
+    """) {
+    new context {
+      val writerFactory = mock[OutputFileWriterFactory]
+      val model = new StateModel("abp", 40, "full", None, logger)
+      val settings = WriterSettings(1, 0)
+      val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
+      model.statusLogger.fail("foo")
+
+      ic.queueIngest(model, settings, writerFactory)
+
+      testWorker.awaitCompletion()
+
+      verify(ex, never).extract(any[File], anyObject())
+      assert(logger.size === 3, logger.all.mkString("\n"))
+      assert(logger.infos.map(_.message) === List("Info:Ingest was skipped.", "Info:cleaning up extractor"))
+
       testWorker.terminate()
     }
   }

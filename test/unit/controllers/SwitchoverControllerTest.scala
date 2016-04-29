@@ -95,6 +95,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       val response = await(futureResponse)
       assert(response.header.status / 100 === 2)
       testWorker.awaitCompletion()
+      testWorker.terminate()
+
       assert(storedItem.get === "abp_40_9")
     }
   }
@@ -114,6 +116,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
       val response = await(futureResponse)
       testWorker.awaitCompletion()
+      testWorker.terminate()
+
       assert(storedItem.get === "the initial value")
       assert(logger.warns.size === 1)
       assert(logger.warns.head.message === "Warn:abp_40_9: collection was not found")
@@ -137,6 +141,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
       val response = await(futureResponse)
       testWorker.awaitCompletion()
+      testWorker.terminate()
+
       assert(storedItem.get === "the initial value")
       assert(logger.warns.size === 1)
       assert(logger.warns.head.message === "Warn:abp_40_9: collection is still being written")
@@ -147,7 +153,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     """
       given a StateModel that is in a failed state
       when the inner queueSwitch method is called
-      then the state model stays in its current state because no task is queued
+      then no task is queued
+      and the state model stays in its current state
     """) {
     new Context {
       when(db.collectionExists("abp_40_9")) thenReturn true
@@ -156,11 +163,17 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
       val sc = new SwitchoverController(workerFactory, logger, mongo, Map("abp" -> storedItem))
       val model = new StateModel("abp", 40, "full", Some(9), logger)
+      model.statusLogger.fail("foo")
 
       sc.queueSwitch(model)
 
+      testWorker.awaitCompletion()
+
       assert(storedItem.get === "the initial value")
-      assert(logger.isEmpty)
+      assert(logger.size === 3, logger.all.mkString("\n"))
+      assert(logger.infos.map(_.message) === List("Info:Switchover was skipped.", "Info:switching to abp_40_9 - completed after {}"))
+
+      testWorker.terminate()
     }
   }
 }
