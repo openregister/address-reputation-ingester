@@ -25,7 +25,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.exec.{Task, WorkQueue}
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.StubLogger
@@ -38,7 +38,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
   // scalastyle:off
   class context {
     val logger = new StubLogger
-    val model = new ABPModel("", 0 , "", None, logger)
+    val model = new StateModel("", 0 , "", None, logger)
     val worker = new WorkQueue(logger)
     val lock = new SynchronousQueue[Boolean]()
   }
@@ -73,7 +73,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
       var closed = false
 
       val out = new OutputWriter {
-        def init(model: ABPModel) {}
+        def init(model: StateModel) {}
 
         def output(a: DbAddress) {
           addressesProduced += a

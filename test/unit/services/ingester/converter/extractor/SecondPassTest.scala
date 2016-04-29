@@ -27,7 +27,7 @@ import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter.Extractor.{Blpu, Street}
 import services.ingester.converter._
 import services.ingester.exec.{Continuer, WorkQueue}
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
@@ -67,7 +67,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       val out = new OutputWriter {
         var count = 0
 
-        def init(model: ABPModel) {}
+        def init(model: StateModel) {}
 
         def output(out: DbAddress) {
           assert(out.id === "GB131041604")
@@ -112,7 +112,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       val out = new OutputWriter {
         var count = 0
 
-        def init(model: ABPModel) {}
+        def init(model: StateModel) {}
 
         def output(out: DbAddress) {
           count += 1
@@ -155,7 +155,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       val out = new OutputWriter {
         var count = 0
 
-        def init(model: ABPModel) {}
+        def init(model: StateModel) {}
 
         def output(out: DbAddress) {
           count += 1

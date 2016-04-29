@@ -23,7 +23,7 @@ import java.util.zip.GZIPOutputStream
 
 import config.ConfigHelper._
 import play.api.Play._
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 import uk.co.hmrc.address.osgb.DbAddress
 
 object OutputFileWriterHelper {
@@ -33,7 +33,7 @@ object OutputFileWriterHelper {
 }
 
 
-class OutputFileWriter(model: ABPModel) extends OutputWriter {
+class OutputFileWriter(model: StateModel) extends OutputWriter {
 
   val fileRoot = model.collectionBaseName
   val outputFile = new File(OutputFileWriterHelper.outputFolder, s"$fileRoot.txt.gz")
@@ -61,5 +61,5 @@ class OutputFileWriter(model: ABPModel) extends OutputWriter {
 
 
 class OutputFileWriterFactory extends OutputWriterFactory {
-  override def writer(model: ABPModel, settings: WriterSettings) = new OutputFileWriter(model)
+  override def writer(model: StateModel, settings: WriterSettings) = new OutputFileWriter(model)
 }

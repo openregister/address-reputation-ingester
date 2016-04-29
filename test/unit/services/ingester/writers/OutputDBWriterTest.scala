@@ -29,7 +29,7 @@ import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar.mock
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger
@@ -43,7 +43,7 @@ class OutputDBWriterTest extends FunSuite {
     val collection = mock[DBCollection]
     val bulk = mock[BulkWriteOperation]
     val logger = new StubLogger()
-    val model = new ABPModel("", 0, "", None, logger)
+    val model = new StateModel("", 0, "", None, logger)
 
     when(mongoDB.collectionExists(anyString())) thenReturn false
     when(mongoDB.getCollection(anyString())) thenReturn collection

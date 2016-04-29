@@ -21,7 +21,7 @@ import java.io._
 import com.typesafe.config.ConfigFactory
 import services.ingester.converter.Extractor
 import services.ingester.exec.{Task, WorkQueue}
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 import services.ingester.writers.OutputFileWriter
 import uk.co.hmrc.logging.Stdout
 
@@ -40,7 +40,7 @@ object Ingester extends App {
   val outputFolder = new File(conf.getString("app.files.outputFolder").replace("$HOME", home))
   outputFolder.mkdirs()
 
-  val model = new ABPModel("abp", 0, "output", None, Stdout)
+  val model = new StateModel("abp", 0, "output", None, Stdout)
   val outCSV = new OutputFileWriter(model)
   val worker = new WorkQueue(Stdout)
 

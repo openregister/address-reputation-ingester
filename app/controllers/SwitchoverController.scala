@@ -20,7 +20,7 @@ import config.ApplicationGlobal
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
 import services.ingester.exec.{Task, WorkerFactory}
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
@@ -42,20 +42,22 @@ class SwitchoverController(workerFactory: WorkerFactory,
 
   def switchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = Action {
     request =>
-      val model = new ABPModel(product, epoch, "", Some(index), logger)
+      val model = new StateModel(product, epoch, "", Some(index), logger)
       queueSwitch(model)
       Accepted
   }
 
-  private[controllers] def queueSwitch(model: ABPModel): Unit = {
-    workerFactory.worker.push(
-      Task(s"switching to ${model.collectionName.get}", {
-        continuer =>
-          switch(model)
-      }))
+  private[controllers] def queueSwitch(model: StateModel) {
+    if (!model.hasFailed) {
+      workerFactory.worker.push(
+        Task(s"switching to ${model.collectionName.get}", {
+          continuer =>
+            switch(model)
+        }))
+    }
   }
 
-  private[controllers] def switch(model: ABPModel) {
+  private[controllers] def switch(model: StateModel) {
 
     val addressBaseCollectionName: StoredMetadataItem = {
       val cn = metadata.get(model.product)

@@ -46,9 +46,12 @@ case class Task(description: String,
                 cleanup: () => Unit = () => {})
 
 
+// WorkQueue provids a process-oriented implementation that guarantees the correct interleaving of
+// tasks to be performed. These tasks are actioned one at a time. It is possible to abort the
+// flow of work cleanly.
+
 object WorkQueue {
-//  val singleton: WorkQueue = throw new RuntimeException()
-    val singleton: WorkQueue = new WorkQueue(new LoggerFacade(Logger.logger))
+    val singleton = new WorkQueue(new LoggerFacade(Logger.logger))
 }
 
 
@@ -84,7 +87,7 @@ class WorkQueue(logger: SimpleLogger) {
       Thread.sleep(5)
   }
 
-  // for application / test shutdown only
+  // For application / test shutdown only; there is no way back!
   def terminate() {
     worker.running = false
     abort()

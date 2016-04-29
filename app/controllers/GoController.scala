@@ -19,7 +19,7 @@ package controllers
 import controllers.SimpleValidator._
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 import services.ingester.writers.{OutputDBWriterFactory, WriterSettings}
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -34,12 +34,12 @@ class GoController(logger: SimpleLogger, dbWriterFactory: OutputDBWriterFactory)
       require(isAlphaNumeric(variant))
 
       val settings = WriterSettings(1, 0)
-      val model = new ABPModel(product, epoch, variant, None, logger)
+      val model = new StateModel(product, epoch, variant, None, logger)
       handleGo(model, settings)
       Accepted
   }
 
-  private[controllers] def handleGo(model: ABPModel, settings: WriterSettings) {
+  private[controllers] def handleGo(model: StateModel, settings: WriterSettings) {
     FetchController.queueFetch(model)
     IngestController.queueIngest(model, settings, dbWriterFactory)
     SwitchoverController.queueSwitch(model)

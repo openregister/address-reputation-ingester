@@ -18,10 +18,10 @@
 
 package services.ingester.writers
 
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 import uk.co.hmrc.address.osgb.DbAddress
 
-class OutputNullWriter(model: ABPModel) extends OutputWriter {
+class OutputNullWriter(model: StateModel) extends OutputWriter {
 
   private var count = 0
 
@@ -37,5 +37,5 @@ class OutputNullWriter(model: ABPModel) extends OutputWriter {
 
 
 class OutputNullWriterFactory extends OutputWriterFactory {
-  override def writer(model: ABPModel, settings: WriterSettings): OutputWriter = new OutputNullWriter(model)
+  override def writer(model: StateModel, settings: WriterSettings): OutputWriter = new OutputNullWriter(model)
 }

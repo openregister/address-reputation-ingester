@@ -18,7 +18,9 @@ package services.ingester.model
 
 import uk.co.hmrc.logging.SimpleLogger
 
-class ABPModel(
+// This mutable state object passes through the sequential steps. It is *never* shared
+// between threads, so synchronisation is not needed.
+class StateModel(
                 var product: String = "",
                 var epoch: Int = 0,
                 var variant: String = "",
@@ -27,6 +29,9 @@ class ABPModel(
               ) {
 
   val statusLogger = new StatusLogger(tee)
+
+  // Indicates whether an earlier stage failed.
+  def hasFailed: Boolean = statusLogger.hasFailed
 
   def pathSegment: String = s"${product}/${epoch}/${variant}"
 

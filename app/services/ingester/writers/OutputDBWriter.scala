@@ -26,7 +26,7 @@ import config.ApplicationGlobal
 import config.ConfigHelper._
 import play.api.Logger
 import play.api.Play._
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
@@ -39,7 +39,7 @@ class OutputDBWriterFactory extends OutputWriterFactory {
 
   private val cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
 
-  def writer(model: ABPModel, settings: WriterSettings): OutputWriter =
+  def writer(model: StateModel, settings: WriterSettings): OutputWriter =
     new OutputDBWriter(cleardownOnError, model,
       ApplicationGlobal.mongoConnection,
       settings,
@@ -48,7 +48,7 @@ class OutputDBWriterFactory extends OutputWriterFactory {
 
 
 class OutputDBWriter(cleardownOnError: Boolean,
-                     model: ABPModel,
+                     model: StateModel,
                      mongoDbConnection: CasbahMongoConnection,
                      settings: WriterSettings,
                      logger: SimpleLogger) extends OutputWriter {

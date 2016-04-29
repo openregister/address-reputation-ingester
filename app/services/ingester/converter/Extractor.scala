@@ -24,7 +24,7 @@ import services.ingester.writers.OutputWriter
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.logging.SimpleLogger
 import config.Divider
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 
 object Extractor {
 
@@ -57,7 +57,7 @@ object Extractor {
 }
 
 
-class Extractor(continuer: Continuer, model: ABPModel) {
+class Extractor(continuer: Continuer, model: StateModel) {
   private def listFiles(file: File): List[File] =
     if (!file.isDirectory) Nil
     else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
@@ -109,6 +109,6 @@ class Extractor(continuer: Continuer, model: ABPModel) {
 }
 
 class ExtractorFactory {
-  def extractor(continuer: Continuer, model: ABPModel): Extractor = new Extractor(continuer, model)
+  def extractor(continuer: Continuer, model: StateModel): Extractor = new Extractor(continuer, model)
 }
 

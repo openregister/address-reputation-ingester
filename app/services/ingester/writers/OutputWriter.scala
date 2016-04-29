@@ -18,7 +18,7 @@
 
 package services.ingester.writers
 
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 import uk.co.hmrc.address.osgb.DbAddress
 
 trait OutputWriter {
@@ -28,7 +28,7 @@ trait OutputWriter {
 }
 
 trait OutputWriterFactory {
-  def writer(model: ABPModel, settings: WriterSettings): OutputWriter
+  def writer(model: StateModel, settings: WriterSettings): OutputWriter
 }
 
 

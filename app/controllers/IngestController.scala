@@ -25,7 +25,7 @@ import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Result}
 import services.ingester.converter.ExtractorFactory
 import services.ingester.exec.{Task, WorkerFactory}
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 import services.ingester.writers._
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -68,7 +68,7 @@ class IngestController(rootFolder: File,
       require(isAlphaNumeric(variant))
 
       val settings = WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
-      val model = new ABPModel(product, epoch, variant, None, logger)
+      val model = new StateModel(product, epoch, variant, None, logger)
       queueIngest(model, settings, dbWriterFactory)
   }
 
@@ -78,7 +78,7 @@ class IngestController(rootFolder: File,
       require(isAlphaNumeric(variant))
 
       val settings = WriterSettings(1, 0)
-      val model = new ABPModel(product, epoch, variant, None, logger)
+      val model = new StateModel(product, epoch, variant, None, logger)
       queueIngest(model, settings, fileWriterFactory)
   }
 
@@ -88,11 +88,11 @@ class IngestController(rootFolder: File,
       require(isAlphaNumeric(variant))
 
       val settings = WriterSettings(1, 0)
-      val model = new ABPModel(product, epoch, variant, None, logger)
+      val model = new StateModel(product, epoch, variant, None, logger)
       queueIngest(model, settings, nullWriterFactory)
   }
 
-  private[controllers] def queueIngest(model: ABPModel,
+  private[controllers] def queueIngest(model: StateModel,
                                        settings: WriterSettings,
                                        writerFactory: OutputWriterFactory): Result = {
     val qualifiedDir = new File(rootFolder, model.pathSegment)

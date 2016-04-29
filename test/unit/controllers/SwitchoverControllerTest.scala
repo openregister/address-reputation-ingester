@@ -27,7 +27,7 @@ import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.ingester.exec.{WorkQueue, WorkerFactory}
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 import uk.co.hmrc.address.admin.StoredMetadataItem
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger
@@ -54,7 +54,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     val storedItem = new StoredMetadataStub()
     val mongo = mock[CasbahMongoConnection]
     val request = FakeRequest()
-    val model = new ABPModel(product, epoch, "", Some(index), logger)
+    val model = new StateModel(product, epoch, "", Some(index), logger)
 
     val sc = new SwitchoverController(workerFactory, logger, mongo, Map("abi" -> storedItem))
 
@@ -140,6 +140,27 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       assert(storedItem.get === "the initial value")
       assert(logger.warns.size === 1)
       assert(logger.warns.head.message === "Warn:abp_40_9: collection is still being written")
+    }
+  }
+
+  test(
+    """
+      given a StateModel that is in a failed state
+      when the inner queueSwitch method is called
+      then the state model stays in its current state because no task is queued
+    """) {
+    new Context {
+      when(db.collectionExists("abp_40_9")) thenReturn true
+      when(db.apply("abp_40_9")) thenReturn collection
+      when(collection.findOneByID("metadata")) thenReturn None
+
+      val sc = new SwitchoverController(workerFactory, logger, mongo, Map("abp" -> storedItem))
+      val model = new StateModel("abp", 40, "full", Some(9), logger)
+
+      sc.queueSwitch(model)
+
+      assert(storedItem.get === "the initial value")
+      assert(logger.isEmpty)
     }
   }
 }

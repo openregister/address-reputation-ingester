@@ -28,7 +28,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.ingester.converter.{Extractor, ExtractorFactory}
 import services.ingester.exec.{Continuer, WorkQueue, WorkerFactory}
-import services.ingester.model.ABPModel
+import services.ingester.model.StateModel
 import services.ingester.writers._
 import uk.co.hmrc.logging.StubLogger
 
@@ -57,7 +57,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val logger = new StubLogger()
     val writerFactory = mock[OutputFileWriterFactory]
     val request = FakeRequest()
-    val model = new ABPModel(product, epoch, variant, None, logger)
+    val model = new StateModel(product, epoch, variant, None, logger)
 
     val ic = new IngestController(folder, logger, null, null, null, null, null)
 
@@ -92,9 +92,9 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       override def worker = testWorker
     }
 
-    when(fwf.writer(any[ABPModel], any[WriterSettings])) thenReturn outputFileWriter
-    when(dbf.writer(any[ABPModel], any[WriterSettings])) thenReturn outputDBWriter
-    when(ef.extractor(any[Continuer], any[ABPModel])) thenReturn ex
+    when(fwf.writer(any[StateModel], any[WriterSettings])) thenReturn outputFileWriter
+    when(dbf.writer(any[StateModel], any[WriterSettings])) thenReturn outputDBWriter
+    when(ef.extractor(any[Continuer], any[StateModel])) thenReturn ex
   }
 
   test(
