@@ -37,7 +37,6 @@ class AdminControllerTest extends FunSuite {
       and no task is executing
       then a bad request response is returned
     """) {
-    println("********** ACT1 **********")
     val logger = new StubLogger
     val worker = new WorkQueue(logger)
     val ac = new AdminController(worker)
@@ -56,7 +55,6 @@ class AdminControllerTest extends FunSuite {
       and a task is executing
       then a successful response is returned
     """) {
-    println("********** ACT2 **********")
     val logger = new StubLogger
     val stuff = new SynchronousQueue[Boolean]()
     val worker = new WorkQueue(logger)
