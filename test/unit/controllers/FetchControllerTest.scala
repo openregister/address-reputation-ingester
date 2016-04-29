@@ -16,18 +16,18 @@
 
 package controllers
 
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Files, Path}
 
-import org.mockito.Mockito._
 import org.scalatest.FunSuite
-import org.specs2.mock.Mockito
+import org.scalatest.mock.MockitoSugar
+import org.mockito.Mockito._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.ingester.exec.{WorkQueue, WorkerFactory}
 import services.ingester.fetch.WebdavFetcher
 import uk.co.hmrc.logging.StubLogger
 
-class FetchControllerTest extends FunSuite with Mockito {
+class FetchControllerTest extends FunSuite with MockitoSugar {
 
   trait context {
     val testWorker = new WorkQueue(new StubLogger())
