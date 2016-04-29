@@ -79,7 +79,7 @@ class WorkQueue(logger: SimpleLogger) {
 
   // used only in special cases, so a simple spin-lock is fine
   def awaitCompletion() {
-    while (notIdle)
+    while (notIdle || !queue.isEmpty)
       Thread.sleep(5)
   }
 

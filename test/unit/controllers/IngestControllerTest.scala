@@ -82,7 +82,6 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val workerFactory = new WorkerFactory {
       override def worker = testWorker
     }
-    val lock = new SynchronousQueue[Boolean]()
 
     when(fwf.writer(anyString, any[WriterSettings])) thenReturn outputFileWriter
     when(dbf.writer(anyString, any[WriterSettings])) thenReturn outputDBWriter
@@ -99,12 +98,6 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
 
       val futureResponse = call(ic.ingestToDB("abp", 40, "full", Some(1), Some(0)), request)
-
-      // push a second task, so ensuring the first will always get run
-      testWorker.push("thinking", {
-        lock.put(true)
-      })
-      lock.take()
 
       val response = await(futureResponse)
       testWorker.awaitCompletion()
@@ -125,12 +118,6 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
 
       val futureResponse = call(ic.ingestToFile("abp", 40, "full"), request)
-
-      // push a second task, so ensuring the first will always get run
-      testWorker.push("thinking", {
-        lock.put(true)
-      })
-      lock.take()
 
       val response = await(futureResponse)
       testWorker.awaitCompletion()
