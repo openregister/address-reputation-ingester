@@ -97,7 +97,7 @@ class IngestController(rootFolder: File,
                                        writerFactory: OutputWriterFactory): Result = {
     val qualifiedDir = new File(rootFolder, model.pathSegment)
 
-    val writer = writerFactory.writer(model.collectionBaseName, settings)
+    val writer = writerFactory.writer(model, settings)
 
     workerFactory.worker.push(
       Task(s"ingesting ${model.pathSegment}", {

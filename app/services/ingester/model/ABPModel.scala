@@ -19,12 +19,12 @@ package services.ingester.model
 import uk.co.hmrc.logging.SimpleLogger
 
 class ABPModel(
-                     var product: String = "",
-                     var epoch: Int = 0,
-                     var variant: String = "",
-                     var index: Option[Int] = None,
-                     tee: SimpleLogger
-                   ) {
+                var product: String = "",
+                var epoch: Int = 0,
+                var variant: String = "",
+                var index: Option[Int] = None,
+                tee: SimpleLogger
+              ) {
 
   val statusLogger = new StatusLogger(tee)
 

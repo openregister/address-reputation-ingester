@@ -31,6 +31,7 @@ import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 
 
@@ -38,8 +39,8 @@ class OutputDBWriterFactory extends OutputWriterFactory {
 
   private val cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
 
-  def writer(collectionNameRoot: String, settings: WriterSettings): OutputWriter =
-    new OutputDBWriter(cleardownOnError, collectionNameRoot,
+  def writer(model: ABPModel, settings: WriterSettings): OutputWriter =
+    new OutputDBWriter(cleardownOnError, model,
       ApplicationGlobal.mongoConnection,
       settings,
       new LoggerFacade(Logger.logger))
@@ -47,31 +48,36 @@ class OutputDBWriterFactory extends OutputWriterFactory {
 
 
 class OutputDBWriter(cleardownOnError: Boolean,
-                     collectionNameRoot: String,
+                     model: ABPModel,
                      mongoDbConnection: CasbahMongoConnection,
                      settings: WriterSettings,
                      logger: SimpleLogger) extends OutputWriter {
 
-  private var index = 0
-  private val collectionName = {
-    var collectionName = s"${collectionNameRoot}_$index"
-    while (mongoDbConnection.getConfiguredDb.collectionExists(collectionName)) {
-      index += 1
-      collectionName = s"${collectionNameRoot}_$index"
-    }
-    collectionName
+  private val collectionNameRoot = model.collectionBaseName
+
+  private val db = mongoDbConnection.getConfiguredDb
+
+  private def collectionExists(i: Int) = {
+    val collectionName = s"${collectionNameRoot}_$i"
+    db.collectionExists(collectionName)
   }
 
-  private val collection: DBCollection = mongoDbConnection.getConfiguredDb.getCollection(collectionName)
+  @tailrec
+  private def nextFreeIndex(i: Int): Int = {
+    if (!collectionExists(i)) i
+    else nextFreeIndex(i + 1)
+  }
+
+  private val index = nextFreeIndex(0)
+  private val collectionName = s"${collectionNameRoot}_$index"
+  private val collection: DBCollection = db.getCollection(collectionName)
   private val bulk = new BatchedBulkOperation(settings, collection)
 
   private var count = 0
   private var errored = false
 
-  override def init(model: ABPModel) {
-    model.index = Some(index)
-    model.statusLogger.put(s"Writing new collection '$collectionName'")
-  }
+  model.index = Some(index)
+  model.statusLogger.put(s"Writing new collection '$collectionName'")
 
   override def output(address: DbAddress) {
     try {
@@ -79,7 +85,7 @@ class OutputDBWriter(cleardownOnError: Boolean,
       count += 1
     } catch {
       case me: MongoException =>
-        logger.info(s"Caught Mongo Exception processing bulk insertion $me")
+        model.statusLogger.fail(s"Caught Mongo Exception processing bulk insertion $me")
         errored = true
         throw me
     }
@@ -91,16 +97,16 @@ class OutputDBWriter(cleardownOnError: Boolean,
         completeTheCollection()
       } catch {
         case me: MongoException =>
-          logger.info(s"Caught MongoException committing final bulk insert and creating index $me")
+          model.statusLogger.fail(s"Caught MongoException committing final bulk insert and creating index $me")
           errored = true
       }
     }
 
     if (errored) {
-      logger.info("Error detected while loading data into MongoDB.")
+      model.statusLogger.put("Error detected while loading data into MongoDB.")
       if (cleardownOnError) collection.drop()
     } else {
-      logger.info(s"Loaded $count documents.")
+      model.statusLogger.put(s"Loaded $count documents.")
     }
     errored = false
   }

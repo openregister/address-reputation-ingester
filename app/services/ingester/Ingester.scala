@@ -40,10 +40,9 @@ object Ingester extends App {
   val outputFolder = new File(conf.getString("app.files.outputFolder").replace("$HOME", home))
   outputFolder.mkdirs()
 
-  val outCSV = new OutputFileWriter(new File(outputFolder, s"output.txt.gz"))
-
+  val model = new ABPModel("abp", 0, "output", None, Stdout)
+  val outCSV = new OutputFileWriter(model)
   val worker = new WorkQueue(Stdout)
-  val model = new ABPModel("", 0 , "", None, Stdout)
 
   worker.push(Task("ingesting", {
     continuer => new Extractor(continuer, model).extract(osRootFolder, outCSV)

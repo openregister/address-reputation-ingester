@@ -65,7 +65,6 @@ class Extractor(continuer: Continuer, model: ABPModel) {
 
   def extract(rootDir: File, out: OutputWriter) {
     model.statusLogger.put(s"Ingesting from $rootDir")
-    out.init(model)
     extract(listFiles(rootDir), out)
   }
 

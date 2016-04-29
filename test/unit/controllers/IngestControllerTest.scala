@@ -30,7 +30,7 @@ import services.ingester.converter.{Extractor, ExtractorFactory}
 import services.ingester.exec.{Continuer, WorkQueue, WorkerFactory}
 import services.ingester.model.ABPModel
 import services.ingester.writers._
-import uk.co.hmrc.logging.{SimpleLogger, StubLogger}
+import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
 class IngestControllerTest extends FunSuite with MockitoSugar {
@@ -92,8 +92,8 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       override def worker = testWorker
     }
 
-    when(fwf.writer(anyString, any[WriterSettings])) thenReturn outputFileWriter
-    when(dbf.writer(anyString, any[WriterSettings])) thenReturn outputDBWriter
+    when(fwf.writer(any[ABPModel], any[WriterSettings])) thenReturn outputFileWriter
+    when(dbf.writer(any[ABPModel], any[WriterSettings])) thenReturn outputDBWriter
     when(ef.extractor(any[Continuer], any[ABPModel])) thenReturn ex
   }
 

@@ -22,15 +22,13 @@ import services.ingester.model.ABPModel
 import uk.co.hmrc.address.osgb.DbAddress
 
 trait OutputWriter {
-  def init(model: ABPModel)
-
   def output(a: DbAddress)
 
   def close(): Unit
 }
 
 trait OutputWriterFactory {
-  def writer(root: String, settings: WriterSettings): OutputWriter
+  def writer(model: ABPModel, settings: WriterSettings): OutputWriter
 }
 
 

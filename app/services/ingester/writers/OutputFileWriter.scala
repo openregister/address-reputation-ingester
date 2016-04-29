@@ -33,7 +33,10 @@ object OutputFileWriterHelper {
 }
 
 
-class OutputFileWriter(outputFile: File) extends OutputWriter {
+class OutputFileWriter(model: ABPModel) extends OutputWriter {
+
+  val fileRoot = model.collectionBaseName
+  val outputFile = new File(OutputFileWriterHelper.outputFolder, s"$fileRoot.txt.gz")
 
   private val bufSize = 32 * 1024
   private val outfile = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile), bufSize))
@@ -47,17 +50,16 @@ class OutputFileWriter(outputFile: File) extends OutputWriter {
     count += 1
   }
 
-  override def close(): Unit = {
-    outCSV.flush()
+  override def close() {
+    if (outCSV.checkError()) {
+      model.statusLogger.fail(s"Failed whilst writing to $outputFile")
+    }
     outCSV.close()
     println(s"*** document count = $count")
   }
-
-  override def init(model: ABPModel) {}
 }
 
 
 class OutputFileWriterFactory extends OutputWriterFactory {
-  override def writer(fileRoot: String, settings: WriterSettings): OutputWriter =
-    new OutputFileWriter(new File(OutputFileWriterHelper.outputFolder, s"$fileRoot.txt.gz"))
+  override def writer(model: ABPModel, settings: WriterSettings) = new OutputFileWriter(model)
 }

@@ -21,7 +21,7 @@ package services.ingester.writers
 import services.ingester.model.ABPModel
 import uk.co.hmrc.address.osgb.DbAddress
 
-class OutputNullWriter extends OutputWriter {
+class OutputNullWriter(model: ABPModel) extends OutputWriter {
 
   private var count = 0
 
@@ -31,13 +31,11 @@ class OutputNullWriter extends OutputWriter {
 
   // scalastylye:off
   override def close(): Unit = {
-    println(s"*** document count = $count")
+    model.statusLogger.put(s"*** document count = $count")
   }
-
-  override def init(model: ABPModel) {}
 }
 
 
 class OutputNullWriterFactory extends OutputWriterFactory {
-  override def writer(root: String, settings: WriterSettings): OutputWriter = new OutputNullWriter()
+  override def writer(model: ABPModel, settings: WriterSettings): OutputWriter = new OutputNullWriter(model)
 }

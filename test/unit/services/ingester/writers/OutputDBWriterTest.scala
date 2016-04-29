@@ -29,6 +29,7 @@ import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar.mock
+import services.ingester.model.ABPModel
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger
@@ -36,29 +37,35 @@ import uk.co.hmrc.logging.StubLogger
 @RunWith(classOf[JUnitRunner])
 class OutputDBWriterTest extends FunSuite {
 
-  test(
-    """
-      when a DbAddress is passed to the writer
-      then an insert is invoked
-    """) {
+  class Context {
     val casbahMongoConnection = mock[CasbahMongoConnection]
     val mongoDB = mock[MongoDB]
     val collection = mock[DBCollection]
     val bulk = mock[BulkWriteOperation]
-    val someDBAddress = DbAddress("id1", List("1 Foo Rue"), "Puddletown", "FX1 1XF")
     val logger = new StubLogger()
+    val model = new ABPModel("", 0, "", None, logger)
 
     when(mongoDB.collectionExists(anyString())) thenReturn false
     when(mongoDB.getCollection(anyString())) thenReturn collection
     when(casbahMongoConnection.getConfiguredDb) thenReturn mongoDB
     when(collection.initializeUnorderedBulkOperation) thenReturn bulk
+  }
 
-    val outputDBWriter = new OutputDBWriter(false, "", casbahMongoConnection, WriterSettings(10, 0), logger)
+  test(
+    """
+      when a DbAddress is passed to the writer
+      then an insert is invoked
+    """) {
+    new Context {
+      val someDBAddress = DbAddress("id1", List("1 Foo Rue"), "Puddletown", "FX1 1XF")
 
-    outputDBWriter.output(someDBAddress)
+      val outputDBWriter = new OutputDBWriter(false, model, casbahMongoConnection, WriterSettings(10, 0), logger)
 
-    //verify(collection, times(1)).insert(any[DBObject])
-    verify(bulk, times(1)).insert(any[DBObject])
+      outputDBWriter.output(someDBAddress)
+
+      //verify(collection, times(1)).insert(any[DBObject])
+      verify(bulk, times(1)).insert(any[DBObject])
+    }
   }
 
 
@@ -69,23 +76,14 @@ class OutputDBWriterTest extends FunSuite {
       and an index is created for the postcode field
       and then close is called on the mongoDB instance
     """) {
-    val casbahMongoConnection = mock[CasbahMongoConnection]
-    val mongoDB = mock[MongoDB]
-    val collection = mock[DBCollection]
-    val bulk = mock[BulkWriteOperation]
-    val logger = new StubLogger()
+    new Context {
+      val outputDBWriter = new OutputDBWriter(false, model, casbahMongoConnection, WriterSettings(10, 0), logger)
 
-    when(mongoDB.collectionExists(anyString())) thenReturn false
-    when(mongoDB.getCollection(anyString())) thenReturn collection
-    when(casbahMongoConnection.getConfiguredDb) thenReturn mongoDB
-    when(collection.initializeUnorderedBulkOperation) thenReturn bulk
+      outputDBWriter.close()
 
-    val outputDBWriter = new OutputDBWriter(false, "", casbahMongoConnection, WriterSettings(10, 0), logger)
-
-    outputDBWriter.close()
-
-    verify(collection).insert(any[util.List[DBObject]])
-    verify(collection).createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
+      verify(collection).insert(any[util.List[DBObject]])
+      verify(collection).createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
+    }
   }
 
 }
