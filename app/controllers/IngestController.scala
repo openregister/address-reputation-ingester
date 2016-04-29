@@ -58,7 +58,7 @@ class IngestController(rootFolder: File,
                        workerFactory: WorkerFactory
                       ) extends BaseController {
 
-  def ingestToDB(product: String, epoch: String, variant: String,
+  def ingestToDB(product: String, epoch: Int, variant: String,
                  bulkSizeStr: Option[Int], loopDelayStr: Option[Int]): Action[AnyContent] = Action {
     request =>
       val bulkSize = bulkSizeStr getOrElse 1
@@ -68,29 +68,28 @@ class IngestController(rootFolder: File,
       handleIngest(request, product, epoch, variant, settings, dbWriterFactory)
   }
 
-  def ingestToFile(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
+  def ingestToFile(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     request =>
       val settings = WriterSettings(1, 0)
       handleIngest(request, product, epoch, variant, settings, fileWriterFactory)
   }
 
-  def ingestToNull(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
+  def ingestToNull(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     request =>
       val settings = WriterSettings(1, 0)
       handleIngest(request, product, epoch, variant, settings, nullWriterFactory)
   }
 
   private[controllers] def handleIngest(request: Request[AnyContent],
-                                        product: String, epoch: String, variant: String,
+                                        product: String, epoch: Int, variant: String,
                                         settings: WriterSettings,
                                         writerFactory: OutputWriterFactory): Result = {
     require(isAlphaNumeric(product))
-    require(isAlphaNumeric(epoch))
     require(isAlphaNumeric(variant))
 
     val qualifiedDir = new File(rootFolder, s"$product/$epoch/$variant")
 
-    val writer = writerFactory.writer(s"${product}_${epoch}", settings)
+    val writer = writerFactory.writer(s"${product}_$epoch", settings)
 
     val worker = workerFactory.worker
     val status = worker.push(

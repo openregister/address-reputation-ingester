@@ -1,4 +1,3 @@
-
 package controllers
 
 import java.nio.file.{Path, Paths}
@@ -28,7 +27,7 @@ class FetchController(taskFactory: WorkerFactory,
                       password: String,
                       outputDirectory: Path) extends BaseController {
 
-  def fetch(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
+  def fetch(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     val worker = taskFactory.worker
     val path = s"$product/$epoch/$variant"
     val started = worker.push(s"fetching $path", {

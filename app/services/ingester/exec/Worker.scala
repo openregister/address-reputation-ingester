@@ -125,8 +125,8 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
         doNextTask()
       }
     } finally {
-      executionState.set(TERMINATED)
       logger.info("Worker thread has terminated.")
+      executionState.set(TERMINATED)
     }
   }
 

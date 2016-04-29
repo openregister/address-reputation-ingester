@@ -53,7 +53,7 @@ class FetchControllerTest extends FunSuite with Mockito {
     println("********** FCT **********")
     new context {
       val product = "product"
-      val epoch = "epoch"
+      val epoch = 123
       val variant = "variant"
       val futureResponse = call(controller.fetch(product, epoch, variant), req)
 

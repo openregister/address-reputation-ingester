@@ -41,15 +41,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
        when an invalid product is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("$%", "40", "full")
-  }
-
-  test(
-    """
-       when an invalid epoch is passed to ingest
-       then an exception is thrown
-    """) {
-    parameterTest("abi", "(*", "full")
+    parameterTest("$%", 40, "full")
   }
 
   test(
@@ -57,10 +49,10 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
        when an invalid variant is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("abi", "40", ")(")
+    parameterTest("abi", 40, ")(")
   }
 
-  def parameterTest(product: String, epoch: String, variant: String): Unit = {
+  def parameterTest(product: String, epoch: Int, variant: String): Unit = {
     val folder = new File(".")
     val logger = new StubLogger()
     val writerFactory = mock[OutputFileWriterFactory]
@@ -106,7 +98,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     new context {
       val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
 
-      val futureResponse = call(ic.ingestToDB("abp", "40", "full", Some(1), Some(0)), request)
+      val futureResponse = call(ic.ingestToDB("abp", 40, "full", Some(1), Some(0)), request)
 
       // push a second task, so ensuring the first will always get run
       testWorker.push("thinking", {
@@ -132,7 +124,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     new context {
       val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
 
-      val futureResponse = call(ic.ingestToFile("abp", "40", "full"), request)
+      val futureResponse = call(ic.ingestToFile("abp", 40, "full"), request)
 
       // push a second task, so ensuring the first will always get run
       testWorker.push("thinking", {

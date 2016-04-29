@@ -34,14 +34,13 @@ object SwitchoverController extends SwitchoverController(
 
 class SwitchoverController(mongoDbConnection: CasbahMongoConnection, metadata: Map[String, StoredMetadataItem]) extends BaseController {
 
-  def switchTo(product: String, epoch: String, index: String): Action[AnyContent] = Action {
+  def switchTo(product: String, epoch: Int, index: String): Action[AnyContent] = Action {
     request =>
       handleSwitch(request, product, epoch, index)
   }
 
   private[controllers] def handleSwitch(request: Request[AnyContent],
-                                        product: String, epoch: String, index: String): Result = {
-    require(isAlphaNumeric(epoch))
+                                        product: String, epoch: Int, index: String): Result = {
     require(isNumeric(index))
 
     val addressBaseCollectionName: StoredMetadataItem = {

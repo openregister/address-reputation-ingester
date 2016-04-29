@@ -132,11 +132,12 @@ class WorkerTest extends FunSuite {
 
     var patience = 100
     while (!worker.hasTerminated && patience > 0) {
-      Thread.sleep(100)
+      Thread.sleep(10)
       patience -= 1
     }
+    Thread.sleep(100)
     assert(patience != 0, "Ran out of patience waiting for termination")
-    assert(logger.infos.size === 1, logger.all.mkString(",\n"))
+    assert(logger.infos.nonEmpty, logger.all.mkString(",\n"))
   }
 
   test(
@@ -161,10 +162,11 @@ class WorkerTest extends FunSuite {
 
     var patience = 100
     while (!worker.hasTerminated && patience > 0) {
-      Thread.sleep(100)
+      Thread.sleep(10)
       patience -= 1
     }
+    Thread.sleep(10)
     assert(patience != 0, "Ran out of patience waiting for termination")
-    assert(logger.infos.size === 2, logger.all.mkString(",\n"))
+    assert(logger.infos.nonEmpty, logger.all.mkString(",\n"))
   }
 }

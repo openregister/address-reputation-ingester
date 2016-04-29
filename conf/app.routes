@@ -6,16 +6,16 @@ GET   /admin/metrics             com.kenshoo.play.metrics.MetricsController.metr
 HEAD  /ping                                         controllers.PingController.ping()
 GET   /ping                                         controllers.PingController.ping()
 
-GET   /ingest/to/db/:product/:epoch/:variant        controllers.IngestController.ingestToDB(product, epoch, variant, bulkSize: Option[Int], loopDelay: Option[Int])
-GET   /ingest/to/file/:product/:epoch/:variant      controllers.IngestController.ingestToFile(product, epoch, variant)
-GET   /ingest/to/null/:product/:epoch/:variant      controllers.IngestController.ingestToNull(product, epoch, variant)
+GET   /ingest/to/db/:product/:epoch/:variant        controllers.IngestController.ingestToDB(product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int])
+GET   /ingest/to/file/:product/:epoch/:variant      controllers.IngestController.ingestToFile(product, epoch: Int, variant)
+GET   /ingest/to/null/:product/:epoch/:variant      controllers.IngestController.ingestToNull(product, epoch: Int, variant)
 
-GET   /switch/to/:product/:epoch/:index             controllers.SwitchoverController.switchTo(product, epoch, index)
+GET   /fetch/:product/:epoch/:variant               controllers.FetchController.fetch(product, epoch: Int, variant)
+
+GET   /switch/to/:product/:epoch/:index             controllers.SwitchoverController.switchTo(product, epoch: Int, index)
 
 GET   /admin/cancelTask                             controllers.AdminController.cancelTask()
 GET   /admin/status                                 controllers.AdminController.status()
-
-GET   /fetch/:product/:epoch/:variant               controllers.FetchController.fetch(product, epoch, variant)
 
 GET   /admin/cancelTask                             controllers.AdminController.cancelTask()
 GET   /admin/status                                 controllers.AdminController.status()

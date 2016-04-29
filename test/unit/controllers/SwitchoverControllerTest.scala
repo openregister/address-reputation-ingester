@@ -39,15 +39,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
        when an invalid product is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("$%", "40", "12")
-  }
-
-  test(
-    """
-       when an invalid epoch is passed to ingest
-       then an exception is thrown
-    """) {
-    parameterTest("abi", "(*", "12")
+    parameterTest("$%", 40, "12")
   }
 
   test(
@@ -55,10 +47,10 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
        when an invalid variant is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("abi", "40", "aa")
+    parameterTest("abi", 40, "aa")
   }
 
-  def parameterTest(product: String, epoch: String, index: String): Unit = {
+  def parameterTest(product: String, epoch: Int, index: String): Unit = {
     val logger = new StubLogger()
     val storedItem = new StoredMetadataStub()
     val mongo = mock[CasbahMongoConnection]
@@ -94,7 +86,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn Some(MongoDBObject())
 
       val sc = new SwitchoverController(mongo, Map("abp" -> storedItem))
-      val futureResponse = call(sc.switchTo("abp", "40", "9"), request)
+      val futureResponse = call(sc.switchTo("abp", 40, "9"), request)
 
       val response = await(futureResponse)
       assert(response.header.status / 100 === 2)
@@ -114,7 +106,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(db.collectionExists(anyString)) thenReturn false
 
       val sc = new SwitchoverController(mongo, Map("abp" -> storedItem))
-      val futureResponse = call(sc.switchTo("abp", "40", "9"), request)
+      val futureResponse = call(sc.switchTo("abp", 40, "9"), request)
 
       val response = await(futureResponse)
       assert(response.header.status === 400)
@@ -136,7 +128,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn None
 
       val sc = new SwitchoverController(mongo, Map("abp" -> storedItem))
-      val futureResponse = call(sc.switchTo("abp", "40", "9"), request)
+      val futureResponse = call(sc.switchTo("abp", 40, "9"), request)
 
       val response = await(futureResponse)
       assert(response.header.status === 409)
