@@ -69,7 +69,7 @@ class IngestController(rootFolder: File,
 
       val settings = WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
       val model = new ABPModel(product, epoch, variant, None, logger)
-      handleIngest(model, settings, dbWriterFactory)
+      queueIngest(model, settings, dbWriterFactory)
   }
 
   def ingestToFile(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
@@ -79,7 +79,7 @@ class IngestController(rootFolder: File,
 
       val settings = WriterSettings(1, 0)
       val model = new ABPModel(product, epoch, variant, None, logger)
-      handleIngest(model, settings, fileWriterFactory)
+      queueIngest(model, settings, fileWriterFactory)
   }
 
   def ingestToNull(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
@@ -89,12 +89,12 @@ class IngestController(rootFolder: File,
 
       val settings = WriterSettings(1, 0)
       val model = new ABPModel(product, epoch, variant, None, logger)
-      handleIngest(model, settings, nullWriterFactory)
+      queueIngest(model, settings, nullWriterFactory)
   }
 
-  private[controllers] def handleIngest(model: ABPModel,
-                                        settings: WriterSettings,
-                                        writerFactory: OutputWriterFactory): Result = {
+  private[controllers] def queueIngest(model: ABPModel,
+                                       settings: WriterSettings,
+                                       writerFactory: OutputWriterFactory): Result = {
     val qualifiedDir = new File(rootFolder, model.pathSegment)
 
     val writer = writerFactory.writer(model.collectionBaseName, settings)
@@ -102,7 +102,7 @@ class IngestController(rootFolder: File,
     workerFactory.worker.push(
       Task(s"ingesting ${model.pathSegment}", {
         continuer =>
-          extractorFactory.extractor(continuer, logger).extract(qualifiedDir, writer)
+          extractorFactory.extractor(continuer, model).extract(qualifiedDir, writer)
       },
         () => {
           logger.info("cleaning up extractor")

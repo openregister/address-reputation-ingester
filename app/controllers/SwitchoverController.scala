@@ -43,11 +43,11 @@ class SwitchoverController(workerFactory: WorkerFactory,
   def switchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = Action {
     request =>
       val model = new ABPModel(product, epoch, "", Some(index), logger)
-      handleSwitch(model)
+      queueSwitch(model)
       Accepted
   }
 
-  private[controllers] def handleSwitch(model: ABPModel): Unit = {
+  private[controllers] def queueSwitch(model: ABPModel): Unit = {
     workerFactory.worker.push(
       Task(s"switching to ${model.collectionName.get}", {
         continuer =>
@@ -77,7 +77,7 @@ class SwitchoverController(workerFactory: WorkerFactory,
     }
     else {
       addressBaseCollectionName.set(newName)
-      model.statusLogger.put("Switched over to $newName")
+      model.statusLogger.put(s"Switched over to $newName")
     }
   }
 

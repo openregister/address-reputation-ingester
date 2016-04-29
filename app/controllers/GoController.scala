@@ -17,28 +17,31 @@
 package controllers
 
 import controllers.SimpleValidator._
-import play.api.mvc.{Action, AnyContent, Request}
-import services.ingester.writers.WriterSettings
+import play.api.Logger
+import play.api.mvc.{Action, AnyContent}
+import services.ingester.model.ABPModel
+import services.ingester.writers.{OutputDBWriterFactory, WriterSettings}
+import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-object GoController extends GoController
+object GoController extends GoController(new LoggerFacade(Logger.logger), new OutputDBWriterFactory)
 
-class GoController extends BaseController {
+class GoController(logger: SimpleLogger, dbWriterFactory: OutputDBWriterFactory) extends BaseController {
 
-  def go(product: String, epoch: String, variant: String): Action[AnyContent] = Action {
+  def go(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     request =>
+      require(isAlphaNumeric(product))
+      require(isAlphaNumeric(variant))
+
       val settings = WriterSettings(1, 0)
-      handleGo(request, product, epoch, variant, settings)
-      Ok("")
+      val model = new ABPModel(product, epoch, variant, None, logger)
+      handleGo(model, settings)
+      Accepted
   }
 
-  private[controllers] def handleGo(request: Request[AnyContent],
-                                    product: String, epoch: String, variant: String,
-                                    settings: WriterSettings
-                                   ) = {
-    require(isAlphaNumeric(product))
-    require(isAlphaNumeric(epoch))
-    require(isAlphaNumeric(variant))
-    ""
+  private[controllers] def handleGo(model: ABPModel, settings: WriterSettings) {
+    FetchController.queueFetch(model)
+    IngestController.queueIngest(model, settings, dbWriterFactory)
+    SwitchoverController.queueSwitch(model)
   }
 }

@@ -23,6 +23,7 @@ import java.util.zip.GZIPOutputStream
 
 import config.ConfigHelper._
 import play.api.Play._
+import services.ingester.model.ABPModel
 import uk.co.hmrc.address.osgb.DbAddress
 
 object OutputFileWriterHelper {
@@ -51,6 +52,8 @@ class OutputFileWriter(outputFile: File) extends OutputWriter {
     outCSV.close()
     println(s"*** document count = $count")
   }
+
+  override def init(model: ABPModel) {}
 }
 
 

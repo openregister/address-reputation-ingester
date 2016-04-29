@@ -63,11 +63,11 @@ class FetchController(workerFactory: WorkerFactory,
   def fetch(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     request =>
       val model = new ABPModel(product, epoch, variant, None, logger)
-      val status = handleFetch(model)
+      val status = queueFetch(model)
       Accepted(status.toString)
   }
 
-  private[controllers] def handleFetch(model: ABPModel): Boolean = {
+  private[controllers] def queueFetch(model: ABPModel): Boolean = {
     val worker = workerFactory.worker
 
     worker.push(s"fetching ${model.pathSegment}", {

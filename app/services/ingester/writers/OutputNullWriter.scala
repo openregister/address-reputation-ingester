@@ -18,6 +18,7 @@
 
 package services.ingester.writers
 
+import services.ingester.model.ABPModel
 import uk.co.hmrc.address.osgb.DbAddress
 
 class OutputNullWriter extends OutputWriter {
@@ -32,6 +33,8 @@ class OutputNullWriter extends OutputWriter {
   override def close(): Unit = {
     println(s"*** document count = $count")
   }
+
+  override def init(model: ABPModel) {}
 }
 
 

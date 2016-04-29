@@ -94,7 +94,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
     when(fwf.writer(anyString, any[WriterSettings])) thenReturn outputFileWriter
     when(dbf.writer(anyString, any[WriterSettings])) thenReturn outputDBWriter
-    when(ef.extractor(any[Continuer], any[SimpleLogger])) thenReturn ex
+    when(ef.extractor(any[Continuer], any[ABPModel])) thenReturn ex
   }
 
   test(

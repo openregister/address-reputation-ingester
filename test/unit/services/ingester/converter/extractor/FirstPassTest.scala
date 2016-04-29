@@ -25,6 +25,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import services.ingester.converter._
 import services.ingester.exec.{Continuer, WorkQueue}
+import services.ingester.model.ABPModel
 import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
@@ -192,6 +193,8 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val out = new OutputWriter {
+        def init(model: ABPModel) {}
+
         def output(out: DbAddress) {
           assert(out.id === "GB9051119283")
           assert(out.lines === List("1 Upper Kennerty Mill Cottages"))

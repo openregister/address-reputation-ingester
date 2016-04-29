@@ -26,6 +26,7 @@ import config.ApplicationGlobal
 import config.ConfigHelper._
 import play.api.Logger
 import play.api.Play._
+import services.ingester.model.ABPModel
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
@@ -51,14 +52,13 @@ class OutputDBWriter(cleardownOnError: Boolean,
                      settings: WriterSettings,
                      logger: SimpleLogger) extends OutputWriter {
 
+  private var index = 0
   private val collectionName = {
-    var iteration = 0
-    var collectionName = s"${collectionNameRoot}_$iteration"
+    var collectionName = s"${collectionNameRoot}_$index"
     while (mongoDbConnection.getConfiguredDb.collectionExists(collectionName)) {
-      iteration += 1
-      collectionName = s"${collectionNameRoot}_$iteration"
+      index += 1
+      collectionName = s"${collectionNameRoot}_$index"
     }
-    logger.info(s"Writing new collection '$collectionName'")
     collectionName
   }
 
@@ -67,6 +67,11 @@ class OutputDBWriter(cleardownOnError: Boolean,
 
   private var count = 0
   private var errored = false
+
+  override def init(model: ABPModel) {
+    model.index = Some(index)
+    model.statusLogger.put(s"Writing new collection '$collectionName'")
+  }
 
   override def output(address: DbAddress) {
     try {

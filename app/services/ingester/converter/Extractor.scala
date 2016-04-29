@@ -24,6 +24,7 @@ import services.ingester.writers.OutputWriter
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.logging.SimpleLogger
 import config.Divider
+import services.ingester.model.ABPModel
 
 object Extractor {
 
@@ -56,14 +57,15 @@ object Extractor {
 }
 
 
-class Extractor(continuer: Continuer, logger: SimpleLogger) {
+class Extractor(continuer: Continuer, model: ABPModel) {
   private def listFiles(file: File): List[File] =
     if (!file.isDirectory) Nil
     else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
 
 
   def extract(rootDir: File, out: OutputWriter) {
-    logger.info(s"Ingesting from $rootDir")
+    model.statusLogger.put(s"Ingesting from $rootDir")
+    out.init(model)
     extract(listFiles(rootDir), out)
   }
 
@@ -71,15 +73,17 @@ class Extractor(continuer: Continuer, logger: SimpleLogger) {
     val dt = new DiagnosticTimer
     val fp = new FirstPass(out, continuer)
 
-    logger.info(s"Starting first pass through ${files.size} files")
+    model.statusLogger.put(s"Starting first pass through ${files.size} files")
     pass(files, out, fp)
     val fd = fp.firstPass
-    logger.info(s"First pass complete after {}", dt)
+    model.statusLogger.put(s"First pass complete after {}", dt)
 
-    logger.info(s"Starting second pass through ${files.size} files")
+    model.statusLogger.put(s"Starting second pass through ${files.size} files")
     val sp = new SecondPass(fd, continuer)
     pass(files, out, sp)
-    logger.info(s"Finished after {}", dt)
+    model.statusLogger.put(s"Finished after {}", dt)
+
+
   }
 
   private def pass(files: Seq[File], out: OutputWriter, thisPass: Pass) {
@@ -93,19 +97,19 @@ class Extractor(continuer: Continuer, logger: SimpleLogger) {
         while (zip.hasNext && continuer.isBusy) {
           val next = zip.next
           val name = next.zipEntry.getName
-          logger.info(s"Reading zip entry $name...")
+          model.statusLogger.put(s"Reading zip entry $name...")
           thisPass.processFile(next, out)
         }
       } finally {
         zip.close()
-        logger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}", file.getName, dt)
+        model.statusLogger.put(s"Reading from ${zip.nFiles} CSV files in {} took {}", file.getName, dt)
       }
-      logger.info(thisPass.sizeInfo)
+      model.statusLogger.put(thisPass.sizeInfo)
     }
   }
 }
 
 class ExtractorFactory {
-  def extractor(continuer: Continuer, logger: SimpleLogger): Extractor = new Extractor(continuer, logger)
+  def extractor(continuer: Continuer, model: ABPModel): Extractor = new Extractor(continuer, model)
 }
 
