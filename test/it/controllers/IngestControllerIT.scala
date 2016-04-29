@@ -44,7 +44,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
       waitUntil("/admin/status", "idle")
 
       val step2 = get("/ingest/to/file/abp/123456/test")
-      step2.status mustBe OK
+      step2.status mustBe ACCEPTED
 
       verifyOK("/admin/status", "busy ingesting abp/123456/test")
 
@@ -72,7 +72,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
       waitUntil("/admin/status", "idle")
 
       val step2 = get("/ingest/to/db/abp/123456/test?bulkSize=5&loopDelay=0")
-      step2.status mustBe OK
+      step2.status mustBe ACCEPTED
 
       verifyOK("/admin/status", "busy ingesting abp/123456/test")
 

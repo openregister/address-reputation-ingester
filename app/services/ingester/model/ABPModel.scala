@@ -18,7 +18,7 @@ package services.ingester.model
 
 import uk.co.hmrc.logging.SimpleLogger
 
-class ABPCollection(
+class ABPModel(
                      var product: String = "",
                      var epoch: Int = 0,
                      var variant: String = "",

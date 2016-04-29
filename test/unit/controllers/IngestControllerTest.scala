@@ -17,7 +17,6 @@
 package controllers
 
 import java.io.File
-import java.util.concurrent.SynchronousQueue
 
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
@@ -29,6 +28,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.ingester.converter.{Extractor, ExtractorFactory}
 import services.ingester.exec.{Continuer, WorkQueue, WorkerFactory}
+import services.ingester.model.ABPModel
 import services.ingester.writers._
 import uk.co.hmrc.logging.{SimpleLogger, StubLogger}
 
@@ -57,11 +57,20 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val logger = new StubLogger()
     val writerFactory = mock[OutputFileWriterFactory]
     val request = FakeRequest()
+    val model = new ABPModel(product, epoch, variant, None, logger)
 
     val ic = new IngestController(folder, logger, null, null, null, null, null)
 
     intercept[IllegalArgumentException] {
-      ic.handleIngest(request, product, epoch, variant, WriterSettings.default, writerFactory)
+      await(call(ic.ingestToDB(product, epoch, variant, None, None), request))
+    }
+
+    intercept[IllegalArgumentException] {
+      await(call(ic.ingestToFile(product, epoch, variant), request))
+    }
+
+    intercept[IllegalArgumentException] {
+      await(call(ic.ingestToNull(product, epoch, variant), request))
     }
   }
 
@@ -93,7 +102,6 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       when valid parameters are passed to ingestToDB
       then a successful response is returned
     """) {
-    println("********** ICT1 **********")
     new context {
       val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
 
@@ -113,7 +121,6 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       when valid parameters are passed to ingestToFile
       then a successful response is returned
     """) {
-    println("********** ICT2 **********")
     new context {
       val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
 

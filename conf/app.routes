@@ -12,7 +12,7 @@ GET   /ingest/to/null/:product/:epoch/:variant      controllers.IngestController
 
 GET   /fetch/:product/:epoch/:variant               controllers.FetchController.fetch(product, epoch: Int, variant)
 
-GET   /switch/to/:product/:epoch/:index             controllers.SwitchoverController.switchTo(product, epoch: Int, index)
+GET   /switch/to/:product/:epoch/:index             controllers.SwitchoverController.switchTo(product, epoch: Int, index: Int)
 
 GET   /admin/cancelTask                             controllers.AdminController.cancelTask()
 GET   /admin/status                                 controllers.AdminController.status()

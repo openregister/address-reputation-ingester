@@ -36,7 +36,6 @@ class WorkerTest extends FunSuite {
       then the first should execute to completion
       and then the second should execute to completion
     """) {
-    println("********** WT1 **********")
     val logger = new StubLogger()
     val worker = new WorkQueue(logger)
     val lock1 = new SynchronousQueue[Boolean]()
@@ -77,7 +76,6 @@ class WorkerTest extends FunSuite {
       when a request to execute something is issued to the worker
       then two log statements are issued
     """) {
-    println("********** WT2 **********")
     val logger = new StubLogger()
     val worker = new WorkQueue(logger)
     val lock = new SynchronousQueue[Boolean]()
@@ -101,7 +99,6 @@ class WorkerTest extends FunSuite {
       and an exception occurs in the worker
       then return true and log one statement
     """) {
-    println("********** WT3 **********")
     val logger = new StubLogger()
     val worker = new WorkQueue(logger)
     val lock = new SynchronousQueue[Boolean]()
@@ -124,7 +121,6 @@ class WorkerTest extends FunSuite {
       when the worker thread is terminated
       then its thread terminates
     """) {
-    println("********** WT4 **********")
     val logger = new StubLogger()
     val worker = new WorkQueue(logger)
 
@@ -146,7 +142,6 @@ class WorkerTest extends FunSuite {
       when the worker thread is terminated
       then its thread terminates
     """) {
-    println("********** WT5 **********")
     val logger = new StubLogger()
     val worker = new WorkQueue(logger)
     val lock = new SynchronousQueue[Boolean]()

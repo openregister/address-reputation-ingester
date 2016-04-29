@@ -16,16 +16,18 @@
 
 package controllers
 
-import com.mongodb.casbah.{MongoCollection, MongoDB}
 import com.mongodb.casbah.commons.MongoDBObject
+import com.mongodb.casbah.{MongoCollection, MongoDB}
 import org.junit.runner.RunWith
-import org.mockito.Mockito._
 import org.mockito.Matchers._
+import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import services.ingester.exec.{WorkQueue, WorkerFactory}
+import services.ingester.model.ABPModel
 import uk.co.hmrc.address.admin.StoredMetadataItem
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger
@@ -39,31 +41,34 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
        when an invalid product is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("$%", 40, "12")
+    parameterTest("$%", 40, 12)
   }
 
-  test(
-    """
-       when an invalid variant is passed to ingest
-       then an exception is thrown
-    """) {
-    parameterTest("abi", 40, "aa")
-  }
-
-  def parameterTest(product: String, epoch: Int, index: String): Unit = {
+  def parameterTest(product: String, epoch: Int, index: Int): Unit = {
     val logger = new StubLogger()
+    val testWorker = new WorkQueue(logger)
+    val workerFactory = new WorkerFactory {
+      override def worker = testWorker
+    }
+
     val storedItem = new StoredMetadataStub()
     val mongo = mock[CasbahMongoConnection]
     val request = FakeRequest()
+    val model = new ABPModel(product, epoch, "", Some(index), logger)
 
-    val sc = new SwitchoverController(mongo, Map("abi" -> storedItem))
+    val sc = new SwitchoverController(workerFactory, logger, mongo, Map("abi" -> storedItem))
 
     intercept[IllegalArgumentException] {
-      sc.handleSwitch(request, product, epoch, index)
+      sc.switch(model)
     }
   }
 
-  class context {
+  class Context {
+    val logger = new StubLogger()
+    val testWorker = new WorkQueue(logger)
+    val workerFactory = new WorkerFactory {
+      override def worker = testWorker
+    }
     val storedItem = new StoredMetadataStub()
     val request = FakeRequest()
     val mongo = mock[CasbahMongoConnection]
@@ -79,17 +84,17 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       then a successful response is returned
       and the stored metadata item for the product in question is set to the new collection name
     """) {
-    println("********** SCT1 **********")
-    new context {
+    new Context {
       when(db.collectionExists("abp_40_9")) thenReturn true
       when(db.apply("abp_40_9")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn Some(MongoDBObject())
 
-      val sc = new SwitchoverController(mongo, Map("abp" -> storedItem))
-      val futureResponse = call(sc.switchTo("abp", 40, "9"), request)
+      val sc = new SwitchoverController(workerFactory, logger, mongo, Map("abp" -> storedItem))
+      val futureResponse = call(sc.switchTo("abp", 40, 9), request)
 
       val response = await(futureResponse)
       assert(response.header.status / 100 === 2)
+      testWorker.awaitCompletion()
       assert(storedItem.get === "abp_40_9")
     }
   }
@@ -98,19 +103,20 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     """
       given that the intended collection does not exist
       when valid parameters are passed to ingest
-      then a bad-request response is returned
+      then the switch-over fails due to missing the collection
       and the stored metadata item for the product in question is left unchanged
     """) {
-    println("********** SCT2 **********")
-    new context {
+    new Context {
       when(db.collectionExists(anyString)) thenReturn false
 
-      val sc = new SwitchoverController(mongo, Map("abp" -> storedItem))
-      val futureResponse = call(sc.switchTo("abp", 40, "9"), request)
+      val sc = new SwitchoverController(workerFactory, logger, mongo, Map("abp" -> storedItem))
+      val futureResponse = call(sc.switchTo("abp", 40, 9), request)
 
       val response = await(futureResponse)
-      assert(response.header.status === 400)
+      testWorker.awaitCompletion()
       assert(storedItem.get === "the initial value")
+      assert(logger.warns.size === 1)
+      assert(logger.warns.head.message === "Warn:abp_40_9: collection was not found")
     }
   }
 
@@ -118,21 +124,22 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     """
       given that the intended collection exists but does not contain the metadata containedAt
       when valid parameters are passed to ingest
-      then a conflict response is returned
+      then the switch-over fails due to conflict
       and the stored metadata item for the product in question is left unchanged
     """) {
-    println("********** SCT3 **********")
-    new context {
+    new Context {
       when(db.collectionExists("abp_40_9")) thenReturn true
       when(db.apply("abp_40_9")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn None
 
-      val sc = new SwitchoverController(mongo, Map("abp" -> storedItem))
-      val futureResponse = call(sc.switchTo("abp", 40, "9"), request)
+      val sc = new SwitchoverController(workerFactory, logger, mongo, Map("abp" -> storedItem))
+      val futureResponse = call(sc.switchTo("abp", 40, 9), request)
 
       val response = await(futureResponse)
-      assert(response.header.status === 409)
+      testWorker.awaitCompletion()
       assert(storedItem.get === "the initial value")
+      assert(logger.warns.size === 1)
+      assert(logger.warns.head.message === "Warn:abp_40_9: collection is still being written")
     }
   }
 }

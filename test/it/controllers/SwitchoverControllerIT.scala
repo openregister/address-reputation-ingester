@@ -30,13 +30,13 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
   "switch-over resource error journeys" must {
     """
        * attempt to switch to non-existent collection
-       * receive BadRequest response
     """ in {
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
 
-      verify("/switch/to/abp/39/3", BAD_REQUEST, "abp_39_3: collection was not found.")
+      assert(get("/switch/to/abp/39/3").status === ACCEPTED)
+      waitUntil("/admin/status", "idle")
 
       val collectionName = admin.gbAddressBaseCollectionName.get
       assert(collectionName === initialCollectionName)
@@ -53,7 +53,8 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
       mongo.getConfiguredDb("abp_39_4").insert(MongoDBObject("_id" -> "foo", "bar" -> true))
 
-      verify("/switch/to/abp/39/4", CONFLICT, "abp_39_4: collection is still being written.")
+      assert(get("/switch/to/abp/39/4").status === ACCEPTED)
+      waitUntil("/admin/status", "idle")
 
       val collectionName = admin.gbAddressBaseCollectionName.get
       assert(collectionName === initialCollectionName)
@@ -72,7 +73,8 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
       mongo.getConfiguredDb("abp_39_5").insert(MongoDBObject("_id" -> "metadata", "completedAt" -> "some date"))
 
-      verify("/switch/to/abp/39/5", OK, "Switched over to abp/39 index 5.")
+      assert(get("/switch/to/abp/39/5").status === ACCEPTED)
+      waitUntil("/admin/status", "idle")
 
       val collectionName = admin.gbAddressBaseCollectionName.get
       assert(collectionName === "abp_39_5")

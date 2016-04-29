@@ -26,7 +26,7 @@ import play.api.Play._
 import play.api.mvc.{Action, AnyContent}
 import services.ingester.exec.WorkerFactory
 import services.ingester.fetch.{SardineFactory2, WebdavFetcher}
-import services.ingester.model.ABPCollection
+import services.ingester.model.ABPModel
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -52,7 +52,7 @@ object FetchController extends FetchController(
 )
 
 
-class FetchController(taskFactory: WorkerFactory,
+class FetchController(workerFactory: WorkerFactory,
                       logger: SimpleLogger,
                       webdavFetcher: WebdavFetcher,
                       url: String,
@@ -62,13 +62,13 @@ class FetchController(taskFactory: WorkerFactory,
 
   def fetch(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     request =>
-      val model = new ABPCollection(product, epoch, variant, None, logger)
+      val model = new ABPModel(product, epoch, variant, None, logger)
       val status = handleFetch(model)
-      Ok(status.toString)
+      Accepted(status.toString)
   }
 
-  private[controllers] def handleFetch(model: ABPCollection): Boolean = {
-    val worker = taskFactory.worker
+  private[controllers] def handleFetch(model: ABPModel): Boolean = {
+    val worker = workerFactory.worker
 
     worker.push(s"fetching ${model.pathSegment}", {
       val dir = outputDirectory.resolve(model.pathSegment)

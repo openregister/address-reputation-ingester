@@ -17,54 +17,67 @@
 package controllers
 
 import config.ApplicationGlobal
-import controllers.SimpleValidator._
 import play.api.Logger
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.mvc.{Action, AnyContent}
+import services.ingester.exec.{Task, WorkerFactory}
+import services.ingester.model.ABPModel
 import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
-import uk.co.hmrc.logging.LoggerFacade
+import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object SwitchoverController extends SwitchoverController(
+  new WorkerFactory,
+  new LoggerFacade(Logger.logger),
   ApplicationGlobal.mongoConnection,
   new MetadataStoreFactory().newStore(ApplicationGlobal.mongoConnection)
 )
 
 
-class SwitchoverController(mongoDbConnection: CasbahMongoConnection, metadata: Map[String, StoredMetadataItem]) extends BaseController {
+class SwitchoverController(workerFactory: WorkerFactory,
+                           logger: SimpleLogger,
+                           mongoDbConnection: CasbahMongoConnection,
+                           metadata: Map[String, StoredMetadataItem]) extends BaseController {
 
-  def switchTo(product: String, epoch: Int, index: String): Action[AnyContent] = Action {
+  def switchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = Action {
     request =>
-      handleSwitch(request, product, epoch, index)
+      val model = new ABPModel(product, epoch, "", Some(index), logger)
+      handleSwitch(model)
+      Accepted
   }
 
-  private[controllers] def handleSwitch(request: Request[AnyContent],
-                                        product: String, epoch: Int, index: String): Result = {
-    require(isNumeric(index))
+  private[controllers] def handleSwitch(model: ABPModel): Unit = {
+    workerFactory.worker.push(
+      Task(s"switching to ${model.collectionName.get}", {
+        continuer =>
+          switch(model)
+      }))
+  }
+
+  private[controllers] def switch(model: ABPModel) {
 
     val addressBaseCollectionName: StoredMetadataItem = {
-      val cn = metadata.get(product)
+      val cn = metadata.get(model.product)
       if (cn.isEmpty) {
-        throw new IllegalArgumentException("Unsupported product " + product)
+        throw new IllegalArgumentException(s"Unsupported product ${model.product}")
       }
       cn.get
     }
 
     // this metadata key/value is checked by all address-lookup nodes once every few minutes
-    val newName = s"${product}_${epoch}_${index}"
+    val newName = model.collectionName.get
 
     val db = mongoDbConnection.getConfiguredDb
     if (!db.collectionExists(newName)) {
-      BadRequest(s"$newName: collection was not found.").withHeaders(textPlain)
+      model.statusLogger.fail(s"$newName: collection was not found")
     }
     else if (db(newName).findOneByID("metadata").isEmpty) {
-      Conflict(s"$newName: collection is still being written.").withHeaders(textPlain)
+      model.statusLogger.fail(s"$newName: collection is still being written")
     }
     else {
       addressBaseCollectionName.set(newName)
-
-      Ok(s"Switched over to $product/$epoch index $index.").withHeaders(textPlain)
+      model.statusLogger.put("Switched over to $newName")
     }
   }
 

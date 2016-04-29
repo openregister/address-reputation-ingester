@@ -51,7 +51,6 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
 
 
   test("fetch should download files using webdav") {
-    println("********** FCT **********")
     new context {
       val product = "product"
       val epoch = 123
@@ -59,7 +58,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       val futureResponse = call(controller.fetch(product, epoch, variant), req)
 
       val response = await(futureResponse)
-      assert(response.header.status === 200)
+      assert(response.header.status === 202)
 
       testWorker.awaitCompletion()
       val dir = outputDirectory.resolve(s"$product/$epoch/$variant")

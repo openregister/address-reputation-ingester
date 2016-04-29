@@ -22,9 +22,10 @@ import config.ConfigHelper._
 import controllers.SimpleValidator._
 import play.api.Logger
 import play.api.Play._
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.mvc.{Action, AnyContent, Result}
 import services.ingester.converter.ExtractorFactory
 import services.ingester.exec.{Task, WorkerFactory}
+import services.ingester.model.ABPModel
 import services.ingester.writers._
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -63,37 +64,43 @@ class IngestController(rootFolder: File,
     request =>
       val bulkSize = bulkSizeStr getOrElse 1
       val loopDelay = loopDelayStr getOrElse 0
+      require(isAlphaNumeric(product))
+      require(isAlphaNumeric(variant))
 
       val settings = WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
-      handleIngest(request, product, epoch, variant, settings, dbWriterFactory)
+      val model = new ABPModel(product, epoch, variant, None, logger)
+      handleIngest(model, settings, dbWriterFactory)
   }
 
   def ingestToFile(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     request =>
+      require(isAlphaNumeric(product))
+      require(isAlphaNumeric(variant))
+
       val settings = WriterSettings(1, 0)
-      handleIngest(request, product, epoch, variant, settings, fileWriterFactory)
+      val model = new ABPModel(product, epoch, variant, None, logger)
+      handleIngest(model, settings, fileWriterFactory)
   }
 
   def ingestToNull(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     request =>
+      require(isAlphaNumeric(product))
+      require(isAlphaNumeric(variant))
+
       val settings = WriterSettings(1, 0)
-      handleIngest(request, product, epoch, variant, settings, nullWriterFactory)
+      val model = new ABPModel(product, epoch, variant, None, logger)
+      handleIngest(model, settings, nullWriterFactory)
   }
 
-  private[controllers] def handleIngest(request: Request[AnyContent],
-                                        product: String, epoch: Int, variant: String,
+  private[controllers] def handleIngest(model: ABPModel,
                                         settings: WriterSettings,
                                         writerFactory: OutputWriterFactory): Result = {
-    require(isAlphaNumeric(product))
-    require(isAlphaNumeric(variant))
+    val qualifiedDir = new File(rootFolder, model.pathSegment)
 
-    val qualifiedDir = new File(rootFolder, s"$product/$epoch/$variant")
+    val writer = writerFactory.writer(model.collectionBaseName, settings)
 
-    val writer = writerFactory.writer(s"${product}_$epoch", settings)
-
-    val worker = workerFactory.worker
-    val status = worker.push(
-      Task(s"ingesting $product/$epoch/$variant", {
+    workerFactory.worker.push(
+      Task(s"ingesting ${model.pathSegment}", {
         continuer =>
           extractorFactory.extractor(continuer, logger).extract(qualifiedDir, writer)
       },
@@ -103,7 +110,6 @@ class IngestController(rootFolder: File,
         })
     )
 
-    if (status) Ok(s"Ingestion has started for $product/$epoch/$variant")
-    else Conflict(worker.status)
+    Accepted(s"Ingestion has started for ${model.pathSegment}")
   }
 }

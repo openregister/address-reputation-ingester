@@ -25,12 +25,22 @@ class StatusLogger(val tee: SimpleLogger) {
   private val buffer = new mutable.ListBuffer[String]()
 
   private var currentStatus = ""
+  private var giveUp = false
 
   def put(format: String, arguments: AnyRef*) {
     tee.info(format, arguments: _*)
     buffer += MessageFormatter.arrayFormat(format, arguments.toArray).getMessage
     currentStatus = ""
   }
+
+  def fail(format: String, arguments: AnyRef*) {
+    tee.warn(format, arguments: _*)
+    buffer += MessageFormatter.arrayFormat(format, arguments.toArray).getMessage
+    currentStatus = ""
+    giveUp = true
+  }
+
+  def hasFailed: Boolean = giveUp
 
   def update(s: String) {
     currentStatus = s
