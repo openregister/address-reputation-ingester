@@ -35,11 +35,12 @@ class FetchControllerTest extends FunSuite with Mockito {
       override def worker = testWorker
     }
     val webdavFetcher = mock[WebdavFetcher]
+    val logger = new StubLogger
     val url = "http://localhost/webdav"
     val username = "foo"
     val password = "bar"
     val outputDirectory: Path = Files.createTempDirectory("fetch-controller-test")
-    val controller = new FetchController(workerFactory, webdavFetcher, url, username, password, outputDirectory)
+    val controller = new FetchController(workerFactory, logger, webdavFetcher, url, username, password, outputDirectory)
     val req = FakeRequest()
 
     def teardown() {
