@@ -33,7 +33,7 @@ object Ingester extends App {
   val conf = ConfigFactory.load()
   val home = System.getenv("HOME")
 
-  val osRootFolder = new File(replaceHome(conf.getString("app.files.rootFolder")))
+  val osRootFolder = new File(replaceHome(conf.getString("app.files.unpackFolder")))
   if (!osRootFolder.exists()) {
     throw new FileNotFoundException(osRootFolder.toString)
   }

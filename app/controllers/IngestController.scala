@@ -32,15 +32,15 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object IngestControllerHelper {
-  val rootFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.rootFolder")))
-  if (!rootFolder.exists()) {
-    throw new FileNotFoundException(rootFolder.toString)
+  val downloadFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.downloadFolder")))
+  if (!downloadFolder.exists()) {
+    throw new FileNotFoundException(downloadFolder.toString)
   }
 }
 
 
 object IngestController extends IngestController(
-  IngestControllerHelper.rootFolder,
+  IngestControllerHelper.downloadFolder,
   new LoggerFacade(Logger.logger),
   new OutputDBWriterFactory,
   new OutputFileWriterFactory,
@@ -49,7 +49,7 @@ object IngestController extends IngestController(
   new WorkerFactory())
 
 
-class IngestController(rootFolder: File,
+class IngestController(downloadFolder: File,
                        logger: SimpleLogger,
                        dbWriterFactory: OutputDBWriterFactory,
                        fileWriterFactory: OutputFileWriterFactory,
@@ -83,7 +83,7 @@ class IngestController(rootFolder: File,
   private[controllers] def queueIngest(model: StateModel,
                                        settings: WriterSettings,
                                        writerFactory: OutputWriterFactory): Result = {
-    val qualifiedDir = new File(rootFolder, model.pathSegment)
+    val qualifiedDir = new File(downloadFolder, model.pathSegment)
 
     workerFactory.worker.push(
       s"ingesting ${model.pathSegment}", model, {

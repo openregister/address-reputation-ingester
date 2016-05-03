@@ -25,11 +25,12 @@ import uk.co.hmrc.logging.SimpleLogger
 
 import scala.collection.JavaConverters._
 
-class WebdavFetcher(logger: SimpleLogger, factory: SardineFactory2) {
+class WebdavFetcher(logger: SimpleLogger, factory: SardineFactory2, downloadFolder: Path, unpackFolder: Path) {
 
   // Downloads a specified set of remote files, marks them all with a completion marker (.done),
   // then returns the total bytes copied.
-  def fetchList(product: OSGBProduct, username: String, password: String, outputDirectory: Path): Long = {
+  def fetchList(product: OSGBProduct, username: String, password: String, outputPath: String): Long = {
+    val outputDirectory = resolveAndMkdirs(outputPath)
     val sardine = factory.begin(username, password)
     val sizes = product.zips.map {
       webDavFile =>
@@ -41,10 +42,8 @@ class WebdavFetcher(logger: SimpleLogger, factory: SardineFactory2) {
   // Searches for remote files, downloads them, marks them all with a completion marker (.done),
   // then returns the total bytes copied.
   // Note that this doesn't check the existence of completion marker files on the remote server.
-  def fetchAll(url: String, username: String, password: String, outputDirectory: Path): Long = {
-    if (!Files.exists(outputDirectory)) {
-      Files.createDirectories(outputDirectory)
-    }
+  def fetchAll(url: String, username: String, password: String, outputPath: String): Long = {
+    val outputDirectory = resolveAndMkdirs(outputPath)
     val sardine = factory.begin(username, password)
     logger.info("Listing {}", url)
     val resources = sardine.list(url).asScala
@@ -81,6 +80,14 @@ class WebdavFetcher(logger: SimpleLogger, factory: SardineFactory2) {
     val file = url.getPath
     val slash = file.lastIndexOf('/')
     file.substring(slash + 1)
+  }
+
+  private def resolveAndMkdirs(outputPath: String): Path = {
+    val outputDirectory = downloadFolder.resolve(outputPath)
+    if (!Files.exists(outputDirectory)) {
+      Files.createDirectories(outputDirectory)
+    }
+    outputDirectory
   }
 }
 

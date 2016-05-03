@@ -39,12 +39,10 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
     val url = "http://localhost/webdav"
     val username = "foo"
     val password = "bar"
-    val outputDirectory: Path = Files.createTempDirectory("fetch-controller-test")
-    val controller = new FetchController(workerFactory, logger, webdavFetcher, url, username, password, outputDirectory)
+    val controller = new FetchController(workerFactory, logger, webdavFetcher, url, username, password)
     val req = FakeRequest()
 
     def teardown() {
-      Files.delete(outputDirectory)
       testWorker.terminate()
     }
   }
@@ -61,8 +59,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === 202)
 
       testWorker.awaitCompletion()
-      val dir = outputDirectory.resolve(s"$product/$epoch/$variant")
-      verify(webdavFetcher).fetchAll(s"$url/$product/$epoch/$variant", username, password, dir)
+      verify(webdavFetcher).fetchAll(s"$url/$product/$epoch/$variant", username, password, "product/123/variant")
       teardown()
     }
   }

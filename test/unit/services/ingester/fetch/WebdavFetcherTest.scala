@@ -18,7 +18,7 @@ package services.ingester.fetch
 
 import java.io.{File, FileInputStream}
 import java.net.{URI, URL}
-import java.nio.file.{Files, Path}
+import java.nio.file.Files
 
 import com.github.sardine.{DavResource, Sardine}
 import org.junit.runner.RunWith
@@ -36,6 +36,8 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
   class Context(resourceFolder: String) {
     val logger = new StubLogger()
     val outputDirectory = Files.createTempDirectory("webdav-fetcher-test")
+    val downloadDirectory = outputDirectory.resolve("downloads")
+    val unpackDirectory = outputDirectory.resolve("unpack")
     val sardine = mock[Sardine]
     val sardineFactory = mock[SardineFactory2]
     when(sardineFactory.begin("user", "pass")) thenReturn sardine
@@ -44,13 +46,16 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
     val files = new File(getClass.getResource(resourceFolder).toURI).listFiles().toList
     val resources = files.map(toDavResource(_, url))
 
-    def teardown(): Unit = {
-      deleteDir(outputDirectory)
+    def teardown() {
+      deleteDir(outputDirectory.toFile)
     }
 
-    private def deleteDir(path: Path): Unit = {
-      path.toFile.listFiles().to[Seq].foreach(f => f.delete())
-      path.toFile.delete()
+    private def deleteDir(path: File) {
+      val sub = path.listFiles()
+      if (sub != null) {
+        sub.toSeq.foreach(f => deleteDir(f))
+      }
+      path.delete()
     }
   }
 
@@ -63,13 +68,13 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
           val s = s"$url${f.getName}"
           when(sardine.get(s)) thenReturn new FileInputStream(f)
       }
-      val fetcher = new WebdavFetcher(logger, sardineFactory)
+      val fetcher = new WebdavFetcher(logger, sardineFactory, downloadDirectory, unpackDirectory)
       // when
-      val total = fetcher.fetchAll(url, "user", "pass", outputDirectory)
+      val total = fetcher.fetchAll(url, "user", "pass", "stuff")
       // then
       total must be(files.map(_.length()).sum)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
-      outputDirectory.toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
+      downloadDirectory.resolve("stuff").toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message).sorted must be(List(
         "Info:Fetched bar.txt in {}",
         "Info:Fetched baz.txt in {}",
@@ -98,13 +103,13 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
           WebDavFile(new URL(s"$url${f.getName}"), f.getName, false, false, true, Nil)
       }
       val product = OSGBProduct("abp", 39, webDavFiles)
-      val fetcher = new WebdavFetcher(logger, sardineFactory)
+      val fetcher = new WebdavFetcher(logger, sardineFactory, downloadDirectory, unpackDirectory)
       // when
-      val total = fetcher.fetchList(product, "user", "pass", outputDirectory)
+      val total = fetcher.fetchList(product, "user", "pass", "stuff")
       // then
       total must be(files.map(_.length()).sum)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
-      outputDirectory.toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
+      downloadDirectory.resolve("stuff").toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message).sorted must be(List(
         "Info:Fetched bar.txt in {}",
         "Info:Fetched baz.txt in {}",

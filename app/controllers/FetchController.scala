@@ -18,6 +18,7 @@
 
 package controllers
 
+import java.io.File
 import java.nio.file.{Path, Paths}
 
 import config.ConfigHelper._
@@ -37,18 +38,20 @@ object FetchControllerConfig {
   val remoteServer = mustGetConfigString(current.mode, current.configuration, "app.remote.server")
   val remoteUser = mustGetConfigString(current.mode, current.configuration, "app.remote.user")
   val remotePass = mustGetConfigString(current.mode, current.configuration, "app.remote.pass")
-  val rootFolder = replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.rootFolder"))
+  val downloadFolder = Paths.get(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.downloadFolder")))
+  val unpackFolder = Paths.get(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.unpackFolder")))
+
+  val fetcher = new WebdavFetcher(FetchControllerConfig.logger, new SardineFactory2, downloadFolder, unpackFolder)
 }
 
 
 object FetchController extends FetchController(
   new WorkerFactory(),
   FetchControllerConfig.logger,
-  new WebdavFetcher(FetchControllerConfig.logger, new SardineFactory2),
+  FetchControllerConfig.fetcher,
   FetchControllerConfig.remoteServer,
   FetchControllerConfig.remoteUser,
-  FetchControllerConfig.remotePass,
-  Paths.get(FetchControllerConfig.rootFolder)
+  FetchControllerConfig.remotePass
 )
 
 
@@ -57,8 +60,7 @@ class FetchController(workerFactory: WorkerFactory,
                       webdavFetcher: WebdavFetcher,
                       url: String,
                       username: String,
-                      password: String,
-                      outputDirectory: Path) extends BaseController {
+                      password: String) extends BaseController {
 
   def fetch(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     request =>
@@ -72,8 +74,7 @@ class FetchController(workerFactory: WorkerFactory,
 
     worker.push(s"fetching ${model.pathSegment}", model, {
       continuer =>
-        val dir = outputDirectory.resolve(model.pathSegment)
-        webdavFetcher.fetchAll(s"$url/${model.pathSegment}", username, password, dir)
+        webdavFetcher.fetchAll(s"$url/${model.pathSegment}", username, password, model.pathSegment)
     })
   }
 }

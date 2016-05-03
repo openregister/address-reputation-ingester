@@ -29,7 +29,8 @@ import play.api.test.Helpers._
 class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServerUnderTest {
 
   def appConfiguration: Map[String, String] = Map(
-    "app.files.rootFolder" -> "/var/tmp",
+    "app.files.downloadFolder" -> "/var/tmp",
+    "app.files.unpackFolder" -> "/var/tmp",
     "app.files.outputFolder" -> "/var/tmp",
     "app.chronicleMap.blpu.mapSize" -> "50000",
     "app.chronicleMap.dpa.setSize" -> "5000",
@@ -98,9 +99,9 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
 
   override def beforeAppServerStarts() {
     val sample = getClass.getClassLoader.getResourceAsStream("SX9090-first3600.zip")
-    val rootFolder = Paths.get("/var/tmp/abp/123456/test")
-    rootFolder.toFile.mkdirs()
-    Files.copy(sample, rootFolder.resolve("SX9090-first3600.zip"), REPLACE_EXISTING)
+    val downloadFolder = Paths.get("/var/tmp/abp/123456/test")
+    downloadFolder.toFile.mkdirs()
+    Files.copy(sample, downloadFolder.resolve("SX9090-first3600.zip"), REPLACE_EXISTING)
     sample.close()
   }
 
