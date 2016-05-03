@@ -21,9 +21,10 @@ import java.util.concurrent.SynchronousQueue
 
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
+import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{FunSuite, Matchers}
+import services.ingester.converter.extractor.ForwardData
 import services.ingester.exec.WorkQueue
 import services.ingester.model.StateModel
 import services.ingester.writers.OutputWriter
@@ -33,7 +34,7 @@ import uk.co.hmrc.logging.StubLogger
 import scala.collection.mutable
 
 @RunWith(classOf[JUnitRunner])
-class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
+class ExtractorTest extends FunSuite with MockitoSugar {
 
   // scalastyle:off
   class context {
@@ -53,7 +54,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
 
       worker.push("testing", model, {
         continuer =>
-          new Extractor(continuer, model).extract(mockFile, dummyOut)
+          new Extractor(continuer, model, ForwardData.chronicleInMemoryForUnitTest()).extract(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -86,7 +87,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
 
       worker.push("testing", model, {
         continuer =>
-          new Extractor(continuer, model).extract(List(sample), out)
+          new Extractor(continuer, model, ForwardData.simpleInstance()).extract(List(sample), out)
           lock.put(true)
       })
 

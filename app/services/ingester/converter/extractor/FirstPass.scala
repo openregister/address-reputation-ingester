@@ -31,13 +31,13 @@ trait Pass {
 }
 
 
-class FirstPass(out: OutputWriter, continuer: Continuer) extends Pass {
+class FirstPass(out: OutputWriter, continuer: Continuer, val forwardData: ForwardData = ForwardData.chronicleInMemory()) extends Pass {
 
   // The simple 'normal' collections
   //  val forwardData = ForwardData.simpleInstance()
 
   // The enhanced Chronicle collections
-  val forwardData = ForwardData.chronicleInMemory()
+//  val forwardData = ForwardData.chronicleInMemory()
 
   //For development only (runs slower and leaves temp files behind)
   //  val forwardData = ForwardData.chronicleWithFile()

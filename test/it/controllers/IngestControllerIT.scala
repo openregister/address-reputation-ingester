@@ -30,7 +30,10 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
 
   def appConfiguration: Map[String, String] = Map(
     "app.files.rootFolder" -> "/var/tmp",
-    "app.files.outputFolder" -> "/var/tmp"
+    "app.files.outputFolder" -> "/var/tmp",
+    "app.chronicleMap.blpu.mapSize" -> "50000",
+    "app.chronicleMap.dpa.setSize" -> "5000",
+    "app.chronicleMap.street.mapSize" -> "2000"
   )
 
   "ingest resource happy journey - to file" must {

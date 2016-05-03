@@ -19,7 +19,7 @@ package services.ingester.converter
 import java.io.File
 
 import config.Divider
-import services.ingester.converter.extractor.{FirstPass, Pass, SecondPass}
+import services.ingester.converter.extractor.{FirstPass, ForwardData, Pass, SecondPass}
 import services.ingester.exec.Continuer
 import services.ingester.model.StateModel
 import services.ingester.writers.OutputWriter
@@ -56,7 +56,7 @@ object Extractor {
 }
 
 
-class Extractor(continuer: Continuer, model: StateModel) {
+class Extractor(continuer: Continuer, model: StateModel, forwardData: ForwardData = ForwardData.chronicleInMemory()) {
   private def listFiles(file: File): List[File] =
     if (!file.isDirectory) Nil
     else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
@@ -69,7 +69,7 @@ class Extractor(continuer: Continuer, model: StateModel) {
 
   def extract(files: Seq[File], out: OutputWriter) {
     val dt = new DiagnosticTimer
-    val fp = new FirstPass(out, continuer)
+    val fp = new FirstPass(out, continuer, forwardData)
 
     model.statusLogger.info(s"Starting first pass through ${files.size} files")
     pass(files, out, fp)
