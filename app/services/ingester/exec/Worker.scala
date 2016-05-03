@@ -42,8 +42,7 @@ trait Continuer {
 
 
 case class Task(description: String,
-                action: (Continuer) => Unit,
-                cleanup: () => Unit = () => {})
+                action: (Continuer) => Unit)
 
 
 // WorkQueue provids a process-oriented implementation that guarantees the correct interleaving of
@@ -61,8 +60,8 @@ class WorkQueue(logger: SimpleLogger) {
   worker.setDaemon(true)
   worker.start()
 
-  def push(work: String, body: (Continuer) => Unit, cleanup: => Unit = {}): Boolean = {
-    push(Task(work, body, () => cleanup))
+  def push(work: String, body: (Continuer) => Unit): Boolean = {
+    push(Task(work, body))
   }
 
   private def push(task: Task): Boolean = {
@@ -157,7 +156,6 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
       task.action(this)
       logger.info(s"$info - completed after {}", timer)
     } finally {
-      task.cleanup()
       doing = ""
     }
   }

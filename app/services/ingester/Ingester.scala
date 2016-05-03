@@ -46,9 +46,11 @@ object Ingester extends App {
 
   worker.push("ingesting", {
     continuer =>
-      new Extractor(continuer, model).extract(osRootFolder, outCSV)
-  }, {
-    () => outCSV.close()
+      try {
+        new Extractor(continuer, model).extract(osRootFolder, outCSV)
+      } finally {
+        () => outCSV.close()
+      }
   })
 
   worker.awaitCompletion()
