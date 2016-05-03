@@ -36,7 +36,7 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
 
       assert(get("/switch/to/abp/39/3").status === ACCEPTED)
-      waitUntil("/admin/status", "idle")
+      assert(waitUntil("/admin/status", "idle", 100000) === true)
 
       val collectionName = admin.gbAddressBaseCollectionName.get
       assert(collectionName === initialCollectionName)
@@ -54,7 +54,7 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
       mongo.getConfiguredDb("abp_39_4").insert(MongoDBObject("_id" -> "foo", "bar" -> true))
 
       assert(get("/switch/to/abp/39/4").status === ACCEPTED)
-      waitUntil("/admin/status", "idle")
+      assert(waitUntil("/admin/status", "idle", 100000) === true)
 
       val collectionName = admin.gbAddressBaseCollectionName.get
       assert(collectionName === initialCollectionName)
@@ -74,7 +74,7 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
       mongo.getConfiguredDb("abp_39_5").insert(MongoDBObject("_id" -> "metadata", "completedAt" -> "some date"))
 
       assert(get("/switch/to/abp/39/5").status === ACCEPTED)
-      waitUntil("/admin/status", "idle")
+      assert(waitUntil("/admin/status", "idle", 100000) === true)
 
       val collectionName = admin.gbAddressBaseCollectionName.get
       assert(collectionName === "abp_39_5")

@@ -42,11 +42,13 @@ class AdminController(worker: WorkQueue) extends BaseController {
 
   def status(): Action[AnyContent] = Action {
     request => {
-      getStatus(request)
+      Ok(worker.status).withHeaders(CONTENT_TYPE -> "text/plain")
     }
   }
 
-  def getStatus(request: Request[AnyContent]): Result = {
-    Ok(worker.status).withHeaders(CONTENT_TYPE -> "text/plain")
+  def fullStatus(): Action[AnyContent] = Action {
+    request => {
+      Ok(worker.fullStatus).withHeaders(CONTENT_TYPE -> "text/plain")
+    }
   }
 }

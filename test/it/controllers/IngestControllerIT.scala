@@ -41,14 +41,14 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
        * await termination
        * observe quiet status
     """ in {
-      waitUntil("/admin/status", "idle")
+      assert(waitUntil("/admin/status", "idle", 100000) === true)
 
       val step2 = get("/ingest/to/file/abp/123456/test")
       step2.status mustBe ACCEPTED
 
       verifyOK("/admin/status", "busy ingesting abp/123456/test")
 
-      waitWhile("/admin/status", "busy ingesting abp/123456/test")
+      assert(waitWhile("/admin/status", "busy ingesting abp/123456/test", 100000) === true)
 
       verifyOK("/admin/status", "idle")
 
@@ -69,14 +69,14 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
     """ in {
       val start = System.currentTimeMillis()
 
-      waitUntil("/admin/status", "idle")
+      assert(waitUntil("/admin/status", "idle", 100000) === true)
 
       val step2 = get("/ingest/to/db/abp/123456/test?bulkSize=5&loopDelay=0")
       step2.status mustBe ACCEPTED
 
       verifyOK("/admin/status", "busy ingesting abp/123456/test")
 
-      waitWhile("/admin/status", "busy ingesting abp/123456/test")
+      assert(waitWhile("/admin/status", "busy ingesting abp/123456/test", 100000) === true)
 
       verifyOK("/admin/status", "idle")
 

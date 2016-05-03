@@ -16,4 +16,5 @@ GET   /switch/to/:product/:epoch/:index             controllers.SwitchoverContro
 
 GET   /admin/cancelTask                             controllers.AdminController.cancelTask()
 GET   /admin/status                                 controllers.AdminController.status()
+GET   /admin/fullStatus                             controllers.AdminController.fullStatus()
 

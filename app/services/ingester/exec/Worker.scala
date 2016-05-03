@@ -73,7 +73,7 @@ class WorkQueue(logger: SimpleLogger) {
 
   def status: String = worker.status
 
-  def fullStatus: String = worker.status
+  def fullStatus: String = worker.fullStatus
 
   def isBusy: Boolean = worker.isBusy
 
@@ -131,7 +131,7 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
     executionState.get match {
       case BUSY => s"${statusLogger.status}\n\nbusy$doing"
       case STOPPING => s"${statusLogger.status}\n\naborting$doing"
-      case _ => "idle"
+      case _ => s"idle\n\nprevious status:\n${statusLogger.status}"
     }
 
   override def run() {
