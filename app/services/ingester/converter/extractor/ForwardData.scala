@@ -41,9 +41,9 @@ object ForwardData {
   )
 
   def chronicleInMemory(): ForwardData = new ForwardData(
-    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(10000).averageValueSize(10).create(),
-    ChronicleSetBuilder.of(classOf[JLong]).entries(10000).create(),
-    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(10000).averageValueSize(20).create()
+    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(35000000).averageValueSize(10).create(),
+    ChronicleSetBuilder.of(classOf[JLong]).entries(35000000).create(),
+    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(1500000).averageValueSize(20).create()
   )
 
   def chronicleWithFile(): ForwardData = new ForwardData(
