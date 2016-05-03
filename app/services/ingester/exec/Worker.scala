@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{BlockingQueue, LinkedTransferQueue}
 
 import play.api.Logger
-import services.ingester.model.StateModel
+import services.ingester.model.{StateModel, StatusLogger}
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 
@@ -73,6 +73,8 @@ class WorkQueue(logger: SimpleLogger) {
 
   def status: String = worker.status
 
+  def fullStatus: String = worker.status
+
   def isBusy: Boolean = worker.isBusy
 
   def notIdle: Boolean = worker.notIdle
@@ -106,6 +108,7 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
 
   private val executionState = new AtomicInteger(IDLE)
   private var doing = "" // n.b. not being used for thread interlocking
+  private var statusLogger = new StatusLogger(logger)
 
   def isBusy: Boolean = executionState.get == BUSY
 
@@ -121,6 +124,13 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
     executionState.get match {
       case BUSY => s"busy$doing"
       case STOPPING => s"aborting$doing"
+      case _ => "idle"
+    }
+
+  def fullStatus: String =
+    executionState.get match {
+      case BUSY => s"${statusLogger.status}\n\nbusy$doing"
+      case STOPPING => s"${statusLogger.status}\n\naborting$doing"
       case _ => "idle"
     }
 
@@ -153,10 +163,12 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
   private def runTask(task: Task) {
     val info = task.description.trim
     doing = " " + info
+    statusLogger = task.model.statusLogger
+    statusLogger.info(s"\nStarting $info")
     try {
       val timer = new DiagnosticTimer
       task.action(this)
-      logger.info(s"$info - completed after {}", timer)
+      statusLogger.info(s"$info - completed after {}", timer)
     } finally {
       doing = ""
     }

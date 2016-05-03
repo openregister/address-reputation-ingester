@@ -94,6 +94,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
       worker.awaitCompletion()
 
       assert(logger.infos.map(_.message) === List(
+        "Info:\nStarting testing",
         "Info:Starting first pass through 1 files",
         "Info:Reading zip entry SX9090-first3600.csv...",
         "Info:Reading from 1 CSV files in {} took {}",

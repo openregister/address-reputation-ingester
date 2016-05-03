@@ -170,8 +170,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       testWorker.awaitCompletion()
 
       assert(storedItem.get === "the initial value")
-      assert(logger.size === 3, logger.all.mkString("\n"))
-      assert(logger.infos.map(_.message) === List("Info:Switchover was skipped.", "Info:switching to abp_40_9 - completed after {}"))
+      assert(logger.size === 4, logger.all.mkString("\n"))
+      assert(logger.infos.map(_.message) === List("Info:\nStarting switching to abp_40_9", "Info:Switchover was skipped.", "Info:switching to abp_40_9 - completed after {}"))
 
       testWorker.terminate()
     }

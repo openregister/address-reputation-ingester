@@ -95,7 +95,7 @@ class WorkerTest extends FunSuite {
     worker.awaitCompletion()
 
     // the logger in the body, and the timer in the executor
-    assert(logger.infos.size === 2, logger.all.mkString(",\n"))
+    assert(logger.infos.size === 3, logger.all.mkString(",\n"))
   }
 
   test(
