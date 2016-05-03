@@ -20,6 +20,7 @@ import java.net.URL
 import java.nio.file._
 
 import com.github.sardine.{DavResource, Sardine}
+import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.logging.SimpleLogger
 
 import scala.collection.JavaConverters._
@@ -45,6 +46,7 @@ class WebdavFetcher(logger: SimpleLogger, factory: SardineFactory2) {
       Files.createDirectories(outputDirectory)
     }
     val sardine = factory.begin(username, password)
+    logger.info("Listing {}", url)
     val resources = sardine.list(url).asScala
     val sizes = resources.filterNot(_.isDirectory).map {
       res =>
@@ -61,12 +63,14 @@ class WebdavFetcher(logger: SimpleLogger, factory: SardineFactory2) {
 
   private def fetchFile(url: URL, sardine: Sardine, outputDirectory: Path): Long = {
     val file = fileOf(url)
+    logger.info(s"Fetching {} to $file", url)
+    val dt = new DiagnosticTimer
     val in = sardine.get(url.toExternalForm)
     try {
       val out = outputDirectory.resolve(file)
       val bytesCopied = Files.copy(in, out)
       Files.createFile(outputDirectory.resolve(file + ".done"))
-      logger.info("Fetched " + file)
+      logger.info(s"Fetched $file in {}", dt)
       bytesCopied
     } finally {
       in.close()

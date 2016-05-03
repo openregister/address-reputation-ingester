@@ -32,8 +32,7 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object IngestControllerHelper {
-  val home = System.getenv("HOME")
-  val rootFolder = new File(mustGetConfigString(current.mode, current.configuration, "app.files.rootFolder").replace("$HOME", home))
+  val rootFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.rootFolder")))
   if (!rootFolder.exists()) {
     throw new FileNotFoundException(rootFolder.toString)
   }

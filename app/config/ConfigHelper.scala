@@ -38,4 +38,9 @@ object ConfigHelper {
     val modeKey = s"$mode.$key"
     config.getString(modeKey).orElse(config.getString(key))
   }
+
+  def replaceHome(string: String): String = {
+    if (string.startsWith("$HOME")) System.getenv("HOME") + string.substring(5)
+    else string
+  }
 }

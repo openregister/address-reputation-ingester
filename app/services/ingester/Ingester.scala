@@ -16,6 +16,7 @@
 
 package services.ingester
 
+import config.ConfigHelper._
 import java.io._
 
 import com.typesafe.config.ConfigFactory
@@ -32,12 +33,12 @@ object Ingester extends App {
   val conf = ConfigFactory.load()
   val home = System.getenv("HOME")
 
-  val osRootFolder = new File(conf.getString("app.files.rootFolder").replace("$HOME", home))
+  val osRootFolder = new File(replaceHome(conf.getString("app.files.rootFolder")))
   if (!osRootFolder.exists()) {
     throw new FileNotFoundException(osRootFolder.toString)
   }
 
-  val outputFolder = new File(conf.getString("app.files.outputFolder").replace("$HOME", home))
+  val outputFolder = new File(replaceHome(conf.getString("app.files.outputFolder")))
   outputFolder.mkdirs()
 
   val model = new StateModel(Stdout, "abp", 0, "output", None)

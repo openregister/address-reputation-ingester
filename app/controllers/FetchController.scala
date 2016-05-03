@@ -37,7 +37,7 @@ object FetchControllerConfig {
   val remoteServer = mustGetConfigString(current.mode, current.configuration, "app.remote.server")
   val remoteUser = mustGetConfigString(current.mode, current.configuration, "app.remote.user")
   val remotePass = mustGetConfigString(current.mode, current.configuration, "app.remote.pass")
-  val rootFolder = mustGetConfigString(current.mode, current.configuration, "app.files.rootFolder")
+  val rootFolder = replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.rootFolder"))
 }
 
 

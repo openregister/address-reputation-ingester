@@ -27,8 +27,7 @@ import services.ingester.model.StateModel
 import uk.co.hmrc.address.osgb.DbAddress
 
 object OutputFileWriterHelper {
-  val home = System.getenv("HOME")
-  val outputFolder = new File(mustGetConfigString(current.mode, current.configuration, "app.files.outputFolder").replace("$HOME", home))
+  val outputFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.outputFolder")))
   outputFolder.mkdirs()
 }
 
