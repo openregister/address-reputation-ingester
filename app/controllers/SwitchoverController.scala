@@ -19,7 +19,7 @@ package controllers
 import config.ApplicationGlobal
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
-import services.ingester.exec.{Task, WorkerFactory}
+import services.ingester.exec.WorkerFactory
 import services.ingester.model.StateModel
 import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
@@ -49,14 +49,14 @@ class SwitchoverController(workerFactory: WorkerFactory,
 
   private[controllers] def queueSwitch(model: StateModel) {
     workerFactory.worker.push(
-      Task(s"switching to ${model.collectionName.get}", {
+      s"switching to ${model.collectionName.get}", {
         continuer =>
           if (!model.hasFailed) {
             switch(model)
           } else {
-            model.statusLogger.put("Switchover was skipped.")
+            model.statusLogger.info("Switchover was skipped.")
           }
-      }))
+      })
   }
 
   private[controllers] def switch(model: StateModel) {
@@ -74,14 +74,14 @@ class SwitchoverController(workerFactory: WorkerFactory,
 
     val db = mongoDbConnection.getConfiguredDb
     if (!db.collectionExists(newName)) {
-      model.statusLogger.fail(s"$newName: collection was not found")
+      model.fail(s"$newName: collection was not found")
     }
     else if (db(newName).findOneByID("metadata").isEmpty) {
-      model.statusLogger.fail(s"$newName: collection is still being written")
+      model.fail(s"$newName: collection is still being written")
     }
     else {
       addressBaseCollectionName.set(newName)
-      model.statusLogger.put(s"Switched over to $newName")
+      model.statusLogger.info(s"Switched over to $newName")
     }
   }
 

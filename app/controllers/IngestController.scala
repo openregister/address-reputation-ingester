@@ -24,7 +24,7 @@ import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Result}
 import services.ingester.converter.ExtractorFactory
-import services.ingester.exec.{Task, WorkerFactory}
+import services.ingester.exec.{Continuer, WorkerFactory}
 import services.ingester.model.StateModel
 import services.ingester.writers._
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
@@ -86,23 +86,27 @@ class IngestController(rootFolder: File,
                                        writerFactory: OutputWriterFactory): Result = {
     val qualifiedDir = new File(rootFolder, model.pathSegment)
 
-    val writer = writerFactory.writer(model, settings)
-
     workerFactory.worker.push(
-      Task(s"ingesting ${model.pathSegment}", {
+      s"ingesting ${model.pathSegment}", {
         continuer =>
           if (!model.hasFailed) {
-            extractorFactory.extractor(continuer, model).extract(qualifiedDir, writer)
+            ingest(model, settings, writerFactory, qualifiedDir, continuer)
           } else {
-            model.statusLogger.put("Ingest was skipped.")
+            model.statusLogger.info("Ingest was skipped.")
           }
-      },
-        () => {
-          logger.info("cleaning up extractor")
-          writer.close()
-        })
+      }
     )
 
     Accepted(s"Ingestion has started for ${model.pathSegment}")
+  }
+
+  private def ingest(model: StateModel, settings: WriterSettings, writerFactory: OutputWriterFactory, qualifiedDir: File, continuer: Continuer): Unit = {
+    val writer = writerFactory.writer(model, settings)
+    try {
+      extractorFactory.extractor(continuer, model).extract(qualifiedDir, writer)
+    } finally {
+      logger.info("cleaning up extractor")
+      writer.close()
+    }
   }
 }

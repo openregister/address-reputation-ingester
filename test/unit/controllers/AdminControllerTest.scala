@@ -58,11 +58,11 @@ class AdminControllerTest extends FunSuite {
     val logger = new StubLogger
     val stuff = new SynchronousQueue[Boolean]()
     val worker = new WorkQueue(logger)
-    worker.push(Task("thinking", {
+    worker.push("thinking", {
       c =>
         stuff.take() // blocks until signalled
         stuff.take() // blocks until signalled
-    }))
+    })
 
     stuff.put(true) // release the lock first time
     val ac = new AdminController(worker)

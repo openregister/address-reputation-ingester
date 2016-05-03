@@ -52,7 +52,7 @@ class OutputFileWriter(model: StateModel) extends OutputWriter {
 
   override def close() {
     if (outCSV.checkError()) {
-      model.statusLogger.fail(s"Failed whilst writing to $outputFile")
+      model.fail(s"Failed whilst writing to $outputFile")
     }
     outCSV.close()
     println(s"*** document count = $count")

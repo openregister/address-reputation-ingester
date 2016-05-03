@@ -148,15 +148,16 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       val model = new StateModel("abp", 40, "full", None, logger)
       val settings = WriterSettings(1, 0)
       val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
-      model.statusLogger.fail("foo")
+      model.fail("foo")
 
       ic.queueIngest(model, settings, writerFactory)
 
       testWorker.awaitCompletion()
 
       verify(ex, never).extract(any[File], anyObject())
-      assert(logger.size === 3, logger.all.mkString("\n"))
-      assert(logger.infos.map(_.message) === List("Info:Ingest was skipped.", "Info:cleaning up extractor"))
+      assert(logger.size === 2, logger.all.mkString("\n"))
+      assert(logger.infos.map(_.message) === List("Info:Ingest was skipped."))
+      assert(logger.warns.map(_.message) === List("Warn:foo"))
 
       testWorker.terminate()
     }

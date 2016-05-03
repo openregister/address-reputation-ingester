@@ -19,34 +19,34 @@ package services.ingester.model
 import org.slf4j.helpers.MessageFormatter
 import uk.co.hmrc.logging.SimpleLogger
 
-import scala.collection.mutable
-
 class StatusLogger(val tee: SimpleLogger) {
-  private val buffer = new mutable.ListBuffer[String]()
-
+  private var buffer = List[String]()
   private var currentStatus = ""
-  private var giveUp = false
 
-  def put(format: String, arguments: AnyRef*) {
+  private def pushMessage(format: String, arguments: AnyRef*) {
+    // note that buffer builds up in reverse
+    buffer = MessageFormatter.arrayFormat(format, arguments.toArray).getMessage :: buffer
+    currentStatus = ""
+  }
+
+  def info(format: String, arguments: AnyRef*) {
     tee.info(format, arguments: _*)
-    buffer += MessageFormatter.arrayFormat(format, arguments.toArray).getMessage
-    currentStatus = ""
+    pushMessage(format, arguments: _*)
   }
 
-  def fail(format: String, arguments: AnyRef*) {
+  def warn(format: String, arguments: AnyRef*) {
     tee.warn(format, arguments: _*)
-    buffer += MessageFormatter.arrayFormat(format, arguments.toArray).getMessage
+    pushMessage(format, arguments: _*)
     currentStatus = ""
-    giveUp = true
   }
-
-  def hasFailed: Boolean = giveUp
 
   def update(s: String) {
     currentStatus = s
   }
 
-  def status: String =
-    if (currentStatus.isEmpty) buffer.mkString("\n")
-    else buffer.mkString("", "\n", "\n") + currentStatus
+  def status: String = {
+    val messages = buffer.reverse
+    if (currentStatus.isEmpty) messages.mkString("\n")
+    else messages.mkString("", "\n", "\n") + currentStatus
+  }
 }

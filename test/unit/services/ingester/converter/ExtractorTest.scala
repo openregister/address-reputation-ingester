@@ -24,7 +24,7 @@ import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import services.ingester.exec.{Task, WorkQueue}
+import services.ingester.exec.WorkQueue
 import services.ingester.model.StateModel
 import services.ingester.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
@@ -38,7 +38,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
   // scalastyle:off
   class context {
     val logger = new StubLogger
-    val model = new StateModel("", 0 , "", None, logger)
+    val model = new StateModel("", 0, "", None, logger)
     val worker = new WorkQueue(logger)
     val lock = new SynchronousQueue[Boolean]()
   }
@@ -51,11 +51,11 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
       when(mockFile.isDirectory) thenReturn true
       when(mockFile.listFiles) thenReturn Array.empty[File]
 
-      worker.push(Task("testing", {
-        c =>
-          new Extractor(c, model).extract(mockFile, dummyOut)
+      worker.push("testing", {
+        continuer =>
+          new Extractor(continuer, model).extract(mockFile, dummyOut)
           lock.put(true)
-      }))
+      })
 
       lock.take()
       worker.awaitCompletion()
@@ -84,11 +84,11 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
         }
       }
 
-      worker.push(Task("testing", {
-        c =>
-          new Extractor(c, model).extract(List(sample), out)
+      worker.push("testing", {
+        continuer =>
+          new Extractor(continuer, model).extract(List(sample), out)
           lock.put(true)
-      }))
+      })
 
       lock.take()
       worker.awaitCompletion()

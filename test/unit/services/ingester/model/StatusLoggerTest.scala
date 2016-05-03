@@ -34,10 +34,10 @@ class StatusLoggerTest extends FunSuite {
 
     val statusLogger = new StatusLogger(tee)
 
-    statusLogger.put("first")
+    statusLogger.info("first")
     assert(statusLogger.status === "first")
 
-    statusLogger.put("second")
+    statusLogger.info("second")
     assert(statusLogger.status === "first\nsecond")
 
     statusLogger.update("third")
@@ -46,7 +46,7 @@ class StatusLoggerTest extends FunSuite {
     statusLogger.update("fourth")
     assert(statusLogger.status === "first\nsecond\nfourth")
 
-    statusLogger.put("fifth")
+    statusLogger.info("fifth")
     assert(statusLogger.status === "first\nsecond\nfifth")
 
     statusLogger.update("sixth")

@@ -77,7 +77,7 @@ class OutputDBWriter(cleardownOnError: Boolean,
   private var errored = false
 
   model.index = Some(index)
-  model.statusLogger.put(s"Writing new collection '$collectionName'")
+  model.statusLogger.info(s"Writing new collection '$collectionName'")
 
   override def output(address: DbAddress) {
     try {
@@ -85,7 +85,7 @@ class OutputDBWriter(cleardownOnError: Boolean,
       count += 1
     } catch {
       case me: MongoException =>
-        model.statusLogger.fail(s"Caught Mongo Exception processing bulk insertion $me")
+        model.fail(s"Caught Mongo Exception processing bulk insertion $me")
         errored = true
         throw me
     }
@@ -97,16 +97,16 @@ class OutputDBWriter(cleardownOnError: Boolean,
         completeTheCollection()
       } catch {
         case me: MongoException =>
-          model.statusLogger.fail(s"Caught MongoException committing final bulk insert and creating index $me")
+          model.fail(s"Caught MongoException committing final bulk insert and creating index $me")
           errored = true
       }
     }
 
     if (errored) {
-      model.statusLogger.put("Error detected while loading data into MongoDB.")
+      model.statusLogger.info("Error detected while loading data into MongoDB.")
       if (cleardownOnError) collection.drop()
     } else {
-      model.statusLogger.put(s"Loaded $count documents.")
+      model.statusLogger.info(s"Loaded $count documents.")
     }
     errored = false
   }

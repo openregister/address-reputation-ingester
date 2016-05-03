@@ -71,8 +71,9 @@ class FetchController(workerFactory: WorkerFactory,
     val worker = workerFactory.worker
 
     worker.push(s"fetching ${model.pathSegment}", {
-      val dir = outputDirectory.resolve(model.pathSegment)
-      webdavFetcher.fetchAll(s"$url/${model.pathSegment}", username, password, dir)
+      continuer =>
+        val dir = outputDirectory.resolve(model.pathSegment)
+        webdavFetcher.fetchAll(s"$url/${model.pathSegment}", username, password, dir)
     })
   }
 }

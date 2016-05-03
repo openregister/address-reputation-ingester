@@ -61,11 +61,11 @@ class WorkQueue(logger: SimpleLogger) {
   worker.setDaemon(true)
   worker.start()
 
-  def push(work: String, body: => Unit, cleanup: => Unit = {}): Boolean = {
-    push(Task(work, c => body, () => cleanup))
+  def push(work: String, body: (Continuer) => Unit, cleanup: => Unit = {}): Boolean = {
+    push(Task(work, body, () => cleanup))
   }
 
-  def push(task: Task): Boolean = {
+  private def push(task: Task): Boolean = {
     queue.put(task)
     true
   }

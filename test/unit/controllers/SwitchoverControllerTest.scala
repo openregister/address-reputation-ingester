@@ -163,7 +163,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
       val sc = new SwitchoverController(workerFactory, logger, mongo, Map("abp" -> storedItem))
       val model = new StateModel("abp", 40, "full", Some(9), logger)
-      model.statusLogger.fail("foo")
+      model.fail("foo")
 
       sc.queueSwitch(model)
 

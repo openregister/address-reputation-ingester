@@ -64,7 +64,7 @@ class Extractor(continuer: Continuer, model: StateModel) {
 
 
   def extract(rootDir: File, out: OutputWriter) {
-    model.statusLogger.put(s"Ingesting from $rootDir")
+    model.statusLogger.info(s"Ingesting from $rootDir")
     extract(listFiles(rootDir), out)
   }
 
@@ -72,15 +72,15 @@ class Extractor(continuer: Continuer, model: StateModel) {
     val dt = new DiagnosticTimer
     val fp = new FirstPass(out, continuer)
 
-    model.statusLogger.put(s"Starting first pass through ${files.size} files")
+    model.statusLogger.info(s"Starting first pass through ${files.size} files")
     pass(files, out, fp)
     val fd = fp.firstPass
-    model.statusLogger.put(s"First pass complete after {}", dt)
+    model.statusLogger.info(s"First pass complete after {}", dt)
 
-    model.statusLogger.put(s"Starting second pass through ${files.size} files")
+    model.statusLogger.info(s"Starting second pass through ${files.size} files")
     val sp = new SecondPass(fd, continuer)
     pass(files, out, sp)
-    model.statusLogger.put(s"Finished after {}", dt)
+    model.statusLogger.info(s"Finished after {}", dt)
 
 
   }
@@ -96,14 +96,14 @@ class Extractor(continuer: Continuer, model: StateModel) {
         while (zip.hasNext && continuer.isBusy) {
           val next = zip.next
           val name = next.zipEntry.getName
-          model.statusLogger.put(s"Reading zip entry $name...")
+          model.statusLogger.info(s"Reading zip entry $name...")
           thisPass.processFile(next, out)
         }
       } finally {
         zip.close()
-        model.statusLogger.put(s"Reading from ${zip.nFiles} CSV files in {} took {}", file.getName, dt)
+        model.statusLogger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}", file.getName, dt)
       }
-      model.statusLogger.put(thisPass.sizeInfo)
+      model.statusLogger.info(thisPass.sizeInfo)
     }
   }
 }

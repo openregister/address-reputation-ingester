@@ -44,15 +44,17 @@ class WorkerTest extends FunSuite {
     assert(worker.status === "idle")
 
     worker.push("thinking", {
-      lock1.take() // blocks until signalled
-      logger.info("foo")
-      lock1.take()
+      continuer =>
+        lock1.take() // blocks until signalled
+        logger.info("foo")
+        lock1.take()
     })
 
     worker.push("cogitating", {
-      lock2.take()
-      logger.info("bar")
-      lock2.take()
+      continuer =>
+        lock2.take()
+        logger.info("bar")
+        lock2.take()
     })
 
     lock1.put(true)
@@ -81,8 +83,9 @@ class WorkerTest extends FunSuite {
     val lock = new SynchronousQueue[Boolean]()
 
     worker.push("thinking", {
-      logger.info("fric")
-      lock.put(true)
+      continuer =>
+        logger.info("fric")
+        lock.put(true)
     })
 
     lock.take()
@@ -104,8 +107,9 @@ class WorkerTest extends FunSuite {
     val lock = new SynchronousQueue[Boolean]()
 
     worker.push("thinking", {
-      lock.put(true)
-      throw new Exception("worker broke")
+      continuer =>
+        lock.put(true)
+        throw new Exception("worker broke")
     })
 
     lock.take()
@@ -147,8 +151,9 @@ class WorkerTest extends FunSuite {
     val lock = new SynchronousQueue[Boolean]()
 
     worker.push("thinking", {
-      lock.put(true)
-      lock.put(true)
+      continuer =>
+        lock.put(true)
+        lock.put(true)
     })
 
     lock.take()

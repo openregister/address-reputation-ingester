@@ -21,17 +21,24 @@ import uk.co.hmrc.logging.SimpleLogger
 // This mutable state object passes through the sequential steps. It is *never* shared
 // between threads, so synchronisation is not needed.
 class StateModel(
-                var product: String = "",
-                var epoch: Int = 0,
-                var variant: String = "",
-                var index: Option[Int] = None,
-                tee: SimpleLogger
-              ) {
+                  var product: String = "",
+                  var epoch: Int = 0,
+                  var variant: String = "",
+                  var index: Option[Int] = None,
+                  tee: SimpleLogger
+                ) {
 
   val statusLogger = new StatusLogger(tee)
 
+  private var failed = false
+
+  def fail(format: String, arguments: AnyRef*) {
+    failed = true
+    statusLogger.warn(format, arguments: _*)
+  }
+
   // Indicates whether an earlier stage failed.
-  def hasFailed: Boolean = statusLogger.hasFailed
+  def hasFailed: Boolean = failed
 
   def pathSegment: String = s"${product}/${epoch}/${variant}"
 
