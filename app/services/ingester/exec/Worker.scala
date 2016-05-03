@@ -52,7 +52,7 @@ case class Task(description: String,
 // flow of work cleanly.
 
 object WorkQueue {
-    val singleton = new WorkQueue(new LoggerFacade(Logger.logger))
+  val singleton = new WorkQueue(new LoggerFacade(Logger.logger))
 }
 
 
@@ -107,7 +107,8 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
   private[exec] var running = true
 
   private val executionState = new AtomicInteger(IDLE)
-  private var doing = "" // n.b. not being used for thread interlocking
+  private var doing = ""
+  // n.b. not being used for thread interlocking
   private var statusLogger = new StatusLogger(logger)
 
   def isBusy: Boolean = executionState.get == BUSY
