@@ -26,6 +26,7 @@ import org.scalatest.junit.JUnitRunner
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.ingester.exec.{Task, WorkQueue}
+import services.ingester.model.StateModel
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
@@ -58,7 +59,8 @@ class AdminControllerTest extends FunSuite {
     val logger = new StubLogger
     val stuff = new SynchronousQueue[Boolean]()
     val worker = new WorkQueue(logger)
-    worker.push("thinking", {
+    val model = new StateModel(logger)
+    worker.push("thinking", model, {
       c =>
         stuff.take() // blocks until signalled
         stuff.take() // blocks until signalled

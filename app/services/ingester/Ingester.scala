@@ -44,7 +44,7 @@ object Ingester extends App {
   val outCSV = new OutputFileWriter(model)
   val worker = new WorkQueue(Stdout)
 
-  worker.push("ingesting", {
+  worker.push("ingesting", model, {
     continuer =>
       try {
         new Extractor(continuer, model).extract(osRootFolder, outCSV)

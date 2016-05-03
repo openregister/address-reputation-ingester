@@ -49,7 +49,7 @@ class SwitchoverController(workerFactory: WorkerFactory,
 
   private[controllers] def queueSwitch(model: StateModel) {
     workerFactory.worker.push(
-      s"switching to ${model.collectionName.get}", {
+      s"switching to ${model.collectionName.get}", model, {
         continuer =>
           if (!model.hasFailed) {
             switch(model)

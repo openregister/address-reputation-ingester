@@ -51,7 +51,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
       when(mockFile.isDirectory) thenReturn true
       when(mockFile.listFiles) thenReturn Array.empty[File]
 
-      worker.push("testing", {
+      worker.push("testing", model, {
         continuer =>
           new Extractor(continuer, model).extract(mockFile, dummyOut)
           lock.put(true)
@@ -84,7 +84,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
         }
       }
 
-      worker.push("testing", {
+      worker.push("testing", model, {
         continuer =>
           new Extractor(continuer, model).extract(List(sample), out)
           lock.put(true)

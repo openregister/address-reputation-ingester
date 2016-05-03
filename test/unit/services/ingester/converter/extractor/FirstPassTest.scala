@@ -47,6 +47,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
     val dummyOut = mock[OutputWriter]
     val continuer = mock[Continuer]
     val lock = new SynchronousQueue[Boolean]()
+    val model = new StateModel(logger)
   }
 
   test(
@@ -59,7 +60,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val firstPass = new FirstPass(dummyOut, continuer)
-      worker.push("testing", {
+      worker.push("testing", model, {
         continuer =>
           lock.put(true)
           firstPass.processFile(csv, dummyOut)
@@ -88,7 +89,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val firstPass = new FirstPass(dummyOut, continuer)
-      worker.push("testing", {
+      worker.push("testing", model, {
         continuer =>
           lock.put(true)
           firstPass.processFile(csv, dummyOut)
@@ -115,7 +116,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val firstPass = new FirstPass(dummyOut, continuer)
-      worker.push("testing", {
+      worker.push("testing", model, {
         continuer =>
           lock.put(true)
           firstPass.processFile(csv, dummyOut)
@@ -142,7 +143,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val firstPass = new FirstPass(dummyOut, continuer)
-      worker.push("testing", {
+      worker.push("testing", model, {
         continuer =>
           lock.put(true)
           firstPass.processFile(csv, dummyOut)
@@ -170,7 +171,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val firstPass = new FirstPass(dummyOut, continuer)
-      worker.push("testing", {
+      worker.push("testing", model, {
         continuer =>
           lock.put(true)
           firstPass.processFile(csv, dummyOut)
@@ -211,7 +212,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
       }
 
       val firstPass = new FirstPass(dummyOut, continuer)
-      worker.push("testing", {
+      worker.push("testing", model, {
         continuer =>
           lock.put(true)
           firstPass.processFile(csv, out)
@@ -235,7 +236,7 @@ class FirstPassTest extends FunSuite with Matchers with MockitoSugar {
       when(continuer.isBusy) thenReturn false
 
       val firstPass = new FirstPass(dummyOut, continuer)
-      worker.push("testing", {
+      worker.push("testing", model, {
         continuer =>
           lock.put(true)
           worker.abort()

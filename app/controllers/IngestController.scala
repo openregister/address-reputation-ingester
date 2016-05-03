@@ -87,7 +87,7 @@ class IngestController(rootFolder: File,
     val qualifiedDir = new File(rootFolder, model.pathSegment)
 
     workerFactory.worker.push(
-      s"ingesting ${model.pathSegment}", {
+      s"ingesting ${model.pathSegment}", model, {
         continuer =>
           if (!model.hasFailed) {
             ingest(model, settings, writerFactory, qualifiedDir, continuer)

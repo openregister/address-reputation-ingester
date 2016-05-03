@@ -70,7 +70,7 @@ class FetchController(workerFactory: WorkerFactory,
   private[controllers] def queueFetch(model: StateModel): Boolean = {
     val worker = workerFactory.worker
 
-    worker.push(s"fetching ${model.pathSegment}", {
+    worker.push(s"fetching ${model.pathSegment}", model, {
       continuer =>
         val dir = outputDirectory.resolve(model.pathSegment)
         webdavFetcher.fetchAll(s"$url/${model.pathSegment}", username, password, dir)

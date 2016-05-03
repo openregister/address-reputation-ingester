@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{BlockingQueue, LinkedTransferQueue}
 
 import play.api.Logger
+import services.ingester.model.StateModel
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 
@@ -42,6 +43,7 @@ trait Continuer {
 
 
 case class Task(description: String,
+                model: StateModel,
                 action: (Continuer) => Unit)
 
 
@@ -60,8 +62,8 @@ class WorkQueue(logger: SimpleLogger) {
   worker.setDaemon(true)
   worker.start()
 
-  def push(work: String, body: (Continuer) => Unit): Boolean = {
-    push(Task(work, body))
+  def push(work: String, model: StateModel, body: (Continuer) => Unit): Boolean = {
+    push(Task(work, model, body))
   }
 
   private def push(task: Task): Boolean = {
@@ -91,7 +93,7 @@ class WorkQueue(logger: SimpleLogger) {
     worker.running = false
     abort()
     // push a 'poison' task that may never get execcuted
-    push(Task("shutting down", { c => }))
+    push(Task("shutting down", new StateModel(logger), { c => }))
   }
 }
 
