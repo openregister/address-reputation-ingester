@@ -43,7 +43,7 @@ class OutputDBWriterTest extends FunSuite {
     val collection = mock[DBCollection]
     val bulk = mock[BulkWriteOperation]
     val logger = new StubLogger()
-    val model = new StateModel("", 0, "", None, logger)
+    val model = new StateModel(logger)
 
     when(mongoDB.collectionExists(anyString())) thenReturn false
     when(mongoDB.getCollection(anyString())) thenReturn collection

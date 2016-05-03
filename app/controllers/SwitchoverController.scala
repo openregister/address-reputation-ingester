@@ -42,7 +42,7 @@ class SwitchoverController(workerFactory: WorkerFactory,
 
   def switchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = Action {
     request =>
-      val model = new StateModel(product, epoch, "", Some(index), logger)
+      val model = new StateModel(logger, product, epoch, "", Some(index))
       queueSwitch(model)
       Accepted
   }

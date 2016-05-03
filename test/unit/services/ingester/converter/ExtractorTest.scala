@@ -38,7 +38,7 @@ class ExtractorTest extends FunSuite with Matchers with MockitoSugar {
   // scalastyle:off
   class context {
     val logger = new StubLogger
-    val model = new StateModel("", 0, "", None, logger)
+    val model = new StateModel(logger)
     val worker = new WorkQueue(logger)
     val lock = new SynchronousQueue[Boolean]()
   }

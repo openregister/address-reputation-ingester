@@ -21,11 +21,11 @@ import uk.co.hmrc.logging.SimpleLogger
 // This mutable state object passes through the sequential steps. It is *never* shared
 // between threads, so synchronisation is not needed.
 class StateModel(
+                  tee: SimpleLogger,
                   var product: String = "",
                   var epoch: Int = 0,
                   var variant: String = "",
-                  var index: Option[Int] = None,
-                  tee: SimpleLogger
+                  var index: Option[Int] = None
                 ) {
 
   val statusLogger = new StatusLogger(tee)

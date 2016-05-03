@@ -77,7 +77,7 @@ class IngestController(rootFolder: File,
       }
 
       val settings = WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
-      val model = new StateModel(product, epoch, variant, None, logger)
+      val model = new StateModel(logger, product, epoch, variant, None)
       queueIngest(model, settings, writerFactory)
   }
 

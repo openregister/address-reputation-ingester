@@ -40,7 +40,7 @@ object Ingester extends App {
   val outputFolder = new File(conf.getString("app.files.outputFolder").replace("$HOME", home))
   outputFolder.mkdirs()
 
-  val model = new StateModel("abp", 0, "output", None, Stdout)
+  val model = new StateModel(Stdout, "abp", 0, "output", None)
   val outCSV = new OutputFileWriter(model)
   val worker = new WorkQueue(Stdout)
 

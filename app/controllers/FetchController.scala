@@ -62,7 +62,7 @@ class FetchController(workerFactory: WorkerFactory,
 
   def fetch(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     request =>
-      val model = new StateModel(product, epoch, variant, None, logger)
+      val model = new StateModel(logger, product, epoch, variant, None)
       val status = queueFetch(model)
       Accepted(status.toString)
   }

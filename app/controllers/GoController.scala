@@ -34,7 +34,7 @@ class GoController(logger: SimpleLogger, dbWriterFactory: OutputDBWriterFactory)
       require(isAlphaNumeric(variant))
 
       val settings = WriterSettings(1, 0)
-      val model = new StateModel(product, epoch, variant, None, logger)
+      val model = new StateModel(logger, product, epoch, variant, None)
       handleGo(model, settings)
       Accepted
   }
