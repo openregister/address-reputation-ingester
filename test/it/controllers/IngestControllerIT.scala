@@ -54,6 +54,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
 
       val outFile = new File("/var/tmp/abp_123456.txt.gz")
       outFile.exists() mustBe true
+      //TODO outFile.length() mustBe 1024L or something
     }
   }
 

@@ -156,7 +156,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       verify(ex, never).extract(any[File], anyObject())
       assert(logger.size === 4, logger.all.mkString("\n"))
-      assert(logger.infos.map(_.message) === List("Info:\nStarting ingesting abp/40/full", "Info:Ingest was skipped.", "Info:ingesting abp/40/full - completed after {}"))
+      assert(logger.infos.map(_.message) === List("Info:Starting ingesting abp/40/full", "Info:Ingest was skipped.", "Info:ingesting abp/40/full - completed after {}"))
       assert(logger.warns.map(_.message) === List("Warn:foo"))
 
       testWorker.terminate()

@@ -18,13 +18,12 @@ package services.ingester.converter
 
 import java.io.File
 
+import config.Divider
 import services.ingester.converter.extractor.{FirstPass, Pass, SecondPass}
 import services.ingester.exec.Continuer
+import services.ingester.model.StateModel
 import services.ingester.writers.OutputWriter
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
-import uk.co.hmrc.logging.SimpleLogger
-import config.Divider
-import services.ingester.model.StateModel
 
 object Extractor {
 
@@ -81,9 +80,8 @@ class Extractor(continuer: Continuer, model: StateModel) {
     val sp = new SecondPass(fd, continuer)
     pass(files, out, sp)
     model.statusLogger.info(s"Finished after {}", dt)
-
-
   }
+
 
   private def pass(files: Seq[File], out: OutputWriter, thisPass: Pass) {
     for (file <- files

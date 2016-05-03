@@ -164,7 +164,7 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
     val info = task.description.trim
     doing = " " + info
     statusLogger = task.model.statusLogger
-    statusLogger.info(s"\nStarting $info")
+    statusLogger.info(s"Starting $info")
     try {
       val timer = new DiagnosticTimer
       task.action(this)
