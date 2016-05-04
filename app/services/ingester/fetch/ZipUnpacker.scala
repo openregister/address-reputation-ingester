@@ -21,11 +21,40 @@
 
 package services.ingester.fetch
 
-import java.io.File
+import java.io.{File, FileInputStream}
+import java.nio.file.Files
+import java.util.zip.ZipInputStream
 
-class ZipUnpacker(outputRootDirectory: File) {
+import uk.co.hmrc.logging.{SimpleLogger, Stdout}
 
-  def unpack(file: File): Int = {
-    0
+class ZipUnpacker(logger: SimpleLogger) {
+
+  /**
+    * Extracts a zip file specified by the zipFilePath to a directory specified by
+    * destDirectory (will be created if does not exists)
+    */
+  def unzip(zipFile: File, destDirectory: File) {
+    if (!destDirectory.exists()) {
+      destDirectory.mkdirs()
+    }
+    val zipIn = new ZipInputStream(new FileInputStream(zipFile))
+    try {
+      var entry = Option(zipIn.getNextEntry)
+      while (entry.isDefined) {
+        val file = entry.get
+        val filePath = new File(destDirectory, file.getName)
+        if (file.isDirectory) {
+          logger.info("mkdir {}", file.getName)
+          filePath.mkdir()
+        } else {
+          logger.info("copy {}", file.getName)
+          Files.copy(zipIn, filePath.toPath)
+        }
+        zipIn.closeEntry()
+        entry = Option(zipIn.getNextEntry)
+      }
+    } finally {
+      zipIn.close()
+    }
   }
 }
