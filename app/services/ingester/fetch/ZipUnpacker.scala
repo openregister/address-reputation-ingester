@@ -29,16 +29,16 @@ import uk.co.hmrc.logging.SimpleLogger
 
 class ZipUnpacker(logger: SimpleLogger, unpackFolder: File) {
 
-  /**
-    * Extracts a zip file to a directory, which will be created if does not exist.
-    */
-  def unzip(zipFile: File, destPath: String): Int = {
-    unzip(new FileInputStream(zipFile), destPath)
+  def unzipList(zipFiles: List[File], destPath: String): Int = {
+    zipFiles.map(z => unzip(z, destPath)).sum
   }
 
-  /**
-    * Extracts a zip file to a directory, which will be created if does not exist.
-    */
+  def unzip(file: File, destPath: String): Int = {
+    if (file.getName.toLowerCase.endsWith(".zip")) {
+      unzip(new FileInputStream(file), destPath)
+    } else 0
+  }
+
   def unzip(zipFile: InputStream, destPath: String): Int = {
     val destDirectory = if (destPath.nonEmpty) new File(unpackFolder, destPath) else unpackFolder
     destDirectory.mkdirs()

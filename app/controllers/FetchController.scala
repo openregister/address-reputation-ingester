@@ -76,8 +76,8 @@ class FetchController(workerFactory: WorkerFactory,
 
     worker.push(s"fetching ${model.pathSegment}", model, {
       continuer =>
-        webdavFetcher.fetchAll(s"$url/${model.pathSegment}", username, password, model.pathSegment)
-//        unzipper.unzip()
+        val files = webdavFetcher.fetchAll(s"$url/${model.pathSegment}", username, password, model.pathSegment)
+        unzipper.unzipList(files, model.pathSegment)
     })
   }
 }

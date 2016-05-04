@@ -16,11 +16,11 @@
 
 package controllers
 
-import java.nio.file.{Files, Path}
+import java.io.File
 
+import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.mock.MockitoSugar
-import org.mockito.Mockito._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.ingester.exec.{WorkQueue, WorkerFactory}
@@ -49,11 +49,18 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
   }
 
 
-  test("fetch should download files using webdav") {
+  test("fetch should download files using webdav then unzip every zip file") {
     new context {
       val product = "product"
       val epoch = 123
       val variant = "variant"
+      val f1Txt = new File("/a/b/f1.txt")
+      val f1Zip = new File("/a/b/f1.zip")
+      val f2Txt = new File("/a/b/f2.txt")
+      val f2Zip = new File("/a/b/f2.zip")
+      val files = List(f1Txt, f1Zip, f2Txt, f2Zip)
+      when(webdavFetcher.fetchAll(s"$url/$product/$epoch/$variant", username, password, "product/123/variant")) thenReturn files
+
       val futureResponse = call(controller.fetch(product, epoch, variant), req)
 
       val response = await(futureResponse)
@@ -61,6 +68,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
 
       testWorker.awaitCompletion()
       verify(webdavFetcher).fetchAll(s"$url/$product/$epoch/$variant", username, password, "product/123/variant")
+      verify(unzipper).unzipList(files, "product/123/variant")
       teardown()
     }
   }

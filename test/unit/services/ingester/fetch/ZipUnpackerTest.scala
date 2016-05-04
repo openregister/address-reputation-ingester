@@ -44,7 +44,7 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
     val logger = new StubLogger
     val sample = new File(getClass.getClassLoader.getResource("nested.zip").getFile)
 
-    val unzipped = new ZipUnpacker(logger, tempDir).unzip(sample, "foo/bar")
+    val unzipped = new ZipUnpacker(logger, tempDir).unzipList(List(sample), "foo/bar")
     assert(unzipped === 2)
 
     val e1 = new File(tempDir, "foo/bar/data/SX9090-first3600.zip")
