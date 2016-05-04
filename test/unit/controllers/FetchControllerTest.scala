@@ -24,7 +24,7 @@ import org.mockito.Mockito._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.ingester.exec.{WorkQueue, WorkerFactory}
-import services.ingester.fetch.WebdavFetcher
+import services.ingester.fetch.{WebdavFetcher, ZipUnpacker}
 import uk.co.hmrc.logging.StubLogger
 
 class FetchControllerTest extends FunSuite with MockitoSugar {
@@ -35,11 +35,12 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       override def worker = testWorker
     }
     val webdavFetcher = mock[WebdavFetcher]
+    val unzipper = mock[ZipUnpacker]
     val logger = new StubLogger
     val url = "http://localhost/webdav"
     val username = "foo"
     val password = "bar"
-    val controller = new FetchController(workerFactory, logger, webdavFetcher, url, username, password)
+    val controller = new FetchController(workerFactory, logger, webdavFetcher, unzipper, url, username, password)
     val req = FakeRequest()
 
     def teardown() {

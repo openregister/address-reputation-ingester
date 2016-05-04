@@ -19,7 +19,6 @@
 package controllers
 
 import java.io.File
-import java.nio.file.{Path, Paths}
 
 import config.ConfigHelper._
 import play.api.Logger
@@ -42,7 +41,7 @@ object FetchControllerConfig {
   val unpackFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.unpackFolder")))
 
   val fetcher = new WebdavFetcher(FetchControllerConfig.logger, new SardineFactory2, downloadFolder)
-  val upzipper = new ZipUnpacker(FetchControllerConfig.logger, unpackFolder)
+  val unzipper = new ZipUnpacker(FetchControllerConfig.logger, unpackFolder)
 }
 
 
@@ -50,6 +49,7 @@ object FetchController extends FetchController(
   new WorkerFactory(),
   FetchControllerConfig.logger,
   FetchControllerConfig.fetcher,
+  FetchControllerConfig.unzipper,
   FetchControllerConfig.remoteServer,
   FetchControllerConfig.remoteUser,
   FetchControllerConfig.remotePass
@@ -59,6 +59,7 @@ object FetchController extends FetchController(
 class FetchController(workerFactory: WorkerFactory,
                       logger: SimpleLogger,
                       webdavFetcher: WebdavFetcher,
+                      unzipper: ZipUnpacker,
                       url: String,
                       username: String,
                       password: String) extends BaseController {
@@ -76,6 +77,7 @@ class FetchController(workerFactory: WorkerFactory,
     worker.push(s"fetching ${model.pathSegment}", model, {
       continuer =>
         webdavFetcher.fetchAll(s"$url/${model.pathSegment}", username, password, model.pathSegment)
+//        unzipper.unzip()
     })
   }
 }
