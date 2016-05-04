@@ -16,6 +16,7 @@
 
 package services.ingester.fetch
 
+import java.io.File
 import java.net.URL
 import java.nio.file._
 
@@ -25,7 +26,7 @@ import uk.co.hmrc.logging.SimpleLogger
 
 import scala.collection.JavaConverters._
 
-class WebdavFetcher(logger: SimpleLogger, factory: SardineFactory2, downloadFolder: Path, unpackFolder: Path) {
+class WebdavFetcher(logger: SimpleLogger, factory: SardineFactory2, downloadFolder: File) {
 
   // Downloads a specified set of remote files, marks them all with a completion marker (.done),
   // then returns the total bytes copied.
@@ -83,11 +84,9 @@ class WebdavFetcher(logger: SimpleLogger, factory: SardineFactory2, downloadFold
   }
 
   private def resolveAndMkdirs(outputPath: String): Path = {
-    val outputDirectory = downloadFolder.resolve(outputPath)
-    if (!Files.exists(outputDirectory)) {
-      Files.createDirectories(outputDirectory)
-    }
-    outputDirectory
+    val outputDirectory = if (outputPath.nonEmpty) new File(downloadFolder, outputPath) else downloadFolder
+    outputDirectory.mkdirs()
+    outputDirectory.toPath
   }
 }
 

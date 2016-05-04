@@ -27,22 +27,22 @@ import java.util.zip.ZipInputStream
 
 import uk.co.hmrc.logging.SimpleLogger
 
-class ZipUnpacker(logger: SimpleLogger) {
+class ZipUnpacker(logger: SimpleLogger, unpackFolder: File) {
 
   /**
     * Extracts a zip file to a directory, which will be created if does not exist.
     */
-  def unzip(zipFile: File, destDirectory: File): Int = {
-    if (!destDirectory.exists()) {
-      destDirectory.mkdirs()
-    }
-    unzip(new FileInputStream(zipFile), destDirectory)
+  def unzip(zipFile: File, destPath: String): Int = {
+    unzip(new FileInputStream(zipFile), destPath)
   }
 
   /**
     * Extracts a zip file to a directory, which will be created if does not exist.
     */
-  def unzip(zipFile: InputStream, destDirectory: File): Int = {
+  def unzip(zipFile: InputStream, destPath: String): Int = {
+    val destDirectory = if (destPath.nonEmpty) new File(unpackFolder, destPath) else unpackFolder
+    destDirectory.mkdirs()
+
     var files = 0
     val zipIn = new ZipInputStream(zipFile)
     try {

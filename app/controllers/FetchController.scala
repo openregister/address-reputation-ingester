@@ -26,7 +26,7 @@ import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent}
 import services.ingester.exec.WorkerFactory
-import services.ingester.fetch.{SardineFactory2, WebdavFetcher}
+import services.ingester.fetch.{SardineFactory2, WebdavFetcher, ZipUnpacker}
 import services.ingester.model.StateModel
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -38,10 +38,11 @@ object FetchControllerConfig {
   val remoteServer = mustGetConfigString(current.mode, current.configuration, "app.remote.server")
   val remoteUser = mustGetConfigString(current.mode, current.configuration, "app.remote.user")
   val remotePass = mustGetConfigString(current.mode, current.configuration, "app.remote.pass")
-  val downloadFolder = Paths.get(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.downloadFolder")))
-  val unpackFolder = Paths.get(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.unpackFolder")))
+  val downloadFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.downloadFolder")))
+  val unpackFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.unpackFolder")))
 
-  val fetcher = new WebdavFetcher(FetchControllerConfig.logger, new SardineFactory2, downloadFolder, unpackFolder)
+  val fetcher = new WebdavFetcher(FetchControllerConfig.logger, new SardineFactory2, downloadFolder)
+  val upzipper = new ZipUnpacker(FetchControllerConfig.logger, unpackFolder)
 }
 
 

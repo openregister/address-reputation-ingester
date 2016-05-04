@@ -25,7 +25,7 @@ object ZipUnpackerEssay {
 
   def main(args: Array[String]) {
     if (args.length >= 2) {
-      new ZipUnpacker(Stdout).unzip(new File(args(0)), new File(args(1)))
+      new ZipUnpacker(Stdout, new File(args(1))).unzip(new File(args(0)), "foo")
     }
   }
 }

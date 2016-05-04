@@ -44,11 +44,11 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
     val logger = new StubLogger
     val sample = new File(getClass.getClassLoader.getResource("nested.zip").getFile)
 
-    val unzipped = new ZipUnpacker(logger).unzip(sample, tempDir)
+    val unzipped = new ZipUnpacker(logger, tempDir).unzip(sample, "foo/bar")
     assert(unzipped === 2)
 
-    val e1 = new File(tempDir, "data/SX9090-first3600.zip")
-    val e2 = new File(tempDir, "resources/hello.txt")
+    val e1 = new File(tempDir, "foo/bar/data/SX9090-first3600.zip")
+    val e2 = new File(tempDir, "foo/bar/resources/hello.txt")
     assert(e1.exists, e1)
     assert(e2.exists, e2)
   }
@@ -63,10 +63,10 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
     val logger = new StubLogger
     val sample = new File(getClass.getClassLoader.getResource("SX9090-first20.zip").getFile)
 
-    val unzipped = new ZipUnpacker(logger).unzip(sample, tempDir)
+    val unzipped = new ZipUnpacker(logger, tempDir).unzip(sample, "foo")
     assert(unzipped === 1)
 
-    val e1 = new File(tempDir, "SX9090-first20.csv")
+    val e1 = new File(tempDir, "foo/SX9090-first20.csv")
     assert(e1.exists, e1)
   }
 
@@ -80,7 +80,7 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
     val logger = new StubLogger
     val sample = new File(getClass.getClassLoader.getResource("invalid15.csv").getFile)
 
-    val unzipped = new ZipUnpacker(logger).unzip(sample, tempDir)
+    val unzipped = new ZipUnpacker(logger, tempDir).unzip(sample, "foo")
     assert(unzipped === 0)
   }
 
