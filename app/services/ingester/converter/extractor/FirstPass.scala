@@ -16,7 +16,7 @@
 
 package services.ingester.converter.extractor
 
-import services.ingester.converter.Extractor.{Blpu, Street}
+import services.ingester.converter.Ingester.{Blpu, Street}
 import services.ingester.converter.{OSBlpu, _}
 import services.ingester.exec.Continuer
 import services.ingester.writers.OutputWriter

@@ -23,7 +23,7 @@ import controllers.SimpleValidator._
 import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Result}
-import services.ingester.converter.ExtractorFactory
+import services.ingester.converter.IngesterFactory
 import services.ingester.exec.{Continuer, WorkerFactory}
 import services.ingester.model.StateModel
 import services.ingester.writers._
@@ -45,7 +45,7 @@ object IngestController extends IngestController(
   new OutputDBWriterFactory,
   new OutputFileWriterFactory,
   new OutputNullWriterFactory,
-  new ExtractorFactory,
+  new IngesterFactory,
   new WorkerFactory())
 
 
@@ -54,7 +54,7 @@ class IngestController(downloadFolder: File,
                        dbWriterFactory: OutputDBWriterFactory,
                        fileWriterFactory: OutputFileWriterFactory,
                        nullWriterFactory: OutputNullWriterFactory,
-                       extractorFactory: ExtractorFactory,
+                       extractorFactory: IngesterFactory,
                        workerFactory: WorkerFactory
                       ) extends BaseController {
 
@@ -102,7 +102,7 @@ class IngestController(downloadFolder: File,
   private def ingest(model: StateModel, settings: WriterSettings, writerFactory: OutputWriterFactory, qualifiedDir: File, continuer: Continuer): Unit = {
     val writer = writerFactory.writer(model, settings)
     try {
-      extractorFactory.extractor(continuer, model).extract(qualifiedDir, writer)
+      extractorFactory.ingester(continuer, model).extract(qualifiedDir, writer)
     } finally {
       logger.info("cleaning up extractor")
       writer.close()

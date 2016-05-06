@@ -25,7 +25,7 @@ import services.ingester.model.StateModel
 import services.ingester.writers.OutputWriter
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
-object Extractor {
+object Ingester {
 
   case class Blpu(postcode: String, logicalStatus: Char) {
     def pack: String = s"$postcode|$logicalStatus"
@@ -56,7 +56,7 @@ object Extractor {
 }
 
 
-class Extractor(continuer: Continuer, model: StateModel, forwardData: ForwardData = ForwardData.chronicleInMemory()) {
+class Ingester(continuer: Continuer, model: StateModel, forwardData: ForwardData = ForwardData.chronicleInMemory()) {
   private def listFiles(file: File): List[File] =
     if (!file.isDirectory) Nil
     else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
@@ -106,7 +106,7 @@ class Extractor(continuer: Continuer, model: StateModel, forwardData: ForwardDat
   }
 }
 
-class ExtractorFactory {
-  def extractor(continuer: Continuer, model: StateModel): Extractor = new Extractor(continuer, model)
+class IngesterFactory {
+  def ingester(continuer: Continuer, model: StateModel): Ingester = new Ingester(continuer, model)
 }
 

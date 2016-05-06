@@ -26,7 +26,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.ingester.converter.{Extractor, ExtractorFactory}
+import services.ingester.converter.{Ingester, IngesterFactory}
 import services.ingester.exec.{Continuer, WorkQueue, WorkerFactory}
 import services.ingester.model.StateModel
 import services.ingester.writers._
@@ -78,8 +78,8 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
   class context {
     val request = FakeRequest()
     val logger = new StubLogger()
-    val ef = mock[ExtractorFactory]
-    val ex = mock[Extractor]
+    val ef = mock[IngesterFactory]
+    val ex = mock[Ingester]
     val dbf = mock[OutputDBWriterFactory]
     val fwf = mock[OutputFileWriterFactory]
     val nwf = mock[OutputNullWriterFactory]
@@ -94,7 +94,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
     when(fwf.writer(any[StateModel], any[WriterSettings])) thenReturn outputFileWriter
     when(dbf.writer(any[StateModel], any[WriterSettings])) thenReturn outputDBWriter
-    when(ef.extractor(any[Continuer], any[StateModel])) thenReturn ex
+    when(ef.ingester(any[Continuer], any[StateModel])) thenReturn ex
   }
 
   test(

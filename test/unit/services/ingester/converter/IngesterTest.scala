@@ -34,7 +34,7 @@ import uk.co.hmrc.logging.StubLogger
 import scala.collection.mutable
 
 @RunWith(classOf[JUnitRunner])
-class ExtractorTest extends FunSuite with MockitoSugar {
+class IngesterTest extends FunSuite with MockitoSugar {
 
   // scalastyle:off
   class context {
@@ -54,7 +54,7 @@ class ExtractorTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", model, {
         continuer =>
-          new Extractor(continuer, model, ForwardData.chronicleInMemoryForUnitTest()).extract(mockFile, dummyOut)
+          new Ingester(continuer, model, ForwardData.chronicleInMemoryForUnitTest()).extract(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -87,7 +87,7 @@ class ExtractorTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", model, {
         continuer =>
-          new Extractor(continuer, model, ForwardData.simpleInstance()).extract(List(sample), out)
+          new Ingester(continuer, model, ForwardData.simpleInstance()).extract(List(sample), out)
           lock.put(true)
       })
 

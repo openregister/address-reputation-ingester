@@ -16,7 +16,7 @@
 
 package services.ingester.converter.extractor
 
-import services.ingester.converter.Extractor.Street
+import services.ingester.converter.Ingester.Street
 import services.ingester.converter.{OSCleanup, OSDpa, OSLpi}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.osgb.Postcode._

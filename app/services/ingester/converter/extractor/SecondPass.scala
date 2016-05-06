@@ -16,7 +16,7 @@
 
 package services.ingester.converter.extractor
 
-import services.ingester.converter.Extractor.Blpu
+import services.ingester.converter.Ingester.Blpu
 import services.ingester.converter._
 import services.ingester.exec.Continuer
 import services.ingester.writers.OutputWriter
