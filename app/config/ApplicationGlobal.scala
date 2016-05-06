@@ -21,7 +21,7 @@ package config
 import config.ConfigHelper._
 import play.api.Play._
 import play.api._
-import services.ingester.exec.WorkQueue
+import services.exec.WorkQueue
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.gov.hmrc.play.config.RunMode
 import uk.gov.hmrc.play.graphite.GraphiteConfig

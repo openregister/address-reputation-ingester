@@ -23,8 +23,8 @@ import org.scalatest.FunSuite
 import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.ingester.exec.{WorkQueue, WorkerFactory}
-import services.ingester.fetch.{WebdavFetcher, ZipUnpacker}
+import services.exec.{WorkQueue, WorkerFactory}
+import services.fetch.{WebdavFetcher, ZipUnpacker}
 import uk.co.hmrc.logging.StubLogger
 
 class FetchControllerTest extends FunSuite with MockitoSugar {

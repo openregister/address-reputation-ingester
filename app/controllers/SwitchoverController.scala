@@ -19,8 +19,8 @@ package controllers
 import config.ApplicationGlobal
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
-import services.ingester.exec.WorkerFactory
-import services.ingester.model.StateModel
+import services.exec.WorkerFactory
+import services.model.StateModel
 import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}

@@ -24,9 +24,9 @@ import config.ConfigHelper._
 import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent}
-import services.ingester.exec.WorkerFactory
-import services.ingester.fetch.{SardineFactory2, WebdavFetcher, ZipUnpacker}
-import services.ingester.model.StateModel
+import services.exec.WorkerFactory
+import services.fetch.{SardineFactory2, WebdavFetcher, ZipUnpacker}
+import services.model.StateModel
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 

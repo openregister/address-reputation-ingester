@@ -26,10 +26,10 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.ingester.converter.{Ingester, IngesterFactory}
-import services.ingester.exec.{Continuer, WorkQueue, WorkerFactory}
-import services.ingester.model.StateModel
-import services.ingester.writers._
+import services.ingest.{Ingester, IngesterFactory}
+import services.exec.{Continuer, WorkQueue, WorkerFactory}
+import services.model.StateModel
+import services.writers._
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])

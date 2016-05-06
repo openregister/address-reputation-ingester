@@ -23,10 +23,10 @@ import controllers.SimpleValidator._
 import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Result}
-import services.ingester.converter.IngesterFactory
-import services.ingester.exec.{Continuer, WorkerFactory}
-import services.ingester.model.StateModel
-import services.ingester.writers._
+import services.ingest.IngesterFactory
+import services.exec.{Continuer, WorkerFactory}
+import services.model.StateModel
+import services.writers._
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 

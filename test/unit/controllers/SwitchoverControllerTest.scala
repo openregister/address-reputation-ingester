@@ -26,8 +26,8 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.ingester.exec.{WorkQueue, WorkerFactory}
-import services.ingester.model.StateModel
+import services.exec.{WorkQueue, WorkerFactory}
+import services.model.StateModel
 import uk.co.hmrc.address.admin.StoredMetadataItem
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger

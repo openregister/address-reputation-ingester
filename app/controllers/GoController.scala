@@ -19,8 +19,8 @@ package controllers
 import controllers.SimpleValidator._
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
-import services.ingester.model.StateModel
-import services.ingester.writers.{OutputDBWriterFactory, WriterSettings}
+import services.model.StateModel
+import services.writers.{OutputDBWriterFactory, WriterSettings}
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 

@@ -25,8 +25,8 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.ingester.exec.{Task, WorkQueue}
-import services.ingester.model.StateModel
+import services.exec.{Task, WorkQueue}
+import services.model.StateModel
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
