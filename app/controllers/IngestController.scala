@@ -54,7 +54,7 @@ class IngestController(downloadFolder: File,
                        dbWriterFactory: OutputDBWriterFactory,
                        fileWriterFactory: OutputFileWriterFactory,
                        nullWriterFactory: OutputNullWriterFactory,
-                       extractorFactory: IngesterFactory,
+                       ingestorFactory: IngesterFactory,
                        workerFactory: WorkerFactory
                       ) extends BaseController {
 
@@ -102,9 +102,9 @@ class IngestController(downloadFolder: File,
   private def ingest(model: StateModel, settings: WriterSettings, writerFactory: OutputWriterFactory, qualifiedDir: File, continuer: Continuer): Unit = {
     val writer = writerFactory.writer(model, settings)
     try {
-      extractorFactory.ingester(continuer, model).extract(qualifiedDir, writer)
+      ingestorFactory.ingester(continuer, model).ingest(qualifiedDir, writer)
     } finally {
-      logger.info("cleaning up extractor")
+      logger.info("cleaning up ingestor")
       writer.close()
     }
   }

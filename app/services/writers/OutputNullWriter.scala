@@ -30,7 +30,7 @@ class OutputNullWriter(model: StateModel) extends OutputWriter {
   }
 
   // scalastylye:off
-  override def close(): Unit = {
+  override def close() {
     model.statusLogger.info(s"*** document count = $count")
   }
 }

@@ -52,21 +52,25 @@ object Ingester {
     }
   }
 
+  private[ingest] def listFiles(file: File, extn: String): List[File] =
+    if (!file.isDirectory) Nil
+    else {
+      val (dirs, files) = file.listFiles().toList.partition(_.isDirectory)
+      val zips = files.filter(f => f.getName.toLowerCase.endsWith(extn))
+      val deeper = dirs.flatMap(listFiles(_, extn))
+      zips.sorted ++ deeper
+    }
 }
 
 
 class Ingester(continuer: Continuer, model: StateModel, forwardData: ForwardData = ForwardData.chronicleInMemory()) {
-  private def listFiles(file: File): List[File] =
-    if (!file.isDirectory) Nil
-    else file.listFiles().filter(f => f.getName.toLowerCase.endsWith(".zip")).toList
 
-
-  def extract(rootDir: File, out: OutputWriter) {
+  def ingest(rootDir: File, out: OutputWriter) {
     model.statusLogger.info(s"Ingesting from $rootDir")
-    extract(listFiles(rootDir), out)
+    ingest(Ingester.listFiles(rootDir, ".zip"), out)
   }
 
-  def extract(files: Seq[File], out: OutputWriter) {
+  private[ingest] def ingest(files: Seq[File], out: OutputWriter) {
     val dt = new DiagnosticTimer
     val fp = new FirstPass(out, continuer, forwardData)
 

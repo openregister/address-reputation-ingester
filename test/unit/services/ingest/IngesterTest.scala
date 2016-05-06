@@ -48,6 +48,13 @@ class IngesterTest extends FunSuite with MockitoSugar {
     val lock = new SynchronousQueue[Boolean]()
   }
 
+  test("finding files recursively: results should be sorted and include subdirectories") {
+    val dir = new File(getClass.getClassLoader.getResource(".").getFile)
+    val found = Ingester.listFiles(dir, ".zip")
+    assert(found.head.getName === "3files.zip")
+    assert(found.last.getPath.endsWith("/exeter/1/sample/SX9090-first3600.zip"))
+  }
+
   test("Having no files should not throw any exception") {
     new context {
       val mockFile = mock[File]
@@ -58,7 +65,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", model, {
         continuer =>
-          new Ingester(continuer, model, ForwardData.chronicleInMemoryForUnitTest()).extract(mockFile, dummyOut)
+          new Ingester(continuer, model, ForwardData.chronicleInMemoryForUnitTest()).ingest(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -70,10 +77,10 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
   test(
     """given a zip archive containing one file,
-       Extractor should iterate over the CSV lines it contains
+       Ingester should iterate over the CSV lines it contains
     """) {
     new context {
-      val sample = new File(getClass.getClassLoader.getResource("SX9090-first3600.zip").getFile)
+      val sample = new File(getClass.getClassLoader.getResource("exeter/1/sample/SX9090-first3600.zip").getFile)
       val addressesProduced = new mutable.ListBuffer[DbAddress]()
       var closed = false
 
@@ -91,7 +98,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", model, {
         continuer =>
-          new Ingester(continuer, model, ForwardData.simpleInstance()).extract(List(sample), out)
+          new Ingester(continuer, model, ForwardData.simpleInstance()).ingest(List(sample), out)
           lock.put(true)
       })
 

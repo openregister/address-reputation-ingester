@@ -110,7 +110,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       val response = await(futureResponse)
       testWorker.awaitCompletion()
 
-      verify(ex, times(1)).extract(any[File], anyObject())
+      verify(ex, times(1)).ingest(any[File], anyObject())
       assert(response.header.status / 100 === 2)
       testWorker.terminate()
     }
@@ -130,7 +130,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       testWorker.awaitCompletion()
       testWorker.terminate()
 
-      verify(ex, times(1)).extract(any[File], anyObject())
+      verify(ex, times(1)).ingest(any[File], anyObject())
       assert(response.header.status / 100 === 2)
       testWorker.terminate()
     }
@@ -154,7 +154,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       testWorker.awaitCompletion()
 
-      verify(ex, never).extract(any[File], anyObject())
+      verify(ex, never).ingest(any[File], anyObject())
       assert(logger.size === 4, logger.all.mkString("\n"))
       assert(logger.infos.map(_.message) === List("Info:Starting ingesting abp/40/full", "Info:Ingest was skipped.", "Info:ingesting abp/40/full - completed after {}"))
       assert(logger.warns.map(_.message) === List("Warn:foo"))

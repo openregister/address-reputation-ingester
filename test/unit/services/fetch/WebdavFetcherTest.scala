@@ -20,6 +20,7 @@ import java.io.{File, FileInputStream}
 import java.net.{URI, URL}
 
 import com.github.sardine.{DavResource, Sardine}
+import config.Utils._
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
@@ -127,13 +128,5 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
     val u = new URL(url)
     val s = s"${u.getPath}${f.getName}"
     new URI(s)
-  }
-
-  private def deleteDir(path: File) {
-    val sub = path.listFiles()
-    if (sub != null) {
-      sub.toSeq.foreach(f => deleteDir(f))
-    }
-    path.delete()
   }
 }

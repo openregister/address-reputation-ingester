@@ -23,6 +23,7 @@ package services.fetch
 
 import java.io.File
 
+import config.Utils._
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import uk.co.hmrc.logging.StubLogger
 
@@ -82,13 +83,5 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
 
     val unzipped = new ZipUnpacker(logger, tempDir).unzip(sample, "foo")
     assert(unzipped === 0)
-  }
-
-  private def deleteDir(path: File) {
-    val sub = path.listFiles()
-    if (sub != null) {
-      sub.toSeq.foreach(f => deleteDir(f))
-    }
-    path.delete()
   }
 }

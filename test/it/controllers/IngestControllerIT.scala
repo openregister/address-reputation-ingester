@@ -17,21 +17,26 @@
 package controllers
 
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
-import java.nio.file.{Files, Paths}
 import java.util.Date
 
 import com.mongodb.casbah.commons.MongoDBObject
+import helper.Utils._
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
 
 class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServerUnderTest {
 
+  private val tmp = System.getProperty("java.io.tmpdir")
+  // this will get deleted so BE CAREFUL to include the subdirectory!
+  private val tmpDir = new File(tmp, "ars")
+
   def appConfiguration: Map[String, String] = Map(
-    "app.files.downloadFolder" -> "/var/tmp",
-    "app.files.unpackFolder" -> "/var/tmp",
-    "app.files.outputFolder" -> "/var/tmp",
+    "app.files.downloadFolder" -> s"$tmpDir/download",
+    "app.files.unpackFolder" -> s"$tmpDir/unpack",
+    "app.files.outputFolder" -> s"$tmpDir/output",
     "app.chronicleMap.blpu.mapSize" -> "50000",
     "app.chronicleMap.dpa.setSize" -> "5000",
     "app.chronicleMap.street.mapSize" -> "2000"
@@ -47,18 +52,18 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
     """ in {
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
-      val step2 = get("/ingest/to/file/abp/123456/test")
+      val step2 = get("/ingest/to/file/exeter/1/sample")
       step2.status mustBe ACCEPTED
 
-      verifyOK("/admin/status", "busy ingesting abp/123456/test")
+      verifyOK("/admin/status", "busy ingesting exeter/1/sample")
 
-      assert(waitWhile("/admin/status", "busy ingesting abp/123456/test", 100000) === true)
+      assert(waitWhile("/admin/status", "busy ingesting exeter/1/sample", 100000) === true)
 
       verifyOK("/admin/status", "idle")
 
-      val outFile = new File("/var/tmp/abp_123456.txt.gz")
+      val outFile = new File(s"$tmpDir/output/exeter_1.txt.gz")
       outFile.exists() mustBe true
-      //TODO outFile.length() mustBe 1024L or something
+      outFile.length() mustBe 689L
     }
   }
 
@@ -76,16 +81,16 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
 
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
-      val step2 = get("/ingest/to/db/abp/123456/test?bulkSize=5&loopDelay=0")
+      val step2 = get("/ingest/to/db/exeter/1/sample?bulkSize=5&loopDelay=0")
       step2.status mustBe ACCEPTED
 
-      verifyOK("/admin/status", "busy ingesting abp/123456/test")
+      verifyOK("/admin/status", "busy ingesting exeter/1/sample")
 
-      assert(waitWhile("/admin/status", "busy ingesting abp/123456/test", 100000) === true)
+      assert(waitWhile("/admin/status", "busy ingesting exeter/1/sample", 100000) === true)
 
       verifyOK("/admin/status", "idle")
 
-      val collection = casbahMongoConnection().getConfiguredDb("abp_123456_0")
+      val collection = casbahMongoConnection().getConfiguredDb("exeter_1_0")
       collection.size mustBe 30 // 29 records plus 1 metadata
       // (see similar tests in ExtractorTest)
 
@@ -96,19 +101,16 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
     }
   }
 
-
   override def beforeAppServerStarts() {
-    val sample = getClass.getClassLoader.getResourceAsStream("SX9090-first3600.zip")
-    val downloadFolder = Paths.get("/var/tmp/abp/123456/test")
-    downloadFolder.toFile.mkdirs()
-    Files.copy(sample, downloadFolder.resolve("SX9090-first3600.zip"), REPLACE_EXISTING)
+    deleteDir(tmpDir)
+    val sample = getClass.getClassLoader.getResourceAsStream("exeter/1/sample/SX9090-first3600.zip")
+    val downloadFolder = new File(tmpDir, "download/exeter/1/sample")
+    downloadFolder.mkdirs()
+    Files.copy(sample, new File(downloadFolder, "SX9090-first3600.zip").toPath, REPLACE_EXISTING)
     sample.close()
   }
 
   override def afterAppServerStops() {
-    val inFile = new File("/var/tmp/abp/123456/test/SX9090-first3600.zip")
-    inFile.delete()
-    val outFile = new File("/var/tmp/abp_123456.txt.gz")
-    outFile.delete()
+    deleteDir(tmpDir)
   }
 }
