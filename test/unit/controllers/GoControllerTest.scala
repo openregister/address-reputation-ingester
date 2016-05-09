@@ -24,16 +24,19 @@ package controllers
 import java.io.File
 import java.net.URL
 
+import com.github.sardine.Sardine
 import org.junit.runner.RunWith
+import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.exec.{WorkQueue, WorkerFactory}
-import services.fetch.{WebdavFetcher, ZipUnpacker}
-import services.writers.OutputFileWriterFactory
+import services.exec.{Continuer, WorkQueue}
+import services.fetch.SardineWrapper
+import services.model.{StateModel, StatusLogger}
+import services.writers._
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
@@ -45,30 +48,48 @@ class GoControllerTest extends FunSuite with MockitoSugar {
 
 
   trait context {
-    val testWorker = new WorkQueue(new StubLogger())
-    val workerFactory = new WorkerFactory {
-      override def worker = testWorker
-    }
-    val webdavFetcher = mock[WebdavFetcher]
-    val unzipper = mock[ZipUnpacker]
-    val logger = new StubLogger
-//    val controller = new GoController(logger, workerFactory, webdavFetcher, unzipper)
-    val req = FakeRequest()
+    val request = FakeRequest()
+    val logger = new StubLogger()
+    val status = new StatusLogger(logger)
+
+    val sardine = mock[Sardine]
+    val sardineFactory = mock[SardineWrapper]
+    when(sardineFactory.begin) thenReturn sardine
+
+    val folder = new File(".")
+    val worker = new WorkQueue(new StubLogger())
+    val workerFactory = new StubWorkerFactory(worker)
+
+    val fetchController = mock[FetchController]
+    val ingestController = mock[IngestController]
+    val switchoverController = mock[SwitchoverController]
+
+    val goController = new GoController(logger, workerFactory, sardineFactory, fetchController, ingestController, switchoverController)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]
       val request = FakeRequest()
 
-//      intercept[IllegalArgumentException] {
-//        await(call(controller.doGo(target, product, epoch, variant), request))
-//      }
+      intercept[IllegalArgumentException] {
+        await(call(goController.doGo(target, product, epoch, variant), request))
+      }
     }
 
     def teardown() {
-      testWorker.terminate()
+      worker.terminate()
     }
   }
 
+
+  test(
+    """
+       when an invalid target is passed to ingest
+       then an exception is thrown
+    """) {
+    new context {
+      parameterTest("bong", "abi", 40, "full")
+    }
+  }
 
   test(
     """
@@ -90,26 +111,59 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     }
   }
 
-  test("fetch should download files using webdav then unzip every zip file") {
+  test("""Given an aborted state,
+          doGo should not download files using webdav
+          then not unzip every zip file
+          and not switch over collections
+       """) {
     new context {
-      val product = "product"
-      val epoch = 123
-      val variant = "variant"
-      val f1Txt = new File("/a/b/f1.txt")
-      val f1Zip = new File("/a/b/f1.zip")
-      val f2Txt = new File("/a/b/f2.txt")
-      val f2Zip = new File("/a/b/f2.zip")
-      val files = List(f1Txt, f1Zip, f2Txt, f2Zip)
-//      when(webdavFetcher.fetchAll(s"$url/$product/$epoch/$variant", username, password, "product/123/variant")) thenReturn files
-//
-//      val futureResponse = call(controller.doGo(target, product, epoch, variant), req)
-//
-//      val response = await(futureResponse)
-//      assert(response.header.status === 202)
-//
-//      testWorker.awaitCompletion()
-//      verify(webdavFetcher).fetchAll(s"$url/$product/$epoch/$variant", username, password, "product/123/variant")
-//      verify(unzipper).unzipList(files, "product/123/variant")
+      // when
+      val response = await(call(goController.doGo("null", "product", 123, "variant"), request))
+
+      // then
+      worker.awaitCompletion()
+      assert(response.header.status === ACCEPTED)
+      verify(fetchController).fetch(any[StateModel], any[StatusLogger])
+      verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
+      verify(switchoverController, never).switchIfOK(any[StateModel], any[StatusLogger])
+      teardown()
+    }
+  }
+
+  test("""Given a null target,
+          doGo should download files using webdav
+          then unzip every zip file
+          but not switch over collections
+       """) {
+    new context {
+      // when
+      val response = await(call(goController.doGo("null", "product", 123, "variant"), request))
+
+      // then
+      worker.awaitCompletion()
+      assert(response.header.status === ACCEPTED)
+      verify(fetchController).fetch(any[StateModel], any[StatusLogger])
+      verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
+      verify(switchoverController, never).switchIfOK(any[StateModel], any[StatusLogger])
+      teardown()
+    }
+  }
+
+  test("""Given a db target,
+          doGo should download files using webdav
+          then unzip every zip file
+          and then switch over collections
+       """) {
+    new context {
+      // when
+      val response = await(call(goController.doGo("db", "product", 123, "variant"), request))
+
+      // then
+      worker.awaitCompletion()
+      assert(response.header.status === ACCEPTED)
+      verify(fetchController).fetch(any[StateModel], any[StatusLogger])
+      verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
+      verify(switchoverController).switchIfOK(any[StateModel], any[StatusLogger])
       teardown()
     }
   }

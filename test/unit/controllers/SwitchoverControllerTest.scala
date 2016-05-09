@@ -57,10 +57,10 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     val model = new StateModel(product, epoch, "", Some(index))
     val status = new StatusLogger(logger)
 
-    val sc = new SwitchoverController(workerFactory, logger, mongo, Map("abi" -> storedItem))
+    val switchoverController = new SwitchoverController(workerFactory, logger, mongo, Map("abi" -> storedItem))
 
     intercept[IllegalArgumentException] {
-      sc.switchIfOK(model, status)
+      switchoverController.switchIfOK(model, status)
     }
   }
 
@@ -91,9 +91,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn Some(MongoDBObject())
 
       val sc = new SwitchoverController(workerFactory, logger, mongo, Map("abp" -> storedItem))
-      val futureResponse = call(sc.doSwitchTo("abp", 40, 9), request)
+      val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
 
-      val response = await(futureResponse)
       assert(response.header.status / 100 === 2)
       testWorker.awaitCompletion()
       testWorker.terminate()
@@ -113,9 +112,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(db.collectionExists(anyString)) thenReturn false
 
       val sc = new SwitchoverController(workerFactory, logger, mongo, Map("abp" -> storedItem))
-      val futureResponse = call(sc.doSwitchTo("abp", 40, 9), request)
+      val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
 
-      val response = await(futureResponse)
       testWorker.awaitCompletion()
       testWorker.terminate()
 
@@ -138,9 +136,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn None
 
       val sc = new SwitchoverController(workerFactory, logger, mongo, Map("abp" -> storedItem))
-      val futureResponse = call(sc.doSwitchTo("abp", 40, 9), request)
+      val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
 
-      val response = await(futureResponse)
       testWorker.awaitCompletion()
       testWorker.terminate()
 

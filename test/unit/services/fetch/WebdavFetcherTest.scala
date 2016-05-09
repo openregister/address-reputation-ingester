@@ -52,7 +52,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
   }
 
   "fetch all" should {
-    "copy files to output directory" in new Context("/webdav") {
+    "copy files to output directory if it is empty" in new Context("/webdav") {
       // given
       deleteDir(outputDirectory)
       when(sardine.list(url)) thenReturn resources
@@ -80,10 +80,14 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       // finally
       teardown()
     }
+
+    "not copy files to output directory if the files are already preseny" in new Context("/webdav") {
+      //TODO
+    }
   }
 
   "fetch list" should {
-    "copy files to output directory" in new Context("/webdav") {
+    "copy files to output directory if it is empty" in new Context("/webdav") {
       // given
       deleteDir(outputDirectory)
       when(sardine.list(url)) thenReturn resources

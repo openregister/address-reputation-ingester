@@ -21,7 +21,7 @@ import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
 import services.fetch.SardineWrapper
 import services.model.{StateModel, StatusLogger}
-import services.writers.{OutputDBWriterFactory, WriterSettings}
+import services.writers.WriterSettings
 import uk.co.hmrc.logging.SimpleLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -30,27 +30,35 @@ object GoController extends GoController(
   ControllerConfig.workerFactory,
   ControllerConfig.sardine,
   FetchController,
-  IngestController
-)
+  IngestController,
+  SwitchoverController
+) {
+  val knownProducts = Seq("abi", "abp")
+}
 
 class GoController(logger: SimpleLogger,
                    workerFactory: WorkerFactory,
                    sardine: SardineWrapper,
                    fetchController: FetchController,
-                   ingestController: IngestController) extends BaseController {
+                   ingestController: IngestController,
+                   switchoverController: SwitchoverController) extends BaseController {
 
   def doGoAuto(target: String): Action[AnyContent] = Action {
     request =>
       require(IngestControllerHelper.isSupportedTarget(target))
 
       val settings = WriterSettings(1, 0)
-      val model1 = new StateModel()
       val status = new StatusLogger(logger)
-      workerFactory.worker.push(s"finding ${model1.pathSegment}", status, {
+      workerFactory.worker.push(s"automatic search", status, {
         continuer =>
           val tree = sardine.exploreRemoteTree
-          val files = tree.findLatestFor(model1.product)
-          pipeline(target, model1, status, settings)
+          for (product <- GoController.knownProducts) {
+            val found = tree.findLatestFor(product)
+            if (found.isDefined) {
+              val model = StateModel(found.get)
+              pipeline(target, model, status, settings)
+            }
+          }
       })
       Accepted
   }
@@ -62,18 +70,22 @@ class GoController(logger: SimpleLogger,
       require(isAlphaNumeric(variant))
 
       val settings = WriterSettings(1, 0)
-      val model1 = new StateModel(product, epoch, variant, None)
+      val model = new StateModel(product, epoch, variant, None)
       val status = new StatusLogger(logger)
-      pipeline(target, model1, status, settings)
+      pipeline(target, model, status, settings)
       Accepted
   }
 
   private def pipeline(target: String, model1: StateModel, status: StatusLogger, settings: WriterSettings) {
     workerFactory.worker.push(s"finding ${model1.pathSegment}", status, {
       continuer =>
-        val model2 = fetchController.fetch(model1, status)
-        val model3 = ingestController.ingestIfOK(model2, status, settings, target, continuer)
-        SwitchoverController.switchIfOK(model3, status)
+        if (continuer.isBusy) {
+          val model2 = fetchController.fetch(model1, status)
+          val model3 = ingestController.ingestIfOK(model2, status, settings, target, continuer)
+          if (target == "db") {
+            switchoverController.switchIfOK(model3, status)
+          }
+        }
     })
   }
 

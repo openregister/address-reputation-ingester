@@ -63,9 +63,9 @@ class SwitchoverController(workerFactory: WorkerFactory,
   private def switch(model: StateModel, status: StatusLogger): StateModel = {
 
     val addressBaseCollectionName: StoredMetadataItem = {
-      val cn = metadata.get(model.product)
+      val cn = metadata.get(model.productName)
       if (cn.isEmpty) {
-        throw new IllegalArgumentException(s"Unsupported product ${model.product}")
+        throw new IllegalArgumentException(s"Unsupported product ${model.productName}")
       }
       cn.get
     }

@@ -19,18 +19,24 @@ package services.model
 import services.fetch.OSGBProduct
 
 case class StateModel(
-                       product: String = "",
+                       productName: String = "",
                        epoch: Int = 0,
                        variant: String = "",
                        index: Option[Int] = None,
-                       products: List[OSGBProduct] = Nil,
+                       product: Option[OSGBProduct] = None,
                        hasFailed: Boolean = false
                      ) {
 
-  def pathSegment: String = s"${product}/${epoch}/${variant}"
+  def pathSegment: String = s"${productName}/${epoch}/${variant}"
 
-  def collectionBaseName: String = s"${product}_${epoch}"
+  def collectionBaseName: String = s"${productName}_${epoch}"
 
   def collectionName: Option[String] = index.map(i => s"${collectionBaseName}_$i")
 }
 
+
+object StateModel {
+  def apply(product: OSGBProduct): StateModel = {
+    new StateModel(product.productName, product.epoch)
+  }
+}

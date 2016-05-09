@@ -52,10 +52,8 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val nullFactory = new StubOutputNullWriterFactory(outputNullWriter)
 
     val folder = new File(".")
-    val testWorker = new WorkQueue(new StubLogger())
-    val workerFactory = new WorkerFactory {
-      override def worker = testWorker
-    }
+    val worker = new WorkQueue(new StubLogger())
+    val workerFactory = new StubWorkerFactory(worker)
 
     val ingestController = new IngestController(folder, logger, dbFactory, fwFactory, nullFactory, ingesterFactory, workerFactory)
 
@@ -106,14 +104,14 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       then a successful response is returned
     """) {
     new context {
-      val futureResponse = call(ingestController.doIngestTo("db", "abp", 40, "full", Some(1), Some(0)), request)
+      // when
+      val response = await(call(ingestController.doIngestTo("db", "abp", 40, "full", Some(1), Some(0)), request))
 
-      val response = await(futureResponse)
-      testWorker.awaitCompletion()
-
+      // then
+      worker.awaitCompletion()
       verify(ingester, times(1)).ingest(any[File], anyObject())
       assert(response.header.status / 100 === 2)
-      testWorker.terminate()
+      worker.terminate()
     }
   }
 
@@ -123,15 +121,14 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       then a successful response is returned
     """) {
     new context {
-      val futureResponse = call(ingestController.doIngestTo("file", "abp", 40, "full", None, None), request)
+      // when
+      val response = await(call(ingestController.doIngestTo("file", "abp", 40, "full", None, None), request))
 
-      val response = await(futureResponse)
-      testWorker.awaitCompletion()
-      testWorker.terminate()
-
+      // then
+      worker.awaitCompletion()
       verify(ingester, times(1)).ingest(any[File], anyObject())
       assert(response.header.status / 100 === 2)
-      testWorker.terminate()
+      worker.terminate()
     }
   }
 
@@ -146,14 +143,17 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       val model1 = new StateModel("abp", 40, "full", None, hasFailed = true)
       val status = new StatusLogger(logger)
       val settings = WriterSettings(1, 0)
+
+      // when
       val model2 = ingestController.ingestIfOK(model1, status, settings, "null", new StubContinuer)
 
+      // then
       assert(model2 === model1)
       verify(ingester, never).ingest(any[File], anyObject())
       assert(logger.size === 1, logger.all.mkString("\n"))
       assert(logger.infos.map(_.message) === List("Info:Ingest was skipped."))
 
-      testWorker.terminate()
+      worker.terminate()
     }
   }
 }

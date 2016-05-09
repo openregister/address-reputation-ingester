@@ -26,29 +26,33 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.exec.{WorkQueue, WorkerFactory}
-import services.fetch.{WebdavFetcher, ZipUnpacker}
+import services.exec.WorkQueue
+import services.fetch.{OSGBProduct, WebDavFile, WebdavFetcher, ZipUnpacker}
+import services.model.{StateModel, StatusLogger}
 import services.writers.OutputFileWriterFactory
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
 class FetchControllerTest extends FunSuite with MockitoSugar {
 
-  val url = new URL("http://localhost/webdav")
+  val base = "http://somedavserver.com:81/webdav"
+  val url = new URL(base)
   val username = "foo"
   val password = "bar"
+  val zip1 = WebDavFile(new URL(base + "/product/123/variant/DVD1.zip"), "DVD1.zip", isZipFile = true)
+  val zip2 = WebDavFile(new URL(base + "/product/123/variant/DVD2.zip"), "DVD2.zip", isZipFile = true)
 
 
   trait context {
-    val testWorker = new WorkQueue(new StubLogger())
-    val workerFactory = new WorkerFactory {
-      override def worker = testWorker
-    }
+    val worker = new WorkQueue(new StubLogger())
+    val workerFactory = new StubWorkerFactory(worker)
     val webdavFetcher = mock[WebdavFetcher]
     val unzipper = mock[ZipUnpacker]
     val logger = new StubLogger
+    val status = new StatusLogger(logger)
+    val request = FakeRequest()
+
     val fetchController = new FetchController(logger, workerFactory, webdavFetcher, unzipper, url)
-    val req = FakeRequest()
 
     def parameterTest(product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]
@@ -60,7 +64,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
     }
 
     def teardown() {
-      testWorker.terminate()
+      worker.terminate()
     }
   }
 
@@ -87,6 +91,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
 
   test("fetch should download files using webdav then unzip every zip file") {
     new context {
+      // given
       val product = "product"
       val epoch = 123
       val variant = "variant"
@@ -97,13 +102,35 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       val files = List(f1Txt, f1Zip, f2Txt, f2Zip)
       when(webdavFetcher.fetchAll(s"$url/$product/$epoch/$variant", "product/123/variant")) thenReturn files
 
-      val futureResponse = call(fetchController.doFetch(product, epoch, variant), req)
+      // when
+      val response = await(call(fetchController.doFetch(product, epoch, variant), request))
 
-      val response = await(futureResponse)
+      // then
+      worker.awaitCompletion()
       assert(response.header.status === 202)
-
-      testWorker.awaitCompletion()
       verify(webdavFetcher).fetchAll(s"$url/$product/$epoch/$variant", "product/123/variant")
+      verify(unzipper).unzipList(files, "product/123/variant")
+      teardown()
+    }
+  }
+
+  test("fetch should download a list of files passed in via the model using webdav then unzip every zip file") {
+    new context {
+      // given
+      val product = OSGBProduct("product", 123, List(zip1))
+      val model1 = StateModel("product", 123, "variant", None, Some(product))
+
+      val f1Txt = new File("/a/b/DVD1.txt")
+      val f1Zip = new File("/a/b/DVD1.zip")
+      val files = List(f1Txt, f1Zip)
+      when(webdavFetcher.fetchList(product, "product/123/variant")) thenReturn files
+
+      // when
+      val model2 = fetchController.fetch(model1, status)
+
+      // then
+      assert(model2 === model1)
+      verify(webdavFetcher).fetchList(product, "product/123/variant")
       verify(unzipper).unzipList(files, "product/123/variant")
       teardown()
     }
