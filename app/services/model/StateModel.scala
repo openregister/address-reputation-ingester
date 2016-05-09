@@ -16,6 +16,7 @@
 
 package services.model
 
+import services.fetch.OSGBProduct
 import uk.co.hmrc.logging.SimpleLogger
 
 // This mutable state object passes through the sequential steps. It is *never* shared
@@ -25,7 +26,8 @@ class StateModel(
                   var product: String = "",
                   var epoch: Int = 0,
                   var variant: String = "",
-                  var index: Option[Int] = None
+                  var index: Option[Int] = None,
+                  var products: List[OSGBProduct] = Nil
                 ) {
 
   val statusLogger = new StatusLogger(tee)

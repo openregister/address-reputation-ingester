@@ -90,25 +90,26 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         // when
         val root = finder.exploreRemoteTree(new URL(base + "/"), "foo", "bar")
         // then
-        root must be(WebDavFile(new URL(base + "/"), "webdav", true, false, false, List(
-          WebDavFile(new URL(base + "/abi/"), "abi", true, false, false, Nil),
-          WebDavFile(new URL(base + "/abp/"), "abp", true, false, false, List(
-            WebDavFile(new URL(base + "/abp/38/"), "38", true, false, false, List(
-              WebDavFile(new URL(base + "/abp/38/full/"), "full", true, false, false, List(
-                WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", false, false, true, Nil),
-                WebDavFile(new URL(base + "/abp/38/full/DVD1.txt"), "DVD1.txt", false, true, false, Nil)
-              ))
-            )),
-            WebDavFile(new URL(base + "/abp/39/"), "39", true, false, false, List(
-              WebDavFile(new URL(base + "/abp/39/full/"), "full", true, false, false, List(
-                WebDavFile(new URL(base + "/abp/39/full/DVD1.zip"), "DVD1.zip", false, false, true, Nil),
-                WebDavFile(new URL(base + "/abp/39/full/DVD1.txt"), "DVD1.txt", false, true, false, Nil),
-                WebDavFile(new URL(base + "/abp/39/full/DVD2.zip"), "DVD2.zip", false, false, true, Nil),
-                WebDavFile(new URL(base + "/abp/39/full/DVD2.txt"), "DVD2.txt", false, true, false, Nil)
+        root must be(WebDavTree(
+          WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true),
+            WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = List(
+                WebDavFile(new URL(base + "/abp/38/full/"), "full", isDirectory = true, files = List(
+                  WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                  WebDavFile(new URL(base + "/abp/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
+                ))
+              )),
+              WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
+                WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
+                  WebDavFile(new URL(base + "/abp/39/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                  WebDavFile(new URL(base + "/abp/39/full/DVD1.txt"), "DVD1.txt", isPlainText = true),
+                  WebDavFile(new URL(base + "/abp/39/full/DVD2.zip"), "DVD2.zip", isZipFile = true),
+                  WebDavFile(new URL(base + "/abp/39/full/DVD2.txt"), "DVD2.txt", isPlainText = true)
+                ))
               ))
             ))
-          ))
-        )))
+          ))))
       }
     }
 
@@ -126,25 +127,26 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         // when
         val root = finder.exploreRemoteTree(new URL(base + "/"), "foo", "bar")
         // then
-        root must be(WebDavFile(new URL(base + "/"), "webdav", true, false, false, List(
-          WebDavFile(new URL(base + "/abi/"), "abi", true, false, false, Nil),
-          WebDavFile(new URL(base + "/abp/"), "abp", true, false, false, List(
-            WebDavFile(new URL(base + "/abp/38/"), "38", true, false, false, List(
-              WebDavFile(new URL(base + "/abp/38/full/"), "full", true, false, false, List(
-                WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", false, false, true, Nil),
-                WebDavFile(new URL(base + "/abp/38/full/DVD1.txt"), "DVD1.txt", false, true, false, Nil)
-              ))
-            )),
-            WebDavFile(new URL(base + "/abp/39/"), "39", true, false, false, List(
-              WebDavFile(new URL(base + "/abp/39/full/"), "full", true, false, false, List(
-                WebDavFile(new URL(base + "/abp/39/full/DVD1.zip"), "DVD1.zip", false, false, true, Nil),
-                WebDavFile(new URL(base + "/abp/39/full/DVD1.txt"), "DVD1.txt", false, true, false, Nil),
-                WebDavFile(new URL(base + "/abp/39/full/DVD2.zip"), "DVD2.zip", false, false, true, Nil),
-                WebDavFile(new URL(base + "/abp/39/full/DVD2.txt"), "DVD2.txt", false, true, false, Nil)
+        root must be(WebDavTree(
+          WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/abi/"), "abi", true, false, false, Nil),
+            WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = List(
+                WebDavFile(new URL(base + "/abp/38/full/"), "full", isDirectory = true, files = List(
+                  WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                  WebDavFile(new URL(base + "/abp/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
+                ))
+              )),
+              WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
+                WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
+                  WebDavFile(new URL(base + "/abp/39/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                  WebDavFile(new URL(base + "/abp/39/full/DVD1.txt"), "DVD1.txt", isPlainText = true),
+                  WebDavFile(new URL(base + "/abp/39/full/DVD2.zip"), "DVD2.zip", isZipFile = true),
+                  WebDavFile(new URL(base + "/abp/39/full/DVD2.txt"), "DVD2.txt", isPlainText = true)
+                ))
               ))
             ))
-          ))
-        )))
+          ))))
       }
     }
   }

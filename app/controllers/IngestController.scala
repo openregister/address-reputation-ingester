@@ -20,14 +20,13 @@ import java.io.{File, FileNotFoundException}
 
 import config.ConfigHelper._
 import controllers.SimpleValidator._
-import play.api.Logger
 import play.api.Play._
 import play.api.mvc.{Action, AnyContent, Result}
-import services.ingest.IngesterFactory
 import services.exec.{Continuer, WorkerFactory}
+import services.ingest.IngesterFactory
 import services.model.StateModel
 import services.writers._
-import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
+import uk.co.hmrc.logging.SimpleLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
@@ -41,12 +40,12 @@ object IngestControllerHelper {
 
 object IngestController extends IngestController(
   IngestControllerHelper.downloadFolder,
-  new LoggerFacade(Logger.logger),
+  ControllerConfig.logger,
   new OutputDBWriterFactory,
   new OutputFileWriterFactory,
   new OutputNullWriterFactory,
   new IngesterFactory,
-  new WorkerFactory())
+  ControllerConfig.workerFactory)
 
 
 class IngestController(downloadFolder: File,

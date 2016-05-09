@@ -25,10 +25,10 @@ import scala.collection.JavaConverters._
 
 class SardineWrapper(logger: SimpleLogger, factory: SardineFactory2) {
 
-  def exploreRemoteTree(url: URL, username: String, password: String): WebDavFile = {
+  def exploreRemoteTree(url: URL, username: String, password: String): WebDavTree = {
     val sardine = factory.begin(username, password)
     val s = url.getProtocol + "://" + url.getAuthority
-    exploreRemoteTree(s, url, sardine)
+    WebDavTree(exploreRemoteTree(s, url, sardine))
   }
 
   private def exploreRemoteTree(base: String, url: URL, sardine: Sardine): WebDavFile = {
@@ -66,28 +66,6 @@ class SardineWrapper(logger: SimpleLogger, factory: SardineFactory2) {
     val dot = filename.lastIndexOf('.')
     if (dot < 0) ""
     else filename.substring(dot)
-  }
-}
-
-
-case class WebDavFile(url: URL, fullName: String,
-                      isDirectory: Boolean, isPlainText: Boolean, isZipFile: Boolean,
-                      files: List[WebDavFile]) {
-
-  val name = {
-    val dot = fullName.lastIndexOf('.')
-    if (dot < 0) fullName
-    else fullName.substring(0, dot)
-  }
-
-  override def toString: String = indentedString("")
-
-  private def indentedString(i: String): String = {
-    val slash = if (isDirectory) "/" else ""
-    val zip = if (isZipFile) " (zip)" else ""
-    val txt = if (isPlainText) " (txt)" else ""
-    s"$i$fullName$slash$txt$zip" +
-      files.map(_.indentedString(i + "  ")).mkString("\n", "", "")
   }
 }
 

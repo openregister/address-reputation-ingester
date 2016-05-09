@@ -16,17 +16,42 @@
 
 package controllers
 
+import java.net.URL
+
 import controllers.SimpleValidator._
-import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
+import services.exec.WorkerFactory
+import services.fetch.SardineWrapper
 import services.model.StateModel
 import services.writers.{OutputDBWriterFactory, WriterSettings}
-import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
+import uk.co.hmrc.logging.SimpleLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-object GoController extends GoController(new LoggerFacade(Logger.logger), new OutputDBWriterFactory)
+object GoController extends GoController(
+  ControllerConfig.logger,
+  ControllerConfig.workerFactory,
+  ControllerConfig.sardine,
+  ControllerConfig.remoteServer,
+  ControllerConfig.remoteUser,
+  ControllerConfig.remotePass,
+  new OutputDBWriterFactory
+)
 
-class GoController(logger: SimpleLogger, dbWriterFactory: OutputDBWriterFactory) extends BaseController {
+class GoController(logger: SimpleLogger,
+                   workerFactory: WorkerFactory,
+                   sardine: SardineWrapper,
+                   url: URL,
+                   username: String,
+                   password: String,
+                   dbWriterFactory: OutputDBWriterFactory) extends BaseController {
+
+  def goAuto: Action[AnyContent] = Action {
+    request =>
+      val settings = WriterSettings(1, 0)
+      val model = new StateModel(logger)
+      handleGoAuto(model, settings)
+      Accepted
+  }
 
   def go(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     request =>
@@ -37,6 +62,20 @@ class GoController(logger: SimpleLogger, dbWriterFactory: OutputDBWriterFactory)
       val model = new StateModel(logger, product, epoch, variant, None)
       handleGo(model, settings)
       Accepted
+  }
+
+  private[controllers] def handleGoAuto(model: StateModel, settings: WriterSettings) {
+    FetchController.queueFetch(model)
+    IngestController.queueIngest(model, settings, dbWriterFactory)
+    SwitchoverController.queueSwitch(model)
+  }
+
+  private[controllers] def queueFind(model: StateModel): Boolean = {
+    workerFactory.worker.push(s"finding ${model.pathSegment}", model, {
+      continuer =>
+        val tree = sardine.exploreRemoteTree(url, username, password)
+        val files = tree.findLatestFor(model.product)
+    })
   }
 
   private[controllers] def handleGo(model: StateModel, settings: WriterSettings) {

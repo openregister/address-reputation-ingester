@@ -17,6 +17,7 @@
 package controllers
 
 import java.io.File
+import java.net.URL
 
 import org.mockito.Mockito._
 import org.scalatest.FunSuite
@@ -29,6 +30,10 @@ import uk.co.hmrc.logging.StubLogger
 
 class FetchControllerTest extends FunSuite with MockitoSugar {
 
+  val url = new URL("http://localhost/webdav")
+  val username = "foo"
+  val password = "bar"
+
   trait context {
     val testWorker = new WorkQueue(new StubLogger())
     val workerFactory = new WorkerFactory {
@@ -37,10 +42,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
     val webdavFetcher = mock[WebdavFetcher]
     val unzipper = mock[ZipUnpacker]
     val logger = new StubLogger
-    val url = "http://localhost/webdav"
-    val username = "foo"
-    val password = "bar"
-    val controller = new FetchController(workerFactory, logger, webdavFetcher, unzipper, url, username, password)
+    val controller = new FetchController(logger, workerFactory, webdavFetcher, unzipper, url, username, password)
     val req = FakeRequest()
 
     def teardown() {

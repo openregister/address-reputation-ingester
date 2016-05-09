@@ -18,49 +18,31 @@
 
 package controllers
 
-import java.io.File
+import java.net.URL
 
-import config.ConfigHelper._
-import play.api.Logger
-import play.api.Play._
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
-import services.fetch.{SardineFactory2, WebdavFetcher, ZipUnpacker}
+import services.fetch.{WebdavFetcher, ZipUnpacker}
 import services.model.StateModel
-import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
+import uk.co.hmrc.logging.SimpleLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
-object FetchControllerConfig {
-  val logger = new LoggerFacade(Logger.logger)
-
-  val remoteServer = mustGetConfigString(current.mode, current.configuration, "app.remote.server")
-  val remoteUser = mustGetConfigString(current.mode, current.configuration, "app.remote.user")
-  val remotePass = mustGetConfigString(current.mode, current.configuration, "app.remote.pass")
-  val downloadFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.downloadFolder")))
-  val unpackFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.unpackFolder")))
-
-  val fetcher = new WebdavFetcher(FetchControllerConfig.logger, new SardineFactory2, downloadFolder)
-  val unzipper = new ZipUnpacker(FetchControllerConfig.logger, unpackFolder)
-}
-
-
 object FetchController extends FetchController(
-  new WorkerFactory(),
-  FetchControllerConfig.logger,
-  FetchControllerConfig.fetcher,
-  FetchControllerConfig.unzipper,
-  FetchControllerConfig.remoteServer,
-  FetchControllerConfig.remoteUser,
-  FetchControllerConfig.remotePass
-)
+  ControllerConfig.logger,
+  ControllerConfig.workerFactory,
+  ControllerConfig.fetcher,
+  ControllerConfig.unzipper,
+  ControllerConfig.remoteServer,
+  ControllerConfig.remoteUser,
+  ControllerConfig.remotePass)
 
 
-class FetchController(workerFactory: WorkerFactory,
-                      logger: SimpleLogger,
+class FetchController(logger: SimpleLogger,
+                      workerFactory: WorkerFactory,
                       webdavFetcher: WebdavFetcher,
                       unzipper: ZipUnpacker,
-                      url: String,
+                      url: URL,
                       username: String,
                       password: String) extends BaseController {
 
