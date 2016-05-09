@@ -26,9 +26,9 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.ingest.{Ingester, IngesterFactory}
 import services.exec.{Continuer, WorkQueue, WorkerFactory}
-import services.model.StateModel
+import services.ingest.{Ingester, IngesterFactory}
+import services.model.{StateModel, StatusLogger}
 import services.writers._
 import uk.co.hmrc.logging.StubLogger
 
@@ -65,12 +65,12 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val logger = new StubLogger()
     val writerFactory = mock[OutputFileWriterFactory]
     val request = FakeRequest()
-    val model = new StateModel(logger, product, epoch, variant, None)
+    val model = new StateModel(product, epoch, variant, None)
 
     val ic = new IngestController(folder, logger, null, null, null, null, null)
 
     intercept[IllegalArgumentException] {
-      await(call(ic.ingestTo(target, product, epoch, variant, None, None), request))
+      await(call(ic.doIngestTo(target, product, epoch, variant, None, None), request))
     }
   }
 
@@ -92,9 +92,9 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       override def worker = testWorker
     }
 
-    when(fwf.writer(any[StateModel], any[WriterSettings])) thenReturn outputFileWriter
-    when(dbf.writer(any[StateModel], any[WriterSettings])) thenReturn outputDBWriter
-    when(ef.ingester(any[Continuer], any[StateModel])) thenReturn ex
+    when(fwf.writer(any[StateModel], any[StatusLogger], any[WriterSettings])) thenReturn outputFileWriter
+    when(dbf.writer(any[StateModel], any[StatusLogger], any[WriterSettings])) thenReturn outputDBWriter
+    when(ef.ingester(any[Continuer], any[StateModel], any[StatusLogger])) thenReturn ex
   }
 
   test(
@@ -105,7 +105,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     new context {
       val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
 
-      val futureResponse = call(ic.ingestTo("db", "abp", 40, "full", Some(1), Some(0)), request)
+      val futureResponse = call(ic.doIngestTo("db", "abp", 40, "full", Some(1), Some(0)), request)
 
       val response = await(futureResponse)
       testWorker.awaitCompletion()
@@ -124,7 +124,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     new context {
       val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
 
-      val futureResponse = call(ic.ingestTo("file", "abp", 40, "full", None, None), request)
+      val futureResponse = call(ic.doIngestTo("file", "abp", 40, "full", None, None), request)
 
       val response = await(futureResponse)
       testWorker.awaitCompletion()
@@ -145,21 +145,23 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       val writerFactory = mock[OutputFileWriterFactory]
-      val model = new StateModel(logger, "abp", 40, "full", None)
+      val model1 = new StateModel("abp", 40, "full", None, hasFailed = true)
+      val status = new StatusLogger(logger)
       val settings = WriterSettings(1, 0)
       val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
-      model.fail("foo")
 
-      ic.queueIngest(model, settings, writerFactory)
+      val model2 = ic.ingestIfOK(model1, status, settings, writerFactory, new StubContinuer)
 
-      testWorker.awaitCompletion()
-
+      assert(model2 === model1)
       verify(ex, never).ingest(any[File], anyObject())
-      assert(logger.size === 4, logger.all.mkString("\n"))
-      assert(logger.infos.map(_.message) === List("Info:Starting ingesting abp/40/full", "Info:Ingest was skipped.", "Info:ingesting abp/40/full - completed after {}"))
-      assert(logger.warns.map(_.message) === List("Warn:foo"))
+      assert(logger.size === 1, logger.all.mkString("\n"))
+      assert(logger.infos.map(_.message) === List("Info:Ingest was skipped."))
 
       testWorker.terminate()
     }
   }
+}
+
+class StubContinuer extends Continuer {
+  override def isBusy: Boolean = true
 }

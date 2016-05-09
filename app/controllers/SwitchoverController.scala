@@ -20,7 +20,7 @@ import config.ApplicationGlobal
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
-import services.model.StateModel
+import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
@@ -40,26 +40,27 @@ class SwitchoverController(workerFactory: WorkerFactory,
                            mongoDbConnection: CasbahMongoConnection,
                            metadata: Map[String, StoredMetadataItem]) extends BaseController {
 
-  def switchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = Action {
+  def doSwitchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = Action {
     request =>
-      val model = new StateModel(logger, product, epoch, "", Some(index))
-      queueSwitch(model)
+      val model = new StateModel(product, epoch, "", Some(index))
+      val status = new StatusLogger(logger)
+      workerFactory.worker.push(s"switching to ${model.collectionName.get}", status, {
+        continuer =>
+          switchIfOK(model, status)
+      })
       Accepted
   }
 
-  private[controllers] def queueSwitch(model: StateModel) {
-    workerFactory.worker.push(
-      s"switching to ${model.collectionName.get}", model, {
-        continuer =>
-          if (!model.hasFailed) {
-            switch(model)
-          } else {
-            model.statusLogger.info("Switchover was skipped.")
-          }
-      })
+  private[controllers] def switchIfOK(model: StateModel, status: StatusLogger): StateModel = {
+    if (!model.hasFailed) {
+      switch(model, status)
+    } else {
+      status.info("Switchover was skipped.")
+      model
+    }
   }
 
-  private[controllers] def switch(model: StateModel) {
+  private def switch(model: StateModel, status: StatusLogger): StateModel = {
 
     val addressBaseCollectionName: StoredMetadataItem = {
       val cn = metadata.get(model.product)
@@ -74,18 +75,19 @@ class SwitchoverController(workerFactory: WorkerFactory,
 
     val db = mongoDbConnection.getConfiguredDb
     if (!db.collectionExists(newName)) {
-      model.fail(s"$newName: collection was not found")
+      status.warn(s"$newName: collection was not found")
+      model.copy(hasFailed = true)
     }
     else if (db(newName).findOneByID("metadata").isEmpty) {
-      model.fail(s"$newName: collection is still being written")
+      status.warn(s"$newName: collection is still being written")
+      model.copy(hasFailed = true)
     }
     else {
       addressBaseCollectionName.set(newName)
-      model.statusLogger.info(s"Switched over to $newName")
+      status.info(s"Switched over to $newName")
+      model // unchanged
     }
   }
-
-  private val textPlain = CONTENT_TYPE -> "text/plain"
 }
 
 

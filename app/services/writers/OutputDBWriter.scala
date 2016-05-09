@@ -26,7 +26,7 @@ import config.ApplicationGlobal
 import config.ConfigHelper._
 import play.api.Logger
 import play.api.Play._
-import services.model.StateModel
+import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
@@ -39,8 +39,8 @@ class OutputDBWriterFactory extends OutputWriterFactory {
 
   private val cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
 
-  def writer(model: StateModel, settings: WriterSettings): OutputWriter =
-    new OutputDBWriter(cleardownOnError, model,
+  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter =
+    new OutputDBWriter(cleardownOnError, model, statusLogger,
       ApplicationGlobal.mongoConnection,
       settings,
       new LoggerFacade(Logger.logger))
@@ -48,7 +48,8 @@ class OutputDBWriterFactory extends OutputWriterFactory {
 
 
 class OutputDBWriter(cleardownOnError: Boolean,
-                     model: StateModel,
+                     var model: StateModel,
+                     statusLogger: StatusLogger,
                      mongoDbConnection: CasbahMongoConnection,
                      settings: WriterSettings,
                      logger: SimpleLogger) extends OutputWriter {
@@ -76,8 +77,8 @@ class OutputDBWriter(cleardownOnError: Boolean,
   private var count = 0
   private var errored = false
 
-  model.index = Some(index)
-  model.statusLogger.info(s"Writing new collection '$collectionName'")
+  model = model.copy(index = Some(index))
+  statusLogger.info(s"Writing new collection '$collectionName'")
 
   override def output(address: DbAddress) {
     try {
@@ -85,30 +86,33 @@ class OutputDBWriter(cleardownOnError: Boolean,
       count += 1
     } catch {
       case me: MongoException =>
-        model.fail(s"Caught Mongo Exception processing bulk insertion $me")
+        statusLogger.warn(s"Caught Mongo Exception processing bulk insertion $me")
+        model = model.copy(hasFailed = true)
         errored = true
         throw me
     }
   }
 
-  override def close() {
+  override def close(): StateModel = {
     if (!errored) {
       try {
         completeTheCollection()
       } catch {
         case me: MongoException =>
-          model.fail(s"Caught MongoException committing final bulk insert and creating index $me")
+          statusLogger.warn(s"Caught MongoException committing final bulk insert and creating index $me")
+          model = model.copy(hasFailed = true)
           errored = true
       }
     }
 
     if (errored) {
-      model.statusLogger.info("Error detected while loading data into MongoDB.")
+      statusLogger.info("Error detected while loading data into MongoDB.")
       if (cleardownOnError) collection.drop()
     } else {
-      model.statusLogger.info(s"Loaded $count documents.")
+      statusLogger.info(s"Loaded $count documents.")
     }
     errored = false
+    model
   }
 
   private def completeTheCollection() {

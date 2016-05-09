@@ -29,7 +29,7 @@ import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar.mock
-import services.model.StateModel
+import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger
@@ -43,7 +43,8 @@ class OutputDBWriterTest extends FunSuite {
     val collection = mock[DBCollection]
     val bulk = mock[BulkWriteOperation]
     val logger = new StubLogger()
-    val model = new StateModel(logger)
+    val model = new StateModel()
+    val status = new StatusLogger(logger)
 
     when(mongoDB.collectionExists(anyString())) thenReturn false
     when(mongoDB.getCollection(anyString())) thenReturn collection
@@ -59,7 +60,7 @@ class OutputDBWriterTest extends FunSuite {
     new Context {
       val someDBAddress = DbAddress("id1", List("1 Foo Rue"), "Puddletown", "FX1 1XF")
 
-      val outputDBWriter = new OutputDBWriter(false, model, casbahMongoConnection, WriterSettings(10, 0), logger)
+      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
 
       outputDBWriter.output(someDBAddress)
 
@@ -77,7 +78,7 @@ class OutputDBWriterTest extends FunSuite {
       and then close is called on the mongoDB instance
     """) {
     new Context {
-      val outputDBWriter = new OutputDBWriter(false, model, casbahMongoConnection, WriterSettings(10, 0), logger)
+      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
 
       outputDBWriter.close()
 

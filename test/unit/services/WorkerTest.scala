@@ -24,7 +24,7 @@ import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import services.exec.WorkQueue
-import services.model.StateModel
+import services.model.StatusLogger
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
@@ -41,18 +41,18 @@ class WorkerTest extends FunSuite {
     val worker = new WorkQueue(logger)
     val lock1 = new SynchronousQueue[Boolean]()
     val lock2 = new SynchronousQueue[Boolean]()
-    val model = new StateModel(logger)
+    val status = new StatusLogger(logger)
 
     assert(worker.status === "idle")
 
-    worker.push("thinking", model, {
+    worker.push("thinking", status, {
       continuer =>
         lock1.take() // blocks until signalled
         logger.info("foo")
         lock1.take()
     })
 
-    worker.push("cogitating", model, {
+    worker.push("cogitating", status, {
       continuer =>
         lock2.take()
         logger.info("bar")
@@ -83,9 +83,9 @@ class WorkerTest extends FunSuite {
     val logger = new StubLogger()
     val worker = new WorkQueue(logger)
     val lock = new SynchronousQueue[Boolean]()
-    val model = new StateModel(logger)
+    val status = new StatusLogger(logger)
 
-    worker.push("thinking", model, {
+    worker.push("thinking", status, {
       continuer =>
         logger.info("fric")
         lock.put(true)
@@ -108,9 +108,9 @@ class WorkerTest extends FunSuite {
     val logger = new StubLogger()
     val worker = new WorkQueue(logger)
     val lock = new SynchronousQueue[Boolean]()
-    val model = new StateModel(logger)
+    val status = new StatusLogger(logger)
 
-    worker.push("thinking", model, {
+    worker.push("thinking", status, {
       continuer =>
         lock.put(true)
         throw new Exception("worker broke")
@@ -153,9 +153,9 @@ class WorkerTest extends FunSuite {
     val logger = new StubLogger()
     val worker = new WorkQueue(logger)
     val lock = new SynchronousQueue[Boolean]()
-    val model = new StateModel(logger)
+    val status = new StatusLogger(logger)
 
-    worker.push("thinking", model, {
+    worker.push("thinking", status, {
       continuer =>
         lock.put(true)
         lock.put(true)

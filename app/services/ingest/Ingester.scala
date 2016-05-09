@@ -20,7 +20,7 @@ import java.io.File
 
 import config.Divider
 import services.exec.Continuer
-import services.model.StateModel
+import services.model.{StateModel, StatusLogger}
 import services.writers.OutputWriter
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
@@ -63,10 +63,10 @@ object Ingester {
 }
 
 
-class Ingester(continuer: Continuer, model: StateModel, forwardData: ForwardData = ForwardData.chronicleInMemory()) {
+class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger, forwardData: ForwardData = ForwardData.chronicleInMemory()) {
 
   def ingest(rootDir: File, out: OutputWriter) {
-    model.statusLogger.info(s"Ingesting from $rootDir")
+    statusLogger.info(s"Ingesting from $rootDir")
     ingest(Ingester.listFiles(rootDir, ".zip"), out)
   }
 
@@ -74,15 +74,15 @@ class Ingester(continuer: Continuer, model: StateModel, forwardData: ForwardData
     val dt = new DiagnosticTimer
     val fp = new FirstPass(out, continuer, forwardData)
 
-    model.statusLogger.info(s"Starting first pass through ${files.size} files")
+    statusLogger.info(s"Starting first pass through ${files.size} files")
     pass(files, out, fp)
     val fd = fp.firstPass
-    model.statusLogger.info(s"First pass complete after {}", dt)
+    statusLogger.info(s"First pass complete after {}", dt)
 
-    model.statusLogger.info(s"Starting second pass through ${files.size} files")
+    statusLogger.info(s"Starting second pass through ${files.size} files")
     val sp = new SecondPass(fd, continuer)
     pass(files, out, sp)
-    model.statusLogger.info(s"Finished after {}", dt)
+    statusLogger.info(s"Finished after {}", dt)
   }
 
 
@@ -97,19 +97,20 @@ class Ingester(continuer: Continuer, model: StateModel, forwardData: ForwardData
         while (zip.hasNext && continuer.isBusy) {
           val next = zip.next
           val name = next.zipEntry.getName
-          model.statusLogger.info(s"Reading zip entry $name...")
+          statusLogger.info(s"Reading zip entry $name...")
           thisPass.processFile(next, out)
         }
       } finally {
         zip.close()
-        model.statusLogger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}", file.getName, dt)
+        statusLogger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}", file.getName, dt)
       }
-      model.statusLogger.info(thisPass.sizeInfo)
+      statusLogger.info(thisPass.sizeInfo)
     }
   }
 }
 
 class IngesterFactory {
-  def ingester(continuer: Continuer, model: StateModel): Ingester = new Ingester(continuer, model)
+  def ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger): Ingester =
+    new Ingester(continuer, model, statusLogger)
 }
 

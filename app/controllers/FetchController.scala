@@ -23,7 +23,7 @@ import java.net.URL
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
 import services.fetch.{WebdavFetcher, ZipUnpacker}
-import services.model.StateModel
+import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.logging.SimpleLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -46,20 +46,22 @@ class FetchController(logger: SimpleLogger,
                       username: String,
                       password: String) extends BaseController {
 
-  def fetch(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
+  def doFetch(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     request =>
-      val model = new StateModel(logger, product, epoch, variant, None)
-      val status = queueFetch(model)
-      Accepted(status.toString)
+      val model = new StateModel(product, epoch, variant, None)
+      val status = new StatusLogger(logger)
+      val worker = workerFactory.worker
+
+      worker.push(s"fetching ${model.pathSegment}", status, {
+        continuer =>
+          fetch(model, status)
+      })
+      Accepted("ok")
   }
 
-  private[controllers] def queueFetch(model: StateModel): Boolean = {
-    val worker = workerFactory.worker
-
-    worker.push(s"fetching ${model.pathSegment}", model, {
-      continuer =>
-        val files = webdavFetcher.fetchAll(s"$url/${model.pathSegment}", username, password, model.pathSegment)
-        unzipper.unzipList(files, model.pathSegment)
-    })
+  private[controllers] def fetch(model: StateModel, status: StatusLogger): StateModel = {
+    val files = webdavFetcher.fetchAll(s"$url/${model.pathSegment}", username, password, model.pathSegment)
+    unzipper.unzipList(files, model.pathSegment)
+    model
   }
 }

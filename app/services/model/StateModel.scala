@@ -17,30 +17,15 @@
 package services.model
 
 import services.fetch.OSGBProduct
-import uk.co.hmrc.logging.SimpleLogger
 
-// This mutable state object passes through the sequential steps. It is *never* shared
-// between threads, so synchronisation is not needed.
-class StateModel(
-                  tee: SimpleLogger,
-                  var product: String = "",
-                  var epoch: Int = 0,
-                  var variant: String = "",
-                  var index: Option[Int] = None,
-                  var products: List[OSGBProduct] = Nil
-                ) {
-
-  val statusLogger = new StatusLogger(tee)
-
-  private var failed = false
-
-  def fail(format: String, arguments: AnyRef*) {
-    failed = true
-    statusLogger.warn(format, arguments: _*)
-  }
-
-  // Indicates whether an earlier stage failed.
-  def hasFailed: Boolean = failed
+case class StateModel(
+                       product: String = "",
+                       epoch: Int = 0,
+                       variant: String = "",
+                       index: Option[Int] = None,
+                       products: List[OSGBProduct] = Nil,
+                       hasFailed: Boolean = false
+                     ) {
 
   def pathSegment: String = s"${product}/${epoch}/${variant}"
 

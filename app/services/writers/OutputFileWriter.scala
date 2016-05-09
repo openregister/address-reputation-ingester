@@ -23,7 +23,7 @@ import java.util.zip.GZIPOutputStream
 
 import config.ConfigHelper._
 import play.api.Play._
-import services.model.StateModel
+import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
 object OutputFileWriterHelper {
@@ -32,7 +32,7 @@ object OutputFileWriterHelper {
 }
 
 
-class OutputFileWriter(model: StateModel) extends OutputWriter {
+class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger) extends OutputWriter {
 
   val fileRoot = model.collectionBaseName
   val outputFile = new File(OutputFileWriterHelper.outputFolder, s"$fileRoot.txt.gz")
@@ -49,16 +49,19 @@ class OutputFileWriter(model: StateModel) extends OutputWriter {
     count += 1
   }
 
-  override def close() {
+  override def close(): StateModel = {
     if (outCSV.checkError()) {
-      model.fail(s"Failed whilst writing to $outputFile")
+      statusLogger.warn(s"Failed whilst writing to $outputFile")
+      model = model.copy(hasFailed = true)
     }
     outCSV.close()
     println(s"*** document count = $count")
+    model
   }
 }
 
 
 class OutputFileWriterFactory extends OutputWriterFactory {
-  override def writer(model: StateModel, settings: WriterSettings) = new OutputFileWriter(model)
+  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings) =
+    new OutputFileWriter(model, statusLogger)
 }

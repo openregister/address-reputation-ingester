@@ -18,17 +18,17 @@
 
 package services.writers
 
-import services.model.StateModel
+import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
 trait OutputWriter {
   def output(a: DbAddress)
 
-  def close(): Unit
+  def close(): StateModel
 }
 
 trait OutputWriterFactory {
-  def writer(model: StateModel, settings: WriterSettings): OutputWriter
+  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter
 }
 
 

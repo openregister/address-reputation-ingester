@@ -22,7 +22,7 @@ import controllers.SimpleValidator._
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
 import services.fetch.SardineWrapper
-import services.model.StateModel
+import services.model.{StateModel, StatusLogger}
 import services.writers.{OutputDBWriterFactory, WriterSettings}
 import uk.co.hmrc.logging.SimpleLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -48,39 +48,36 @@ class GoController(logger: SimpleLogger,
   def goAuto: Action[AnyContent] = Action {
     request =>
       val settings = WriterSettings(1, 0)
-      val model = new StateModel(logger)
-      handleGoAuto(model, settings)
+      val model1 = new StateModel()
+      val status = new StatusLogger(logger)
+      workerFactory.worker.push(s"finding ${model1.pathSegment}", status, {
+        continuer =>
+          val tree = sardine.exploreRemoteTree(url, username, password)
+          val files = tree.findLatestFor(model1.product)
+          pipeline(model1, status, settings)
+      })
       Accepted
   }
 
-  def go(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
+  def doGo(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     request =>
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
       val settings = WriterSettings(1, 0)
-      val model = new StateModel(logger, product, epoch, variant, None)
-      handleGo(model, settings)
+      val model1 = new StateModel(product, epoch, variant, None)
+      val status = new StatusLogger(logger)
+      pipeline(model1, status, settings)
       Accepted
   }
 
-  private[controllers] def handleGoAuto(model: StateModel, settings: WriterSettings) {
-    FetchController.queueFetch(model)
-    IngestController.queueIngest(model, settings, dbWriterFactory)
-    SwitchoverController.queueSwitch(model)
-  }
-
-  private[controllers] def queueFind(model: StateModel): Boolean = {
-    workerFactory.worker.push(s"finding ${model.pathSegment}", model, {
+  private def pipeline(model1: StateModel, status: StatusLogger, settings: WriterSettings) {
+    workerFactory.worker.push(s"finding ${model1.pathSegment}", status, {
       continuer =>
-        val tree = sardine.exploreRemoteTree(url, username, password)
-        val files = tree.findLatestFor(model.product)
+        val model2 = FetchController.fetch(model1, status)
+        val model3 = IngestController.ingestIfOK(model2, status, settings, dbWriterFactory, continuer)
+        SwitchoverController.switchIfOK(model3, status)
     })
   }
 
-  private[controllers] def handleGo(model: StateModel, settings: WriterSettings) {
-    FetchController.queueFetch(model)
-    IngestController.queueIngest(model, settings, dbWriterFactory)
-    SwitchoverController.queueSwitch(model)
-  }
 }

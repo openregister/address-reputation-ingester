@@ -43,7 +43,7 @@ trait Continuer {
 
 
 case class Task(description: String,
-                model: StateModel,
+                status: StatusLogger,
                 action: (Continuer) => Unit)
 
 
@@ -62,8 +62,8 @@ class WorkQueue(logger: SimpleLogger) {
   worker.setDaemon(true)
   worker.start()
 
-  def push(work: String, model: StateModel, body: (Continuer) => Unit): Boolean = {
-    push(Task(work, model, body))
+  def push(work: String, status: StatusLogger, body: (Continuer) => Unit): Boolean = {
+    push(Task(work, status, body))
   }
 
   private def push(task: Task): Boolean = {
@@ -95,7 +95,7 @@ class WorkQueue(logger: SimpleLogger) {
     worker.running = false
     abort()
     // push a 'poison' task that may never get execcuted
-    push(Task("shutting down", new StateModel(logger), { c => }))
+    push(Task("shutting down", new StatusLogger(logger), { c => }))
   }
 }
 
@@ -164,8 +164,7 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
   private def runTask(task: Task) {
     val info = task.description.trim
     doing = " " + info
-    statusLogger = task.model.statusLogger
-    statusLogger.info(s"Starting $info")
+    task.status.info(s"Starting $info")
     try {
       val timer = new DiagnosticTimer
       task.action(this)

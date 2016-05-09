@@ -63,7 +63,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       val files = List(f1Txt, f1Zip, f2Txt, f2Zip)
       when(webdavFetcher.fetchAll(s"$url/$product/$epoch/$variant", username, password, "product/123/variant")) thenReturn files
 
-      val futureResponse = call(controller.fetch(product, epoch, variant), req)
+      val futureResponse = call(controller.doFetch(product, epoch, variant), req)
 
       val response = await(futureResponse)
       assert(response.header.status === 202)

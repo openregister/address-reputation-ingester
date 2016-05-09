@@ -30,7 +30,7 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import services.exec.WorkQueue
-import services.model.StateModel
+import services.model.{StateModel, StatusLogger}
 import services.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.StubLogger
@@ -43,7 +43,8 @@ class IngesterTest extends FunSuite with MockitoSugar {
   // scalastyle:off
   class context {
     val logger = new StubLogger
-    val model = new StateModel(logger)
+    val model = new StateModel()
+    val status = new StatusLogger(logger)
     val worker = new WorkQueue(logger)
     val lock = new SynchronousQueue[Boolean]()
   }
@@ -63,9 +64,9 @@ class IngesterTest extends FunSuite with MockitoSugar {
       when(mockFile.isDirectory) thenReturn true
       when(mockFile.listFiles) thenReturn Array.empty[File]
 
-      worker.push("testing", model, {
+      worker.push("testing", status, {
         continuer =>
-          new Ingester(continuer, model, ForwardData.chronicleInMemoryForUnitTest()).ingest(mockFile, dummyOut)
+          new Ingester(continuer, model, status, ForwardData.chronicleInMemoryForUnitTest()).ingest(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -91,14 +92,15 @@ class IngesterTest extends FunSuite with MockitoSugar {
           addressesProduced += a
         }
 
-        def close() {
+        def close() = {
           closed = true
+          model
         }
       }
 
-      worker.push("testing", model, {
+      worker.push("testing", status, {
         continuer =>
-          new Ingester(continuer, model, ForwardData.simpleInstance()).ingest(List(sample), out)
+          new Ingester(continuer, model, status, ForwardData.simpleInstance()).ingest(List(sample), out)
           lock.put(true)
       })
 

@@ -31,7 +31,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import services.exec.{Continuer, WorkQueue}
 import services.ingest.Ingester.{Blpu, Street}
-import services.model.StateModel
+import services.model.{StateModel, StatusLogger}
 import services.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
@@ -51,7 +51,8 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val worker = new WorkQueue(logger)
     val continuer = mock[Continuer]
     val lock = new SynchronousQueue[Boolean]()
-    val model = new StateModel(logger)
+    val model = new StateModel()
+    val status = new StatusLogger(logger)
     val forwardData = ForwardData.chronicleInMemoryForUnitTest()
   }
 
@@ -63,7 +64,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       val lpiData =
         """
           24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
-          """
+        """
 
       val csv = CsvParser.split(lpiData)
 
@@ -80,13 +81,13 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
           count += 1
         }
 
-        def close() {}
+        def close() = model
       }
 
       when(continuer.isBusy) thenReturn true
 
       val sp = new SecondPass(forwardData, continuer)
-      worker.push("testing", model, {
+      worker.push("testing", status, {
         continuer =>
           lock.put(true)
           sp.processFile(csv, out)
@@ -108,7 +109,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       val lpiData =
         """
           24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
-          """
+        """
 
       val csv = CsvParser.split(lpiData)
 
@@ -123,13 +124,13 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
           count += 1
         }
 
-        def close() {}
+        def close() = model
       }
 
       when(continuer.isBusy) thenReturn false
 
       val sp = new SecondPass(forwardData, continuer)
-      worker.push("testing", model, {
+      worker.push("testing", status, {
         continuer =>
           lock.put(true)
           sp.processFile(csv, out)
@@ -151,7 +152,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       val lpiData =
         """
           24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
-          """
+        """
 
       val csv = CsvParser.split(lpiData)
 
@@ -166,13 +167,13 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
           count += 1
         }
 
-        def close() {}
+        def close() = model
       }
 
       when(continuer.isBusy) thenReturn true
 
       val sp = new SecondPass(forwardData, continuer)
-      worker.push("testing", model, {
+      worker.push("testing", status, {
         continuer =>
           lock.put(true)
           sp.processFile(csv, out)
@@ -191,12 +192,12 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     """) {
     val lpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
-        """
+      """
 
     val blpuData =
     // 0   1  2      3         4 5 6         7 8         9        10 11   12          14         15         16  17        18
       """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,1,9063,2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
-        """
+      """
 
 
     val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
@@ -224,11 +225,11 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     """) {
     val lpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
-        """
+      """
 
     val blpuData =
       """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,1,9063,2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
-        """
+      """
 
 
     val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
@@ -257,11 +258,11 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     """) {
     val lpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","MAIDENHILL From STABLES",48804683,"1","","","Y"
-        """
+      """
 
     val blpuData =
       """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,1,9063,2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
-        """
+      """
 
 
     val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
@@ -289,16 +290,16 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     """) {
     val osHeader =
       """10,"NAG Hub - GeoPlace",9999,2016-02-19,0,2016-02-19,23:47:05,"2.0","F"
-        """
+      """
     val lpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","MAIDENHILL From STABLES",48804683,"1","","","Y"
-        """
+      """
     val blpuData =
       """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,50.7337174,-3.4940473,1,9063,"E",2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
-        """
+      """
     val dpaData =
       """28,"I",109437,131041604,50308610,"","","","39D",,"","POLSLOE ROAD","","","EXETER","EX1 2DN","S","1R","","","","","","",2016-01-18,2012-04-23,,2016-02-10,2012-03-19
-        """
+      """
 
 
     val csvOSHeaderLine: Array[String] = CsvParser.split(osHeader).next()
@@ -346,16 +347,16 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     """) {
     val osHeader =
       """10,"NAG Hub - GeoPlace",9999,2016-02-19,0,2016-02-19,23:47:05,"2.0","F"
-        """
+      """
     val firstLpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","LPI ONE",48804683,"1","","","Y"
-        """
+      """
     val secondLpiData =
       """24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,1,"a",2,"b","",,"",,"","LPI TWO",58804683,"1","","","Y"
-        """
+      """
     val blpuData =
       """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,50.7337174,-3.4940473,1,9063,"E",2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
-        """
+      """
 
 
     val csvOSHeaderLine: Array[String] = CsvParser.split(osHeader).next()

@@ -18,10 +18,10 @@
 
 package services.writers
 
-import services.model.StateModel
+import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
-class OutputNullWriter(model: StateModel) extends OutputWriter {
+class OutputNullWriter(model: StateModel, statusLogger: StatusLogger) extends OutputWriter {
 
   private var count = 0
 
@@ -30,12 +30,14 @@ class OutputNullWriter(model: StateModel) extends OutputWriter {
   }
 
   // scalastylye:off
-  override def close() {
-    model.statusLogger.info(s"*** document count = $count")
+  override def close(): StateModel = {
+    statusLogger.info(s"*** document count = $count")
+    model
   }
 }
 
 
 class OutputNullWriterFactory extends OutputWriterFactory {
-  override def writer(model: StateModel, settings: WriterSettings): OutputWriter = new OutputNullWriter(model)
+  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter =
+    new OutputNullWriter(model, statusLogger)
 }
