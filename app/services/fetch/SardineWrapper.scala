@@ -23,9 +23,11 @@ import uk.co.hmrc.logging.SimpleLogger
 
 import scala.collection.JavaConverters._
 
-class SardineWrapper(logger: SimpleLogger, factory: SardineFactory2) {
+class SardineWrapper(val url: URL, username: String, password: String, logger: SimpleLogger, factory: SardineFactory2) {
 
-  def exploreRemoteTree(url: URL, username: String, password: String): WebDavTree = {
+  def begin: Sardine = factory.begin(username, password)
+
+  def exploreRemoteTree: WebDavTree = {
     val sardine = factory.begin(username, password)
     val s = url.getProtocol + "://" + url.getAuthority
     WebDavTree(exploreRemoteTree(s, url, sardine))

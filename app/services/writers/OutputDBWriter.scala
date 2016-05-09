@@ -37,7 +37,7 @@ import scala.collection.JavaConverters._
 
 class OutputDBWriterFactory extends OutputWriterFactory {
 
-  private val cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
+  private def cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
 
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter =
     new OutputDBWriter(cleardownOnError, model, statusLogger,

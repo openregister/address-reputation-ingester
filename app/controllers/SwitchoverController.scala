@@ -56,7 +56,7 @@ class SwitchoverController(workerFactory: WorkerFactory,
       switch(model, status)
     } else {
       status.info("Switchover was skipped.")
-      model
+      model // unchanged
     }
   }
 

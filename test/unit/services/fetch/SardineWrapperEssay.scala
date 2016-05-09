@@ -22,14 +22,15 @@ import uk.co.hmrc.logging.Stdout
 
 // for manual test/development
 object SardineWrapperEssay {
-  val finder = new SardineWrapper(Stdout, new SardineFactory2)
 
   def main(args: Array[String]) {
     if (args.length > 2) {
-      val top = finder.exploreRemoteTree(new URL(args(0)), args(1), args(2))
+      val finder = new SardineWrapper(new URL(args(0)), args(1), args(2), Stdout, new SardineFactory2)
+      val top = finder.exploreRemoteTree
       Stdout.info(top.toString)
     } else if (args.length > 0) {
-      val top = finder.exploreRemoteTree(new URL(args(0)), "", "")
+      val finder = new SardineWrapper(new URL(args(0)), "", "", Stdout, new SardineFactory2)
+      val top = finder.exploreRemoteTree
       Stdout.info(top.toString)
     }
   }

@@ -37,9 +37,11 @@ class SardineWrapperTest extends PlaySpec with Mockito {
     val logger = new StubLogger()
     val sardine = mock[Sardine]
     val sardineFactory = mock[SardineFactory2]
-    when(sardineFactory.begin("foo", "bar")) thenReturn sardine
+    when(sardineFactory.begin("username", "password")) thenReturn sardine
 
     val base = "http://somedavserver.com:81/webdav"
+    val baseUrl = new URL(base + "/")
+
     val productResources = List[DavResource](
       dir("/webdav/", "webdav"),
       dir("/webdav/abi/", "abi"),
@@ -86,9 +88,9 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         when(sardine.list(base + "/abp/39/")) thenReturn abpE39VariantResources.asJava
         when(sardine.list(base + "/abp/38/full/")) thenReturn file38Resources.asJava
         when(sardine.list(base + "/abp/39/full/")) thenReturn file39Resources.asJava
-        val finder = new SardineWrapper(logger, sardineFactory)
+        val finder = new SardineWrapper(baseUrl, "username", "password", logger, sardineFactory)
         // when
-        val root = finder.exploreRemoteTree(new URL(base + "/"), "foo", "bar")
+        val root = finder.exploreRemoteTree
         // then
         root must be(WebDavTree(
           WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
@@ -123,13 +125,13 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         when(sardine.list(base + "/abp/39/")) thenReturn abpE39VariantResources.asJava
         when(sardine.list(base + "/abp/38/full/")) thenReturn file38Resources.asJava
         when(sardine.list(base + "/abp/39/full/")) thenReturn file39Resources.asJava
-        val finder = new SardineWrapper(logger, sardineFactory)
+        val finder = new SardineWrapper(baseUrl, "username", "password", logger, sardineFactory)
         // when
-        val root = finder.exploreRemoteTree(new URL(base + "/"), "foo", "bar")
+        val root = finder.exploreRemoteTree
         // then
         root must be(WebDavTree(
           WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
-            WebDavFile(new URL(base + "/abi/"), "abi", true, false, false, Nil),
+            WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true),
             WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/abp/38/full/"), "full", isDirectory = true, files = List(

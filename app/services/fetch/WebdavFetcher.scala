@@ -26,13 +26,13 @@ import uk.co.hmrc.logging.SimpleLogger
 
 import scala.collection.JavaConverters._
 
-class WebdavFetcher(logger: SimpleLogger, factory: SardineFactory2, downloadFolder: File) {
+class WebdavFetcher(logger: SimpleLogger, factory: SardineWrapper, downloadFolder: File) {
 
   // Downloads a specified set of remote files, marks them all with a completion marker (.done),
   // then returns the total bytes copied.
-  def fetchList(product: OSGBProduct, username: String, password: String, outputPath: String): List[File] = {
+  def fetchList(product: OSGBProduct, outputPath: String): List[File] = {
     val outputDirectory = resolveAndMkdirs(outputPath)
-    val sardine = factory.begin(username, password)
+    val sardine = factory.begin
     product.zips.map {
       webDavFile =>
         fetchFile(webDavFile.url, sardine, outputDirectory)
@@ -42,9 +42,9 @@ class WebdavFetcher(logger: SimpleLogger, factory: SardineFactory2, downloadFold
   // Searches for remote files, downloads them, marks them all with a completion marker (.done),
   // then returns the total bytes copied.
   // Note that this doesn't check the existence of completion marker files on the remote server.
-  def fetchAll(url: String, username: String, password: String, outputPath: String): List[File] = {
+  def fetchAll(url: String, outputPath: String): List[File] = {
     val outputDirectory = resolveAndMkdirs(outputPath)
-    val sardine = factory.begin(username, password)
+    val sardine = factory.begin
     logger.info("Listing {}", url)
     val resources = sardine.list(url).asScala.toList.filterNot(_.isDirectory)
     resources.map {

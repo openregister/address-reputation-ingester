@@ -26,6 +26,7 @@ import services.fetch.{WebdavFetcher, ZipUnpacker}
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.logging.SimpleLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
+import controllers.SimpleValidator._
 
 
 object FetchController extends FetchController(
@@ -33,21 +34,20 @@ object FetchController extends FetchController(
   ControllerConfig.workerFactory,
   ControllerConfig.fetcher,
   ControllerConfig.unzipper,
-  ControllerConfig.remoteServer,
-  ControllerConfig.remoteUser,
-  ControllerConfig.remotePass)
+  ControllerConfig.remoteServer)
 
 
 class FetchController(logger: SimpleLogger,
                       workerFactory: WorkerFactory,
                       webdavFetcher: WebdavFetcher,
                       unzipper: ZipUnpacker,
-                      url: URL,
-                      username: String,
-                      password: String) extends BaseController {
+                      url: URL) extends BaseController {
 
   def doFetch(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
     request =>
+      require(isAlphaNumeric(product))
+      require(isAlphaNumeric(variant))
+
       val model = new StateModel(product, epoch, variant, None)
       val status = new StatusLogger(logger)
       val worker = workerFactory.worker
@@ -60,7 +60,7 @@ class FetchController(logger: SimpleLogger,
   }
 
   private[controllers] def fetch(model: StateModel, status: StatusLogger): StateModel = {
-    val files = webdavFetcher.fetchAll(s"$url/${model.pathSegment}", username, password, model.pathSegment)
+    val files = webdavFetcher.fetchAll(s"$url/${model.pathSegment}", model.pathSegment)
     unzipper.unzipList(files, model.pathSegment)
     model
   }

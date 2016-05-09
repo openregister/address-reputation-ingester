@@ -65,12 +65,12 @@ object Ingester {
 
 class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger, forwardData: ForwardData = ForwardData.chronicleInMemory()) {
 
-  def ingest(rootDir: File, out: OutputWriter) {
+  def ingest(rootDir: File, out: OutputWriter): StateModel = {
     statusLogger.info(s"Ingesting from $rootDir")
     ingest(Ingester.listFiles(rootDir, ".zip"), out)
   }
 
-  private[ingest] def ingest(files: Seq[File], out: OutputWriter) {
+  private[ingest] def ingest(files: Seq[File], out: OutputWriter): StateModel = {
     val dt = new DiagnosticTimer
     val fp = new FirstPass(out, continuer, forwardData)
 
@@ -83,6 +83,8 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
     val sp = new SecondPass(fd, continuer)
     pass(files, out, sp)
     statusLogger.info(s"Finished after {}", dt)
+
+    model // unchanged
   }
 
 

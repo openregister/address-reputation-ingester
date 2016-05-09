@@ -36,12 +36,48 @@ import uk.co.hmrc.logging.StubLogger
 class IngestControllerTest extends FunSuite with MockitoSugar {
 
 
+  // scalastyle:off
+  class context {
+    val request = FakeRequest()
+    val logger = new StubLogger()
+
+    val ingester = mock[Ingester]
+    val outputFileWriter = mock[OutputFileWriter]
+    val outputDBWriter = mock[OutputDBWriter]
+    val outputNullWriter = mock[OutputNullWriter]
+
+    val ingesterFactory = new StubIngesterFactory(ingester)
+    val dbFactory = new StubOutputDBWriterFactory(outputDBWriter)
+    val fwFactory = new StubOutputFileWriterFactory(outputFileWriter)
+    val nullFactory = new StubOutputNullWriterFactory(outputNullWriter)
+
+    val folder = new File(".")
+    val testWorker = new WorkQueue(new StubLogger())
+    val workerFactory = new WorkerFactory {
+      override def worker = testWorker
+    }
+
+    val ingestController = new IngestController(folder, logger, dbFactory, fwFactory, nullFactory, ingesterFactory, workerFactory)
+
+    def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
+      val folder = new File(".")
+      val logger = new StubLogger()
+      val request = FakeRequest()
+
+      intercept[IllegalArgumentException] {
+        await(call(ingestController.doIngestTo(target, product, epoch, variant, None, None), request))
+      }
+    }
+  }
+
   test(
     """
        when an invalid target is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("$%", "abp", 40, "full")
+    new context {
+      parameterTest("$%", "abp", 40, "full")
+    }
   }
 
   test(
@@ -49,7 +85,9 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
        when an invalid product is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("null", "$%", 40, "full")
+    new context {
+      parameterTest("null", "$%", 40, "full")
+    }
   }
 
   test(
@@ -57,44 +95,9 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
        when an invalid variant is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("null", "abi", 40, ")(")
-  }
-
-  def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
-    val folder = new File(".")
-    val logger = new StubLogger()
-    val writerFactory = mock[OutputFileWriterFactory]
-    val request = FakeRequest()
-    val model = new StateModel(product, epoch, variant, None)
-
-    val ic = new IngestController(folder, logger, null, null, null, null, null)
-
-    intercept[IllegalArgumentException] {
-      await(call(ic.doIngestTo(target, product, epoch, variant, None, None), request))
+    new context {
+      parameterTest("null", "abi", 40, ")(")
     }
-  }
-
-  // scalastyle:off
-  class context {
-    val request = FakeRequest()
-    val logger = new StubLogger()
-    val ef = mock[IngesterFactory]
-    val ex = mock[Ingester]
-    val dbf = mock[OutputDBWriterFactory]
-    val fwf = mock[OutputFileWriterFactory]
-    val nwf = mock[OutputNullWriterFactory]
-    val outputFileWriter = mock[OutputFileWriter]
-    val outputDBWriter = mock[OutputDBWriter]
-    val outputNullWriter = mock[OutputNullWriter]
-    val folder = new File(".")
-    val testWorker = new WorkQueue(new StubLogger())
-    val workerFactory = new WorkerFactory {
-      override def worker = testWorker
-    }
-
-    when(fwf.writer(any[StateModel], any[StatusLogger], any[WriterSettings])) thenReturn outputFileWriter
-    when(dbf.writer(any[StateModel], any[StatusLogger], any[WriterSettings])) thenReturn outputDBWriter
-    when(ef.ingester(any[Continuer], any[StateModel], any[StatusLogger])) thenReturn ex
   }
 
   test(
@@ -103,14 +106,12 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       then a successful response is returned
     """) {
     new context {
-      val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
-
-      val futureResponse = call(ic.doIngestTo("db", "abp", 40, "full", Some(1), Some(0)), request)
+      val futureResponse = call(ingestController.doIngestTo("db", "abp", 40, "full", Some(1), Some(0)), request)
 
       val response = await(futureResponse)
       testWorker.awaitCompletion()
 
-      verify(ex, times(1)).ingest(any[File], anyObject())
+      verify(ingester, times(1)).ingest(any[File], anyObject())
       assert(response.header.status / 100 === 2)
       testWorker.terminate()
     }
@@ -122,15 +123,13 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       then a successful response is returned
     """) {
     new context {
-      val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
-
-      val futureResponse = call(ic.doIngestTo("file", "abp", 40, "full", None, None), request)
+      val futureResponse = call(ingestController.doIngestTo("file", "abp", 40, "full", None, None), request)
 
       val response = await(futureResponse)
       testWorker.awaitCompletion()
       testWorker.terminate()
 
-      verify(ex, times(1)).ingest(any[File], anyObject())
+      verify(ingester, times(1)).ingest(any[File], anyObject())
       assert(response.header.status / 100 === 2)
       testWorker.terminate()
     }
@@ -144,22 +143,39 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       and the state model stays in its current state
     """) {
     new context {
-      val writerFactory = mock[OutputFileWriterFactory]
       val model1 = new StateModel("abp", 40, "full", None, hasFailed = true)
       val status = new StatusLogger(logger)
       val settings = WriterSettings(1, 0)
-      val ic = new IngestController(folder, logger, dbf, fwf, nwf, ef, workerFactory)
-
-      val model2 = ic.ingestIfOK(model1, status, settings, writerFactory, new StubContinuer)
+      val model2 = ingestController.ingestIfOK(model1, status, settings, "null", new StubContinuer)
 
       assert(model2 === model1)
-      verify(ex, never).ingest(any[File], anyObject())
+      verify(ingester, never).ingest(any[File], anyObject())
       assert(logger.size === 1, logger.all.mkString("\n"))
       assert(logger.infos.map(_.message) === List("Info:Ingest was skipped."))
 
       testWorker.terminate()
     }
   }
+}
+
+class StubOutputFileWriterFactory(w: OutputFileWriter) extends OutputFileWriterFactory {
+  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings) = w
+}
+
+class StubOutputDBWriterFactory(w: OutputDBWriter) extends OutputDBWriterFactory {
+  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter = w
+}
+
+class StubOutputNullWriterFactory(w: OutputNullWriter) extends OutputNullWriterFactory {
+  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter = w
+}
+
+class StubIngesterFactory(i: Ingester) extends IngesterFactory {
+  override def ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger): Ingester = i
+}
+
+class StubWorkerFactory(w: WorkQueue) extends WorkerFactory {
+  override def worker = w
 }
 
 class StubContinuer extends Continuer {

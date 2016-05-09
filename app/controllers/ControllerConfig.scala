@@ -42,8 +42,7 @@ object ControllerConfig {
   val unpackFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.unpackFolder")))
 
   val workerFactory = new WorkerFactory()
-  val sardineFactory = new SardineFactory2
-  val sardine = new SardineWrapper(logger, sardineFactory)
-  val fetcher = new WebdavFetcher(logger, sardineFactory, downloadFolder)
+  val sardine = new SardineWrapper(remoteServer, remoteUser, remotePass, logger, new SardineFactory2)
+  val fetcher = new WebdavFetcher(logger, sardine, downloadFolder)
   val unzipper = new ZipUnpacker(logger, unpackFolder)
 }

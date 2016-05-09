@@ -22,14 +22,15 @@ import uk.co.hmrc.logging.Stdout
 
 // for manual test/development
 object WebdavFinderEssay {
-  val sardine = new SardineWrapper(Stdout, new SardineFactory2)
 
   def main(args: Array[String]) {
     val products = if (args.length > 2) {
-      val tree = sardine.exploreRemoteTree(new URL(args(0)), args(1), args(2))
+      val sardine = new SardineWrapper(new URL(args(0)), args(1), args(2), Stdout, new SardineFactory2)
+      val tree = sardine.exploreRemoteTree
       tree.findAvailableFor("abi") ++ tree.findAvailableFor("abp")
     } else if (args.length > 0) {
-      val tree = sardine.exploreRemoteTree(new URL(args(0)), "", "")
+      val sardine = new SardineWrapper(new URL(args(0)), "", "", Stdout, new SardineFactory2)
+      val tree = sardine.exploreRemoteTree
       tree.findAvailableFor("abi") ++ tree.findAvailableFor("abp")
     } else Nil
     Stdout.info(products.map(_.toString).mkString("\n"))

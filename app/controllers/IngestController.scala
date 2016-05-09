@@ -31,10 +31,16 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object IngestControllerHelper {
-  val downloadFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.downloadFolder")))
-  if (!downloadFolder.exists()) {
-    throw new FileNotFoundException(downloadFolder.toString)
+  def downloadFolder: File = {
+    val str = replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.downloadFolder"))
+    val dir = new File(str)
+    if (!dir.exists()) {
+      throw new FileNotFoundException(dir.toString)
+    }
+    dir
   }
+
+  def isSupportedTarget(target: String): Boolean = Set("db", "file", "null").contains(target)
 }
 
 
@@ -45,7 +51,9 @@ object IngestController extends IngestController(
   new OutputFileWriterFactory,
   new OutputNullWriterFactory,
   new IngesterFactory,
-  ControllerConfig.workerFactory)
+  ControllerConfig.workerFactory) {
+
+}
 
 
 class IngestController(downloadFolder: File,
@@ -62,17 +70,9 @@ class IngestController(downloadFolder: File,
     request =>
       val bulkSize = bulkSizeStr getOrElse 1
       val loopDelay = loopDelayStr getOrElse 0
-      require(isAlphaNumeric(target))
+      require(IngestControllerHelper.isSupportedTarget(target))
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
-
-      val writerFactory = target match {
-        case "db" => dbWriterFactory
-        case "file" => fileWriterFactory
-        case "null" => nullWriterFactory
-        case _ =>
-          throw new IllegalArgumentException(target + " no supported.")
-      }
 
       val settings = WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
       val model = new StateModel(product, epoch, variant, None)
@@ -81,7 +81,7 @@ class IngestController(downloadFolder: File,
       workerFactory.worker.push(
         s"ingesting ${model.pathSegment}", status, {
           continuer =>
-            ingestIfOK(model, status, settings, writerFactory, continuer)
+            ingestIfOK(model, status, settings, target, continuer)
         }
       )
 
@@ -91,13 +91,14 @@ class IngestController(downloadFolder: File,
   private[controllers] def ingestIfOK(model: StateModel,
                                       status: StatusLogger,
                                       settings: WriterSettings,
-                                      writerFactory: OutputWriterFactory,
+                                      target: String,
                                       continuer: Continuer): StateModel = {
     if (!model.hasFailed) {
+      val writerFactory = pickWriter(target)
       ingest(model, status, settings, writerFactory, continuer)
     } else {
       status.info("Ingest was skipped.")
-      model
+      model // unchanged
     }
   }
 
@@ -115,6 +116,15 @@ class IngestController(downloadFolder: File,
       logger.info("Cleaning up the ingester.")
       writer.close()
     }
-    model
+  }
+
+  private def pickWriter(target: String) = {
+    target match {
+      case "db" => dbWriterFactory
+      case "file" => fileWriterFactory
+      case "null" => nullWriterFactory
+      case _ =>
+        throw new IllegalArgumentException(target + " not supported.")
+    }
   }
 }
