@@ -18,4 +18,6 @@ GET   /switch/to/:product/:epoch/:index             controllers.SwitchoverContro
 GET   /admin/cancelTask                             controllers.AdminController.cancelTask()
 GET   /admin/status                                 controllers.AdminController.status()
 GET   /admin/fullStatus                             controllers.AdminController.fullStatus()
+GET   /collections/list                             controllers.CollectionController.listCollections
+DELETE /collections/:name                           controllers.CollectionController.dropCollection(name)
 

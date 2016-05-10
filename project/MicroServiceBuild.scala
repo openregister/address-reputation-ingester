@@ -42,15 +42,15 @@ object MicroServiceBuild extends Build with MicroService {
     "ch.qos.logback" % "logback-classic" % "1.1.7",
     "ch.qos.logback" % "logback-core" % "1.1.7",
     "org.slf4j" % "jcl-over-slf4j" % "1.7.21",
-    "com.github.lookfirst" % "sardine" % "5.7"
-      excludeAll ExclusionRule(organization = "org.apache.httpcomponents"), // for some reason this dependency is skipping the local cache and forcing resolution from the internet
+    "com.github.lookfirst" % "sardine" % "5.7",
     "net.openhft" % "chronicle-map" % "3.8.0"
   )
 
   private def baseTestDependencies(scope: String) = Seq(
     "org.scalatest" %% "scalatest" % "2.2.4" % scope,
     "org.scalamock" %% "scalamock-scalatest-support" % "3.2" % scope,
-    "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2" % scope,    "org.pegdown" % "pegdown" % "1.4.2" % scope,
+    "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2" % scope,
+    "org.pegdown" % "pegdown" % "1.4.2" % scope,
     "uk.gov.hmrc" %% "hmrctest" % "1.4.0" % scope,
     "org.scalatestplus" %% "play" % "1.2.0" % scope,
     "org.mockito" % "mockito-all" % "1.10.19" % scope,

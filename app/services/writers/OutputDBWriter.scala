@@ -21,6 +21,7 @@ package services.writers
 import java.util.Date
 
 import com.mongodb._
+import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
 import config.ApplicationGlobal
 import config.ConfigHelper._
@@ -71,7 +72,8 @@ class OutputDBWriter(cleardownOnError: Boolean,
 
   private val index = nextFreeIndex(0)
   private val collectionName = s"${collectionNameRoot}_$index"
-  private val collection: DBCollection = db.getCollection(collectionName)
+  private val collection = db(collectionName)
+//  private val collection: DBCollection = db.getCollection(collectionName)
   private val bulk = new BatchedBulkOperation(settings, collection)
 
   private var count = 0
@@ -120,13 +122,13 @@ class OutputDBWriter(cleardownOnError: Boolean,
 
     collection.createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
 
-    val metadata = MongoDBObject("_id" -> "metadata", "completedAt" -> new Date())
-    collection.insert(List(metadata).asJava)
+    // we have finished! let's celebrate
+    Metadata.writeCompletionDateTo(collection)
   }
 }
 
 
-class BatchedBulkOperation(settings: WriterSettings, collection: DBCollection) {
+class BatchedBulkOperation(settings: WriterSettings, collection: MongoCollection) {
   require(settings.bulkSize > 0)
 
   private var bulk = collection.initializeUnorderedBulkOperation

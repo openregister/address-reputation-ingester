@@ -16,6 +16,8 @@
 
 package controllers
 
+import java.util.Date
+
 import com.mongodb.casbah.commons.MongoDBObject
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
@@ -45,7 +47,7 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
     }
 
     """
-       * attempt to switch to existing collection that is without completion metadata
+       * attempt to switch to existing collection that has no completion metadata
        * receive Conflict response
     """ in {
       val mongo = casbahMongoConnection()
@@ -65,13 +67,13 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
 
   "switch-over resource happy journey" must {
     """
-       * attempt to switch to existing collection that is without completion metadata
+       * attempt to switch to existing collection that has no completion metadata
        * receive OK response
     """ in {
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
-      mongo.getConfiguredDb("abp_39_5").insert(MongoDBObject("_id" -> "metadata", "completedAt" -> "some date"))
+      mongo.getConfiguredDb("abp_39_5").insert(MongoDBObject("_id" -> "metadata", "completedAt" -> new Date()))
 
       assert(get("/switch/to/abp/39/5").status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)

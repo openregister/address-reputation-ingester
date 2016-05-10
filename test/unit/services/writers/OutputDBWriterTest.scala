@@ -18,11 +18,9 @@
 
 package services.writers
 
-import java.util
-
-import com.mongodb._
-import com.mongodb.casbah.MongoDB
+import com.mongodb.DBObject
 import com.mongodb.casbah.commons.MongoDBObject
+import com.mongodb.casbah.{BulkWriteOperation, MongoCollection, MongoDB}
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -40,14 +38,14 @@ class OutputDBWriterTest extends FunSuite {
   class Context {
     val casbahMongoConnection = mock[CasbahMongoConnection]
     val mongoDB = mock[MongoDB]
-    val collection = mock[DBCollection]
+    val collection = mock[MongoCollection]
     val bulk = mock[BulkWriteOperation]
     val logger = new StubLogger()
     val model = new StateModel()
     val status = new StatusLogger(logger)
 
     when(mongoDB.collectionExists(anyString())) thenReturn false
-    when(mongoDB.getCollection(anyString())) thenReturn collection
+    when(mongoDB(anyString())) thenReturn collection
     when(casbahMongoConnection.getConfiguredDb) thenReturn mongoDB
     when(collection.initializeUnorderedBulkOperation) thenReturn bulk
   }
@@ -64,7 +62,6 @@ class OutputDBWriterTest extends FunSuite {
 
       outputDBWriter.output(someDBAddress)
 
-      //verify(collection, times(1)).insert(any[DBObject])
       verify(bulk, times(1)).insert(any[DBObject])
     }
   }
@@ -82,7 +79,7 @@ class OutputDBWriterTest extends FunSuite {
 
       outputDBWriter.close()
 
-      verify(collection).insert(any[util.List[DBObject]])
+      verify(collection).insert(any[DBObject])
       verify(collection).createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
     }
   }
