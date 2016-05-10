@@ -21,7 +21,7 @@ import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
+import uk.co.hmrc.address.admin.{MetadataStore, MongoStoredMetadataItem, StoredMetadataItem}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -31,14 +31,14 @@ object SwitchoverController extends SwitchoverController(
   new WorkerFactory,
   new LoggerFacade(Logger.logger),
   ApplicationGlobal.mongoConnection,
-  new MetadataStoreFactory().newStore(ApplicationGlobal.mongoConnection)
+  ApplicationGlobal.metadataStore
 )
 
 
 class SwitchoverController(workerFactory: WorkerFactory,
                            logger: SimpleLogger,
                            mongoDbConnection: CasbahMongoConnection,
-                           metadata: Map[String, StoredMetadataItem]) extends BaseController {
+                           systemMetadata: SystemMetadataStore) extends BaseController {
 
   def doSwitchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = Action {
     request =>
@@ -62,13 +62,7 @@ class SwitchoverController(workerFactory: WorkerFactory,
 
   private def switch(model: StateModel, status: StatusLogger): StateModel = {
 
-    val addressBaseCollectionName: StoredMetadataItem = {
-      val cn = metadata.get(model.productName)
-      if (cn.isEmpty) {
-        throw new IllegalArgumentException(s"Unsupported product ${model.productName}")
-      }
-      cn.get
-    }
+    val addressBaseCollectionName = systemMetadata.addressBaseCollectionItem(model.productName)
 
     // this metadata key/value is checked by all address-lookup nodes once every few minutes
     val newName = model.collectionName.get
@@ -91,12 +85,24 @@ class SwitchoverController(workerFactory: WorkerFactory,
 }
 
 
-class MetadataStoreFactory {
-  def newStore(mongo: CasbahMongoConnection): Map[String, StoredMetadataItem] = {
-    val store = new MetadataStore(mongo, new LoggerFacade(Logger.logger))
-    Map(
-      "abp" -> store.gbAddressBaseCollectionName,
-      "abi" -> store.niAddressBaseCollectionName
-    )
+class SystemMetadataStoreFactory {
+  def newStore(mongo: CasbahMongoConnection): SystemMetadataStore =
+    new SystemMetadataStore(mongo, new LoggerFacade(Logger.logger))
+}
+
+
+class SystemMetadataStore(mongo: CasbahMongoConnection, logger: SimpleLogger) {
+  private val store = new MetadataStore(mongo, logger)
+  private val table = Map(
+    "abp" -> store.gbAddressBaseCollectionName,
+    "abi" -> store.niAddressBaseCollectionName
+  )
+
+  def addressBaseCollectionItem(productName: String): StoredMetadataItem = {
+    val cn = table.get(productName)
+    if (cn.isEmpty) {
+      throw new IllegalArgumentException(s"Unsupported product $productName")
+    }
+    cn.get
   }
 }

@@ -104,9 +104,9 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
   override def beforeAppServerStarts() {
     deleteDir(tmpDir)
     val sample = getClass.getClassLoader.getResourceAsStream("exeter/1/sample/SX9090-first3600.zip")
-    val downloadFolder = new File(tmpDir, "download/exeter/1/sample")
-    downloadFolder.mkdirs()
-    Files.copy(sample, new File(downloadFolder, "SX9090-first3600.zip").toPath, REPLACE_EXISTING)
+    val unpackFolder = new File(tmpDir, "unpack/exeter/1/sample")
+    unpackFolder.mkdirs()
+    Files.copy(sample, new File(unpackFolder, "SX9090-first3600.zip").toPath, REPLACE_EXISTING)
     sample.close()
   }
 

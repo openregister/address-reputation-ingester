@@ -16,11 +16,9 @@
 
 package controllers
 
-import java.io.{File, FileNotFoundException}
+import java.io.File
 
-import config.ConfigHelper._
 import controllers.SimpleValidator._
-import play.api.Play._
 import play.api.mvc.{Action, AnyContent}
 import services.exec.{Continuer, WorkerFactory}
 import services.ingest.IngesterFactory
@@ -31,32 +29,21 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object IngestControllerHelper {
-  def downloadFolder: File = {
-    val str = replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.downloadFolder"))
-    val dir = new File(str)
-    if (!dir.exists()) {
-      throw new FileNotFoundException(dir.toString)
-    }
-    dir
-  }
-
   def isSupportedTarget(target: String): Boolean = Set("db", "file", "null").contains(target)
 }
 
 
 object IngestController extends IngestController(
-  IngestControllerHelper.downloadFolder,
+  ControllerConfig.unpackFolder,
   ControllerConfig.logger,
   new OutputDBWriterFactory,
   new OutputFileWriterFactory,
   new OutputNullWriterFactory,
   new IngesterFactory,
-  ControllerConfig.workerFactory) {
-
-}
+  ControllerConfig.workerFactory)
 
 
-class IngestController(downloadFolder: File,
+class IngestController(unpackedFolder: File,
                        logger: SimpleLogger,
                        dbWriterFactory: OutputDBWriterFactory,
                        fileWriterFactory: OutputFileWriterFactory,
@@ -108,7 +95,7 @@ class IngestController(downloadFolder: File,
                      writerFactory: OutputWriterFactory,
                      continuer: Continuer): StateModel = {
 
-    val qualifiedDir = new File(downloadFolder, model.pathSegment)
+    val qualifiedDir = new File(unpackedFolder, model.pathSegment)
     val writer = writerFactory.writer(model, status, settings)
     try {
       ingestorFactory.ingester(continuer, model, status).ingest(qualifiedDir, writer)

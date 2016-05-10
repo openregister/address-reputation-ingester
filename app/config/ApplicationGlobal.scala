@@ -19,6 +19,7 @@
 package config
 
 import config.ConfigHelper._
+import controllers.SystemMetadataStoreFactory
 import play.api.Play._
 import play.api._
 import services.exec.WorkQueue
@@ -34,6 +35,7 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
     val mongoDbUri = mustGetConfigString(current.mode, current.configuration, "mongodb.uri")
     new CasbahMongoConnection(mongoDbUri)
   }
+  lazy val metadataStore = new SystemMetadataStoreFactory().newStore(mongoConnection)
 
   override def onStart(app: Application) {
     println("########## onStart ##########")
