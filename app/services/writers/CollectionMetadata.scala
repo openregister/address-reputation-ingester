@@ -23,11 +23,40 @@ package services.writers
 
 import java.util.Date
 
-import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
+import com.mongodb.casbah.{MongoCollection, MongoDB}
+import services.model.StateModel
+
+import scala.annotation.tailrec
 
 
-object Metadata {
+class CollectionMetadata(db: MongoDB, inputModel: StateModel) {
+  private val collectionNamePrefix = inputModel.collectionBaseName + "_"
+
+  private def collectionExists(i: Int) = {
+    val collectionName = s"$collectionNamePrefix$i"
+    db.collectionExists(collectionName)
+  }
+
+  @tailrec
+  private def findNextFreeIndex(i: Int): Int = {
+    if (!collectionExists(i)) i
+    else findNextFreeIndex(i + 1)
+  }
+
+  private lazy val nextFreeIndex = findNextFreeIndex(0)
+
+  def nextFreeCollectionName: String = s"$collectionNamePrefix$nextFreeIndex"
+
+  def revisedModel: StateModel = inputModel.copy(index = Some(nextFreeIndex))
+
+  def existingCollectionNames: List[String] = {
+    db.collectionNames.filter(_.startsWith(collectionNamePrefix)).toList.sorted
+  }
+}
+
+
+object CollectionMetadata {
 
   def writeCompletionDateTo(collection: MongoCollection, date: Date = new Date()) {
     val metadata = MongoDBObject("_id" -> "metadata", "completedAt" -> date)

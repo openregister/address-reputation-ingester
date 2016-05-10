@@ -19,7 +19,7 @@ package controllers
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
-import services.writers.Metadata
+import services.writers.CollectionMetadata
 import uk.co.hmrc.address.admin.MetadataStore
 import uk.co.hmrc.logging.Stdout
 
@@ -34,7 +34,7 @@ class CollectionControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
     """ in {
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
-      Metadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_5"))
+      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_5"))
 
       val response = get("/collections/list")
       assert(response.status === OK)

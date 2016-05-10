@@ -18,8 +18,6 @@
 
 package services.writers
 
-import java.util.Date
-
 import com.mongodb._
 import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
@@ -31,9 +29,6 @@ import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
-
-import scala.annotation.tailrec
-import scala.collection.JavaConverters._
 
 
 class OutputDBWriterFactory extends OutputWriterFactory {
@@ -55,31 +50,17 @@ class OutputDBWriter(cleardownOnError: Boolean,
                      settings: WriterSettings,
                      logger: SimpleLogger) extends OutputWriter {
 
-  private val collectionNameRoot = model.collectionBaseName
-
   private val db = mongoDbConnection.getConfiguredDb
 
-  private def collectionExists(i: Int) = {
-    val collectionName = s"${collectionNameRoot}_$i"
-    db.collectionExists(collectionName)
-  }
-
-  @tailrec
-  private def nextFreeIndex(i: Int): Int = {
-    if (!collectionExists(i)) i
-    else nextFreeIndex(i + 1)
-  }
-
-  private val index = nextFreeIndex(0)
-  private val collectionName = s"${collectionNameRoot}_$index"
+  private val collectionMetadata = new CollectionMetadata(db, model)
+  private val collectionName = collectionMetadata.nextFreeCollectionName
   private val collection = db(collectionName)
-//  private val collection: DBCollection = db.getCollection(collectionName)
   private val bulk = new BatchedBulkOperation(settings, collection)
 
   private var count = 0
-  private var errored = false
+  private var hasError = false
 
-  model = model.copy(index = Some(index))
+  model = collectionMetadata.revisedModel
   statusLogger.info(s"Writing new collection '$collectionName'")
 
   override def output(address: DbAddress) {
@@ -90,30 +71,30 @@ class OutputDBWriter(cleardownOnError: Boolean,
       case me: MongoException =>
         statusLogger.warn(s"Caught Mongo Exception processing bulk insertion $me")
         model = model.copy(hasFailed = true)
-        errored = true
+        hasError = true
         throw me
     }
   }
 
   override def close(): StateModel = {
-    if (!errored) {
+    if (!hasError) {
       try {
         completeTheCollection()
       } catch {
         case me: MongoException =>
           statusLogger.warn(s"Caught MongoException committing final bulk insert and creating index $me")
           model = model.copy(hasFailed = true)
-          errored = true
+          hasError = true
       }
     }
 
-    if (errored) {
+    if (hasError) {
       statusLogger.info("Error detected while loading data into MongoDB.")
       if (cleardownOnError) collection.drop()
     } else {
       statusLogger.info(s"Loaded $count documents.")
     }
-    errored = false
+    hasError = false
     model
   }
 
@@ -123,7 +104,7 @@ class OutputDBWriter(cleardownOnError: Boolean,
     collection.createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
 
     // we have finished! let's celebrate
-    Metadata.writeCompletionDateTo(collection)
+    CollectionMetadata.writeCompletionDateTo(collection)
   }
 }
 
