@@ -19,7 +19,7 @@
  *
  */
 
-package config
+package services.fetch
 
 import java.io.File
 

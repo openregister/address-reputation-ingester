@@ -26,6 +26,7 @@ import java.nio.file.Files
 import java.util.zip.ZipInputStream
 
 import uk.co.hmrc.logging.SimpleLogger
+import Utils._
 
 class ZipUnpacker(logger: SimpleLogger, unpackFolder: File) {
 
@@ -41,6 +42,8 @@ class ZipUnpacker(logger: SimpleLogger, unpackFolder: File) {
 
   def unzip(zipFile: InputStream, destPath: String): Int = {
     val destDirectory = if (destPath.nonEmpty) new File(unpackFolder, destPath) else unpackFolder
+    // remove all pre-existing files
+    deleteDir(destDirectory)
     destDirectory.mkdirs()
 
     var files = 0

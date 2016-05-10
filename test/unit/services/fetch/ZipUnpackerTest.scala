@@ -23,7 +23,7 @@ package services.fetch
 
 import java.io.File
 
-import config.Utils._
+import Utils._
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import uk.co.hmrc.logging.StubLogger
 
@@ -38,9 +38,14 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
   test(
     """
        Given a zip file that contains nested zip files,
-       Then unpack will expand the contents into a subdirectory.
+       Then unpack will expand the contents into a subdirectory,
+       And any pre-existing files will be deleted.
     """) {
     deleteDir(tempDir)
+    val fooBar = new File(tempDir, "foo/bar")
+    fooBar.mkdirs()
+    val preExisting = new File(fooBar, "preExisting.txt")
+    assert(preExisting.createNewFile())
 
     val logger = new StubLogger
     val sample = new File(getClass.getClassLoader.getResource("nested.zip").getFile)
@@ -52,6 +57,7 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
     val e2 = new File(tempDir, "foo/bar/resources/hello.txt")
     assert(e1.exists, e1)
     assert(e2.exists, e2)
+    assert(!preExisting.exists(), preExisting)
   }
 
   test(

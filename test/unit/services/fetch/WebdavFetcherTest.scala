@@ -21,7 +21,7 @@ import java.net.{URI, URL}
 import java.nio.file.Files
 
 import com.github.sardine.{DavResource, Sardine}
-import config.Utils._
+import Utils._
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
