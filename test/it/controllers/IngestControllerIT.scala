@@ -90,7 +90,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
 
       verifyOK("/admin/status", "idle")
 
-      val collection = casbahMongoConnection().getConfiguredDb("exeter_1_0")
+      val collection = casbahMongoConnection().getConfiguredDb("exeter_1_001")
       collection.size mustBe 30 // 29 records plus 1 metadata
       // (see similar tests in ExtractorTest)
 

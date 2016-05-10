@@ -32,6 +32,8 @@ import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger
 
+import scala.collection.mutable
+
 @RunWith(classOf[JUnitRunner])
 class OutputDBWriterTest extends FunSuite {
 
@@ -41,9 +43,10 @@ class OutputDBWriterTest extends FunSuite {
     val collection = mock[MongoCollection]
     val bulk = mock[BulkWriteOperation]
     val logger = new StubLogger()
-    val model = new StateModel()
+    val model = new StateModel("x")
     val status = new StatusLogger(logger)
 
+    when(mongoDB.collectionNames()) thenReturn mutable.Set("admin", "x_0_000", "x_0_001", "x_0_004")
     when(mongoDB.collectionExists(anyString())) thenReturn false
     when(mongoDB(anyString())) thenReturn collection
     when(casbahMongoConnection.getConfiguredDb) thenReturn mongoDB
@@ -54,6 +57,7 @@ class OutputDBWriterTest extends FunSuite {
     """
       when a DbAddress is passed to the writer
       then an insert is invoked
+      and the collection name is chosen correctly
     """) {
     new Context {
       val someDBAddress = DbAddress("id1", List("1 Foo Rue"), "Puddletown", "FX1 1XF")
@@ -62,6 +66,7 @@ class OutputDBWriterTest extends FunSuite {
 
       outputDBWriter.output(someDBAddress)
 
+      assert(outputDBWriter.collectionName === "x_0_005")
       verify(bulk, times(1)).insert(any[DBObject])
     }
   }

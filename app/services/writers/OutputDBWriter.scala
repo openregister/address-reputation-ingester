@@ -53,7 +53,7 @@ class OutputDBWriter(cleardownOnError: Boolean,
   private val db = mongoDbConnection.getConfiguredDb
 
   private val collectionMetadata = new CollectionMetadata(db, model)
-  private val collectionName = collectionMetadata.nextFreeCollectionName
+  val collectionName = collectionMetadata.nextFreeCollectionName
   private val collection = db(collectionName)
   private val bulk = new BatchedBulkOperation(settings, collection)
 

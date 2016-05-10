@@ -27,32 +27,26 @@ import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoCollection, MongoDB}
 import services.model.StateModel
 
-import scala.annotation.tailrec
-
 
 class CollectionMetadata(db: MongoDB, inputModel: StateModel) {
   private val collectionNamePrefix = inputModel.collectionBaseName + "_"
 
-  private def collectionExists(i: Int) = {
-    val collectionName = s"$collectionNamePrefix$i"
-    db.collectionExists(collectionName)
-  }
-
-  @tailrec
-  private def findNextFreeIndex(i: Int): Int = {
-    if (!collectionExists(i)) i
-    else findNextFreeIndex(i + 1)
-  }
-
-  private lazy val nextFreeIndex = findNextFreeIndex(0)
-
-  def nextFreeCollectionName: String = s"$collectionNamePrefix$nextFreeIndex"
-
-  def revisedModel: StateModel = inputModel.copy(index = Some(nextFreeIndex))
-
-  def existingCollectionNames: List[String] = {
+  lazy val existingCollectionNames: List[String] = {
     db.collectionNames.filter(_.startsWith(collectionNamePrefix)).toList.sorted
   }
+
+  private def indexOf(collectionName: String): Int = {
+    collectionName.substring(collectionName.length - 3).toInt
+  }
+
+  private lazy val nextFreeIndex =
+    if (existingCollectionNames.isEmpty) 1
+    else indexOf(existingCollectionNames.last) + 1
+
+  def nextFreeCollectionName: String =
+    String.format("%s%03d", collectionNamePrefix, java.lang.Integer.valueOf(nextFreeIndex))
+
+  def revisedModel: StateModel = inputModel.copy(index = Some(nextFreeIndex))
 }
 
 
