@@ -18,6 +18,7 @@ package services.fetch
 
 import java.io.{File, FileInputStream}
 import java.net.{URI, URL}
+import java.nio.file.Files
 
 import com.github.sardine.{DavResource, Sardine}
 import config.Utils._
@@ -43,7 +44,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
     when(sardineFactory.begin) thenReturn sardine
 
     val url = "http://somedavserver.com/path/prod/rel/variant/"
-    val files = new File(getClass.getResource(resourceFolder).toURI).listFiles().toList
+    val files = new File(getClass.getResource(resourceFolder).toURI).listFiles().toList.sorted
     val resources = files.map(toDavResource(_, url))
 
     def teardown() {
@@ -55,6 +56,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
     "copy files to output directory if it is empty" in new Context("/webdav") {
       // given
       deleteDir(outputDirectory)
+      val stuff = downloadDirectory.toPath.resolve("stuff1")
       when(sardine.list(url)) thenReturn resources
       files.foreach {
         f =>
@@ -63,26 +65,132 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       }
       val fetcher = new WebdavFetcher(logger, sardineFactory, downloadDirectory)
       // when
-      val downloaded = fetcher.fetchAll(url, "stuff")
+      val downloaded = fetcher.fetchAll(url, "stuff1")
       // then
+      downloaded.size must be(3)
       downloaded.map(_.length()).sum must be(files.map(_.length()).sum)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
-      downloadDirectory.toPath.resolve("stuff").toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
-      logger.infos.map(_.message).sorted must be(List(
-        "Info:Fetched bar.txt in {}",
-        "Info:Fetched baz.txt in {}",
-        "Info:Fetched foo.txt in {}",
+      stuff.toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
+      logger.infos.map(_.message) must be(List(
+        "Info:Listing {}",
         "Info:Fetching {} to bar.txt",
+        "Info:Fetched bar.txt in {}",
         "Info:Fetching {} to baz.txt",
+        "Info:Fetched baz.txt in {}",
         "Info:Fetching {} to foo.txt",
-        "Info:Listing {}"
+        "Info:Fetched foo.txt in {}"
       ))
       // finally
       teardown()
     }
 
-    "not copy files to output directory if the files are already preseny" in new Context("/webdav") {
-      //TODO
+    "copy files to output directory if the files are already present but without .done markers" in new Context("/webdav") {
+      // given
+      deleteDir(outputDirectory)
+      val stuff = downloadDirectory.toPath.resolve("stuff2")
+      stuff.toFile.mkdirs()
+      when(sardine.list(url)) thenReturn resources
+      files.foreach {
+        f =>
+          val s = s"$url${f.getName}"
+          when(sardine.get(s)) thenReturn new FileInputStream(f)
+          Files.createFile(stuff.resolve(f.getName))
+      }
+      Thread.sleep(10) // because the filesystem can be slightly behind
+      val fetcher = new WebdavFetcher(logger, sardineFactory, downloadDirectory)
+      // when
+      val downloaded = fetcher.fetchAll(url, "stuff2")
+      // then
+      downloaded.size must be(3)
+      downloaded.map(_.length()).sum must be(files.map(_.length()).sum)
+      val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
+      stuff.toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
+      logger.infos.map(_.message) must be(List(
+        "Info:Listing {}",
+        "Info:Fetching {} to bar.txt",
+        "Info:Fetched bar.txt in {}",
+        "Info:Fetching {} to baz.txt",
+        "Info:Fetched baz.txt in {}",
+        "Info:Fetching {} to foo.txt",
+        "Info:Fetched foo.txt in {}"
+      ))
+      // finally
+      teardown()
+    }
+
+    "copy files to output directory if the files are already present but with older .done markers" in new Context("/webdav") {
+      // given
+      deleteDir(outputDirectory)
+      val stuff = downloadDirectory.toPath.resolve("stuff2")
+      stuff.toFile.mkdirs()
+      when(sardine.list(url)) thenReturn resources
+      files.foreach {
+        f =>
+          Files.createFile(stuff.resolve(f.getName + ".done"))
+      }
+      // needs a long delay because of 1sec resolution of file timestamps
+      Thread.sleep(1000)
+      files.foreach {
+        f =>
+          val s = s"$url${f.getName}"
+          when(sardine.get(s)) thenReturn new FileInputStream(f)
+          Files.createFile(stuff.resolve(f.getName))
+      }
+      Thread.sleep(10) // because the filesystem can be slightly behind
+      val fetcher = new WebdavFetcher(logger, sardineFactory, downloadDirectory)
+      // when
+      val downloaded = fetcher.fetchAll(url, "stuff2")
+      // then
+      downloaded.size must be(3)
+      downloaded.map(_.length()).sum must be(files.map(_.length()).sum)
+      val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
+      stuff.toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
+      logger.infos.map(_.message) must be(List(
+        "Info:Listing {}",
+        "Info:Fetching {} to bar.txt",
+        "Info:Fetched bar.txt in {}",
+        "Info:Fetching {} to baz.txt",
+        "Info:Fetched baz.txt in {}",
+        "Info:Fetching {} to foo.txt",
+        "Info:Fetched foo.txt in {}"
+      ))
+      // finally
+      teardown()
+    }
+
+    "not copy files to output directory if the files are already present and with younger .done markers" in new Context("/webdav") {
+      // given
+      deleteDir(outputDirectory)
+      val stuff = downloadDirectory.toPath.resolve("stuff3")
+      stuff.toFile.mkdirs()
+      when(sardine.list(url)) thenReturn resources
+      files.foreach {
+        f =>
+          val s = s"$url${f.getName}"
+          when(sardine.get(s)) thenReturn new FileInputStream(f)
+          Files.createFile(stuff.resolve(f.getName))
+      }
+      Thread.sleep(10)
+      files.foreach {
+        f =>
+          Files.createFile(stuff.resolve(f.getName + ".done"))
+      }
+      Thread.sleep(10) // because the filesystem can be slightly behind
+      val fetcher = new WebdavFetcher(logger, sardineFactory, downloadDirectory)
+      // when
+      val downloaded = fetcher.fetchAll(url, "stuff3")
+      // then
+      downloaded.size must be(3)
+      val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
+      stuff.toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
+      logger.infos.map(_.message) must be(List(
+        "Info:Listing {}",
+        "Info:Already had bar.txt",
+        "Info:Already had baz.txt",
+        "Info:Already had foo.txt"
+      ))
+      // finally
+      teardown()
     }
   }
 
@@ -108,13 +216,13 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       downloaded.map(_.length()).sum must be(files.map(_.length()).sum)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       downloadDirectory.toPath.resolve("stuff").toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
-      logger.infos.map(_.message).sorted must be(List(
-        "Info:Fetched bar.txt in {}",
-        "Info:Fetched baz.txt in {}",
-        "Info:Fetched foo.txt in {}",
+      logger.infos.map(_.message) must be(List(
         "Info:Fetching {} to bar.txt",
+        "Info:Fetched bar.txt in {}",
         "Info:Fetching {} to baz.txt",
-        "Info:Fetching {} to foo.txt"
+        "Info:Fetched baz.txt in {}",
+        "Info:Fetching {} to foo.txt",
+        "Info:Fetched foo.txt in {}"
       ))
       // finally
       teardown()

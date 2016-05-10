@@ -59,17 +59,33 @@ class WebdavFetcher(logger: SimpleLogger, factory: SardineWrapper, downloadFolde
     new URL(myUrl.getProtocol, myUrl.getHost, myUrl.getPort, res.getHref.getPath)
   }
 
-  private def fetchFile(url: URL, sardine: Sardine, outputDirectory: Path): File = {
+  private def fetchFile(url: URL, sardine: Sardine, outputDirectory: File): File = {
     val file = fileOf(url)
-    logger.info(s"Fetching {} to $file", url)
-    val dt = new DiagnosticTimer
+    val outFile = new File(outputDirectory, file)
+    val doneFile = new File(outputDirectory, file + ".done")
+    if (outFile.exists() && doneFile.exists() && outFile.lastModified() <= doneFile.lastModified()) {
+      logger.info(s"Already had $file")
+
+    } else {
+      // pre-existing files are considered incomplete
+      outFile.delete()
+      doneFile.delete()
+
+      logger.info(s"Fetching {} to $file", url)
+      val dt = new DiagnosticTimer
+      doFetchFile(url, sardine, outFile)
+      Files.createFile(doneFile.toPath)
+      logger.info(s"Fetched $file in {}", dt)
+    }
+    outFile
+  }
+
+  private def doFetchFile(url: URL, sardine: Sardine, outFile: File): File = {
+    val file = fileOf(url)
     val in = sardine.get(url.toExternalForm)
     try {
-      val out = outputDirectory.resolve(file)
-      val bytesCopied = Files.copy(in, out)
-      Files.createFile(outputDirectory.resolve(file + ".done"))
-      logger.info(s"Fetched $file in {}", dt)
-      out.toFile
+      val bytesCopied = Files.copy(in, outFile.toPath)
+      outFile
     } finally {
       in.close()
     }
@@ -81,10 +97,10 @@ class WebdavFetcher(logger: SimpleLogger, factory: SardineWrapper, downloadFolde
     file.substring(slash + 1)
   }
 
-  private def resolveAndMkdirs(outputPath: String): Path = {
+  private def resolveAndMkdirs(outputPath: String): File = {
     val outputDirectory = if (outputPath.nonEmpty) new File(downloadFolder, outputPath) else downloadFolder
     outputDirectory.mkdirs()
-    outputDirectory.toPath
+    outputDirectory
   }
 }
 
