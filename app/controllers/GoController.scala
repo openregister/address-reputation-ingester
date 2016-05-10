@@ -25,6 +25,11 @@ import services.writers.WriterSettings
 import uk.co.hmrc.logging.SimpleLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
+object KnownProducts {
+  val OSGB = List("abi", "abp")
+}
+
+
 object GoController extends GoController(
   ControllerConfig.logger,
   ControllerConfig.workerFactory,
@@ -32,9 +37,8 @@ object GoController extends GoController(
   FetchController,
   IngestController,
   SwitchoverController
-) {
-  val knownProducts = Seq("abi", "abp")
-}
+)
+
 
 class GoController(logger: SimpleLogger,
                    workerFactory: WorkerFactory,
@@ -52,7 +56,7 @@ class GoController(logger: SimpleLogger,
       workerFactory.worker.push(s"automatic search", status, {
         continuer =>
           val tree = sardine.exploreRemoteTree
-          for (product <- GoController.knownProducts) {
+          for (product <- KnownProducts.OSGB) {
             val found = tree.findLatestFor(product)
             if (found.isDefined) {
               val model = StateModel(found.get)

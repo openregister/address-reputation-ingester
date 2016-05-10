@@ -34,7 +34,7 @@ import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.exec.{Continuer, WorkQueue}
-import services.fetch.SardineWrapper
+import services.fetch.{SardineWrapper, WebDavFile, WebDavTree}
 import services.model.{StateModel, StatusLogger}
 import services.writers._
 import uk.co.hmrc.logging.StubLogger
@@ -42,7 +42,8 @@ import uk.co.hmrc.logging.StubLogger
 @RunWith(classOf[JUnitRunner])
 class GoControllerTest extends FunSuite with MockitoSugar {
 
-  val url = new URL("http://localhost/webdav")
+  val base = "http://somedavserver.com:81/webdav"
+  val baseUrl = new URL(base + "/")
   val username = "foo"
   val password = "bar"
 
@@ -53,8 +54,8 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     val status = new StatusLogger(logger)
 
     val sardine = mock[Sardine]
-    val sardineFactory = mock[SardineWrapper]
-    when(sardineFactory.begin) thenReturn sardine
+    val sardineWrapper = mock[SardineWrapper]
+    when(sardineWrapper.begin) thenReturn sardine
 
     val folder = new File(".")
     val worker = new WorkQueue(new StubLogger())
@@ -64,7 +65,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     val ingestController = mock[IngestController]
     val switchoverController = mock[SwitchoverController]
 
-    val goController = new GoController(logger, workerFactory, sardineFactory, fetchController, ingestController, switchoverController)
+    val goController = new GoController(logger, workerFactory, sardineWrapper, fetchController, ingestController, switchoverController)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]
@@ -111,11 +112,12 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     }
   }
 
-  test("""Given an aborted state,
+  test(
+    """Given an aborted state,
           doGo should not download files using webdav
           then not unzip every zip file
           and not switch over collections
-       """) {
+    """) {
     new context {
       // when
       val response = await(call(goController.doGo("null", "product", 123, "variant"), request))
@@ -130,11 +132,12 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     }
   }
 
-  test("""Given a null target,
+  test(
+    """Given a null target,
           doGo should download files using webdav
           then unzip every zip file
           but not switch over collections
-       """) {
+    """) {
     new context {
       // when
       val response = await(call(goController.doGo("null", "product", 123, "variant"), request))
@@ -149,11 +152,12 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     }
   }
 
-  test("""Given a db target,
+  test(
+    """Given a db target,
           doGo should download files using webdav
           then unzip every zip file
           and then switch over collections
-       """) {
+    """) {
     new context {
       // when
       val response = await(call(goController.doGo("db", "product", 123, "variant"), request))
@@ -164,6 +168,82 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       verify(fetchController).fetch(any[StateModel], any[StatusLogger])
       verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(switchoverController).switchIfOK(any[StateModel], any[StatusLogger])
+      teardown()
+    }
+  }
+
+  test(
+    """Given a db target and a tree containing abp files
+          doGoAuto should find remote files
+          then download files for both products using webdav
+          then unzip every zip file
+          and then switch over collections
+    """) {
+    new context {
+      // given
+      val tree = WebDavTree(
+        WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
+          WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abp/38/full/"), "full", isDirectory = true, files = List(
+                WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                WebDavFile(new URL(base + "/abp/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
+              ))
+            )))),
+          WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abp/38/full/"), "full", isDirectory = true, files = List(
+                WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                WebDavFile(new URL(base + "/abp/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
+              ))
+            )),
+            WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
+                WebDavFile(new URL(base + "/abp/39/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                WebDavFile(new URL(base + "/abp/39/full/DVD1.txt"), "DVD1.txt", isPlainText = true),
+                WebDavFile(new URL(base + "/abp/39/full/DVD2.zip"), "DVD2.zip", isZipFile = true),
+                WebDavFile(new URL(base + "/abp/39/full/DVD2.txt"), "DVD2.txt", isPlainText = true)
+              ))
+            ))
+          ))
+        )))
+      when(sardineWrapper.exploreRemoteTree) thenReturn tree
+
+      // when
+      val response = await(call(goController.doGoAuto("db"), request))
+
+      // then
+      worker.awaitCompletion()
+      assert(response.header.status === ACCEPTED)
+      verify(fetchController, times(2)).fetch(any[StateModel], any[StatusLogger])
+      verify(ingestController, times(2)).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
+      verify(switchoverController, times(2)).switchIfOK(any[StateModel], any[StatusLogger])
+      teardown()
+    }
+  }
+
+  test(
+    """Given a db target and a tree containing no files
+          doGoAuto should find no remote files
+    """) {
+    new context {
+      // given
+      val tree = WebDavTree(
+        WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
+          WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true),
+          WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = Nil)
+        )))
+      when(sardineWrapper.exploreRemoteTree) thenReturn tree
+
+      // when
+      val response = await(call(goController.doGoAuto("db"), request))
+
+      // then
+      worker.awaitCompletion()
+      assert(response.header.status === ACCEPTED)
+      verify(fetchController, never).fetch(any[StateModel], any[StatusLogger])
+      verify(ingestController, never).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
+      verify(switchoverController, never).switchIfOK(any[StateModel], any[StatusLogger])
       teardown()
     }
   }
