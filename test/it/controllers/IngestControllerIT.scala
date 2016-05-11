@@ -22,7 +22,7 @@ import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import java.util.Date
 
 import com.mongodb.casbah.commons.MongoDBObject
-import helper.Utils._
+import services.fetch.Utils._
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._

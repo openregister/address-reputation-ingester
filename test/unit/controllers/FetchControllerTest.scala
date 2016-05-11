@@ -27,7 +27,7 @@ import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.exec.WorkQueue
-import services.fetch.{OSGBProduct, WebDavFile, WebdavFetcher, ZipUnpacker}
+import services.fetch._
 import services.model.{StateModel, StatusLogger}
 import services.writers.OutputFileWriterFactory
 import uk.co.hmrc.logging.StubLogger
@@ -100,7 +100,8 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       val f2Txt = new File("/a/b/f2.txt")
       val f2Zip = new File("/a/b/f2.zip")
       val files = List(f1Txt, f1Zip, f2Txt, f2Zip)
-      when(webdavFetcher.fetchAll(s"$url/$product/$epoch/$variant", "product/123/variant")) thenReturn files
+      val items = List(DownloadItem.fresh(f1Txt), DownloadItem.fresh(f1Zip), DownloadItem.fresh(f2Txt), DownloadItem.fresh(f2Zip))
+      when(webdavFetcher.fetchAll(s"$url/$product/$epoch/$variant", "product/123/variant")) thenReturn items
 
       // when
       val response = await(call(fetchController.doFetch(product, epoch, variant), request))
@@ -114,6 +115,31 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
     }
   }
 
+  test("fetch should download files using webdav but only unzip fresh zip files") {
+    new context {
+      // given
+      val product = "product"
+      val epoch = 123
+      val variant = "variant"
+      val f1Txt = new File("/a/b/f1.txt")
+      val f1Zip = new File("/a/b/f1.zip")
+      val f2Txt = new File("/a/b/f2.txt")
+      val f2Zip = new File("/a/b/f2.zip")
+      val items = List(DownloadItem.stale(f1Txt), DownloadItem.stale(f1Zip), DownloadItem.fresh(f2Txt), DownloadItem.fresh(f2Zip))
+      when(webdavFetcher.fetchAll(s"$url/$product/$epoch/$variant", "product/123/variant")) thenReturn items
+
+      // when
+      val response = await(call(fetchController.doFetch(product, epoch, variant), request))
+
+      // then
+      worker.awaitCompletion()
+      assert(response.header.status === 202)
+      verify(webdavFetcher).fetchAll(s"$url/$product/$epoch/$variant", "product/123/variant")
+      verify(unzipper).unzipList(List(f2Txt, f2Zip), "product/123/variant")
+      teardown()
+    }
+  }
+
   test("fetch should download a list of files passed in via the model using webdav then unzip every zip file") {
     new context {
       // given
@@ -122,8 +148,8 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
 
       val f1Txt = new File("/a/b/DVD1.txt")
       val f1Zip = new File("/a/b/DVD1.zip")
-      val files = List(f1Txt, f1Zip)
-      when(webdavFetcher.fetchList(product, "product/123/variant")) thenReturn files
+      val items = List(DownloadItem.fresh(f1Txt), DownloadItem.fresh(f1Zip))
+      when(webdavFetcher.fetchList(product, "product/123/variant")) thenReturn items
 
       // when
       val model2 = fetchController.fetch(model1, status)
@@ -131,7 +157,52 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       // then
       assert(model2 === model1)
       verify(webdavFetcher).fetchList(product, "product/123/variant")
-      verify(unzipper).unzipList(files, "product/123/variant")
+      verify(unzipper).unzipList(List(f1Txt, f1Zip), "product/123/variant")
+      teardown()
+    }
+  }
+
+  test("fetch should consider downloading a list of files passed in via the model but change the model to failed because all are stale") {
+    new context {
+      // given
+      val product = OSGBProduct("product", 123, List(zip1))
+      val model1 = StateModel("product", 123, "variant", None, Some(product))
+
+      val f1Txt = new File("/a/b/DVD1.txt")
+      val f1Zip = new File("/a/b/DVD1.zip")
+      val items = List(DownloadItem.stale(f1Txt), DownloadItem.stale(f1Zip))
+      when(webdavFetcher.fetchList(product, "product/123/variant")) thenReturn items
+
+      // when
+      val model2 = fetchController.fetch(model1, status)
+
+      // then
+      assert(model2 === model1.copy(hasFailed = true))
+      verify(webdavFetcher).fetchList(product, "product/123/variant")
+      verify(unzipper).unzipList(Nil, "product/123/variant")
+      teardown()
+    }
+  }
+
+  test("when passed an empty file list, fetch should leave the model in a failed state") {
+    new context {
+      // given
+      val product = OSGBProduct("product", 123, List(zip1))
+      val model1 = StateModel("product", 123, "variant", None, Some(product))
+
+      val f1Txt = new File("/a/b/DVD1.txt")
+      val f1Zip = new File("/a/b/DVD1.zip")
+      val files = List(f1Txt, f1Zip)
+      val items = List[DownloadItem]()
+      when(webdavFetcher.fetchList(product, "product/123/variant")) thenReturn items
+
+      // when
+      val model2 = fetchController.fetch(model1, status)
+
+      // then
+      assert(model2 === model1.copy(hasFailed = true))
+      verify(webdavFetcher).fetchList(product, "product/123/variant")
+      verify(unzipper).unzipList(Nil, "product/123/variant")
       teardown()
     }
   }

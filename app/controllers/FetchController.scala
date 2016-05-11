@@ -18,13 +18,12 @@
 
 package controllers
 
-import java.io.File
 import java.net.URL
 
 import controllers.SimpleValidator._
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
-import services.fetch.{WebdavFetcher, ZipUnpacker}
+import services.fetch.{DownloadItem, WebdavFetcher, ZipUnpacker}
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.logging.SimpleLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -61,13 +60,17 @@ class FetchController(logger: SimpleLogger,
   }
 
   private[controllers] def fetch(model: StateModel, status: StatusLogger): StateModel = {
-    val files: List[File] =
+    val files: List[DownloadItem] =
       if (model.product.nonEmpty) {
         webdavFetcher.fetchList(model.product.get, model.pathSegment)
       } else {
         webdavFetcher.fetchAll(s"$url/${model.pathSegment}", model.pathSegment)
       }
-    unzipper.unzipList(files, model.pathSegment)
-    model
+
+    val freshItems = files.filter(_.fresh)
+    val toUnzip = freshItems.map(_.file)
+    unzipper.unzipList(toUnzip, model.pathSegment)
+
+    if (freshItems.nonEmpty) model else model.copy(hasFailed = true)
   }
 }
