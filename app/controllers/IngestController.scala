@@ -48,7 +48,7 @@ class IngestController(unpackedFolder: File,
                        dbWriterFactory: OutputDBWriterFactory,
                        fileWriterFactory: OutputFileWriterFactory,
                        nullWriterFactory: OutputNullWriterFactory,
-                       ingestorFactory: IngesterFactory,
+                       ingesterFactory: IngesterFactory,
                        workerFactory: WorkerFactory
                       ) extends BaseController {
 
@@ -98,7 +98,7 @@ class IngestController(unpackedFolder: File,
     val qualifiedDir = new File(unpackedFolder, model.pathSegment)
     val writer = writerFactory.writer(model, status, settings)
     try {
-      ingestorFactory.ingester(continuer, model, status).ingest(qualifiedDir, writer)
+      ingesterFactory.ingester(continuer, model, status).ingest(qualifiedDir, writer)
     } finally {
       logger.info("Cleaning up the ingester.")
       writer.close()

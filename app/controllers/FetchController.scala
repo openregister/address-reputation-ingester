@@ -62,14 +62,14 @@ class FetchController(logger: SimpleLogger,
   private[controllers] def fetch(model: StateModel, status: StatusLogger): StateModel = {
     val files: List[DownloadItem] =
       if (model.product.nonEmpty) {
-        webdavFetcher.fetchList(model.product.get, model.pathSegment)
+        webdavFetcher.fetchList(model.product.get, model.pathSegment, status)
       } else {
-        webdavFetcher.fetchAll(s"$url/${model.pathSegment}", model.pathSegment)
+        webdavFetcher.fetchAll(s"$url/${model.pathSegment}", model.pathSegment, status)
       }
 
     val freshItems = files.filter(_.fresh)
     val toUnzip = freshItems.map(_.file)
-    unzipper.unzipList(toUnzip, model.pathSegment)
+    unzipper.unzipList(toUnzip, model.pathSegment, status)
 
     if (freshItems.nonEmpty) model else model.copy(hasFailed = true)
   }

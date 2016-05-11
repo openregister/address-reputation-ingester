@@ -21,36 +21,37 @@ import java.net.URL
 import java.nio.file._
 
 import com.github.sardine.{DavResource, Sardine}
+import services.model.StatusLogger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.logging.SimpleLogger
 
 import scala.collection.JavaConverters._
 
-class WebdavFetcher(logger: SimpleLogger, factory: SardineWrapper, downloadFolder: File) {
+class WebdavFetcher(factory: SardineWrapper, downloadFolder: File) {
 
   // Downloads a specified set of remote files, marks them all with a completion marker (.done),
   // then returns the total bytes copied.
-  def fetchList(product: OSGBProduct, outputPath: String): List[DownloadItem] = {
+  def fetchList(product: OSGBProduct, outputPath: String, status: StatusLogger): List[DownloadItem] = {
     val outputDirectory = resolveAndMkdirs(outputPath)
     val sardine = factory.begin
     product.zips.map {
       webDavFile =>
-        fetchFile(webDavFile.url, sardine, outputDirectory)
+        fetchFile(webDavFile.url, sardine, outputDirectory, status)
     }
   }
 
   // Searches for remote files, downloads them, marks them all with a completion marker (.done),
   // then returns the total bytes copied.
   // Note that this doesn't check the existence of completion marker files on the remote server.
-  def fetchAll(url: String, outputPath: String): List[DownloadItem] = {
+  def fetchAll(url: String, outputPath: String, status: StatusLogger): List[DownloadItem] = {
     val outputDirectory = resolveAndMkdirs(outputPath)
     val sardine = factory.begin
-    logger.info("Listing {}", url)
+    status.info("Listing {}", url)
     val resources = sardine.list(url).asScala.toList.filterNot(_.isDirectory)
     resources.map {
       res =>
         val absoluteUrl = toUrl(url, res)
-        fetchFile(absoluteUrl, sardine, outputDirectory)
+        fetchFile(absoluteUrl, sardine, outputDirectory, status)
     }
   }
 
@@ -59,12 +60,12 @@ class WebdavFetcher(logger: SimpleLogger, factory: SardineWrapper, downloadFolde
     new URL(myUrl.getProtocol, myUrl.getHost, myUrl.getPort, res.getHref.getPath)
   }
 
-  private def fetchFile(url: URL, sardine: Sardine, outputDirectory: File): DownloadItem = {
+  private def fetchFile(url: URL, sardine: Sardine, outputDirectory: File, status: StatusLogger): DownloadItem = {
     val file = fileOf(url)
     val outFile = new File(outputDirectory, file)
     val doneFile = new File(outputDirectory, file + ".done")
     if (outFile.exists() && doneFile.exists() && outFile.lastModified() <= doneFile.lastModified()) {
-      logger.info(s"Already had $file")
+      status.info(s"Already had $file")
       DownloadItem.stale(outFile)
 
     } else {
@@ -72,11 +73,11 @@ class WebdavFetcher(logger: SimpleLogger, factory: SardineWrapper, downloadFolde
       outFile.delete()
       doneFile.delete()
 
-      logger.info(s"Fetching {} to $file", url)
+      status.info(s"Fetching {} to $file", url)
       val dt = new DiagnosticTimer
       val item = doFetchFile(url, sardine, outFile)
       Files.createFile(doneFile.toPath)
-      logger.info(s"Fetched $file in {}", dt)
+      status.info(s"Fetched $file in {}", dt)
       item
     }
   }

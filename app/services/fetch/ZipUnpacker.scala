@@ -25,22 +25,22 @@ import java.io.{File, FileInputStream, InputStream}
 import java.nio.file.Files
 import java.util.zip.ZipInputStream
 
-import uk.co.hmrc.logging.SimpleLogger
-import Utils._
+import services.fetch.Utils._
+import services.model.StatusLogger
 
-class ZipUnpacker(logger: SimpleLogger, unpackFolder: File) {
+class ZipUnpacker(unpackFolder: File) {
 
-  def unzipList(zipFiles: List[File], destPath: String): Int = {
-    zipFiles.map(z => unzip(z, destPath)).sum
+  def unzipList(zipFiles: List[File], destPath: String, status: StatusLogger): Int = {
+    zipFiles.map(z => unzip(z, destPath, status)).sum
   }
 
-  def unzip(file: File, destPath: String): Int = {
+  def unzip(file: File, destPath: String, status: StatusLogger): Int = {
     if (file.getName.toLowerCase.endsWith(".zip")) {
-      unzip(new FileInputStream(file), destPath)
+      unzip(new FileInputStream(file), destPath, status)
     } else 0
   }
 
-  def unzip(zipFile: InputStream, destPath: String): Int = {
+  def unzip(zipFile: InputStream, destPath: String, status: StatusLogger): Int = {
     val destDirectory = if (destPath.nonEmpty) new File(unpackFolder, destPath) else unpackFolder
     // remove all pre-existing files
     deleteDir(destDirectory)
@@ -54,10 +54,10 @@ class ZipUnpacker(logger: SimpleLogger, unpackFolder: File) {
         val file = entry.get
         val filePath = new File(destDirectory, file.getName)
         if (file.isDirectory) {
-          logger.info("mkdir {}", file.getName)
+          status.info("mkdir {}", file.getName)
           filePath.mkdir()
         } else {
-          logger.info("copy {}", file.getName)
+          status.info("copy {}", file.getName)
           Files.copy(zipIn, filePath.toPath)
           files += 1
         }

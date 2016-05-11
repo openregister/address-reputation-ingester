@@ -23,8 +23,9 @@ package services.fetch
 
 import java.io.File
 
-import Utils._
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import services.fetch.Utils._
+import services.model.StatusLogger
 import uk.co.hmrc.logging.StubLogger
 
 class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
@@ -42,17 +43,21 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
        And any pre-existing files will be deleted.
     """) {
     deleteDir(tempDir)
+    // given
     val fooBar = new File(tempDir, "foo/bar")
     fooBar.mkdirs()
     val preExisting = new File(fooBar, "preExisting.txt")
     assert(preExisting.createNewFile())
 
     val logger = new StubLogger
+    val status = new StatusLogger(logger)
     val sample = new File(getClass.getClassLoader.getResource("nested.zip").getFile)
 
-    val unzipped = new ZipUnpacker(logger, tempDir).unzipList(List(sample), "foo/bar")
-    assert(unzipped === 2)
+    // when
+    val unzipped = new ZipUnpacker(tempDir).unzipList(List(sample), "foo/bar", status)
 
+    // then
+    assert(unzipped === 2)
     val e1 = new File(tempDir, "foo/bar/data/SX9090-first3600.zip")
     val e2 = new File(tempDir, "foo/bar/resources/hello.txt")
     assert(e1.exists, e1)
@@ -66,11 +71,15 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
        Then unpack will do nothing.
     """) {
     deleteDir(tempDir)
-
+    // given
     val logger = new StubLogger
+    val status = new StatusLogger(logger)
     val sample = new File(getClass.getClassLoader.getResource("SX9090-first20.zip").getFile)
 
-    val unzipped = new ZipUnpacker(logger, tempDir).unzip(sample, "foo")
+    // when
+    val unzipped = new ZipUnpacker(tempDir).unzip(sample, "foo", status)
+
+    // then
     assert(unzipped === 1)
 
     val e1 = new File(tempDir, "foo/SX9090-first20.csv")
@@ -83,11 +92,15 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
        Then unpack will do nothing.
     """) {
     deleteDir(tempDir)
-
+    // given
     val logger = new StubLogger
+    val status = new StatusLogger(logger)
     val sample = new File(getClass.getClassLoader.getResource("invalid15.csv").getFile)
 
-    val unzipped = new ZipUnpacker(logger, tempDir).unzip(sample, "foo")
+    //when
+    val unzipped = new ZipUnpacker(tempDir).unzip(sample, "foo", status)
+
+    // then
     assert(unzipped === 0)
   }
 }

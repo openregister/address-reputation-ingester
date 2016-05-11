@@ -43,6 +43,6 @@ object ControllerConfig {
 
   val workerFactory = new WorkerFactory()
   val sardine = new SardineWrapper(remoteServer, remoteUser, remotePass, logger, new SardineFactory2)
-  val fetcher = new WebdavFetcher(logger, sardine, downloadFolder)
-  val unzipper = new ZipUnpacker(logger, unpackFolder)
+  val fetcher = new WebdavFetcher(sardine, downloadFolder)
+  val unzipper = new ZipUnpacker(unpackFolder)
 }

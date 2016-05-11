@@ -18,6 +18,7 @@ package services.fetch
 
 import java.io.File
 
+import services.model.StatusLogger
 import uk.co.hmrc.logging.Stdout
 
 // for manual test/development
@@ -25,7 +26,7 @@ object ZipUnpackerEssay {
 
   def main(args: Array[String]) {
     if (args.length >= 2) {
-      new ZipUnpacker(Stdout, new File(args(1))).unzip(new File(args(0)), "foo")
+      new ZipUnpacker(new File(args(1))).unzip(new File(args(0)), "foo", new StatusLogger(Stdout))
     }
   }
 }
