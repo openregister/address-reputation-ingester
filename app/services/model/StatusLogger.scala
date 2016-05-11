@@ -26,7 +26,6 @@ class StatusLogger(val tee: SimpleLogger, history: Int = 1) {
   require(history > 0)
 
   private var buffers = List(new mutable.ListBuffer[String]())
-  private var dt = new DiagnosticTimer
 
   def info(format: String, arguments: AnyRef*) {
     tee.info(format, arguments: _*)
@@ -56,17 +55,13 @@ class StatusLogger(val tee: SimpleLogger, history: Int = 1) {
   }
 
   def startAfresh() {
-    if (buffers.head.nonEmpty) {
-      synchronized {
-        pushMessage("Total {}", dt)
-        pushMessage("~~~~~~~~~~~~~~~", dt)
-        // note that this builds up in reverse
-        if (buffers.size > history) {
-          buffers = buffers.take(history)
-        }
-        buffers = new mutable.ListBuffer[String]() :: buffers
-        dt = new DiagnosticTimer
+    synchronized {
+      pushMessage("~~~~~~~~~~~~~~~")
+      // note that 'buffers' builds up in reverse
+      if (buffers.size > history) {
+        buffers = buffers.take(history)
       }
+      buffers = new mutable.ListBuffer[String]() :: buffers
     }
   }
 }

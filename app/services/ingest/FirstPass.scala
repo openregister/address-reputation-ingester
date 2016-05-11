@@ -112,5 +112,5 @@ class FirstPass(out: OutputWriter, continuer: Continuer, val forwardData: Forwar
     }
   }
 
-  def sizeInfo: String = s"First pass obtained ${forwardData.sizeInfo}"
+  def sizeInfo: String = s"First pass obtained ${forwardData.sizeInfo}."
 }

@@ -73,6 +73,6 @@ class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
     dpaCount += 1
   }
 
-  def sizeInfo: String = s"Second pass processed $dpaCount DPAs, $lpiCount LPIs"
+  def sizeInfo: String = s"Second pass processed $dpaCount DPAs, $lpiCount LPIs."
 }
 

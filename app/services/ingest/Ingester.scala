@@ -66,7 +66,7 @@ object Ingester {
 class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger, forwardData: ForwardData = ForwardData.chronicleInMemory()) {
 
   def ingest(rootDir: File, out: OutputWriter): StateModel = {
-    statusLogger.info(s"Ingesting from $rootDir")
+    statusLogger.info(s"Ingesting from $rootDir.")
     ingest(Ingester.listFiles(rootDir, ".zip"), out)
   }
 
@@ -74,15 +74,15 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
     val dt = new DiagnosticTimer
     val fp = new FirstPass(out, continuer, forwardData)
 
-    statusLogger.info(s"Starting first pass through ${files.size} files")
+    statusLogger.info(s"Starting first pass through ${files.size} files.")
     pass(files, out, fp)
     val fd = fp.firstPass
-    statusLogger.info(s"First pass complete after {}", dt)
+    statusLogger.info(s"First pass complete after {}.", dt)
 
-    statusLogger.info(s"Starting second pass through ${files.size} files")
+    statusLogger.info(s"Starting second pass through ${files.size} files.")
     val sp = new SecondPass(fd, continuer)
     pass(files, out, sp)
-    statusLogger.info(s"Finished after {}", dt)
+    statusLogger.info(s"Ingester finished after {}.", dt)
 
     model // unchanged
   }
@@ -104,7 +104,7 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
         }
       } finally {
         zip.close()
-        statusLogger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}", file.getName, dt)
+        statusLogger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}.", file.getName, dt)
       }
       statusLogger.info(thisPass.sizeInfo)
     }

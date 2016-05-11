@@ -76,7 +76,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
       assert(firstPass.forwardData.streets.size === 1)
       assert(firstPass.forwardData.streets.get(48504236L) === "A|A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE||NEW CUMNOCK")
-      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets")
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets.")
     }
   }
 
@@ -105,7 +105,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
       assert(firstPass.forwardData.streets.size === 1)
       assert(firstPass.forwardData.streets.get(47208194L) === "2|CWMDUAD TO CYNWYL ELFED|CWMDUAD|CARMARTHEN")
-      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets")
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets.")
     }
   }
 
@@ -132,7 +132,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
       assert(firstPass.forwardData.streets.size === 1)
       assert(firstPass.forwardData.streets.get(48504236L) === "2|A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE||NEW CUMNOCK")
-      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets")
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets.")
     }
   }
 
@@ -159,7 +159,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
       assert(firstPass.forwardData.streets.size === 1)
       assert(firstPass.forwardData.streets.get(48504236L) === "2|A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE||NEW CUMNOCK")
-      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets")
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets.")
     }
   }
 
@@ -187,7 +187,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
       assert(firstPass.forwardData.blpu.size === 1)
       assert(firstPass.forwardData.blpu.get(320077134L) === "KY10 2PY|1")
-      assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPAs, 0 streets")
+      assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPAs, 0 streets.")
     }
   }
 
@@ -228,7 +228,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
       assert(firstPass.forwardData.dpa.size === 1)
       assert(firstPass.forwardData.dpa.contains(9051119283L))
-      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 1 DPAs, 0 streets")
+      assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 1 DPAs, 0 streets.")
     }
   }
 

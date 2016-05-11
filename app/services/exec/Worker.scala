@@ -129,7 +129,7 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
     executionState.get match {
       case BUSY => s"${statusLogger.status}\n\nbusy$doing"
       case STOPPING => s"${statusLogger.status}\n\naborting$doing"
-      case _ => s"idle\n\nprevious status:\n${statusLogger.status}"
+      case _ => s"${statusLogger.status}\n\nidle"
     }
 
   override def run() {
@@ -161,11 +161,11 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
   private def runTask(task: Task) {
     val info = task.description.trim
     doing = " " + info
-    statusLogger.info(s"Starting $info")
+    statusLogger.info(s"Starting $info.")
     try {
       val timer = new DiagnosticTimer
       task.action(this)
-      statusLogger.info(s"$info - completed after {}", timer)
+      statusLogger.info(s"Finished $info after {}.", timer)
     } finally {
       doing = ""
     }

@@ -111,8 +111,8 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       verify(unzipper).unzipList(any[List[File]], anyString)
       assert(logger.size === 2)
       assert(logger.infos.map(_.message) === List(
-        "Info:Starting fetching product/123/variant",
-        "Info:fetching product/123/variant - completed after {}"
+        "Info:Starting fetching product/123/variant.",
+        "Info:Finished fetching product/123/variant after {}."
       ))
       teardown()
     }

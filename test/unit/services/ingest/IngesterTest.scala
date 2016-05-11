@@ -108,18 +108,18 @@ class IngesterTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
 
       assert(logger.infos.map(_.message) === List(
-        "Info:Starting testing",
-        "Info:Starting first pass through 1 files",
+        "Info:Starting testing.",
+        "Info:Starting first pass through 1 files.",
         "Info:Reading zip entry SX9090-first3600.csv...",
-        "Info:Reading from 1 CSV files in {} took {}",
-        "Info:First pass obtained 30 BLPUs, 25 DPAs, 1683 streets",
-        "Info:First pass complete after {}",
-        "Info:Starting second pass through 1 files",
+        "Info:Reading from 1 CSV files in {} took {}.",
+        "Info:First pass obtained 30 BLPUs, 25 DPAs, 1683 streets.",
+        "Info:First pass complete after {}.",
+        "Info:Starting second pass through 1 files.",
         "Info:Reading zip entry SX9090-first3600.csv...",
-        "Info:Reading from 1 CSV files in {} took {}",
-        "Info:Second pass processed 25 DPAs, 4 LPIs",
-        "Info:Finished after {}",
-        "Info:testing - completed after {}"
+        "Info:Reading from 1 CSV files in {} took {}.",
+        "Info:Second pass processed 25 DPAs, 4 LPIs.",
+        "Info:Ingester finished after {}.",
+        "Info:Finished testing after {}."
       ))
       assert(addressesProduced.size === 29)
       assert(!closed) // the writer is closed at a higher scope level
