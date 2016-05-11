@@ -70,17 +70,16 @@ class CollectionController(workerFactory: WorkerFactory,
 
   def dropCollection(name: String): Action[AnyContent] = Action {
     request =>
-      require(isAlphaNumeric(name))
-      if (!db.collectionExists(name)) {
+      if (!isAlphaNumOrUnderscore(name))
+        BadRequest(name)
+      else if (!db.collectionExists(name)) {
         NotFound
+      } else if (protectedCollections.contains(name)) {
+        BadRequest(name + " cannot be dropped")
       } else {
-        if (protectedCollections.contains(name)) {
-          BadRequest
-        } else {
-          db(name).dropCollection()
-          //          TODO SeeOther(routes.CollectionController.listCollections())
-          SeeOther("/collections/list")
-        }
+        db(name).dropCollection()
+        //          TODO SeeOther(routes.CollectionController.listCollections())
+        SeeOther("/collections/list")
       }
   }
 

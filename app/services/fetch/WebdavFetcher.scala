@@ -45,7 +45,7 @@ class WebdavFetcher(factory: SardineWrapper, downloadFolder: File, status: Statu
   def fetchAll(url: String, outputPath: String): List[DownloadItem] = {
     val outputDirectory = resolveAndMkdirs(outputPath)
     val sardine = factory.begin
-    status.info("Listing {}", url)
+    status.info("Listing {}.", url)
     val resources = sardine.list(url).asScala.toList.filterNot(_.isDirectory)
     resources.map {
       res =>
@@ -64,7 +64,7 @@ class WebdavFetcher(factory: SardineWrapper, downloadFolder: File, status: Statu
     val outFile = new File(outputDirectory, file)
     val doneFile = new File(outputDirectory, file + ".done")
     if (outFile.exists() && doneFile.exists() && outFile.lastModified() <= doneFile.lastModified()) {
-      status.info(s"Already had $file")
+      status.info(s"Already had $file.")
       DownloadItem.stale(outFile)
 
     } else {
@@ -72,11 +72,11 @@ class WebdavFetcher(factory: SardineWrapper, downloadFolder: File, status: Statu
       outFile.delete()
       doneFile.delete()
 
-      status.info(s"Fetching {} to $file", url)
+      status.info(s"Fetching {} to $file.", url)
       val dt = new DiagnosticTimer
       val item = doFetchFile(url, sardine, outFile)
       Files.createFile(doneFile.toPath)
-      status.info(s"Fetched $file in {}", dt)
+      status.info(s"Fetched $file in {}.", dt)
       item
     }
   }

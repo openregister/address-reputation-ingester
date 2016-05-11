@@ -36,7 +36,8 @@ class CollectionMetadata(db: MongoDB, inputModel: StateModel) {
   }
 
   private def indexOf(collectionName: String): Int = {
-    collectionName.substring(collectionName.length - 3).toInt
+    val u = collectionName.lastIndexOf('_')
+    collectionName.substring(u + 1).toInt
   }
 
   private lazy val nextFreeIndex =

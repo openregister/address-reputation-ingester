@@ -46,7 +46,8 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
     // given
     val fooBar = new File(tempDir, "foo/bar")
     fooBar.mkdirs()
-    val preExisting = new File(fooBar, "preExisting.txt")
+    val preExisting = new File(fooBar, "data/preExisting.txt")
+    preExisting.getParentFile.mkdirs()
     assert(preExisting.createNewFile())
 
     val logger = new StubLogger
@@ -57,11 +58,11 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
     val unzipped = new ZipUnpacker(tempDir, status).unzipList(List(sample), "foo/bar")
 
     // then
-    assert(unzipped === 2)
-    val e1 = new File(tempDir, "foo/bar/data/SX9090-first3600.zip")
-    val e2 = new File(tempDir, "foo/bar/resources/hello.txt")
+    assert(unzipped === 1)
+    val e1 = new File(fooBar, "data/SX9090-first3600.zip")
+    val e2 = new File(fooBar, "resources/hello.txt")
     assert(e1.exists, e1)
-    assert(e2.exists, e2)
+    assert(!e2.exists, e2)
     assert(!preExisting.exists(), preExisting)
   }
 
@@ -80,10 +81,10 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
     val unzipped = new ZipUnpacker(tempDir, status).unzip(sample, "foo")
 
     // then
-    assert(unzipped === 1)
+    assert(unzipped === 0)
 
     val e1 = new File(tempDir, "foo/SX9090-first20.csv")
-    assert(e1.exists, e1)
+    assert(!e1.exists, e1)
   }
 
   test(

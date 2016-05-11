@@ -35,7 +35,6 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
 
   def appConfiguration: Map[String, String] = Map(
     "app.files.downloadFolder" -> s"$tmpDir/download",
-    "app.files.unpackFolder" -> s"$tmpDir/unpack",
     "app.files.outputFolder" -> s"$tmpDir/output",
     "app.chronicleMap.blpu.mapSize" -> "50000",
     "app.chronicleMap.dpa.setSize" -> "5000",
@@ -104,7 +103,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
   override def beforeAppServerStarts() {
     deleteDir(tmpDir)
     val sample = getClass.getClassLoader.getResourceAsStream("exeter/1/sample/SX9090-first3600.zip")
-    val unpackFolder = new File(tmpDir, "unpack/exeter/1/sample")
+    val unpackFolder = new File(tmpDir, "download/exeter/1/sample")
     unpackFolder.mkdirs()
     Files.copy(sample, new File(unpackFolder, "SX9090-first3600.zip").toPath, REPLACE_EXISTING)
     sample.close()

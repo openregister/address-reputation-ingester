@@ -42,8 +42,6 @@ class ZipUnpacker(unpackFolder: File, status: StatusLogger) {
 
   def unzip(zipFile: InputStream, destPath: String): Int = {
     val destDirectory = if (destPath.nonEmpty) new File(unpackFolder, destPath) else unpackFolder
-    // remove all pre-existing files
-    deleteDir(destDirectory)
     destDirectory.mkdirs()
 
     var files = 0
@@ -55,11 +53,15 @@ class ZipUnpacker(unpackFolder: File, status: StatusLogger) {
         val filePath = new File(destDirectory, file.getName)
         if (file.isDirectory) {
           status.info("mkdir {}", file.getName)
+          // remove all pre-existing files
+          deleteDir(filePath)
           filePath.mkdir()
         } else {
-          status.info("copy {}", file.getName)
-          Files.copy(zipIn, filePath.toPath)
-          files += 1
+          if (file.getName.toLowerCase.endsWith(".zip")) {
+            status.info("copy {}", file.getName)
+            Files.copy(zipIn, filePath.toPath)
+            files += 1
+          }
         }
         zipIn.closeEntry()
         entry = Option(zipIn.getNextEntry)

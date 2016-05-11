@@ -41,11 +41,9 @@ class SwitchoverController(workerFactory: WorkerFactory,
   def doSwitchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = Action {
     request =>
       val model = new StateModel(product, epoch, "", Some(index))
-      val worker = workerFactory.worker
-      worker.statusLogger.startAfresh()
-      worker.push(s"switching to ${model.collectionName.get}", {
+      workerFactory.worker.push(s"switching to ${model.collectionName.get}", {
         continuer =>
-          switchIfOK(model, worker.statusLogger)
+          switchIfOK(model, workerFactory.worker.statusLogger)
       })
       Accepted
   }

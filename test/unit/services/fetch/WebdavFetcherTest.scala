@@ -74,13 +74,13 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       stuff.toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
-        "Info:Listing {}",
-        "Info:Fetching {} to bar.txt",
-        "Info:Fetched bar.txt in {}",
-        "Info:Fetching {} to baz.txt",
-        "Info:Fetched baz.txt in {}",
-        "Info:Fetching {} to foo.txt",
-        "Info:Fetched foo.txt in {}"
+        "Info:Listing {}.",
+        "Info:Fetching {} to bar.txt.",
+        "Info:Fetched bar.txt in {}.",
+        "Info:Fetching {} to baz.txt.",
+        "Info:Fetched baz.txt in {}.",
+        "Info:Fetching {} to foo.txt.",
+        "Info:Fetched foo.txt in {}."
       ))
       // finally
       teardown()
@@ -108,13 +108,13 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       stuff.toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
-        "Info:Listing {}",
-        "Info:Fetching {} to bar.txt",
-        "Info:Fetched bar.txt in {}",
-        "Info:Fetching {} to baz.txt",
-        "Info:Fetched baz.txt in {}",
-        "Info:Fetching {} to foo.txt",
-        "Info:Fetched foo.txt in {}"
+        "Info:Listing {}.",
+        "Info:Fetching {} to bar.txt.",
+        "Info:Fetched bar.txt in {}.",
+        "Info:Fetching {} to baz.txt.",
+        "Info:Fetched baz.txt in {}.",
+        "Info:Fetching {} to foo.txt.",
+        "Info:Fetched foo.txt in {}."
       ))
       // finally
       teardown()
@@ -148,13 +148,13 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       stuff.toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
-        "Info:Listing {}",
-        "Info:Fetching {} to bar.txt",
-        "Info:Fetched bar.txt in {}",
-        "Info:Fetching {} to baz.txt",
-        "Info:Fetched baz.txt in {}",
-        "Info:Fetching {} to foo.txt",
-        "Info:Fetched foo.txt in {}"
+        "Info:Listing {}.",
+        "Info:Fetching {} to bar.txt.",
+        "Info:Fetched bar.txt in {}.",
+        "Info:Fetching {} to baz.txt.",
+        "Info:Fetched baz.txt in {}.",
+        "Info:Fetching {} to foo.txt.",
+        "Info:Fetched foo.txt in {}."
       ))
       // finally
       teardown()
@@ -186,10 +186,10 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       stuff.toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
-        "Info:Listing {}",
-        "Info:Already had bar.txt",
-        "Info:Already had baz.txt",
-        "Info:Already had foo.txt"
+        "Info:Listing {}.",
+        "Info:Already had bar.txt.",
+        "Info:Already had baz.txt.",
+        "Info:Already had foo.txt."
       ))
       // finally
       teardown()
@@ -219,12 +219,12 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       downloadDirectory.toPath.resolve("stuff").toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
-        "Info:Fetching {} to bar.txt",
-        "Info:Fetched bar.txt in {}",
-        "Info:Fetching {} to baz.txt",
-        "Info:Fetched baz.txt in {}",
-        "Info:Fetching {} to foo.txt",
-        "Info:Fetched foo.txt in {}"
+        "Info:Fetching {} to bar.txt.",
+        "Info:Fetched bar.txt in {}.",
+        "Info:Fetching {} to baz.txt.",
+        "Info:Fetched baz.txt in {}.",
+        "Info:Fetching {} to foo.txt.",
+        "Info:Fetched foo.txt in {}."
       ))
       // finally
       teardown()

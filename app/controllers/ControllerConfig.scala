@@ -35,13 +35,14 @@ object ControllerConfig {
 
   val remoteUser = mustGetConfigString(current.mode, current.configuration, "app.remote.user")
   val remotePass = mustGetConfigString(current.mode, current.configuration, "app.remote.pass")
+
   val downloadFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.downloadFolder")))
-  val unpackFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.unpackFolder")))
+  val outputFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.outputFolder")))
 
   val workerFactory = new WorkerFactory()
   val logger = workerFactory.worker.statusLogger
 
   val sardine = new SardineWrapper(remoteServer, remoteUser, remotePass, logger, new SardineFactory2)
   val fetcher = new WebdavFetcher(sardine, downloadFolder, logger)
-  val unzipper = new ZipUnpacker(unpackFolder, logger)
+  val unzipper = new ZipUnpacker(downloadFolder, logger)
 }

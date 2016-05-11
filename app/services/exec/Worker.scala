@@ -146,6 +146,7 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
   private def doNextTask() {
     val task = queue.take() // blocks until there is something to do
     executionState.compareAndSet(IDLE, BUSY)
+    statusLogger.startAfresh()
     try {
       runTask(task)
     } catch {

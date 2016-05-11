@@ -28,7 +28,12 @@ object SimpleValidator {
   def isAlphaNumeric(param: String, maxLength: Int = 20): Boolean =
     param.length <= maxLength && alphaNumPattern.matcher(param).matches()
 
+  def isAlphaNumOrUnderscore(param: String, maxLength: Int = 20): Boolean =
+    param.length <= maxLength && alphaNumUscorePattern.matcher(param).matches()
+
   private val alphaNumPattern = "[a-z0-9]+".r.pattern
+
+  private val alphaNumUscorePattern = "[a-z0-9_]+".r.pattern
 
   def isNumeric(param: String): Boolean =
     param.length <= 10 && numPattern.matcher(param).matches()

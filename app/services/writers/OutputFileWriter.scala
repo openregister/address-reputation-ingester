@@ -21,21 +21,16 @@ package services.writers
 import java.io.{OutputStreamWriter, _}
 import java.util.zip.GZIPOutputStream
 
-import config.ConfigHelper._
-import play.api.Play._
+import controllers.ControllerConfig
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
-
-object OutputFileWriterHelper {
-  val outputFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.outputFolder")))
-  outputFolder.mkdirs()
-}
 
 
 class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger) extends OutputWriter {
 
   val fileRoot = model.collectionBaseName
-  val outputFile = new File(OutputFileWriterHelper.outputFolder, s"$fileRoot.txt.gz")
+  val outputFile = new File(ControllerConfig.outputFolder, s"$fileRoot.txt.gz")
+  ControllerConfig.outputFolder.mkdirs()
 
   private val bufSize = 32 * 1024
   private val outfile = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile), bufSize))

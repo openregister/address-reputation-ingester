@@ -17,7 +17,6 @@
 package services.model
 
 import org.slf4j.helpers.MessageFormatter
-import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.logging.SimpleLogger
 
 import scala.collection.mutable

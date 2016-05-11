@@ -50,9 +50,7 @@ class GoController(workerFactory: WorkerFactory,
       require(IngestControllerHelper.isSupportedTarget(target))
 
       val settings = WriterSettings(1, 0)
-      val worker = workerFactory.worker
-      worker.statusLogger.startAfresh()
-      worker.push(s"automatic search", {
+      workerFactory.worker.push(s"automatic search", {
         continuer =>
           val tree = sardine.exploreRemoteTree
           for (product <- KnownProducts.OSGB) {
@@ -72,7 +70,6 @@ class GoController(workerFactory: WorkerFactory,
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
-      workerFactory.worker.statusLogger.startAfresh()
       val settings = WriterSettings(1, 0)
       val model = new StateModel(product, epoch, variant, None)
       pipeline(target, model, settings)

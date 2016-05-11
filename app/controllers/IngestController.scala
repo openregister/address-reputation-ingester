@@ -33,7 +33,7 @@ object IngestControllerHelper {
 
 
 object IngestController extends IngestController(
-  ControllerConfig.unpackFolder,
+  ControllerConfig.downloadFolder,
   new OutputDBWriterFactory,
   new OutputFileWriterFactory,
   new OutputNullWriterFactory,
@@ -62,7 +62,6 @@ class IngestController(unpackedFolder: File,
       val model = new StateModel(product, epoch, variant, None)
 
       val worker = workerFactory.worker
-      worker.statusLogger.startAfresh()
       worker.push(
         s"ingesting ${model.pathSegment}", {
           continuer =>
