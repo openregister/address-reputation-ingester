@@ -45,15 +45,15 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
 
 
   trait context {
-    val worker = new WorkQueue(new StubLogger())
+    val logger = new StubLogger
+    val status = new StatusLogger(logger)
+    val worker = new WorkQueue(status)
     val workerFactory = new StubWorkerFactory(worker)
     val webdavFetcher = mock[WebdavFetcher]
     val unzipper = mock[ZipUnpacker]
-    val logger = new StubLogger
-    val status = new StatusLogger(logger)
     val request = FakeRequest()
 
-    val fetchController = new FetchController(logger, workerFactory, webdavFetcher, unzipper, url)
+    val fetchController = new FetchController(status, workerFactory, webdavFetcher, unzipper, url)
 
     def parameterTest(product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]
@@ -99,7 +99,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       val f2Zip = new File("/a/b/f2.zip")
       val files = List(f1Txt, f1Zip, f2Txt, f2Zip)
       val items = List(DownloadItem.fresh(f1Txt), DownloadItem.fresh(f1Zip), DownloadItem.fresh(f2Txt), DownloadItem.fresh(f2Zip))
-      when(webdavFetcher.fetchAll(anyString, anyString, any[StatusLogger])) thenReturn items
+      when(webdavFetcher.fetchAll(anyString, anyString)) thenReturn items
 
       // when
       val response = await(call(fetchController.doFetch("product", 123, "variant"), request))
@@ -107,11 +107,12 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       // then
       worker.awaitCompletion()
       assert(response.header.status === 202)
-      verify(webdavFetcher).fetchAll(anyString, anyString, any[StatusLogger])
-      verify(unzipper).unzipList(any[List[File]], anyString, any[StatusLogger])
-      assert(logger.size === 1)
+      verify(webdavFetcher).fetchAll(anyString, anyString)
+      verify(unzipper).unzipList(any[List[File]], anyString)
+      assert(logger.size === 2)
       assert(logger.infos.map(_.message) === List(
-        "Info:Starting fetching product/123/variant"
+        "Info:Starting fetching product/123/variant",
+        "Info:fetching product/123/variant - completed after {}"
       ))
       teardown()
     }
@@ -127,15 +128,15 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       val f2Zip = new File("/a/b/f2.zip")
       val files = List(f1Txt, f1Zip, f2Txt, f2Zip)
       val items = List(DownloadItem.fresh(f1Txt), DownloadItem.fresh(f1Zip), DownloadItem.fresh(f2Txt), DownloadItem.fresh(f2Zip))
-      when(webdavFetcher.fetchAll(s"$url/product/123/variant", "product/123/variant", status)) thenReturn items
+      when(webdavFetcher.fetchAll(s"$url/product/123/variant", "product/123/variant")) thenReturn items
 
       // when
-      val model2 = fetchController.fetch(model1, status)
+      val model2 = fetchController.fetch(model1)
 
       // then
       assert(model2 === model1)
-      verify(webdavFetcher).fetchAll(s"$url/product/123/variant", "product/123/variant", status)
-      verify(unzipper).unzipList(files, "product/123/variant", status)
+      verify(webdavFetcher).fetchAll(s"$url/product/123/variant", "product/123/variant")
+      verify(unzipper).unzipList(files, "product/123/variant")
       assert(logger.size === 0)
       teardown()
     }
@@ -150,15 +151,15 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       val f2Txt = new File("/a/b/f2.txt")
       val f2Zip = new File("/a/b/f2.zip")
       val items = List(DownloadItem.stale(f1Txt), DownloadItem.stale(f1Zip), DownloadItem.fresh(f2Txt), DownloadItem.fresh(f2Zip))
-      when(webdavFetcher.fetchAll(s"$url/product/123/variant", "product/123/variant", status)) thenReturn items
+      when(webdavFetcher.fetchAll(s"$url/product/123/variant", "product/123/variant")) thenReturn items
 
       // when
-      val model2 = fetchController.fetch(model1, status)
+      val model2 = fetchController.fetch(model1)
 
       // then
       assert(model2 === model1)
-      verify(webdavFetcher).fetchAll(s"$url/product/123/variant", "product/123/variant", status)
-      verify(unzipper).unzipList(List(f2Txt, f2Zip), "product/123/variant", status)
+      verify(webdavFetcher).fetchAll(s"$url/product/123/variant", "product/123/variant")
+      verify(unzipper).unzipList(List(f2Txt, f2Zip), "product/123/variant")
       assert(logger.size === 0)
       teardown()
     }
@@ -173,15 +174,15 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       val f1Txt = new File("/a/b/DVD1.txt")
       val f1Zip = new File("/a/b/DVD1.zip")
       val items = List(DownloadItem.fresh(f1Txt), DownloadItem.fresh(f1Zip))
-      when(webdavFetcher.fetchList(product, "product/123/variant", status)) thenReturn items
+      when(webdavFetcher.fetchList(product, "product/123/variant")) thenReturn items
 
       // when
-      val model2 = fetchController.fetch(model1, status)
+      val model2 = fetchController.fetch(model1)
 
       // then
       assert(model2 === model1)
-      verify(webdavFetcher).fetchList(product, "product/123/variant", status)
-      verify(unzipper).unzipList(List(f1Txt, f1Zip), "product/123/variant", status)
+      verify(webdavFetcher).fetchList(product, "product/123/variant")
+      verify(unzipper).unzipList(List(f1Txt, f1Zip), "product/123/variant")
       assert(logger.size === 0)
       teardown()
     }
@@ -196,15 +197,15 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       val f1Txt = new File("/a/b/DVD1.txt")
       val f1Zip = new File("/a/b/DVD1.zip")
       val items = List(DownloadItem.stale(f1Txt), DownloadItem.stale(f1Zip))
-      when(webdavFetcher.fetchList(product, "product/123/variant", status)) thenReturn items
+      when(webdavFetcher.fetchList(product, "product/123/variant")) thenReturn items
 
       // when
-      val model2 = fetchController.fetch(model1, status)
+      val model2 = fetchController.fetch(model1)
 
       // then
       assert(model2 === model1.copy(hasFailed = true))
-      verify(webdavFetcher).fetchList(product, "product/123/variant", status)
-      verify(unzipper).unzipList(Nil, "product/123/variant", status)
+      verify(webdavFetcher).fetchList(product, "product/123/variant")
+      verify(unzipper).unzipList(Nil, "product/123/variant")
       assert(logger.size === 0)
       teardown()
     }
@@ -220,15 +221,15 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       val f1Zip = new File("/a/b/DVD1.zip")
       val files = List(f1Txt, f1Zip)
       val items = List[DownloadItem]()
-      when(webdavFetcher.fetchList(product, "product/123/variant", status)) thenReturn items
+      when(webdavFetcher.fetchList(product, "product/123/variant")) thenReturn items
 
       // when
-      val model2 = fetchController.fetch(model1, status)
+      val model2 = fetchController.fetch(model1)
 
       // then
       assert(model2 === model1.copy(hasFailed = true))
-      verify(webdavFetcher).fetchList(product, "product/123/variant", status)
-      verify(unzipper).unzipList(Nil, "product/123/variant", status)
+      verify(webdavFetcher).fetchList(product, "product/123/variant")
+      verify(unzipper).unzipList(Nil, "product/123/variant")
       assert(logger.size === 0)
       teardown()
     }

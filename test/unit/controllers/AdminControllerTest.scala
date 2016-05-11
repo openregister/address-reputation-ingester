@@ -39,7 +39,8 @@ class AdminControllerTest extends FunSuite {
       then a bad request response is returned
     """) {
     val logger = new StubLogger
-    val worker = new WorkQueue(logger)
+    val status = new StatusLogger(logger)
+    val worker = new WorkQueue(status)
     val ac = new AdminController(worker)
     val request = FakeRequest()
 
@@ -57,11 +58,11 @@ class AdminControllerTest extends FunSuite {
       then a successful response is returned
     """) {
     val logger = new StubLogger
-    val stuff = new SynchronousQueue[Boolean]()
-    val worker = new WorkQueue(logger)
-    val model = new StateModel()
     val status = new StatusLogger(logger)
-    worker.push("thinking", status, {
+    val stuff = new SynchronousQueue[Boolean]()
+    val worker = new WorkQueue(status)
+    val model = new StateModel()
+    worker.push("thinking", {
       c =>
         stuff.take() // blocks until signalled
         stuff.take() // blocks until signalled

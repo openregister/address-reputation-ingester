@@ -21,7 +21,7 @@ import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.address.admin.{MetadataStore, MongoStoredMetadataItem, StoredMetadataItem}
+import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -29,24 +29,23 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 object SwitchoverController extends SwitchoverController(
   new WorkerFactory,
-  new LoggerFacade(Logger.logger),
   ApplicationGlobal.mongoConnection,
   ApplicationGlobal.metadataStore
 )
 
 
 class SwitchoverController(workerFactory: WorkerFactory,
-                           logger: SimpleLogger,
                            mongoDbConnection: CasbahMongoConnection,
                            systemMetadata: SystemMetadataStore) extends BaseController {
 
   def doSwitchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = Action {
     request =>
       val model = new StateModel(product, epoch, "", Some(index))
-      val status = new StatusLogger(logger)
-      workerFactory.worker.push(s"switching to ${model.collectionName.get}", status, {
+      val worker = workerFactory.worker
+      worker.statusLogger.startAfresh()
+      worker.push(s"switching to ${model.collectionName.get}", {
         continuer =>
-          switchIfOK(model, status)
+          switchIfOK(model, worker.statusLogger)
       })
       Accepted
   }

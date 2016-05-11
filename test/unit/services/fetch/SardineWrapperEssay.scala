@@ -18,18 +18,20 @@ package services.fetch
 
 import java.net.URL
 
+import services.model.StatusLogger
 import uk.co.hmrc.logging.Stdout
 
 // for manual test/development
 object SardineWrapperEssay {
 
   def main(args: Array[String]) {
+    val status = new StatusLogger(Stdout)
     if (args.length > 2) {
-      val finder = new SardineWrapper(new URL(args(0)), args(1), args(2), Stdout, new SardineFactory2)
+      val finder = new SardineWrapper(new URL(args(0)), args(1), args(2), status, new SardineFactory2)
       val top = finder.exploreRemoteTree
       Stdout.info(top.toString)
     } else if (args.length > 0) {
-      val finder = new SardineWrapper(new URL(args(0)), "", "", Stdout, new SardineFactory2)
+      val finder = new SardineWrapper(new URL(args(0)), "", "", status, new SardineFactory2)
       val top = finder.exploreRemoteTree
       Stdout.info(top.toString)
     }

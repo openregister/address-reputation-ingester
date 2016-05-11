@@ -40,6 +40,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
   class context {
     val request = FakeRequest()
     val logger = new StubLogger()
+    val status = new StatusLogger(logger)
 
     val ingester = mock[Ingester]
     val outputFileWriter = mock[OutputFileWriter]
@@ -52,10 +53,10 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val nullFactory = new StubOutputNullWriterFactory(outputNullWriter)
 
     val folder = new File(".")
-    val worker = new WorkQueue(new StubLogger())
+    val worker = new WorkQueue(status)
     val workerFactory = new StubWorkerFactory(worker)
 
-    val ingestController = new IngestController(folder, logger, dbFactory, fwFactory, nullFactory, ingesterFactory, workerFactory)
+    val ingestController = new IngestController(folder, dbFactory, fwFactory, nullFactory, ingesterFactory, workerFactory)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val folder = new File(".")
@@ -141,7 +142,6 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       val model1 = new StateModel("abp", 40, "full", None, hasFailed = true)
-      val status = new StatusLogger(logger)
       val settings = WriterSettings(1, 0)
 
       // when

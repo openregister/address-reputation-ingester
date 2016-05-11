@@ -48,11 +48,11 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
   class context {
     val logger = new StubLogger
-    val worker = new WorkQueue(logger)
+    val status = new StatusLogger(logger)
+    val worker = new WorkQueue(status)
     val continuer = mock[Continuer]
     val lock = new SynchronousQueue[Boolean]()
     val model = new StateModel()
-    val status = new StatusLogger(logger)
     val forwardData = ForwardData.chronicleInMemoryForUnitTest()
   }
 
@@ -87,7 +87,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val sp = new SecondPass(forwardData, continuer)
-      worker.push("testing", status, {
+      worker.push("testing", {
         continuer =>
           lock.put(true)
           sp.processFile(csv, out)
@@ -130,7 +130,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       when(continuer.isBusy) thenReturn false
 
       val sp = new SecondPass(forwardData, continuer)
-      worker.push("testing", status, {
+      worker.push("testing", {
         continuer =>
           lock.put(true)
           sp.processFile(csv, out)
@@ -173,7 +173,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val sp = new SecondPass(forwardData, continuer)
-      worker.push("testing", status, {
+      worker.push("testing", {
         continuer =>
           lock.put(true)
           sp.processFile(csv, out)

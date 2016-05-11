@@ -18,18 +18,21 @@ package services.fetch
 
 import java.net.URL
 
+import services.model.StatusLogger
 import uk.co.hmrc.logging.Stdout
 
 // for manual test/development
 object WebdavFinderEssay {
 
   def main(args: Array[String]) {
+    val status = new StatusLogger(Stdout)
+
     val products = if (args.length > 2) {
-      val sardine = new SardineWrapper(new URL(args(0)), args(1), args(2), Stdout, new SardineFactory2)
+      val sardine = new SardineWrapper(new URL(args(0)), args(1), args(2), status, new SardineFactory2)
       val tree = sardine.exploreRemoteTree
       tree.findAvailableFor("abi") ++ tree.findAvailableFor("abp")
     } else if (args.length > 0) {
-      val sardine = new SardineWrapper(new URL(args(0)), "", "", Stdout, new SardineFactory2)
+      val sardine = new SardineWrapper(new URL(args(0)), "", "", status, new SardineFactory2)
       val tree = sardine.exploreRemoteTree
       tree.findAvailableFor("abi") ++ tree.findAvailableFor("abp")
     } else Nil

@@ -23,27 +23,26 @@ import java.nio.file._
 import com.github.sardine.{DavResource, Sardine}
 import services.model.StatusLogger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
-import uk.co.hmrc.logging.SimpleLogger
 
 import scala.collection.JavaConverters._
 
-class WebdavFetcher(factory: SardineWrapper, downloadFolder: File) {
+class WebdavFetcher(factory: SardineWrapper, downloadFolder: File, status: StatusLogger) {
 
   // Downloads a specified set of remote files, marks them all with a completion marker (.done),
   // then returns the total bytes copied.
-  def fetchList(product: OSGBProduct, outputPath: String, status: StatusLogger): List[DownloadItem] = {
+  def fetchList(product: OSGBProduct, outputPath: String): List[DownloadItem] = {
     val outputDirectory = resolveAndMkdirs(outputPath)
     val sardine = factory.begin
     product.zips.map {
       webDavFile =>
-        fetchFile(webDavFile.url, sardine, outputDirectory, status)
+        fetchFile(webDavFile.url, sardine, outputDirectory)
     }
   }
 
   // Searches for remote files, downloads them, marks them all with a completion marker (.done),
   // then returns the total bytes copied.
   // Note that this doesn't check the existence of completion marker files on the remote server.
-  def fetchAll(url: String, outputPath: String, status: StatusLogger): List[DownloadItem] = {
+  def fetchAll(url: String, outputPath: String): List[DownloadItem] = {
     val outputDirectory = resolveAndMkdirs(outputPath)
     val sardine = factory.begin
     status.info("Listing {}", url)
@@ -51,7 +50,7 @@ class WebdavFetcher(factory: SardineWrapper, downloadFolder: File) {
     resources.map {
       res =>
         val absoluteUrl = toUrl(url, res)
-        fetchFile(absoluteUrl, sardine, outputDirectory, status)
+        fetchFile(absoluteUrl, sardine, outputDirectory)
     }
   }
 
@@ -60,7 +59,7 @@ class WebdavFetcher(factory: SardineWrapper, downloadFolder: File) {
     new URL(myUrl.getProtocol, myUrl.getHost, myUrl.getPort, res.getHref.getPath)
   }
 
-  private def fetchFile(url: URL, sardine: Sardine, outputDirectory: File, status: StatusLogger): DownloadItem = {
+  private def fetchFile(url: URL, sardine: Sardine, outputDirectory: File): DownloadItem = {
     val file = fileOf(url)
     val outFile = new File(outputDirectory, file)
     val doneFile = new File(outputDirectory, file + ".done")

@@ -17,17 +17,16 @@
 package services.model
 
 import org.slf4j.helpers.MessageFormatter
+import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import uk.co.hmrc.logging.SimpleLogger
 
-class StatusLogger(val tee: SimpleLogger) {
-  private var buffer = List[String]()
-  private var currentStatus = ""
+import scala.collection.mutable
 
-  private def pushMessage(format: String, arguments: AnyRef*) {
-    // note that buffer builds up in reverse
-    buffer = MessageFormatter.arrayFormat(format, arguments.toArray).getMessage :: buffer
-    currentStatus = ""
-  }
+class StatusLogger(val tee: SimpleLogger, history: Int = 1) {
+  require(history > 0)
+
+  private var buffers = List(new mutable.ListBuffer[String]())
+  private var dt = new DiagnosticTimer
 
   def info(format: String, arguments: AnyRef*) {
     tee.info(format, arguments: _*)
@@ -36,17 +35,38 @@ class StatusLogger(val tee: SimpleLogger) {
 
   def warn(format: String, arguments: AnyRef*) {
     tee.warn(format, arguments: _*)
-    pushMessage(format, arguments: _*)
-    currentStatus = ""
+    pushMessage("Warn: " + format, arguments: _*)
   }
 
-  def update(s: String) {
-    currentStatus = s
+  private def pushMessage(format: String, arguments: AnyRef*) {
+    val message = MessageFormatter.arrayFormat(format, arguments.toArray).getMessage
+    synchronized {
+      buffers.head += message
+    }
+  }
+
+  def statusList: List[List[String]] = {
+    synchronized {
+      buffers.reverse.map(_.toList)
+    }
   }
 
   def status: String = {
-    val messages = buffer.reverse
-    if (currentStatus.isEmpty) messages.mkString("\n")
-    else messages.mkString("", "\n", "\n") + currentStatus
+    statusList.map(_.mkString("\n")).mkString("\n")
+  }
+
+  def startAfresh() {
+    if (buffers.head.nonEmpty) {
+      synchronized {
+        pushMessage("Total {}", dt)
+        pushMessage("~~~~~~~~~~~~~~~", dt)
+        // note that this builds up in reverse
+        if (buffers.size > history) {
+          buffers = buffers.take(history)
+        }
+        buffers = new mutable.ListBuffer[String]() :: buffers
+        dt = new DiagnosticTimer
+      }
+    }
   }
 }

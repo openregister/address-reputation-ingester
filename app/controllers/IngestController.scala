@@ -24,7 +24,6 @@ import services.exec.{Continuer, WorkerFactory}
 import services.ingest.IngesterFactory
 import services.model.{StateModel, StatusLogger}
 import services.writers._
-import uk.co.hmrc.logging.SimpleLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
@@ -35,7 +34,6 @@ object IngestControllerHelper {
 
 object IngestController extends IngestController(
   ControllerConfig.unpackFolder,
-  ControllerConfig.logger,
   new OutputDBWriterFactory,
   new OutputFileWriterFactory,
   new OutputNullWriterFactory,
@@ -44,7 +42,6 @@ object IngestController extends IngestController(
 
 
 class IngestController(unpackedFolder: File,
-                       logger: SimpleLogger,
                        dbWriterFactory: OutputDBWriterFactory,
                        fileWriterFactory: OutputFileWriterFactory,
                        nullWriterFactory: OutputNullWriterFactory,
@@ -63,12 +60,13 @@ class IngestController(unpackedFolder: File,
 
       val settings = WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
       val model = new StateModel(product, epoch, variant, None)
-      val status = new StatusLogger(logger)
 
-      workerFactory.worker.push(
-        s"ingesting ${model.pathSegment}", status, {
+      val worker = workerFactory.worker
+      worker.statusLogger.startAfresh()
+      worker.push(
+        s"ingesting ${model.pathSegment}", {
           continuer =>
-            ingestIfOK(model, status, settings, target, continuer)
+            ingestIfOK(model, worker.statusLogger, settings, target, continuer)
         }
       )
 
@@ -100,7 +98,7 @@ class IngestController(unpackedFolder: File,
     try {
       ingesterFactory.ingester(continuer, model, status).ingest(qualifiedDir, writer)
     } finally {
-      logger.info("Cleaning up the ingester.")
+      status.info("Cleaning up the ingester.")
       writer.close()
     }
   }

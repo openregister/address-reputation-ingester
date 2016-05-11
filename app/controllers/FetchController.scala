@@ -37,7 +37,7 @@ object FetchController extends FetchController(
   ControllerConfig.remoteServer)
 
 
-class FetchController(logger: SimpleLogger,
+class FetchController(logger: StatusLogger,
                       workerFactory: WorkerFactory,
                       webdavFetcher: WebdavFetcher,
                       unzipper: ZipUnpacker,
@@ -49,27 +49,26 @@ class FetchController(logger: SimpleLogger,
       require(isAlphaNumeric(variant))
 
       val model = new StateModel(product, epoch, variant, None)
-      val status = new StatusLogger(logger)
       val worker = workerFactory.worker
-
-      worker.push(s"fetching ${model.pathSegment}", status, {
+      worker.statusLogger.startAfresh()
+      worker.push(s"fetching ${model.pathSegment}", {
         continuer =>
-          fetch(model, status)
+          fetch(model)
       })
       Accepted("ok")
   }
 
-  private[controllers] def fetch(model: StateModel, status: StatusLogger): StateModel = {
+  private[controllers] def fetch(model: StateModel): StateModel = {
     val files: List[DownloadItem] =
       if (model.product.nonEmpty) {
-        webdavFetcher.fetchList(model.product.get, model.pathSegment, status)
+        webdavFetcher.fetchList(model.product.get, model.pathSegment)
       } else {
-        webdavFetcher.fetchAll(s"$url/${model.pathSegment}", model.pathSegment, status)
+        webdavFetcher.fetchAll(s"$url/${model.pathSegment}", model.pathSegment)
       }
 
     val freshItems = files.filter(_.fresh)
     val toUnzip = freshItems.map(_.file)
-    unzipper.unzipList(toUnzip, model.pathSegment, status)
+    unzipper.unzipList(toUnzip, model.pathSegment)
 
     if (freshItems.nonEmpty) model else model.copy(hasFailed = true)
   }

@@ -38,21 +38,21 @@ class WorkerTest extends FunSuite {
       and then the second should execute to completion
     """) {
     val logger = new StubLogger()
-    val worker = new WorkQueue(logger)
+    val status = new StatusLogger(logger,1)
+    val worker = new WorkQueue(status)
     val lock1 = new SynchronousQueue[Boolean]()
     val lock2 = new SynchronousQueue[Boolean]()
-    val status = new StatusLogger(logger)
 
     assert(worker.status === "idle")
 
-    worker.push("thinking", status, {
+    worker.push("thinking", {
       continuer =>
         lock1.take() // blocks until signalled
         logger.info("foo")
         lock1.take()
     })
 
-    worker.push("cogitating", status, {
+    worker.push("cogitating", {
       continuer =>
         lock2.take()
         logger.info("bar")
@@ -81,11 +81,11 @@ class WorkerTest extends FunSuite {
       then two log statements are issued
     """) {
     val logger = new StubLogger()
-    val worker = new WorkQueue(logger)
+    val status = new StatusLogger(logger, 1)
+    val worker = new WorkQueue(status)
     val lock = new SynchronousQueue[Boolean]()
-    val status = new StatusLogger(logger)
 
-    worker.push("thinking", status, {
+    worker.push("thinking", {
       continuer =>
         logger.info("fric")
         lock.put(true)
@@ -106,11 +106,11 @@ class WorkerTest extends FunSuite {
       then return true and log one statement
     """) {
     val logger = new StubLogger()
-    val worker = new WorkQueue(logger)
+    val status = new StatusLogger(logger, 1)
+    val worker = new WorkQueue(status)
     val lock = new SynchronousQueue[Boolean]()
-    val status = new StatusLogger(logger)
 
-    worker.push("thinking", status, {
+    worker.push("thinking", {
       continuer =>
         lock.put(true)
         throw new Exception("worker broke")
@@ -130,7 +130,8 @@ class WorkerTest extends FunSuite {
       then its thread terminates
     """) {
     val logger = new StubLogger()
-    val worker = new WorkQueue(logger)
+    val status = new StatusLogger(logger, 1)
+    val worker = new WorkQueue(status)
 
     worker.terminate()
 
@@ -151,11 +152,11 @@ class WorkerTest extends FunSuite {
       then its thread terminates
     """) {
     val logger = new StubLogger()
-    val worker = new WorkQueue(logger)
+    val status = new StatusLogger(logger, 1)
+    val worker = new WorkQueue(status)
     val lock = new SynchronousQueue[Boolean]()
-    val status = new StatusLogger(logger)
 
-    worker.push("thinking", status, {
+    worker.push("thinking", {
       continuer =>
         lock.put(true)
         lock.put(true)

@@ -47,12 +47,12 @@ class FirstPassTest extends FunSuite with MockitoSugar {
   class context(data: String) {
     val csv = CsvParser.split(data)
     val logger = new StubLogger
-    val worker = new WorkQueue(logger)
+    val status = new StatusLogger(logger)
+    val worker = new WorkQueue(status)
     val dummyOut = mock[OutputWriter]
     val continuer = mock[Continuer]
     val lock = new SynchronousQueue[Boolean]()
     val model = new StateModel()
-    val status = new StatusLogger(logger)
     val forwardData = ForwardData.chronicleInMemoryForUnitTest()
   }
 
@@ -66,7 +66,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val firstPass = new FirstPass(dummyOut, continuer, forwardData)
-      worker.push("testing", status, {
+      worker.push("testing", {
         continuer =>
           lock.put(true)
           firstPass.processFile(csv, dummyOut)
@@ -95,7 +95,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val firstPass = new FirstPass(dummyOut, continuer, forwardData)
-      worker.push("testing", status, {
+      worker.push("testing", {
         continuer =>
           lock.put(true)
           firstPass.processFile(csv, dummyOut)
@@ -122,7 +122,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val firstPass = new FirstPass(dummyOut, continuer, forwardData)
-      worker.push("testing", status, {
+      worker.push("testing", {
         continuer =>
           lock.put(true)
           firstPass.processFile(csv, dummyOut)
@@ -149,7 +149,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val firstPass = new FirstPass(dummyOut, continuer, forwardData)
-      worker.push("testing", status, {
+      worker.push("testing", {
         continuer =>
           lock.put(true)
           firstPass.processFile(csv, dummyOut)
@@ -177,7 +177,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val firstPass = new FirstPass(dummyOut, continuer, forwardData)
-      worker.push("testing", status, {
+      worker.push("testing", {
         continuer =>
           lock.put(true)
           firstPass.processFile(csv, dummyOut)
@@ -218,7 +218,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       }
 
       val firstPass = new FirstPass(dummyOut, continuer, forwardData)
-      worker.push("testing", status, {
+      worker.push("testing", {
         continuer =>
           lock.put(true)
           firstPass.processFile(csv, out)
@@ -242,7 +242,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       when(continuer.isBusy) thenReturn false
 
       val firstPass = new FirstPass(dummyOut, continuer, forwardData)
-      worker.push("testing", status, {
+      worker.push("testing", {
         continuer =>
           lock.put(true)
           worker.abort()

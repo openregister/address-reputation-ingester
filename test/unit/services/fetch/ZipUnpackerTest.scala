@@ -54,7 +54,7 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
     val sample = new File(getClass.getClassLoader.getResource("nested.zip").getFile)
 
     // when
-    val unzipped = new ZipUnpacker(tempDir).unzipList(List(sample), "foo/bar", status)
+    val unzipped = new ZipUnpacker(tempDir, status).unzipList(List(sample), "foo/bar")
 
     // then
     assert(unzipped === 2)
@@ -77,7 +77,7 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
     val sample = new File(getClass.getClassLoader.getResource("SX9090-first20.zip").getFile)
 
     // when
-    val unzipped = new ZipUnpacker(tempDir).unzip(sample, "foo", status)
+    val unzipped = new ZipUnpacker(tempDir, status).unzip(sample, "foo")
 
     // then
     assert(unzipped === 1)
@@ -98,7 +98,7 @@ class ZipUnpackerTest extends FunSuite with BeforeAndAfterAll {
     val sample = new File(getClass.getClassLoader.getResource("invalid15.csv").getFile)
 
     //when
-    val unzipped = new ZipUnpacker(tempDir).unzip(sample, "foo", status)
+    val unzipped = new ZipUnpacker(tempDir, status).unzip(sample, "foo")
 
     // then
     assert(unzipped === 0)

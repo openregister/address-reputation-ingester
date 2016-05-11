@@ -22,9 +22,9 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{BlockingQueue, LinkedTransferQueue}
 
 import play.api.Logger
-import services.model.{StateModel, StatusLogger}
+import services.model.StatusLogger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
-import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
+import uk.co.hmrc.logging.LoggerFacade
 
 import scala.util.control.NonFatal
 
@@ -43,7 +43,6 @@ trait Continuer {
 
 
 case class Task(description: String,
-                status: StatusLogger,
                 action: (Continuer) => Unit)
 
 
@@ -52,18 +51,18 @@ case class Task(description: String,
 // flow of work cleanly.
 
 object WorkQueue {
-  val singleton = new WorkQueue(new LoggerFacade(Logger.logger))
+  val singleton = new WorkQueue(new StatusLogger(new LoggerFacade(Logger.logger), 2))
 }
 
 
-class WorkQueue(logger: SimpleLogger) {
+class WorkQueue(val statusLogger: StatusLogger) {
   private val queue = new LinkedTransferQueue[Task]()
-  private val worker = new Worker(queue, logger)
+  private val worker = new Worker(queue, statusLogger)
   worker.setDaemon(true)
   worker.start()
 
-  def push(work: String, status: StatusLogger, body: (Continuer) => Unit): Boolean = {
-    push(Task(work, status, body))
+  def push(work: String, body: (Continuer) => Unit): Boolean = {
+    push(Task(work, body))
   }
 
   private def push(task: Task): Boolean = {
@@ -95,12 +94,12 @@ class WorkQueue(logger: SimpleLogger) {
     worker.running = false
     abort()
     // push a 'poison' task that may never get execcuted
-    push(Task("shutting down", new StatusLogger(logger), { c => }))
+    push(Task("shutting down", { c => }))
   }
 }
 
 
-private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) extends Thread with Continuer {
+private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogger) extends Thread with Continuer {
 
   import ExecutionState._
 
@@ -108,8 +107,6 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
 
   private val executionState = new AtomicInteger(IDLE)
   private var doing = ""
-  // n.b. not being used for thread interlocking
-  private var statusLogger = new StatusLogger(logger)
 
   def isBusy: Boolean = executionState.get == BUSY
 
@@ -141,7 +138,7 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
         doNextTask()
       }
     } finally {
-      logger.info("Worker thread has terminated.")
+      statusLogger.info("Worker thread has terminated.")
       executionState.set(TERMINATED)
     }
   }
@@ -153,7 +150,7 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
       runTask(task)
     } catch {
       case NonFatal(e) =>
-        logger.warn(status, e)
+        statusLogger.warn(status, e)
     } finally {
       if (queue.isEmpty) {
         executionState.set(IDLE)
@@ -164,7 +161,7 @@ private[exec] class Worker(queue: BlockingQueue[Task], logger: SimpleLogger) ext
   private def runTask(task: Task) {
     val info = task.description.trim
     doing = " " + info
-    task.status.info(s"Starting $info")
+    statusLogger.info(s"Starting $info")
     try {
       val timer = new DiagnosticTimer
       task.action(this)

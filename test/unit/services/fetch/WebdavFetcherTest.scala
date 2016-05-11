@@ -65,9 +65,9 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
           val s = s"$url${f.getName}"
           when(sardine.get(s)) thenReturn new FileInputStream(f)
       }
-      val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory)
+      val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)
       // when
-      val downloaded = fetcher.fetchAll(url, "stuff1", status)
+      val downloaded = fetcher.fetchAll(url, "stuff1")
       // then
       downloaded.size must be(3)
       downloaded.map(_.file.length()).sum must be(files.map(_.length()).sum)
@@ -99,9 +99,9 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
           Files.createFile(stuff.resolve(f.getName))
       }
       Thread.sleep(10) // because the filesystem can be slightly behind
-      val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory)
+      val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)
       // when
-      val downloaded = fetcher.fetchAll(url, "stuff2", status)
+      val downloaded = fetcher.fetchAll(url, "stuff2")
       // then
       downloaded.size must be(3)
       downloaded.map(_.file.length()).sum must be(files.map(_.length()).sum)
@@ -139,9 +139,9 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
           Files.createFile(stuff.resolve(f.getName))
       }
       Thread.sleep(10) // because the filesystem can be slightly behind
-      val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory)
+      val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)
       // when
-      val downloaded = fetcher.fetchAll(url, "stuff2", status)
+      val downloaded = fetcher.fetchAll(url, "stuff2")
       // then
       downloaded.size must be(3)
       downloaded.map(_.file.length()).sum must be(files.map(_.length()).sum)
@@ -178,9 +178,9 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
           Files.createFile(stuff.resolve(f.getName + ".done"))
       }
       Thread.sleep(10) // because the filesystem can be slightly behind
-      val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory)
+      val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)
       // when
-      val downloaded = fetcher.fetchAll(url, "stuff3", status)
+      val downloaded = fetcher.fetchAll(url, "stuff3")
       // then
       downloaded.size must be(3)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
@@ -211,9 +211,9 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
           WebDavFile(new URL(s"$url${f.getName}"), f.getName, false, false, true, Nil)
       }
       val product = OSGBProduct("abp", 39, webDavFiles)
-      val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory)
+      val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)
       // when
-      val downloaded = fetcher.fetchList(product, "stuff", status)
+      val downloaded = fetcher.fetchList(product, "stuff")
       // then
       downloaded.map(_.file.length()).sum must be(files.map(_.length()).sum)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet

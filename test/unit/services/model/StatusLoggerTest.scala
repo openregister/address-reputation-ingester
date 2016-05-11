@@ -18,10 +18,10 @@
 
 package services.model
 
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, Matchers}
 import uk.co.hmrc.logging.StubLogger
 
-class StatusLoggerTest extends FunSuite {
+class StatusLoggerTest extends FunSuite with Matchers {
 
   test(
     """
@@ -32,25 +32,40 @@ class StatusLoggerTest extends FunSuite {
 
     val tee = new StubLogger
 
-    val statusLogger = new StatusLogger(tee)
+    val statusLogger = new StatusLogger(tee, 2)
 
-    statusLogger.info("first")
-    assert(statusLogger.status === "first")
+    statusLogger.info("a1")
+    statusLogger.status should fullyMatch regex "a1"
 
-    statusLogger.info("second")
-    assert(statusLogger.status === "first\nsecond")
+    statusLogger.info("a2")
+    statusLogger.status should fullyMatch regex "a1\na2"
 
-    statusLogger.update("third")
-    assert(statusLogger.status === "first\nsecond\nthird")
+    statusLogger.info("a3")
+    statusLogger.status should fullyMatch regex "a1\na2\na3"
 
-    statusLogger.update("fourth")
-    assert(statusLogger.status === "first\nsecond\nfourth")
+    statusLogger.info("a4")
+    statusLogger.status should fullyMatch regex "a1\na2\na3\na4"
 
-    statusLogger.info("fifth")
-    assert(statusLogger.status === "first\nsecond\nfifth")
+    statusLogger.startAfresh()
+    statusLogger.info("b5")
+    statusLogger.status should fullyMatch regex "a1\na2\na3\na4\nTotal .*s\n~~~~~~~~~~~~~~~\nb5"
 
-    statusLogger.update("sixth")
-    assert(statusLogger.status === "first\nsecond\nfifth\nsixth")
+    statusLogger.info("b6")
+    statusLogger.status should fullyMatch regex "a1\na2\na3\na4\nTotal .*s\n~~~~~~~~~~~~~~~\nb5\nb6"
+
+    statusLogger.startAfresh()
+    statusLogger.info("c7")
+    statusLogger.status should fullyMatch regex "a1\na2\na3\na4\nTotal .*s\n~~~~~~~~~~~~~~~\nb5\nb6\nTotal .*s\n~~~~~~~~~~~~~~~\nc7"
+
+    statusLogger.info("c8")
+    statusLogger.status should fullyMatch regex "a1\na2\na3\na4\nTotal .*s\n~~~~~~~~~~~~~~~\nb5\nb6\nTotal .*s\n~~~~~~~~~~~~~~~\nc7\nc8"
+
+    statusLogger.startAfresh()
+    statusLogger.info("d9")
+    statusLogger.status should fullyMatch regex "b5\nb6\nTotal .*s\n~~~~~~~~~~~~~~~\nc7\nc8\nTotal .*s\n~~~~~~~~~~~~~~~\nd9"
+
+    statusLogger.info("d10")
+    statusLogger.status should fullyMatch regex "b5\nb6\nTotal .*s\n~~~~~~~~~~~~~~~\nc7\nc8\nTotal .*s\n~~~~~~~~~~~~~~~\nd9\nd10"
   }
 
 }

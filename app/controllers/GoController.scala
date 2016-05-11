@@ -31,7 +31,6 @@ object KnownProducts {
 
 
 object GoController extends GoController(
-  ControllerConfig.logger,
   ControllerConfig.workerFactory,
   ControllerConfig.sardine,
   FetchController,
@@ -40,8 +39,7 @@ object GoController extends GoController(
 )
 
 
-class GoController(logger: SimpleLogger,
-                   workerFactory: WorkerFactory,
+class GoController(workerFactory: WorkerFactory,
                    sardine: SardineWrapper,
                    fetchController: FetchController,
                    ingestController: IngestController,
@@ -52,15 +50,16 @@ class GoController(logger: SimpleLogger,
       require(IngestControllerHelper.isSupportedTarget(target))
 
       val settings = WriterSettings(1, 0)
-      val status = new StatusLogger(logger)
-      workerFactory.worker.push(s"automatic search", status, {
+      val worker = workerFactory.worker
+      worker.statusLogger.startAfresh()
+      worker.push(s"automatic search", {
         continuer =>
           val tree = sardine.exploreRemoteTree
           for (product <- KnownProducts.OSGB) {
             val found = tree.findLatestFor(product)
             if (found.isDefined) {
               val model = StateModel(found.get)
-              pipeline(target, model, status, settings)
+              pipeline(target, model, settings)
             }
           }
       })
@@ -73,21 +72,22 @@ class GoController(logger: SimpleLogger,
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
+      workerFactory.worker.statusLogger.startAfresh()
       val settings = WriterSettings(1, 0)
       val model = new StateModel(product, epoch, variant, None)
-      val status = new StatusLogger(logger)
-      pipeline(target, model, status, settings)
+      pipeline(target, model, settings)
       Accepted
   }
 
-  private def pipeline(target: String, model1: StateModel, status: StatusLogger, settings: WriterSettings) {
-    workerFactory.worker.push(s"finding ${model1.pathSegment}", status, {
+  private def pipeline(target: String, model1: StateModel, settings: WriterSettings) {
+    val worker = workerFactory.worker
+    worker.push(s"finding ${model1.pathSegment}", {
       continuer =>
         if (continuer.isBusy) {
-          val model2 = fetchController.fetch(model1, status)
-          val model3 = ingestController.ingestIfOK(model2, status, settings, target, continuer)
+          val model2 = fetchController.fetch(model1)
+          val model3 = ingestController.ingestIfOK(model2, worker.statusLogger, settings, target, continuer)
           if (target == "db") {
-            switchoverController.switchIfOK(model3, status)
+            switchoverController.switchIfOK(model3, worker.statusLogger)
           }
         }
     })

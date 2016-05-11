@@ -45,7 +45,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
     val logger = new StubLogger
     val model = new StateModel()
     val status = new StatusLogger(logger)
-    val worker = new WorkQueue(logger)
+    val worker = new WorkQueue(status)
     val lock = new SynchronousQueue[Boolean]()
   }
 
@@ -64,7 +64,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       when(mockFile.isDirectory) thenReturn true
       when(mockFile.listFiles) thenReturn Array.empty[File]
 
-      worker.push("testing", status, {
+      worker.push("testing", {
         continuer =>
           new Ingester(continuer, model, status, ForwardData.chronicleInMemoryForUnitTest()).ingest(mockFile, dummyOut)
           lock.put(true)
@@ -98,7 +98,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
         }
       }
 
-      worker.push("testing", status, {
+      worker.push("testing", {
         continuer =>
           new Ingester(continuer, model, status, ForwardData.simpleInstance()).ingest(List(sample), out)
           lock.put(true)

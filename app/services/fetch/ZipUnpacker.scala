@@ -28,19 +28,19 @@ import java.util.zip.ZipInputStream
 import services.fetch.Utils._
 import services.model.StatusLogger
 
-class ZipUnpacker(unpackFolder: File) {
+class ZipUnpacker(unpackFolder: File, status: StatusLogger) {
 
-  def unzipList(zipFiles: List[File], destPath: String, status: StatusLogger): Int = {
-    zipFiles.map(z => unzip(z, destPath, status)).sum
+  def unzipList(zipFiles: List[File], destPath: String): Int = {
+    zipFiles.map(z => unzip(z, destPath)).sum
   }
 
-  def unzip(file: File, destPath: String, status: StatusLogger): Int = {
+  def unzip(file: File, destPath: String): Int = {
     if (file.getName.toLowerCase.endsWith(".zip")) {
-      unzip(new FileInputStream(file), destPath, status)
+      unzip(new FileInputStream(file), destPath)
     } else 0
   }
 
-  def unzip(zipFile: InputStream, destPath: String, status: StatusLogger): Int = {
+  def unzip(zipFile: InputStream, destPath: String): Int = {
     val destDirectory = if (destPath.nonEmpty) new File(unpackFolder, destPath) else unpackFolder
     // remove all pre-existing files
     deleteDir(destDirectory)
