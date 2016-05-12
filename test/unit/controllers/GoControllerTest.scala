@@ -72,7 +72,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       val request = FakeRequest()
 
       intercept[IllegalArgumentException] {
-        await(call(goController.doGo(target, product, epoch, variant, None, None), request))
+        await(call(goController.doGo(target, product, epoch, variant, None, None, None), request))
       }
     }
 
@@ -120,7 +120,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       // when
-      val response = await(call(goController.doGo("null", "product", 123, "variant", None, None), request))
+      val response = await(call(goController.doGo("null", "product", 123, "variant", None, None, None), request))
 
       // then
       worker.awaitCompletion()
@@ -140,7 +140,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       // when
-      val response = await(call(goController.doGo("null", "product", 123, "variant", None, None), request))
+      val response = await(call(goController.doGo("null", "product", 123, "variant", None, None, None), request))
 
       // then
       worker.awaitCompletion()
@@ -160,7 +160,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       // when
-      val response = await(call(goController.doGo("db", "product", 123, "variant", None, None), request))
+      val response = await(call(goController.doGo("db", "product", 123, "variant", None, None, None), request))
 
       // then
       worker.awaitCompletion()

@@ -63,8 +63,7 @@ class IngestController(unpackedFolder: File,
       require(isAlphaNumeric(variant))
 
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
-      val model = new StateModel(product, epoch, variant,
-        forceChange = forceChange.getOrElse(false))
+      val model = new StateModel(product, epoch, variant, forceChange = forceChange getOrElse false)
 
       val worker = workerFactory.worker
       worker.push(

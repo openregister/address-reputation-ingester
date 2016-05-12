@@ -43,12 +43,12 @@ class FetchController(logger: StatusLogger,
                       unzipper: ZipUnpacker,
                       url: URL) extends BaseController {
 
-  def doFetch(product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
+  def doFetch(product: String, epoch: Int, variant: String, forceChange: Option[Boolean]): Action[AnyContent] = Action {
     request =>
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
-      val model = new StateModel(product, epoch, variant)
+      val model = new StateModel(product, epoch, variant, forceChange = forceChange getOrElse false)
       workerFactory.worker.push(s"fetching ${model.pathSegment}", {
         continuer =>
           fetch(model)
@@ -59,9 +59,9 @@ class FetchController(logger: StatusLogger,
   private[controllers] def fetch(model: StateModel): StateModel = {
     val files: List[DownloadItem] =
       if (model.product.nonEmpty) {
-        webdavFetcher.fetchList(model.product.get, model.pathSegment)
+        webdavFetcher.fetchList(model.product.get, model.pathSegment, model.forceChange)
       } else {
-        webdavFetcher.fetchAll(s"$url/${model.pathSegment}", model.pathSegment)
+        webdavFetcher.fetchAll(s"$url/${model.pathSegment}", model.pathSegment, model.forceChange)
       }
 
     val freshItems = files.filter(_.fresh)

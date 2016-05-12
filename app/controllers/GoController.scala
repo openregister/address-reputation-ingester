@@ -66,14 +66,15 @@ class GoController(workerFactory: WorkerFactory,
   }
 
   def doGo(target: String, product: String, epoch: Int, variant: String,
-           bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = Action {
+           bulkSize: Option[Int], loopDelay: Option[Int],
+           forceChange: Option[Boolean]): Action[AnyContent] = Action {
     request =>
       require(IngestControllerHelper.isSupportedTarget(target))
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
-      val model = new StateModel(product, epoch, variant)
+      val model = new StateModel(product, epoch, variant, forceChange = forceChange getOrElse false)
       pipeline(target, model, settings)
       Accepted
   }

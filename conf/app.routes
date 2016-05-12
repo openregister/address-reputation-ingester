@@ -7,9 +7,9 @@ HEAD  /ping                                         controllers.PingController.p
 GET   /ping                                         controllers.PingController.ping()
 
 GET   /goAuto/to/:target                            controllers.GoController.doGoAuto(target, bulkSize: Option[Int], loopDelay: Option[Int])
-GET   /go/to/:target/:product/:epoch/:variant       controllers.GoController.doGo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int])
+GET   /go/to/:target/:product/:epoch/:variant       controllers.GoController.doGo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
 
-GET   /fetch/:product/:epoch/:variant               controllers.FetchController.doFetch(product, epoch: Int, variant)
+GET   /fetch/:product/:epoch/:variant               controllers.FetchController.doFetch(product, epoch: Int, variant, forceChange: Option[Boolean])
 
 GET   /ingest/to/:target/:product/:epoch/:variant   controllers.IngestController.doIngestTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
 
