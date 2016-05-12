@@ -24,6 +24,7 @@ case class StateModel(
                        variant: String = "",
                        index: Option[Int] = None,
                        product: Option[OSGBProduct] = None,
+                       forceChange: Boolean = false,
                        hasFailed: Boolean = false
                      ) {
 

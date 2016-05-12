@@ -19,6 +19,7 @@
 package services.writers
 
 import java.io.{OutputStreamWriter, _}
+import java.util.Date
 import java.util.zip.GZIPOutputStream
 
 import controllers.ControllerConfig
@@ -38,13 +39,19 @@ class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger) extend
 
   private var count = 0
 
-  override def output(a: DbAddress) {
+  def existingTargetThatIsNewerThan(date: Date): Option[String] =
+    if (outputFile.exists() && outputFile.lastModified() >= date.getTime)
+      Some(outputFile.getPath)
+    else
+      None
+
+  def output(a: DbAddress) {
     // scalastyle:off
     outCSV.println(a.toString)
     count += 1
   }
 
-  override def close(): StateModel = {
+  def close(): StateModel = {
     if (outCSV.checkError()) {
       statusLogger.warn(s"Failed whilst writing to $outputFile")
       model = model.copy(hasFailed = true)
@@ -57,6 +64,6 @@ class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger) extend
 
 
 class OutputFileWriterFactory extends OutputWriterFactory {
-  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings) =
+  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings) =
     new OutputFileWriter(model, statusLogger)
 }

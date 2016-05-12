@@ -18,10 +18,14 @@
 
 package services.writers
 
+import java.util.Date
+
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
 trait OutputWriter {
+  def existingTargetThatIsNewerThan(date: Date): Option[String]
+
   def output(a: DbAddress)
 
   def close(): StateModel

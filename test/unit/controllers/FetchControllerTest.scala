@@ -121,7 +121,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
   test("fetch should download files using webdav then unzip every zip file") {
     new context {
       // given
-      val model1 = StateModel("product", 123, "variant", None, None)
+      val model1 = StateModel("product", 123, "variant")
       val f1Txt = new File("/a/b/f1.txt")
       val f1Zip = new File("/a/b/f1.zip")
       val f2Txt = new File("/a/b/f2.txt")
@@ -145,7 +145,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
   test("fetch should download files using webdav but only unzip fresh zip files") {
     new context {
       // given
-      val model1 = StateModel("product", 123, "variant", None, None)
+      val model1 = StateModel("product", 123, "variant")
       val f1Txt = new File("/a/b/f1.txt")
       val f1Zip = new File("/a/b/f1.zip")
       val f2Txt = new File("/a/b/f2.txt")

@@ -21,6 +21,7 @@
 
 package services.ingest
 
+import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
 import org.junit.runner.RunWith
@@ -205,7 +206,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       when(continuer.isBusy) thenReturn true
 
       val out = new OutputWriter {
-        def init(model: StateModel) {}
+        def existingTargetThatIsNewerThan(date: Date) = None
 
         def output(out: DbAddress) {
           assert(out.id === "GB9051119283")

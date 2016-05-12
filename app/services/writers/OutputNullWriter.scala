@@ -18,6 +18,8 @@
 
 package services.writers
 
+import java.util.Date
+
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
@@ -25,12 +27,14 @@ class OutputNullWriter(model: StateModel, statusLogger: StatusLogger) extends Ou
 
   private var count = 0
 
-  override def output(a: DbAddress) {
+  def existingTargetThatIsNewerThan(date: Date): Option[String] = None
+
+  def output(a: DbAddress) {
     count += 1
   }
 
   // scalastylye:off
-  override def close(): StateModel = {
+  def close(): StateModel = {
     statusLogger.info(s"*** document count = $count")
     model
   }

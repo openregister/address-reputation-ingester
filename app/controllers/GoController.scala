@@ -73,7 +73,7 @@ class GoController(workerFactory: WorkerFactory,
       require(isAlphaNumeric(variant))
 
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
-      val model = new StateModel(product, epoch, variant, None)
+      val model = new StateModel(product, epoch, variant)
       pipeline(target, model, settings)
       Accepted
   }

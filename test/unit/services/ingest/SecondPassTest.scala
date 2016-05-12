@@ -21,6 +21,7 @@
 
 package services.ingest
 
+import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
 import org.junit.runner.RunWith
@@ -73,7 +74,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       val out = new OutputWriter {
         var count = 0
 
-        def init(model: StateModel) {}
+        def existingTargetThatIsNewerThan(date: Date) = None
 
         def output(out: DbAddress) {
           assert(out.id === "GB131041604")
@@ -118,7 +119,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       val out = new OutputWriter {
         var count = 0
 
-        def init(model: StateModel) {}
+        def existingTargetThatIsNewerThan(date: Date) = None
 
         def output(out: DbAddress) {
           count += 1
@@ -161,7 +162,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       val out = new OutputWriter {
         var count = 0
 
-        def init(model: StateModel) {}
+        def existingTargetThatIsNewerThan(date: Date) = None
 
         def output(out: DbAddress) {
           count += 1

@@ -64,7 +64,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       val request = FakeRequest()
 
       intercept[IllegalArgumentException] {
-        await(call(ingestController.doIngestTo(target, product, epoch, variant, None, None), request))
+        await(call(ingestController.doIngestTo(target, product, epoch, variant, None, None, None), request))
       }
     }
   }
@@ -106,7 +106,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       // when
-      val response = await(call(ingestController.doIngestTo("db", "abp", 40, "full", Some(1), Some(0)), request))
+      val response = await(call(ingestController.doIngestTo("db", "abp", 40, "full", Some(1), Some(0), None), request))
 
       // then
       worker.awaitCompletion()
@@ -123,7 +123,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       // when
-      val response = await(call(ingestController.doIngestTo("file", "abp", 40, "full", None, None), request))
+      val response = await(call(ingestController.doIngestTo("file", "abp", 40, "full", None, None, None), request))
 
       // then
       worker.awaitCompletion()
@@ -141,7 +141,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       and the state model stays in its current state
     """) {
     new context {
-      val model1 = new StateModel("abp", 40, "full", None, hasFailed = true)
+      val model1 = new StateModel("abp", 40, "full", hasFailed = true)
       val settings = WriterSettings(1, 0)
 
       // when

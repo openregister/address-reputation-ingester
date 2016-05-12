@@ -18,6 +18,8 @@
 
 package services.writers
 
+import java.util.Date
+
 import com.mongodb._
 import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
@@ -63,7 +65,16 @@ class OutputDBWriter(cleardownOnError: Boolean,
   model = collectionMetadata.revisedModel
   statusLogger.info(s"Writing new collection '$collectionName'")
 
-  override def output(address: DbAddress) {
+  def existingTargetThatIsNewerThan(date: Date): Option[String] = {
+    collectionMetadata.existingCollectionNames.reverse.find {
+      name =>
+        val coll = db(name)
+        val completion = CollectionMetadata.findCompletionDateIn(coll)
+        completion.isDefined && completion.get.after(date)
+    }
+  }
+
+  def output(address: DbAddress) {
     try {
       bulk.insert(address.id, MongoDBObject(address.tupled))
       count += 1
@@ -76,7 +87,7 @@ class OutputDBWriter(cleardownOnError: Boolean,
     }
   }
 
-  override def close(): StateModel = {
+  def close(): StateModel = {
     if (!hasError) {
       try {
         completeTheCollection()

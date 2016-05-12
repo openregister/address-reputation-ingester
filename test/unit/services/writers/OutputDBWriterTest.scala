@@ -18,6 +18,8 @@
 
 package services.writers
 
+import java.util.Date
+
 import com.mongodb.DBObject
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{BulkWriteOperation, MongoCollection, MongoDB}
@@ -37,21 +39,98 @@ import scala.collection.mutable
 @RunWith(classOf[JUnitRunner])
 class OutputDBWriterTest extends FunSuite {
 
-  class Context {
+  class Context(collections: String*) {
     val casbahMongoConnection = mock[CasbahMongoConnection]
     val mongoDB = mock[MongoDB]
     val collection = mock[MongoCollection]
     val bulk = mock[BulkWriteOperation]
     val logger = new StubLogger()
-    val model = new StateModel("x")
+    val model = new StateModel("x", 4)
     val status = new StatusLogger(logger)
 
-    when(mongoDB.collectionNames()) thenReturn mutable.Set("admin", "x_0_000", "x_0_001", "x_0_004")
-    when(mongoDB.collectionExists(anyString())) thenReturn false
     when(mongoDB(anyString())) thenReturn collection
     when(casbahMongoConnection.getConfiguredDb) thenReturn mongoDB
     when(collection.initializeUnorderedBulkOperation) thenReturn bulk
+
+    when(mongoDB.collectionNames()) thenReturn (mutable.Set() ++ collections)
+    for (n <- collections) {
+      when(mongoDB.collectionExists(n)) thenReturn true
+    }
   }
+
+  test(
+    """
+      when the model has no corresponding collection yet
+      then targetExistsAndIsNewerThan will return None
+    """) {
+    new Context("admin", "x_1_001", "x_2_001", "x_3_001") {
+      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
+
+      val result = outputDBWriter.existingTargetThatIsNewerThan(new Date())
+
+      assert(result === None)
+    }
+  }
+
+
+  test(
+    """
+      when the model has corresponding collections without any completion dates
+      then targetExistsAndIsNewerThan will return None
+    """) {
+    new Context("admin", "x_4_001", "x_4_002") {
+      when(collection.findOneByID("metadata")) thenReturn None
+
+      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
+
+      val result = outputDBWriter.existingTargetThatIsNewerThan(new Date(System.currentTimeMillis - 86400000L))
+
+      assert(result === None)
+    }
+  }
+
+
+  test(
+    """
+      when the model has corresponding collections with old completion dates
+      then targetExistsAndIsNewerThan will return None
+    """) {
+    new Context("admin", "x_4_001", "x_4_002") {
+      val now = new Date()
+      val yesterday = new Date(now.getTime - 86400000L)
+
+      val metadata = MongoDBObject("completedAt" -> yesterday)
+      when(collection.findOneByID("metadata")) thenReturn Some(metadata)
+
+      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
+
+      val result = outputDBWriter.existingTargetThatIsNewerThan(now)
+
+      assert(result === None)
+    }
+  }
+
+
+  test(
+    """
+      when the model has corresponding collections with newish completion dates
+      then targetExistsAndIsNewerThan will return the last collection name
+    """) {
+    new Context("admin", "x_4_001", "x_4_002") {
+      val now = new Date()
+      val yesterday = new Date(now.getTime - 86400000L)
+
+      val metadata = MongoDBObject("completedAt" -> now)
+      when(collection.findOneByID("metadata")) thenReturn Some(metadata)
+
+      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
+
+      val result = outputDBWriter.existingTargetThatIsNewerThan(yesterday)
+
+      assert(result === Some("x_4_002"))
+    }
+  }
+
 
   test(
     """
@@ -59,14 +138,14 @@ class OutputDBWriterTest extends FunSuite {
       then an insert is invoked
       and the collection name is chosen correctly
     """) {
-    new Context {
+    new Context("admin", "x_4_000", "x_4_001", "x_4_004") {
       val someDBAddress = DbAddress("id1", List("1 Foo Rue"), "Puddletown", "FX1 1XF")
 
       val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
 
       outputDBWriter.output(someDBAddress)
 
-      assert(outputDBWriter.collectionName === "x_0_005")
+      assert(outputDBWriter.collectionName === "x_4_005")
       verify(bulk, times(1)).insert(any[DBObject])
     }
   }
@@ -79,7 +158,7 @@ class OutputDBWriterTest extends FunSuite {
       and an index is created for the postcode field
       and then close is called on the mongoDB instance
     """) {
-    new Context {
+    new Context("admin", "x_4_000", "x_4_001", "x_4_004") {
       val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
 
       outputDBWriter.close()

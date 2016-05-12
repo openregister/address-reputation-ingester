@@ -22,9 +22,11 @@
 package services.ingest
 
 import java.io.File
+import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
 import org.junit.runner.RunWith
+import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -56,6 +58,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
     assert(found.last.getPath.endsWith("/exeter/1/sample/SX9090-first3600.zip"))
   }
 
+
   test("Having no files should not throw any exception") {
     new context {
       val mockFile = mock[File]
@@ -63,6 +66,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       when(mockFile.isDirectory) thenReturn true
       when(mockFile.listFiles) thenReturn Array.empty[File]
+      when(dummyOut.existingTargetThatIsNewerThan(any[Date])) thenReturn None
 
       worker.push("testing", {
         continuer =>
@@ -72,6 +76,29 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       lock.take()
       worker.awaitCompletion()
+    }
+  }
+
+
+  test("Having some old files and an up-to-date target should cause the ingestion to be skipped") {
+    new context {
+      val mockFile = mock[File]
+      val dummyOut = mock[OutputWriter]
+
+      when(mockFile.isDirectory) thenReturn true
+      when(mockFile.listFiles) thenReturn List(new File("foo.zip")).toArray
+      when(dummyOut.existingTargetThatIsNewerThan(any[Date])) thenReturn Some("foo")
+      var result = model
+
+      worker.push("testing", {
+        continuer =>
+          result = new Ingester(continuer, model, status, ForwardData.chronicleInMemoryForUnitTest()).ingest(mockFile, dummyOut)
+          lock.put(true)
+      })
+
+      lock.take()
+      worker.awaitCompletion()
+      assert(result === model.copy(hasFailed = true))
     }
   }
 
@@ -86,7 +113,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       var closed = false
 
       val out = new OutputWriter {
-        def init(model: StateModel) {}
+        def existingTargetThatIsNewerThan(date: Date) = None
 
         def output(a: DbAddress) {
           addressesProduced += a

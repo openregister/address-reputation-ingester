@@ -17,6 +17,7 @@
 package services.ingest
 
 import java.io.File
+import java.util.Date
 
 import config.Divider
 import services.exec.Continuer
@@ -60,14 +61,28 @@ object Ingester {
       val deeper = dirs.flatMap(listFiles(_, extn))
       zips.sorted ++ deeper
     }
+
+  val theEpoch = new Date(0)
 }
 
 
 class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger, forwardData: ForwardData = ForwardData.chronicleInMemory()) {
 
   def ingest(rootDir: File, out: OutputWriter): StateModel = {
-    statusLogger.info(s"Ingesting from $rootDir.")
-    ingest(Ingester.listFiles(rootDir, ".zip"), out)
+    val files = Ingester.listFiles(rootDir, ".zip")
+    val youngest = if (files.isEmpty) Ingester.theEpoch else new Date(files.map(_.lastModified).max)
+    val target = out.existingTargetThatIsNewerThan(youngest)
+    if (target.isEmpty) {
+      statusLogger.info(s"Ingesting from $rootDir.")
+      ingest(files, out)
+    } else if (model.forceChange) {
+      statusLogger.info(s"Ingesting from $rootDir (forced update).")
+      ingest(files, out)
+    } else {
+      statusLogger.info(s"Ingest skipped; ${target.get} is up to date.")
+      // Not strictly a failure, this inhibits an immediate automatic switch-over.
+      model.copy(hasFailed = true)
+    }
   }
 
   private[ingest] def ingest(files: Seq[File], out: OutputWriter): StateModel = {

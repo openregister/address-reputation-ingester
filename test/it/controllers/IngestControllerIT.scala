@@ -51,7 +51,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
     """ in {
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
-      val step2 = get("/ingest/to/file/exeter/1/sample")
+      val step2 = get("/ingest/to/file/exeter/1/sample?forceChange=true")
       step2.status mustBe ACCEPTED
 
       verifyOK("/admin/status", "busy ingesting exeter/1/sample")
@@ -80,7 +80,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
 
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
-      val step2 = get("/ingest/to/db/exeter/1/sample?bulkSize=5&loopDelay=0")
+      val step2 = get("/ingest/to/db/exeter/1/sample?bulkSize=5&loopDelay=0&forceChange=true")
       step2.status mustBe ACCEPTED
 
       verifyOK("/admin/status", "busy ingesting exeter/1/sample")
