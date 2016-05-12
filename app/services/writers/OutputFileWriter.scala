@@ -51,7 +51,7 @@ class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger) extend
     count += 1
   }
 
-  def close(): StateModel = {
+  def close(completed: Boolean): StateModel = {
     if (outCSV.checkError()) {
       statusLogger.warn(s"Failed whilst writing to $outputFile")
       model = model.copy(hasFailed = true)

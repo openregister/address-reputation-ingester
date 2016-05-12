@@ -68,6 +68,6 @@ class FetchController(logger: StatusLogger,
     val toUnzip = freshItems.map(_.file)
     unzipper.unzipList(toUnzip, model.pathSegment)
 
-    if (freshItems.nonEmpty) model else model.copy(hasFailed = true)
+    if (files.nonEmpty) model else model.copy(hasFailed = true)
   }
 }

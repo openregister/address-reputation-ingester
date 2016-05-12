@@ -215,7 +215,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
           assert(out.postcode === "AB14 0LQ")
         }
 
-        def close() = model
+        def close(completed: Boolean) = model
       }
 
       val firstPass = new FirstPass(dummyOut, continuer, forwardData)

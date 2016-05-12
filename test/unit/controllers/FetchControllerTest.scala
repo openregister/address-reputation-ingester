@@ -195,7 +195,6 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
   test(
     """given a list of pre-existing (i.e. stale) files passed in via the model,
        fetch should not download the files
-       but instead change the model to failed
     """) {
     new context {
       // given
@@ -211,7 +210,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
       val model2 = fetchController.fetch(model1)
 
       // then
-      assert(model2 === model1.copy(hasFailed = true))
+      assert(model2 === model1)
       verify(webdavFetcher).fetchList(product, "product/123/variant", false)
       verify(unzipper).unzipList(Nil, "product/123/variant")
       assert(logger.size === 0)
@@ -223,7 +222,6 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
     """given a list of pre-existing (i.e. stale) files passed in via the model,
        when forceFetch is set,
        fetch should download the files
-       and not change the model to failed
     """) {
     new context {
       // given

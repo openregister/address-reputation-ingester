@@ -119,7 +119,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
           addressesProduced += a
         }
 
-        def close() = {
+        def close(completed: Boolean) = {
           closed = true
           model
         }

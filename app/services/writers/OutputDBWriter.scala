@@ -87,10 +87,16 @@ class OutputDBWriter(cleardownOnError: Boolean,
     }
   }
 
-  def close(): StateModel = {
+  def close(completed: Boolean): StateModel = {
     if (!hasError) {
-      try {
-        completeTheCollection()
+      try { {
+        bulk.close()
+        collection.createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
+        if (completed) {
+          // we have finished! let's celebrate
+          CollectionMetadata.writeCompletionDateTo(collection)
+        }
+      }
       } catch {
         case me: MongoException =>
           statusLogger.warn(s"Caught MongoException committing final bulk insert and creating index $me")
@@ -109,14 +115,6 @@ class OutputDBWriter(cleardownOnError: Boolean,
     model
   }
 
-  private def completeTheCollection() {
-    bulk.close()
-
-    collection.createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
-
-    // we have finished! let's celebrate
-    CollectionMetadata.writeCompletionDateTo(collection)
-  }
 }
 
 

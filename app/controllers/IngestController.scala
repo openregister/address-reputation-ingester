@@ -102,7 +102,7 @@ class IngestController(unpackedFolder: File,
       ingesterFactory.ingester(continuer, model, status).ingest(qualifiedDir, writer)
     } finally {
       status.info("Cleaning up the ingester.")
-      writer.close()
+      writer.close(continuer.isBusy)
     }
   }
 

@@ -69,7 +69,7 @@ object Ingester {
 class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger, forwardData: ForwardData = ForwardData.chronicleInMemory()) {
 
   def ingest(rootDir: File, out: OutputWriter): StateModel = {
-    val files = Ingester.listFiles(rootDir, ".zip")
+    val files = Ingester.listFiles(rootDir, ".zip").sorted
     val youngest = if (files.isEmpty) Ingester.theEpoch else new Date(files.map(_.lastModified).max)
     val target = out.existingTargetThatIsNewerThan(youngest)
     if (target.isEmpty) {

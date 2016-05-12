@@ -125,7 +125,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       testWorker.terminate()
 
       assert(storedItem.get === "the initial value")
-      assert(logger.warns.size === 1)
+      assert(logger.warns.size === 2, logger.all)
       assert(logger.warns.head.message === "Warn:abp_40_009: collection was not found")
     }
   }
@@ -149,7 +149,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       testWorker.terminate()
 
       assert(storedItem.get === "the initial value")
-      assert(logger.warns.size === 1)
+      assert(logger.warns.size === 2, logger.all)
       assert(logger.warns.head.message === "Warn:abp_40_009: collection is still being written")
     }
   }

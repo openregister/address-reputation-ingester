@@ -82,7 +82,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
           count += 1
         }
 
-        def close() = model
+        def close(completed: Boolean) = model
       }
 
       when(continuer.isBusy) thenReturn true
@@ -125,7 +125,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
           count += 1
         }
 
-        def close() = model
+        def close(completed: Boolean) = model
       }
 
       when(continuer.isBusy) thenReturn false
@@ -168,7 +168,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
           count += 1
         }
 
-        def close() = model
+        def close(completed: Boolean) = model
       }
 
       when(continuer.isBusy) thenReturn true

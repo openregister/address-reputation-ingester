@@ -52,7 +52,6 @@ class CollectionController(workerFactory: WorkerFactory,
   def listCollections: Action[AnyContent] = Action {
     request =>
       val pc = protectedCollections
-      logger.info("listCollections {}", pc)
       val names = db.collectionNames().toList.sorted
       val result =
         for (name <- names) yield {

@@ -161,7 +161,7 @@ class OutputDBWriterTest extends FunSuite {
     new Context("admin", "x_4_000", "x_4_001", "x_4_004") {
       val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
 
-      outputDBWriter.close()
+      outputDBWriter.close(true)
 
       verify(collection).insert(any[DBObject])
       verify(collection).createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))

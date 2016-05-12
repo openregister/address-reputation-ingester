@@ -34,7 +34,7 @@ class OutputNullWriter(model: StateModel, statusLogger: StatusLogger) extends Ou
   }
 
   // scalastylye:off
-  def close(): StateModel = {
+  def close(completed: Boolean): StateModel = {
     statusLogger.info(s"*** document count = $count")
     model
   }

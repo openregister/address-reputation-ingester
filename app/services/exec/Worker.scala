@@ -115,7 +115,9 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
   def hasTerminated: Boolean = executionState.get == TERMINATED
 
   def abort(): Boolean = {
-    executionState.compareAndSet(BUSY, STOPPING)
+    val b = executionState.compareAndSet(BUSY, STOPPING)
+    statusLogger.warn(s"Abort. Now $status.")
+    b
   }
 
   def status: String =

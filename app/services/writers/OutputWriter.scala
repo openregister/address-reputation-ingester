@@ -28,7 +28,7 @@ trait OutputWriter {
 
   def output(a: DbAddress)
 
-  def close(): StateModel
+  def close(completed: Boolean): StateModel
 }
 
 trait OutputWriterFactory {
