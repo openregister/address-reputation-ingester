@@ -51,7 +51,7 @@ class GoController(workerFactory: WorkerFactory,
       require(IngestControllerHelper.isSupportedTarget(target))
 
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
-      workerFactory.worker.push(s"automatic search", {
+      workerFactory.worker.push(s"automatically searching", {
         continuer =>
           val tree = sardine.exploreRemoteTree
           for (product <- KnownProducts.OSGB) {
@@ -81,7 +81,7 @@ class GoController(workerFactory: WorkerFactory,
 
   private def pipeline(target: String, model1: StateModel, settings: WriterSettings) {
     val worker = workerFactory.worker
-    worker.push(s"finding ${model1.pathSegment}", {
+    worker.push(s"automatically loading ${model1.pathSegment}", {
       continuer =>
         if (continuer.isBusy) {
           val model2 = fetchController.fetch(model1)

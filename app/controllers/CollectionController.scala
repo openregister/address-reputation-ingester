@@ -29,6 +29,7 @@ import play.api.libs.json.Reads._
 import play.api.libs.json.{JsPath, Json, Reads, Writes}
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
+import services.writers.CollectionMetadata.{findCompletionDateIn, findCreationDateIn}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -56,12 +57,13 @@ class CollectionController(workerFactory: WorkerFactory,
       val result =
         for (name <- names) yield {
           val collection = db(name)
-          val metadata = collection.findOneByID("metadata")
-          val completedAt = metadata.flatMap(m => Option(m.get("completedAt"))).map(_.toString)
+          val createdAt = findCreationDateIn(collection)
+          val completedAt = findCompletionDateIn(collection)
           CollectionInfo(name, collection.size,
             systemCollections.contains(name),
             pc.contains(name),
-            completedAt)
+            createdAt.map(_.toString),
+            completedAt.map(_.toString))
         }
 
       Ok(Json.toJson(ListCI(result)))
@@ -95,6 +97,7 @@ class CollectionController(workerFactory: WorkerFactory,
       (JsPath \ "size").read[Int] and
       (JsPath \ "system").read[Boolean] and
       (JsPath \ "inUse").read[Boolean] and
+      (JsPath \ "createdAt").readNullable[String] and
       (JsPath \ "completedAt").readNullable[String]) (CollectionInfo.apply _)
 
   implicit val CollectionInfoWrites: Writes[CollectionInfo] = (
@@ -102,12 +105,15 @@ class CollectionController(workerFactory: WorkerFactory,
       (JsPath \ "size").write[Int] and
       (JsPath \ "system").write[Boolean] and
       (JsPath \ "inUse").write[Boolean] and
+      (JsPath \ "createdAt").writeNullable[String] and
       (JsPath \ "completedAt").writeNullable[String]) (unlift(CollectionInfo.unapply))
 
   implicit val ListCollectionInfoWrites: Writes[ListCI] = Json.format[ListCI]
 }
 
 
-case class CollectionInfo(name: String, size: Int, system: Boolean, inUse: Boolean, completedAt: Option[String] = None)
+case class CollectionInfo(name: String, size: Int, system: Boolean, inUse: Boolean,
+                          createdAt: Option[String] = None,
+                          completedAt: Option[String] = None)
 
 case class ListCI(collections: List[CollectionInfo])

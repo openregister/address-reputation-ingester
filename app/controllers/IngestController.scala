@@ -99,10 +99,11 @@ class IngestController(unpackedFolder: File,
     val qualifiedDir = new File(unpackedFolder, model.pathSegment)
     val writer = writerFactory.writer(model, status, settings)
     try {
+      writer.begin()
       ingesterFactory.ingester(continuer, model, status).ingest(qualifiedDir, writer)
     } finally {
       status.info("Cleaning up the ingester.")
-      writer.close(continuer.isBusy)
+      writer.end(continuer.isBusy)
     }
   }
 

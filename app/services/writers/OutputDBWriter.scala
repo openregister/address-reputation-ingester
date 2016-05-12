@@ -62,9 +62,6 @@ class OutputDBWriter(cleardownOnError: Boolean,
   private var count = 0
   private var hasError = false
 
-  model = collectionMetadata.revisedModel
-  statusLogger.info(s"Writing new collection '$collectionName'")
-
   def existingTargetThatIsNewerThan(date: Date): Option[String] = {
     collectionMetadata.existingCollectionNames.reverse.find {
       name =>
@@ -72,6 +69,12 @@ class OutputDBWriter(cleardownOnError: Boolean,
         val completion = CollectionMetadata.findCompletionDateIn(coll)
         completion.isDefined && completion.get.after(date)
     }
+  }
+
+  def begin() {
+    model = collectionMetadata.revisedModel
+    statusLogger.info(s"Writing new collection '$collectionName'")
+    CollectionMetadata.writeCreationDateTo(collection)
   }
 
   def output(address: DbAddress) {
@@ -87,16 +90,15 @@ class OutputDBWriter(cleardownOnError: Boolean,
     }
   }
 
-  def close(completed: Boolean): StateModel = {
+  def end(completed: Boolean): StateModel = {
     if (!hasError) {
-      try { {
+      try {
         bulk.close()
         collection.createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
         if (completed) {
           // we have finished! let's celebrate
           CollectionMetadata.writeCompletionDateTo(collection)
         }
-      }
       } catch {
         case me: MongoException =>
           statusLogger.warn(s"Caught MongoException committing final bulk insert and creating index $me")

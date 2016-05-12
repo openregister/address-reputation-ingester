@@ -19,13 +19,12 @@ package controllers
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
-import java.util.Date
 
 import com.mongodb.casbah.commons.MongoDBObject
-import services.fetch.Utils._
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
+import services.fetch.Utils._
 
 class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServerUnderTest {
 
@@ -94,7 +93,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
       // (see similar tests in ExtractorTest)
 
       val metadata = collection.findOne(MongoDBObject("_id" -> "metadata")).get
-      val completedAt = metadata.get("completedAt").asInstanceOf[Date].getTime
+      val completedAt = metadata.get("completedAt").asInstanceOf[Long]
       assert(start <= completedAt)
       assert(completedAt <= System.currentTimeMillis())
     }

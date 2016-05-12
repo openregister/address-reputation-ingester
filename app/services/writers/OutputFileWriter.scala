@@ -31,11 +31,9 @@ class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger) extend
 
   val fileRoot = model.collectionBaseName
   val outputFile = new File(ControllerConfig.outputFolder, s"$fileRoot.txt.gz")
-  ControllerConfig.outputFolder.mkdirs()
 
   private val bufSize = 32 * 1024
-  private val outfile = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile), bufSize))
-  private val outCSV = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outfile), bufSize))
+  private var outCSV: PrintWriter = _
 
   private var count = 0
 
@@ -45,13 +43,19 @@ class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger) extend
     else
       None
 
+  def begin() {
+    ControllerConfig.outputFolder.mkdirs()
+    val outfile = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile), bufSize))
+    outCSV = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outfile), bufSize))
+  }
+
   def output(a: DbAddress) {
     // scalastyle:off
     outCSV.println(a.toString)
     count += 1
   }
 
-  def close(completed: Boolean): StateModel = {
+  def end(completed: Boolean): StateModel = {
     if (outCSV.checkError()) {
       statusLogger.warn(s"Failed whilst writing to $outputFile")
       model = model.copy(hasFailed = true)

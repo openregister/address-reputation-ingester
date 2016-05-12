@@ -115,11 +115,13 @@ class IngesterTest extends FunSuite with MockitoSugar {
       val out = new OutputWriter {
         def existingTargetThatIsNewerThan(date: Date) = None
 
+        def begin() {}
+
         def output(a: DbAddress) {
           addressesProduced += a
         }
 
-        def close(completed: Boolean) = {
+        def end(completed: Boolean) = {
           closed = true
           model
         }

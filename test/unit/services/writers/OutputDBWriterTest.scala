@@ -20,7 +20,7 @@ package services.writers
 
 import java.util.Date
 
-import com.mongodb.DBObject
+import com.mongodb.{DBObject, WriteConcern}
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{BulkWriteOperation, MongoCollection, MongoDB}
 import org.junit.runner.RunWith
@@ -38,6 +38,9 @@ import scala.collection.mutable
 
 @RunWith(classOf[JUnitRunner])
 class OutputDBWriterTest extends FunSuite {
+
+  val now = new Date()
+  val yesterday = new Date(now.getTime - 86400000L)
 
   class Context(collections: String*) {
     val casbahMongoConnection = mock[CasbahMongoConnection]
@@ -83,7 +86,7 @@ class OutputDBWriterTest extends FunSuite {
 
       val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
 
-      val result = outputDBWriter.existingTargetThatIsNewerThan(new Date(System.currentTimeMillis - 86400000L))
+      val result = outputDBWriter.existingTargetThatIsNewerThan(yesterday)
 
       assert(result === None)
     }
@@ -96,10 +99,8 @@ class OutputDBWriterTest extends FunSuite {
       then targetExistsAndIsNewerThan will return None
     """) {
     new Context("admin", "x_4_001", "x_4_002") {
-      val now = new Date()
-      val yesterday = new Date(now.getTime - 86400000L)
 
-      val metadata = MongoDBObject("completedAt" -> yesterday)
+      val metadata = MongoDBObject("completedAt" -> yesterday.getTime)
       when(collection.findOneByID("metadata")) thenReturn Some(metadata)
 
       val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
@@ -120,7 +121,7 @@ class OutputDBWriterTest extends FunSuite {
       val now = new Date()
       val yesterday = new Date(now.getTime - 86400000L)
 
-      val metadata = MongoDBObject("completedAt" -> now)
+      val metadata = MongoDBObject("completedAt" -> now.getTime)
       when(collection.findOneByID("metadata")) thenReturn Some(metadata)
 
       val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
@@ -161,9 +162,9 @@ class OutputDBWriterTest extends FunSuite {
     new Context("admin", "x_4_000", "x_4_001", "x_4_004") {
       val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
 
-      outputDBWriter.close(true)
+      outputDBWriter.end(true)
 
-      verify(collection).insert(any[DBObject])
+      verify(collection).update(any[DBObject], any[DBObject], any[Boolean], any[Boolean], any[WriteConcern], any[Option[Boolean]])
       verify(collection).createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
     }
   }

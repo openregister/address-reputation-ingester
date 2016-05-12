@@ -60,24 +60,32 @@ class SwitchoverController(workerFactory: WorkerFactory,
 
   private def switch(model: StateModel, status: StatusLogger): StateModel = {
 
-    val addressBaseCollectionName = systemMetadata.addressBaseCollectionItem(model.productName)
-
-    // this metadata key/value is checked by all address-lookup nodes once every few minutes
-    val newName = CollectionMetadata.formatName(model.collectionBaseName, model.index.get)
-
-    val db = mongoDbConnection.getConfiguredDb
-    if (!db.collectionExists(newName)) {
-      status.warn(s"$newName: collection was not found")
+    val baseName = model.collectionBaseName
+    if (model.index.isEmpty) {
+      status.warn(s"cannot switch to $baseName with unknown index")
       model.copy(hasFailed = true)
-    }
-    else if (db(newName).findOneByID("metadata").isEmpty) {
-      status.warn(s"$newName: collection is still being written")
-      model.copy(hasFailed = true)
-    }
-    else {
-      addressBaseCollectionName.set(newName)
-      status.info(s"Switched over to $newName")
-      model // unchanged
+
+    } else {
+
+      val addressBaseCollectionName = systemMetadata.addressBaseCollectionItem(model.productName)
+
+      // this metadata key/value is checked by all address-lookup nodes once every few minutes
+      val newName = CollectionMetadata.formatName(baseName, model.index.get)
+
+      val db = mongoDbConnection.getConfiguredDb
+      if (!db.collectionExists(newName)) {
+        status.warn(s"$newName: collection was not found")
+        model.copy(hasFailed = true)
+      }
+      else if (db(newName).findOneByID("metadata").isEmpty) {
+        status.warn(s"$newName: collection is still being written")
+        model.copy(hasFailed = true)
+      }
+      else {
+        addressBaseCollectionName.set(newName)
+        status.info(s"Switched over to $newName")
+        model // unchanged
+      }
     }
   }
 }

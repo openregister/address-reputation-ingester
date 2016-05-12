@@ -23,8 +23,8 @@ package services.writers
 
 import java.util.Date
 
+import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
-import com.mongodb.casbah.{MongoCollection, MongoDB}
 import services.model.StateModel
 
 
@@ -51,19 +51,35 @@ class CollectionMetadata(db: MongoDB, inputModel: StateModel) {
 
 
 object CollectionMetadata {
+  private val metadata = "metadata"
+  private val createdAt = "createdAt"
+  private val completedAt = "completedAt"
 
   def formatName(collectionNamePrefix: String, index: Int): String = {
     "%s_%03d".format(collectionNamePrefix, index)
   }
 
+  def writeCreationDateTo(collection: MongoCollection, date: Date = new Date()) {
+    val filter = MongoDBObject("_id" -> metadata)
+    collection.update(filter, $inc(createdAt -> date.getTime), upsert = true)
+  }
+
+
   def writeCompletionDateTo(collection: MongoCollection, date: Date = new Date()) {
-    val metadata = MongoDBObject("_id" -> "metadata", "completedAt" -> date)
-    collection.insert(metadata)
+    val filter = MongoDBObject("_id" -> metadata)
+    collection.update(filter, $inc(completedAt -> date.getTime), upsert = true)
+  }
+
+  def findCreationDateIn(collection: MongoCollection): Option[Date] = {
+    findValue(collection, createdAt).map(n => new Date(n.asInstanceOf[Long]))
   }
 
   def findCompletionDateIn(collection: MongoCollection): Option[Date] = {
-    val metadata = collection.findOneByID("metadata")
-    if (metadata.isEmpty) None
-    else Option(metadata.get.get("completedAt").asInstanceOf[Date])
+    findValue(collection, completedAt).map(n => new Date(n.asInstanceOf[Long]))
+  }
+
+  private def findValue(collection: MongoCollection, key: String): Option[Any] = {
+    val m = collection.findOneByID(metadata)
+    m.map(_.get(key))
   }
 }

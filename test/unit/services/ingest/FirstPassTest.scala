@@ -208,6 +208,8 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       val out = new OutputWriter {
         def existingTargetThatIsNewerThan(date: Date) = None
 
+        def begin() {}
+
         def output(out: DbAddress) {
           assert(out.id === "GB9051119283")
           assert(out.lines === List("1 Upper Kennerty Mill Cottages"))
@@ -215,7 +217,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
           assert(out.postcode === "AB14 0LQ")
         }
 
-        def close(completed: Boolean) = model
+        def end(completed: Boolean) = model
       }
 
       val firstPass = new FirstPass(dummyOut, continuer, forwardData)

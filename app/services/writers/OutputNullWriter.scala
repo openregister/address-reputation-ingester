@@ -29,12 +29,14 @@ class OutputNullWriter(model: StateModel, statusLogger: StatusLogger) extends Ou
 
   def existingTargetThatIsNewerThan(date: Date): Option[String] = None
 
+  def begin() {}
+
   def output(a: DbAddress) {
     count += 1
   }
 
   // scalastylye:off
-  def close(completed: Boolean): StateModel = {
+  def end(completed: Boolean): StateModel = {
     statusLogger.info(s"*** document count = $count")
     model
   }

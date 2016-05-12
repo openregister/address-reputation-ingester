@@ -26,9 +26,11 @@ import uk.co.hmrc.address.osgb.DbAddress
 trait OutputWriter {
   def existingTargetThatIsNewerThan(date: Date): Option[String]
 
+  def begin()
+
   def output(a: DbAddress)
 
-  def close(completed: Boolean): StateModel
+  def end(completed: Boolean): StateModel
 }
 
 trait OutputWriterFactory {

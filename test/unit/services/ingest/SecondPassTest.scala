@@ -76,13 +76,15 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
         def existingTargetThatIsNewerThan(date: Date) = None
 
+        def begin() {}
+
         def output(out: DbAddress) {
           assert(out.id === "GB131041604")
           assert(out.postcode === "AB12 3CD")
           count += 1
         }
 
-        def close(completed: Boolean) = model
+        def end(completed: Boolean) = model
       }
 
       when(continuer.isBusy) thenReturn true
@@ -121,11 +123,13 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
         def existingTargetThatIsNewerThan(date: Date) = None
 
+        def begin() {}
+
         def output(out: DbAddress) {
           count += 1
         }
 
-        def close(completed: Boolean) = model
+        def end(completed: Boolean) = model
       }
 
       when(continuer.isBusy) thenReturn false
@@ -164,11 +168,13 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
         def existingTargetThatIsNewerThan(date: Date) = None
 
+        def begin() {}
+
         def output(out: DbAddress) {
           count += 1
         }
 
-        def close(completed: Boolean) = model
+        def end(completed: Boolean) = model
       }
 
       when(continuer.isBusy) thenReturn true
