@@ -29,9 +29,9 @@ import services.model.StateModel
 
 
 class CollectionMetadata(db: MongoDB, inputModel: StateModel) {
-  private val collectionNamePrefix = inputModel.collectionBaseName + "_"
 
   lazy val existingCollectionNames: List[String] = {
+    val collectionNamePrefix = inputModel.collectionBaseName + "_"
     db.collectionNames.filter(_.startsWith(collectionNamePrefix)).toList.sorted
   }
 
@@ -44,14 +44,17 @@ class CollectionMetadata(db: MongoDB, inputModel: StateModel) {
     if (existingCollectionNames.isEmpty) 1
     else indexOf(existingCollectionNames.last) + 1
 
-  def nextFreeCollectionName: String =
-    String.format("%s%03d", collectionNamePrefix, java.lang.Integer.valueOf(nextFreeIndex))
+  def nextFreeCollectionName: String = CollectionMetadata.formatName(inputModel.collectionBaseName, nextFreeIndex)
 
   def revisedModel: StateModel = inputModel.copy(index = Some(nextFreeIndex))
 }
 
 
 object CollectionMetadata {
+
+  def formatName(collectionNamePrefix: String, index: Int): String = {
+    "%s_%03d".format(collectionNamePrefix, index)
+  }
 
   def writeCompletionDateTo(collection: MongoCollection, date: Date = new Date()) {
     val metadata = MongoDBObject("_id" -> "metadata", "completedAt" -> date)

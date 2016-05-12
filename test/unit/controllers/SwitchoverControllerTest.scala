@@ -93,8 +93,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       and the stored metadata item for the product in question is set to the new collection name
     """) {
     new Context {
-      when(db.collectionExists("abp_40_9")) thenReturn true
-      when(db.apply("abp_40_9")) thenReturn collection
+      when(db.collectionExists("abp_40_009")) thenReturn true
+      when(db.apply("abp_40_009")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn Some(MongoDBObject())
 
       val sc = new SwitchoverController(workerFactory, mongo, store)
@@ -104,7 +104,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       testWorker.awaitCompletion()
       testWorker.terminate()
 
-      assert(storedItem.get === "abp_40_9")
+      assert(storedItem.get === "abp_40_009")
     }
   }
 
@@ -126,7 +126,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
       assert(storedItem.get === "the initial value")
       assert(logger.warns.size === 1)
-      assert(logger.warns.head.message === "Warn:abp_40_9: collection was not found")
+      assert(logger.warns.head.message === "Warn:abp_40_009: collection was not found")
     }
   }
 
@@ -138,8 +138,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       and the stored metadata item for the product in question is left unchanged
     """) {
     new Context {
-      when(db.collectionExists("abp_40_9")) thenReturn true
-      when(db.apply("abp_40_9")) thenReturn collection
+      when(db.collectionExists("abp_40_009")) thenReturn true
+      when(db.apply("abp_40_009")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn None
 
       val sc = new SwitchoverController(workerFactory, mongo, store)
@@ -150,7 +150,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
       assert(storedItem.get === "the initial value")
       assert(logger.warns.size === 1)
-      assert(logger.warns.head.message === "Warn:abp_40_9: collection is still being written")
+      assert(logger.warns.head.message === "Warn:abp_40_009: collection is still being written")
     }
   }
 
@@ -162,8 +162,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       and the state model stays in its current state
     """) {
     new Context {
-      when(db.collectionExists("abp_40_9")) thenReturn true
-      when(db.apply("abp_40_9")) thenReturn collection
+      when(db.collectionExists("abp_40_009")) thenReturn true
+      when(db.apply("abp_40_009")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn None
 
       val sc = new SwitchoverController(workerFactory, mongo, store)

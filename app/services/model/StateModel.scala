@@ -27,11 +27,9 @@ case class StateModel(
                        hasFailed: Boolean = false
                      ) {
 
-  def pathSegment: String = s"${productName}/${epoch}/${variant}"
+  def pathSegment: String = s"$productName/$epoch/$variant"
 
   def collectionBaseName: String = s"${productName}_${epoch}"
-
-  def collectionName: Option[String] = index.map(i => s"${collectionBaseName}_$i")
 }
 
 

@@ -21,6 +21,7 @@ import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
+import services.writers.CollectionMetadata
 import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
@@ -41,7 +42,7 @@ class SwitchoverController(workerFactory: WorkerFactory,
   def doSwitchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = Action {
     request =>
       val model = new StateModel(product, epoch, "", Some(index))
-      workerFactory.worker.push(s"switching to ${model.collectionName.get}", {
+      workerFactory.worker.push(s"switching to ${model.collectionBaseName} ${model.index.get}", {
         continuer =>
           switchIfOK(model, workerFactory.worker.statusLogger)
       })
@@ -62,7 +63,7 @@ class SwitchoverController(workerFactory: WorkerFactory,
     val addressBaseCollectionName = systemMetadata.addressBaseCollectionItem(model.productName)
 
     // this metadata key/value is checked by all address-lookup nodes once every few minutes
-    val newName = model.collectionName.get
+    val newName = CollectionMetadata.formatName(model.collectionBaseName, model.index.get)
 
     val db = mongoDbConnection.getConfiguredDb
     if (!db.collectionExists(newName)) {

@@ -53,7 +53,7 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
-      mongo.getConfiguredDb("abp_39_4").insert(MongoDBObject("_id" -> "foo", "bar" -> true))
+      mongo.getConfiguredDb("abp_39_004").insert(MongoDBObject("_id" -> "foo", "bar" -> true))
 
       assert(get("/switch/to/abp/39/4").status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -73,13 +73,13 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
-      mongo.getConfiguredDb("abp_39_5").insert(MongoDBObject("_id" -> "metadata", "completedAt" -> new Date()))
+      mongo.getConfiguredDb("abp_39_005").insert(MongoDBObject("_id" -> "metadata", "completedAt" -> new Date()))
 
       assert(get("/switch/to/abp/39/5").status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
       val collectionName = admin.gbAddressBaseCollectionName.get
-      assert(collectionName === "abp_39_5")
+      assert(collectionName === "abp_39_005")
 
       mongo.close()
     }
