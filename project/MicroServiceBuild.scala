@@ -44,7 +44,7 @@ object MicroServiceBuild extends Build with MicroService {
     "org.slf4j" % "jcl-over-slf4j" % "1.7.21",
     "com.github.lookfirst" % "sardine" % "5.7"
       excludeAll ExclusionRule(organization = "org.apache.httpcomponents"), // for some reason this dependency is skipping the local cache and forcing resolution from the internet
-    "org.apache.httpcomponents" % "httpcomponents-core" % "4.4.4",
+    "org.apache.httpcomponents" % "httpclient" % "4.5.1",
     "net.openhft" % "chronicle-map" % "3.8.0"
   )
 

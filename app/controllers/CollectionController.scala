@@ -51,20 +51,20 @@ class CollectionController(workerFactory: WorkerFactory,
 
   def listCollections: Action[AnyContent] = Action {
     request =>
-      val disallowed = protectedCollections
-
+      val pc = protectedCollections
+      logger.info("listCollections {}", pc)
       val names = db.collectionNames().toList.sorted
-      val result = for (name <- names) yield {
-        val collection = db(name)
-        val canDrop = !disallowed.contains(name)
-        val metadata = collection.findOneByID("metadata")
-        if (metadata.isDefined) {
-          val completedAt = Option(metadata.get.get("completedAt").toString)
-          CollectionInfo(name, collection.size, canDrop, completedAt)
-        } else {
-          CollectionInfo(name, collection.size, canDrop)
+      val result =
+        for (name <- names) yield {
+          val collection = db(name)
+          val metadata = collection.findOneByID("metadata")
+          val completedAt = metadata.flatMap(m => Option(m.get("completedAt"))).map(_.toString)
+          CollectionInfo(name, collection.size,
+            systemCollections.contains(name),
+            pc.contains(name),
+            completedAt)
         }
-      }
+
       Ok(Json.toJson(ListCI(result)))
   }
 
@@ -74,7 +74,7 @@ class CollectionController(workerFactory: WorkerFactory,
         BadRequest(name)
       else if (!db.collectionExists(name)) {
         NotFound
-      } else if (protectedCollections.contains(name)) {
+      } else if (systemCollections.contains(name) || protectedCollections.contains(name)) {
         BadRequest(name + " cannot be dropped")
       } else {
         db(name).dropCollection()
@@ -88,25 +88,27 @@ class CollectionController(workerFactory: WorkerFactory,
   private def protectedCollections = {
     val currentAbp = systemMetadata.addressBaseCollectionItem("abp").get
     val currentAbi = systemMetadata.addressBaseCollectionItem("abi").get
-    systemCollections + currentAbp + currentAbi
+    Set(currentAbp, currentAbi)
   }
 
   implicit val CollectionInfoReads: Reads[CollectionInfo] = (
     (JsPath \ "name").read[String] and
       (JsPath \ "size").read[Int] and
-      (JsPath \ "canDrop").read[Boolean] and
+      (JsPath \ "system").read[Boolean] and
+      (JsPath \ "inUse").read[Boolean] and
       (JsPath \ "completedAt").readNullable[String]) (CollectionInfo.apply _)
 
   implicit val CollectionInfoWrites: Writes[CollectionInfo] = (
     (JsPath \ "name").write[String] and
       (JsPath \ "size").write[Int] and
-      (JsPath \ "canDrop").write[Boolean] and
+      (JsPath \ "system").write[Boolean] and
+      (JsPath \ "inUse").write[Boolean] and
       (JsPath \ "completedAt").writeNullable[String]) (unlift(CollectionInfo.unapply))
 
   implicit val ListCollectionInfoWrites: Writes[ListCI] = Json.format[ListCI]
 }
 
 
-case class CollectionInfo(name: String, size: Int, canDrop: Boolean, completedAt: Option[String] = None)
+case class CollectionInfo(name: String, size: Int, system: Boolean, inUse: Boolean, completedAt: Option[String] = None)
 
 case class ListCI(collections: List[CollectionInfo])
