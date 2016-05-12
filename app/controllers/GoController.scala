@@ -45,11 +45,12 @@ class GoController(workerFactory: WorkerFactory,
                    ingestController: IngestController,
                    switchoverController: SwitchoverController) extends BaseController {
 
-  def doGoAuto(target: String): Action[AnyContent] = Action {
+  def doGoAuto(target: String,
+               bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = Action {
     request =>
       require(IngestControllerHelper.isSupportedTarget(target))
 
-      val settings = WriterSettings(1, 0)
+      val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
       workerFactory.worker.push(s"automatic search", {
         continuer =>
           val tree = sardine.exploreRemoteTree
@@ -64,13 +65,14 @@ class GoController(workerFactory: WorkerFactory,
       Accepted
   }
 
-  def doGo(target: String, product: String, epoch: Int, variant: String): Action[AnyContent] = Action {
+  def doGo(target: String, product: String, epoch: Int, variant: String,
+           bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = Action {
     request =>
       require(IngestControllerHelper.isSupportedTarget(target))
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
-      val settings = WriterSettings(1, 0)
+      val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
       val model = new StateModel(product, epoch, variant, None)
       pipeline(target, model, settings)
       Accepted

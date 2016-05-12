@@ -29,6 +29,12 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 object IngestControllerHelper {
   def isSupportedTarget(target: String): Boolean = Set("db", "file", "null").contains(target)
+
+  def settings(opBulkSize: Option[Int], opLoopDelay: Option[Int]): WriterSettings = {
+    val bulkSize = opBulkSize getOrElse 1
+    val loopDelay = opLoopDelay getOrElse 0
+    WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
+  }
 }
 
 
@@ -40,7 +46,6 @@ object IngestController extends IngestController(
   new IngesterFactory,
   ControllerConfig.workerFactory)
 
-
 class IngestController(unpackedFolder: File,
                        dbWriterFactory: OutputDBWriterFactory,
                        fileWriterFactory: OutputFileWriterFactory,
@@ -50,15 +55,13 @@ class IngestController(unpackedFolder: File,
                       ) extends BaseController {
 
   def doIngestTo(target: String, product: String, epoch: Int, variant: String,
-                 bulkSizeStr: Option[Int], loopDelayStr: Option[Int]): Action[AnyContent] = Action {
+                 bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = Action {
     request =>
-      val bulkSize = bulkSizeStr getOrElse 1
-      val loopDelay = loopDelayStr getOrElse 0
       require(IngestControllerHelper.isSupportedTarget(target))
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
-      val settings = WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
+      val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
       val model = new StateModel(product, epoch, variant, None)
 
       val worker = workerFactory.worker

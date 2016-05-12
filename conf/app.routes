@@ -6,8 +6,8 @@ GET   /admin/metrics             com.kenshoo.play.metrics.MetricsController.metr
 HEAD  /ping                                         controllers.PingController.ping()
 GET   /ping                                         controllers.PingController.ping()
 
-GET   /goAuto/to/:target                            controllers.GoController.doGoAuto(target)
-GET   /go/to/:target/:product/:epoch/:variant       controllers.GoController.doGo(target, product, epoch: Int, variant)
+GET   /goAuto/to/:target                            controllers.GoController.doGoAuto(target, bulkSize: Option[Int], loopDelay: Option[Int])
+GET   /go/to/:target/:product/:epoch/:variant       controllers.GoController.doGo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int])
 
 GET   /fetch/:product/:epoch/:variant               controllers.FetchController.doFetch(product, epoch: Int, variant)
 

@@ -110,7 +110,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       // then
       worker.awaitCompletion()
-      verify(ingester, times(1)).ingest(any[File], anyObject())
+      verify(ingester, times(1)).ingest(new File(folder, "abp/40/full"), outputDBWriter)
       assert(response.header.status / 100 === 2)
       worker.terminate()
     }
@@ -127,7 +127,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       // then
       worker.awaitCompletion()
-      verify(ingester, times(1)).ingest(any[File], anyObject())
+      verify(ingester, times(1)).ingest(new File(folder, "abp/40/full"), outputFileWriter)
       assert(response.header.status / 100 === 2)
       worker.terminate()
     }
@@ -155,6 +155,19 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       worker.terminate()
     }
+  }
+
+  test(
+    """
+      Settings are correctly hard-limited
+    """) {
+    import IngestControllerHelper._
+    assert(settings(None, None) === WriterSettings(1, 0))
+    assert(settings(Some(7), Some(9)) === WriterSettings(7, 9))
+    assert(settings(Some(0), None) === WriterSettings(1, 0))
+    assert(settings(Some(10001), None) === WriterSettings(10000, 0))
+    assert(settings(None, Some(-1)) === WriterSettings(1, 0))
+    assert(settings(None, Some(100001)) === WriterSettings(1, 100000))
   }
 }
 
