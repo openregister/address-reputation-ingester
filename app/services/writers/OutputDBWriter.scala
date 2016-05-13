@@ -66,8 +66,8 @@ class OutputDBWriter(cleardownOnError: Boolean,
     collectionMetadata.existingCollectionNames.reverse.find {
       name =>
         val coll = db(name)
-        val completion = CollectionMetadata.findCompletionDateIn(coll)
-        completion.isDefined && completion.get.after(date)
+        val info = CollectionMetadata.findMetadata(coll)
+        info.completedAt.isDefined && info.completedAt.get.after(date)
     }
   }
 

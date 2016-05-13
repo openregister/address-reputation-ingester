@@ -64,22 +64,22 @@ object CollectionMetadata {
     collection.update(filter, $inc(createdAt -> date.getTime), upsert = true)
   }
 
-
   def writeCompletionDateTo(collection: MongoCollection, date: Date = new Date()) {
     val filter = MongoDBObject("_id" -> metadata)
     collection.update(filter, $inc(completedAt -> date.getTime), upsert = true)
   }
 
-  def findCreationDateIn(collection: MongoCollection): Option[Date] = {
-    findValue(collection, createdAt).map(n => new Date(n.asInstanceOf[Long]))
-  }
-
-  def findCompletionDateIn(collection: MongoCollection): Option[Date] = {
-    findValue(collection, completedAt).map(n => new Date(n.asInstanceOf[Long]))
-  }
-
-  private def findValue(collection: MongoCollection, key: String): Option[Any] = {
+  def findMetadata(collection: MongoCollection): CollectionMetadataItem = {
     val m = collection.findOneByID(metadata)
-    m.map(_.get(key))
+    if (m.isEmpty) CollectionMetadataItem()
+    else {
+      val created = Option(m.get.get(createdAt)).map(n => new Date(n.asInstanceOf[Long]))
+      val completed = Option(m.get.get(completedAt)).map(n => new Date(n.asInstanceOf[Long]))
+      CollectionMetadataItem(created, completed)
+    }
   }
 }
+
+
+case class CollectionMetadataItem(createdAt: Option[Date] = None,
+                                  completedAt: Option[Date] = None)
