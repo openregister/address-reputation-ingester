@@ -116,13 +116,10 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     }
   }
 
-  // TODO this is unfininshed
   test(
     """
       when valid parameters are passed to ingestToFile
-      then a new collection is created -- TODO
-      and its metadata includes the completedAt timestamp -- TODO
-      and a successful response is returned
+      then the output file writer is used to create a new output file
     """) {
     new context {
       // when
@@ -133,19 +130,6 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       verify(ingester, times(1)).ingest(new File(folder, "abp/40/full"), outputFileWriter)
       assert(response.header.status / 100 === 2)
       worker.terminate()
-    }
-  }
-
-  // TODO this is unfininshed
-  test(
-    """
-      when valid parameters are passed to ingestToFile
-      and the ingestion is abort
-      then a new collection is created -- TODO
-      and its metadata does not include the completedAt timestamp -- TODO
-      and yet a successful response is returned
-    """) {
-    new context {
     }
   }
 
