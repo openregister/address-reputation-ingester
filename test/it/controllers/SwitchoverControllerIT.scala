@@ -22,6 +22,7 @@ import com.mongodb.casbah.commons.MongoDBObject
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
+import services.writers.CollectionMetadata
 import uk.co.hmrc.address.admin.MetadataStore
 import uk.co.hmrc.logging.Stdout
 
@@ -32,6 +33,7 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
   "switch-over resource error journeys" must {
     """
        * attempt to switch to non-existent collection
+       * should not change the nominated collection
     """ in {
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
@@ -48,7 +50,7 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
 
     """
        * attempt to switch to existing collection that has no completion metadata
-       * receive Conflict response
+       * should not change the nominated collection
     """ in {
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
@@ -67,13 +69,12 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
 
   "switch-over resource happy journey" must {
     """
-       * attempt to switch to existing collection that has no completion metadata
-       * receive OK response
+       * attempt to switch to existing collection that has completion metadata
+       * should change the nominated collection
     """ in {
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
-      val initialCollectionName = admin.gbAddressBaseCollectionName.get
-      mongo.getConfiguredDb("abp_39_005").insert(MongoDBObject("_id" -> "metadata", "completedAt" -> new Date()))
+      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_005"), new Date())
 
       assert(get("/switch/to/abp/39/5").status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
