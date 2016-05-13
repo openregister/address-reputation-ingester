@@ -116,10 +116,13 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     }
   }
 
+  // TODO this is unfininshed
   test(
     """
       when valid parameters are passed to ingestToFile
-      then a successful response is returned
+      then a new collection is created -- TODO
+      and its metadata includes the completedAt timestamp -- TODO
+      and a successful response is returned
     """) {
     new context {
       // when
@@ -132,6 +135,22 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       worker.terminate()
     }
   }
+
+  // TODO this is unfininshed
+  test(
+    """
+      when valid parameters are passed to ingestToFile
+      and the ingestion is abort
+      then a new collection is created -- TODO
+      and its metadata does not include the completedAt timestamp -- TODO
+      and yet a successful response is returned
+    """) {
+    new context {
+    }
+  }
+//2016-05-12 23:27:30,847 INFO Second pass processed 28443568 DPAs, 3807340 LPIs.
+//2016-05-12 23:59:13,065 INFO Second pass processed 28443568 DPAs, 3807340 LPIs.
+  // 1635s -> 1433s
 
   test(
     """
@@ -162,12 +181,12 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       Settings are correctly hard-limited
     """) {
     import IngestControllerHelper._
-    assert(settings(None, None) === WriterSettings(1, 0))
+    assert(settings(None, None) === WriterSettings(defaultBulkSize, defaultLoopDelay))
     assert(settings(Some(7), Some(9)) === WriterSettings(7, 9))
-    assert(settings(Some(0), None) === WriterSettings(1, 0))
-    assert(settings(Some(10001), None) === WriterSettings(10000, 0))
-    assert(settings(None, Some(-1)) === WriterSettings(1, 0))
-    assert(settings(None, Some(100001)) === WriterSettings(1, 100000))
+    assert(settings(Some(0), None) === WriterSettings(1, defaultLoopDelay))
+    assert(settings(Some(10001), None) === WriterSettings(10000, defaultLoopDelay))
+    assert(settings(None, Some(-1)) === WriterSettings(defaultBulkSize, 0))
+    assert(settings(None, Some(100001)) === WriterSettings(defaultBulkSize, 100000))
   }
 }
 

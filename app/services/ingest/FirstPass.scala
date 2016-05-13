@@ -29,7 +29,7 @@ import scala.collection._
 
 
 trait Pass {
-  def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter)
+  def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter): Boolean
 
   def sizeInfo: String
 }
@@ -41,45 +41,45 @@ class FirstPass(out: OutputWriter, continuer: Continuer, val forwardData: Forwar
   //  val forwardData = ForwardData.simpleInstance()
 
   // The enhanced Chronicle collections
-//  val forwardData = ForwardData.chronicleInMemory()
+  //  val forwardData = ForwardData.chronicleInMemory()
 
   //For development only (runs slower and leaves temp files behind)
   //  val forwardData = ForwardData.chronicleWithFile()
 
   def firstPass: ForwardData = forwardData
 
+  // scalastyle:off
+  def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter): Boolean = {
+    var needSecondPass = false
 
-  def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter) {
     for (csvLine <- csvIterator
          if continuer.isBusy) {
-      processLine(csvLine, out)
+
+      csvLine(OSCsv.RecordIdentifier_idx) match {
+        case OSHeader.RecordId =>
+          OSCsv.setCsvFormatFor(csvLine(OSHeader.Version_Idx))
+
+        case OSBlpu.RecordId if OSBlpu.isUsefulPostcode(csvLine) =>
+          processBlpu(csvLine)
+
+        case OSLpi.RecordId =>
+          needSecondPass = true
+
+        case OSDpa.RecordId =>
+          processDpa(csvLine)
+          needSecondPass = true
+
+        case OSStreet.RecordId =>
+          processStreet(OSStreet(csvLine))
+
+        case OSStreetDescriptor.RecordId if OSStreetDescriptor.isEnglish(csvLine) =>
+          processStreetDescriptor(OSStreetDescriptor(csvLine))
+
+        case _ =>
+      }
     }
-  }
 
-
-  private def processLine(csvLine: Array[String], out: OutputWriter) {
-
-    csvLine(OSCsv.RecordIdentifier_idx) match {
-      case OSHeader.RecordId =>
-        if (csvLine(OSHeader.Version_Idx) == "1.0")
-          OSCsv.setCsvFormat(1)
-        else
-          OSCsv.setCsvFormat(2)
-
-      case OSBlpu.RecordId if OSBlpu.isUsefulPostcode(csvLine) =>
-        processBlpu(csvLine)
-
-      case OSDpa.RecordId =>
-        processDpa(csvLine)
-
-      case OSStreet.RecordId =>
-        processStreet(OSStreet(csvLine))
-
-      case OSStreetDescriptor.RecordId if OSStreetDescriptor.isEnglish(csvLine) =>
-        processStreetDescriptor(OSStreetDescriptor(csvLine))
-
-      case _ =>
-    }
+    needSecondPass
   }
 
   private def processBlpu(csvLine: Array[String]): Unit = {

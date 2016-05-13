@@ -31,15 +31,13 @@ class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
   private var lpiCount = 0
 
 
-  def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter) {
+  def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter): Boolean = {
     for (csvLine <- csvIterator
          if continuer.isBusy) {
+
       csvLine(OSCsv.RecordIdentifier_idx) match {
         case OSHeader.RecordId =>
-          if (csvLine(OSHeader.Version_Idx) == "1.0")
-            OSCsv.setCsvFormat(1)
-          else
-            OSCsv.setCsvFormat(2)
+          OSCsv.setCsvFormatFor(csvLine(OSHeader.Version_Idx))
 
         case OSLpi.RecordId => processLPI(csvLine, out)
 
@@ -48,6 +46,7 @@ class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
         case _ =>
       }
     }
+    false
   }
 
   private def processLPI(csvLine: Array[String], out: OutputWriter): Unit = {

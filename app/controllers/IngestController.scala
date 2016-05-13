@@ -31,10 +31,13 @@ object IngestControllerHelper {
   def isSupportedTarget(target: String): Boolean = Set("db", "file", "null").contains(target)
 
   def settings(opBulkSize: Option[Int], opLoopDelay: Option[Int]): WriterSettings = {
-    val bulkSize = opBulkSize getOrElse 1
-    val loopDelay = opLoopDelay getOrElse 0
+    val bulkSize = opBulkSize getOrElse defaultBulkSize
+    val loopDelay = opLoopDelay getOrElse defaultLoopDelay
     WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
   }
+
+  val defaultBulkSize = 1000
+  val defaultLoopDelay = 0
 }
 
 

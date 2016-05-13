@@ -328,5 +328,12 @@ object OSCsv {
     }
   }
 
+  def setCsvFormatFor(version: String): Unit = {
+    version match {
+      case "1.0" => setCsvFormat(1)
+      case _ => setCsvFormat(2)
+    }
+  }
+
   val RecordIdentifier_idx = 0
 }

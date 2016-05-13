@@ -25,6 +25,8 @@ import services.model.{StateModel, StatusLogger}
 import services.writers.OutputWriter
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
+import scala.collection.mutable
+
 object Ingester {
 
   case class Blpu(postcode: String, logicalStatus: Char) {
@@ -90,20 +92,21 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
     val fp = new FirstPass(out, continuer, forwardData)
 
     statusLogger.info(s"Starting first pass through ${files.size} files.")
-    pass(files, out, fp)
+    val fewerFiles = pass(files, out, fp)
     val fd = fp.firstPass
     statusLogger.info(s"First pass complete after {}.", dt)
 
-    statusLogger.info(s"Starting second pass through ${files.size} files.")
+    statusLogger.info(s"Starting second pass through ${fewerFiles.size} files.")
     val sp = new SecondPass(fd, continuer)
-    pass(files, out, sp)
+    pass(fewerFiles, out, sp)
     statusLogger.info(s"Ingester finished after {}.", dt)
 
     model // unchanged
   }
 
 
-  private def pass(files: Seq[File], out: OutputWriter, thisPass: Pass) {
+  private def pass(files: Seq[File], out: OutputWriter, thisPass: Pass): Seq[File] = {
+    val passOn = new mutable.ListBuffer[File]()
     for (file <- files
          if continuer.isBusy) {
       val dt = new DiagnosticTimer
@@ -111,11 +114,16 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
         name.toLowerCase.endsWith(".csv")
       })
       try {
+        var neededLater = false
         while (zip.hasNext && continuer.isBusy) {
           val next = zip.next
           val name = next.zipEntry.getName
           statusLogger.info(s"Reading zip entry $name...")
-          thisPass.processFile(next, out)
+          val r = thisPass.processFile(next, out)
+          neededLater ||= r
+        }
+        if (neededLater) {
+          passOn += file
         }
       } finally {
         zip.close()
@@ -123,6 +131,7 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
       }
       statusLogger.info(thisPass.sizeInfo)
     }
+    passOn.toList
   }
 }
 
