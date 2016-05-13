@@ -49,13 +49,13 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
     }
 
     """
-       * attempt to switch to existing collection that has no completion metadata
+       * attempt to switch to existing collection that has no completedAt metadata
        * should not change the nominated collection
     """ in {
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
-      mongo.getConfiguredDb("abp_39_004").insert(MongoDBObject("_id" -> "foo", "bar" -> true))
+      CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_004"))
 
       assert(get("/switch/to/abp/39/4").status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -69,12 +69,13 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
 
   "switch-over resource happy journey" must {
     """
-       * attempt to switch to existing collection that has completion metadata
+       * attempt to switch to existing collection that has completedAt metadata
        * should change the nominated collection
     """ in {
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
-      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_005"), new Date())
+      CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_005"))
+      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_005"))
 
       assert(get("/switch/to/abp/39/5").status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)

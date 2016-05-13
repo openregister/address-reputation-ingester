@@ -77,7 +77,7 @@ class SwitchoverController(workerFactory: WorkerFactory,
         status.warn(s"$newName: collection was not found")
         model.copy(hasFailed = true)
       }
-      else if (db(newName).findOneByID("metadata").isEmpty) {
+      else if (CollectionMetadata.findMetadata(db(newName)).completedAt.isEmpty) {
         status.warn(s"$newName: collection is still being written")
         model.copy(hasFailed = true)
       }

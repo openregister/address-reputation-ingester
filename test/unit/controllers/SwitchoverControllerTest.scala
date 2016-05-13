@@ -95,7 +95,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     new Context {
       when(db.collectionExists("abp_40_009")) thenReturn true
       when(db.apply("abp_40_009")) thenReturn collection
-      when(collection.findOneByID("metadata")) thenReturn Some(MongoDBObject())
+      when(collection.findOneByID("metadata")) thenReturn Some(MongoDBObject("completedAt" -> 0L))
 
       val sc = new SwitchoverController(workerFactory, mongo, store)
       val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
