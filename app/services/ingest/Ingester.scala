@@ -70,7 +70,7 @@ object Ingester {
 
 class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger, forwardData: ForwardData = ForwardData.chronicleInMemory()) {
 
-  def ingest(rootDir: File, out: OutputWriter): StateModel = {
+  def ingest(rootDir: File, out: OutputWriter): Boolean = {
     val files = Ingester.listFiles(rootDir, ".zip").sorted
     val youngest = if (files.isEmpty) Ingester.theEpoch else new Date(files.map(_.lastModified).max)
     val target = out.existingTargetThatIsNewerThan(youngest)
@@ -83,11 +83,11 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
     } else {
       statusLogger.info(s"Ingest skipped; ${target.get} is up to date.")
       // Not strictly a failure, this inhibits an immediate automatic switch-over.
-      model.copy(hasFailed = true)
+      true // failure
     }
   }
 
-  private[ingest] def ingest(files: Seq[File], out: OutputWriter): StateModel = {
+  private[ingest] def ingest(files: Seq[File], out: OutputWriter): Boolean = {
     val dt = new DiagnosticTimer
     val fp = new FirstPass(out, continuer, forwardData)
 
@@ -101,7 +101,7 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
     pass(fewerFiles, out, sp)
     statusLogger.info(s"Ingester finished after {}.", dt)
 
-    model // unchanged
+    false // not a failure
   }
 
 

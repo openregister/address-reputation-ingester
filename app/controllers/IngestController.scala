@@ -101,13 +101,16 @@ class IngestController(unpackedFolder: File,
 
     val qualifiedDir = new File(unpackedFolder, model.pathSegment)
     val writer = writerFactory.writer(model, status, settings)
+    var result = model
+    var failed = false
     try {
       writer.begin()
-      ingesterFactory.ingester(continuer, model, status).ingest(qualifiedDir, writer)
+      failed = ingesterFactory.ingester(continuer, model, status).ingest(qualifiedDir, writer)
     } finally {
       status.info("Cleaning up the ingester.")
-      writer.end(continuer.isBusy)
+      result = writer.end(continuer.isBusy)
     }
+    if (failed) result.copy(hasFailed = true) else result
   }
 
   private def pickWriter(target: String) = {

@@ -88,7 +88,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       when(mockFile.isDirectory) thenReturn true
       when(mockFile.listFiles) thenReturn List(new File("foo.zip")).toArray
       when(dummyOut.existingTargetThatIsNewerThan(any[Date])) thenReturn Some("foo")
-      var result = model
+      var result = false
 
       worker.push("testing", {
         continuer =>
@@ -98,7 +98,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       lock.take()
       worker.awaitCompletion()
-      assert(result === model.copy(hasFailed = true))
+      assert(result === true)
     }
   }
 

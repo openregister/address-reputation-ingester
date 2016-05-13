@@ -148,16 +148,37 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     new context {
     }
   }
-//2016-05-12 23:27:30,847 INFO Second pass processed 28443568 DPAs, 3807340 LPIs.
-//2016-05-12 23:59:13,065 INFO Second pass processed 28443568 DPAs, 3807340 LPIs.
-  // 1635s -> 1433s
+
+  test(
+    """
+      given a StateModel that is in a happy state
+      when the inner ingestIfOK method is called
+      then the state model index is set
+    """) {
+    new context {
+      val model1 = new StateModel("abp", 40, "full")
+      val model2 = model1.copy(index = Some(101))
+      val settings = WriterSettings(1, 0)
+      when(outputDBWriter.end(true)) thenReturn model2
+
+      // when
+      val model3 = ingestController.ingestIfOK(model1, status, settings, "db", new StubContinuer)
+
+      // then
+      assert(model3 === model2)
+      verify(ingester).ingest(any[File], anyObject())
+      assert(logger.size === 1, logger.all.mkString("\n"))
+      assert(logger.infos.map(_.message) === List("Info:Cleaning up the ingester."))
+
+      worker.terminate()
+    }
+  }
 
   test(
     """
       given a StateModel that is in a failed state
-      when the inner queueSwitch method is called
-      then no task is queued
-      and the state model stays in its current state
+      when the inner ingestIfOK method is called
+      then the state model stays in its current state
     """) {
     new context {
       val model1 = new StateModel("abp", 40, "full", hasFailed = true)
