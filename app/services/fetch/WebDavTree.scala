@@ -26,7 +26,8 @@ import java.net.URL
 
 /**
   * WebDavFile is essentially an abstraction of Sardine's DavResource,
-  * pimped as a case class.
+  * pimped as a case class. Note that we cannot rely on the file modification
+  * timestamps on the remote server.
   */
 case class WebDavFile(url: URL, fullName: String,
                       isDirectory: Boolean = false, isPlainText: Boolean = false, isZipFile: Boolean = false,

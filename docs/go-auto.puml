@@ -1,0 +1,26 @@
+@startuml
+
+start
+
+:goAuto / to / tgt;
+
+:scan the webdav file tree;
+
+-> a tree describing\nthe remote files;
+
+partition foreach-product {
+
+if ( Is __product__ / __epoch__ \n available?) then (yes)
+  :fetch zip files\nfrom remote server;
+  note left: Cannot rely on\nthe server's\nfile timestamps.
+
+else (no)
+  :stop;
+  detach
+endif
+
+}
+
+stop
+
+@enduml

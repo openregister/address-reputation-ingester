@@ -1,0 +1,73 @@
+@startuml
+
+start
+
+:go / to / __tgt__ / __product__ / __epoch__ / __variant__;
+
+:Scan the remote file tree using webdav.;
+
+-> a tree describing\nthe remote files;
+
+if ( Is __product__ / __epoch__ \n available ?) then (no)
+  end
+
+else (yes)
+endif
+
+-> Download folder may already\ncontain some stale zip files.;
+
+if (Do some __product__ / __epoch__ zip\nfiles need downloading ?) then (yes)
+
+  :Fetch __product__ / __epoch__ zip files\nfrom remote server.;
+  note left: Cannot rely on\nthe server's\nfile timestamps.
+
+endif
+
+-> Download folder may contain\nboth fresh and stale zip files.;
+
+if (Are there some\nfresh files in the\ndownload folder ?) then (yes)
+  :Unzip the zip files\nthat contain zip files.;
+else (no)
+endif
+
+
+-> Download folder contains\ningestable files. Files\nwithout //.done// marks will be\nignored.;
+
+if (Are there some\ningestable files in the\ndownload folder ?) then (no)
+  end
+endif
+
+->yes;
+
+if (target?) then (db)
+
+  if (Is the target collection\nabsent, incomplete,\nor older than zips?) then (no)
+    end
+
+  else (yes)
+    :Ingest the zip files to **db**.;
+
+    -> A new collection is created.\nIt has a unique index.;
+
+    :Switch to the new collection\n//product//_//variant//_//index//.;
+
+    -> New collection takes up to\n10 min to come into use\nby all //address-lookup// nodes.;
+
+    note left: The index is a number starting at\n1 and increasing. Each new index\nis greater than all existing indexes.
+
+    :(in use);
+    stop
+    endif
+
+elseif (target?) then (file)
+
+  :Ingest the zip files to **file**.;
+  stop
+
+else (null)
+  stop
+endif
+
+
+
+@enduml
