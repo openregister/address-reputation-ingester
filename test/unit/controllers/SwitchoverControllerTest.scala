@@ -26,6 +26,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import services.audit.AuditClient
 import services.exec.{WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.admin.StoredMetadataItem
@@ -48,6 +49,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     val logger = new StubLogger()
     val status = new StatusLogger(logger)
     val testWorker = new WorkQueue(status)
+    val auditClient = mock[AuditClient]
 
     val workerFactory = new WorkerFactory {
       override def worker = testWorker
@@ -59,7 +61,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     val request = FakeRequest()
     val model = new StateModel(product, epoch, None, Some(index))
 
-    val switchoverController = new SwitchoverController(workerFactory, mongo, store)
+    val switchoverController = new SwitchoverController(workerFactory, mongo, store, auditClient)
 
     intercept[IllegalArgumentException] {
       switchoverController.switchIfOK(model, status)
@@ -69,6 +71,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
   class Context {
     val logger = new StubLogger()
     val status = new StatusLogger(logger)
+    val auditClient = mock[AuditClient]
     val testWorker = new WorkQueue(status)
     val workerFactory = new WorkerFactory {
       override def worker = testWorker
@@ -91,13 +94,14 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when valid parameters are passed to ingest
       then a successful response is returned
       and the stored metadata item for the product in question is set to the new collection name
+      and an audit message is logged that describes the change
     """) {
     new Context {
       when(db.collectionExists("abp_40_009")) thenReturn true
       when(db.apply("abp_40_009")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn Some(MongoDBObject("completedAt" -> 0L))
 
-      val sc = new SwitchoverController(workerFactory, mongo, store)
+      val sc = new SwitchoverController(workerFactory, mongo, store, auditClient)
       val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
 
       assert(response.header.status / 100 === 2)
@@ -105,6 +109,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       testWorker.terminate()
 
       assert(storedItem.get === "abp_40_009")
+
+      verify(auditClient).succeeded(Map("product" -> "abp", "epoch" -> "40", "newCollection" -> "abp_40_009"))
     }
   }
 
@@ -118,7 +124,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     new Context {
       when(db.collectionExists(anyString)) thenReturn false
 
-      val sc = new SwitchoverController(workerFactory, mongo, store)
+      val sc = new SwitchoverController(workerFactory, mongo, store, auditClient)
       val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
 
       testWorker.awaitCompletion()
@@ -142,7 +148,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(db.apply("abp_40_009")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn None
 
-      val sc = new SwitchoverController(workerFactory, mongo, store)
+      val sc = new SwitchoverController(workerFactory, mongo, store, auditClient)
       val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
 
       testWorker.awaitCompletion()
@@ -166,7 +172,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(db.apply("abp_40_009")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn None
 
-      val sc = new SwitchoverController(workerFactory, mongo, store)
+      val sc = new SwitchoverController(workerFactory, mongo, store, auditClient)
       val model1 = new StateModel("abp", 40, Some("full"), Some(9), hasFailed = true)
 
       val model2 = sc.switchIfOK(model1, status)

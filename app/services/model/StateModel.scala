@@ -28,9 +28,10 @@ case class StateModel(
                        hasFailed: Boolean = false
                      ) {
 
-  def pathSegment: String =
-    if (variant.isEmpty) s"$productName/$epoch/..."
-    else s"$productName/$epoch/${variant.get}"
+  def pathSegment: String = {
+    val v = variant getOrElse "full"
+    s"$productName/$epoch/$v"
+  }
 
   def collectionBaseName: String = s"${productName}_${epoch}"
 }

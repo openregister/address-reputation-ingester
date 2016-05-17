@@ -16,9 +16,6 @@
 
 package controllers
 
-import java.util.Date
-
-import com.mongodb.casbah.commons.MongoDBObject
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
@@ -66,6 +63,7 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
       mongo.close()
     }
   }
+
 
   "switch-over resource happy journey" must {
     """

@@ -19,6 +19,7 @@ package controllers
 import config.ApplicationGlobal
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
+import services.audit.AuditClient
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
 import services.writers.CollectionMetadata
@@ -31,13 +32,15 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 object SwitchoverController extends SwitchoverController(
   new WorkerFactory,
   ApplicationGlobal.mongoConnection,
-  ApplicationGlobal.metadataStore
+  ApplicationGlobal.metadataStore,
+  services.audit.Services.auditClient
 )
 
 
 class SwitchoverController(workerFactory: WorkerFactory,
                            mongoDbConnection: CasbahMongoConnection,
-                           systemMetadata: SystemMetadataStore) extends BaseController {
+                           systemMetadata: SystemMetadataStore,
+                           auditClient: AuditClient) extends BaseController {
 
   def doSwitchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = Action {
     request =>
@@ -82,11 +85,17 @@ class SwitchoverController(workerFactory: WorkerFactory,
         model.copy(hasFailed = true)
       }
       else {
-        addressBaseCollectionName.set(newName)
+        setCollectionName(model.productName, model.epoch, newName)
         status.info(s"Switched over to $newName")
         model // unchanged
       }
     }
+  }
+
+  private def setCollectionName(productName: String, epoch: Int, newName: String) {
+    val addressBaseCollectionName = systemMetadata.addressBaseCollectionItem(productName)
+    addressBaseCollectionName.set(newName)
+    auditClient.succeeded(Map("product" -> productName, "epoch" -> epoch.toString, "newCollection" -> newName))
   }
 }
 
