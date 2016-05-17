@@ -19,11 +19,11 @@
  *
  */
 
-package services.ingest
+package ingest
 
 import services.exec.Continuer
-import services.ingest.Ingester.{Blpu, Street}
-import services.writers.OutputWriter
+import ingest.Ingester.{Blpu, Street}
+import ingest.writers.OutputWriter
 
 import scala.collection._
 

@@ -16,7 +16,7 @@
  *
  */
 
-package services.writers
+package ingest.writers
 
 import java.io.{OutputStreamWriter, _}
 import java.util.Date

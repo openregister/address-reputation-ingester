@@ -19,7 +19,7 @@
  *
  */
 
-package services.ingest
+package ingest
 
 import java.io.File
 import java.util.Date
@@ -33,7 +33,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import services.exec.WorkQueue
 import services.model.{StateModel, StatusLogger}
-import services.writers.OutputWriter
+import ingest.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.StubLogger
 

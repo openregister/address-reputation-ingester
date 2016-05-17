@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package services.ingest
+package ingest
 
 // These case classes represent the data model for the parts of AddressBasePremium
 // (https://www.ordnancesurvey.co.uk/business-and-government/products/addressbase-products.html)

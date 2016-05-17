@@ -30,7 +30,7 @@ import play.api.test.Helpers._
 import services.exec.WorkQueue
 import fetch._
 import services.model.{StateModel, StatusLogger}
-import services.writers.OutputFileWriterFactory
+import ingest.writers.OutputFileWriterFactory
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])

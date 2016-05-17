@@ -11,7 +11,7 @@ GET   /go/to/:target/:product/:epoch/:variant       controllers.GoController.doG
 
 GET   /fetch/:product/:epoch/:variant               fetch.FetchController.doFetch(product, epoch: Int, variant, forceChange: Option[Boolean])
 
-GET   /ingest/to/:target/:product/:epoch/:variant   controllers.IngestController.doIngestTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
+GET   /ingest/to/:target/:product/:epoch/:variant   ingest.IngestController.doIngestTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
 
 GET   /switch/to/:product/:epoch/:index             controllers.SwitchoverController.doSwitchTo(product, epoch: Int, index: Int)
 

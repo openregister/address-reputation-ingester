@@ -16,34 +16,30 @@
  *
  */
 
-package services.writers
+package ingest.writers
 
 import java.util.Date
 
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
-class OutputNullWriter(model: StateModel, statusLogger: StatusLogger) extends OutputWriter {
+trait OutputWriter {
+  def existingTargetThatIsNewerThan(date: Date): Option[String]
 
-  private var count = 0
+  def begin()
 
-  def existingTargetThatIsNewerThan(date: Date): Option[String] = None
+  def output(a: DbAddress)
 
-  def begin() {}
+  def end(completed: Boolean): StateModel
+}
 
-  def output(a: DbAddress) {
-    count += 1
-  }
-
-  // scalastylye:off
-  def end(completed: Boolean): StateModel = {
-    statusLogger.info(s"*** document count = $count")
-    model
-  }
+trait OutputWriterFactory {
+  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter
 }
 
 
-class OutputNullWriterFactory extends OutputWriterFactory {
-  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter =
-    new OutputNullWriter(model, statusLogger)
+case class WriterSettings(bulkSize: Int, loopDelay: Int)
+
+object WriterSettings {
+  val default = WriterSettings(1, 0)
 }

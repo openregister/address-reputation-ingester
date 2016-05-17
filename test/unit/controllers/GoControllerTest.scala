@@ -26,6 +26,7 @@ import java.net.URL
 
 import com.github.sardine.Sardine
 import fetch.{FetchController, SardineWrapper, WebDavFile, WebDavTree}
+import ingest.IngestController
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -36,7 +37,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
-import services.writers._
+import ingest.writers._
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])

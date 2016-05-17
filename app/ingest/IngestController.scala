@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package controllers
+package ingest
 
 import java.io.File
 
+import controllers.ControllerConfig
 import controllers.SimpleValidator._
 import play.api.mvc.{Action, AnyContent}
 import services.exec.{Continuer, WorkerFactory}
-import services.ingest.IngesterFactory
 import services.model.{StateModel, StatusLogger}
-import services.writers._
+import ingest.writers._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
@@ -79,11 +79,11 @@ class IngestController(unpackedFolder: File,
       Accepted(s"Ingestion has started for ${model.pathSegment}")
   }
 
-  private[controllers] def ingestIfOK(model: StateModel,
-                                      status: StatusLogger,
-                                      settings: WriterSettings,
-                                      target: String,
-                                      continuer: Continuer): StateModel = {
+  def ingestIfOK(model: StateModel,
+                 status: StatusLogger,
+                 settings: WriterSettings,
+                 target: String,
+                 continuer: Continuer): StateModel = {
     if (!model.hasFailed) {
       val writerFactory = pickWriter(target)
       ingest(model, status, settings, writerFactory, continuer)

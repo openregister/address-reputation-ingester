@@ -19,7 +19,7 @@ package controllers
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
-import services.writers.CollectionMetadata
+import ingest.writers.CollectionMetadata
 import uk.co.hmrc.address.admin.MetadataStore
 import uk.co.hmrc.logging.Stdout
 

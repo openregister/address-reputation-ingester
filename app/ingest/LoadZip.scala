@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package services.ingest
+package ingest
 
 import java.io._
 import java.util.zip.{ZipEntry, ZipFile}

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package services.ingest
+package ingest
 
 import java.io.File
 import java.util.Date
@@ -22,7 +22,7 @@ import java.util.Date
 import config.Divider
 import services.exec.Continuer
 import services.model.{StateModel, StatusLogger}
-import services.writers.OutputWriter
+import ingest.writers.OutputWriter
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
 import scala.collection.mutable

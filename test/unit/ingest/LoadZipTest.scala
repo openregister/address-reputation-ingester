@@ -19,7 +19,7 @@
  *
  */
 
-package services.ingest
+package ingest
 
 import java.io.File
 

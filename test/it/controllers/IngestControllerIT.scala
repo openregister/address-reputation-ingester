@@ -24,7 +24,7 @@ import fetch.Utils._
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
-import services.writers.CollectionMetadata
+import ingest.writers.CollectionMetadata
 
 class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServerUnderTest {
 

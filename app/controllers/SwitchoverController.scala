@@ -22,7 +22,7 @@ import play.api.mvc.{Action, AnyContent}
 import services.audit.AuditClient
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
-import services.writers.CollectionMetadata
+import ingest.writers.CollectionMetadata
 import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}

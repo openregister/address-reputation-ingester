@@ -29,7 +29,7 @@ import play.api.libs.json.Reads._
 import play.api.libs.json.{JsPath, Json, Reads, Writes}
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
-import services.writers.CollectionMetadata.findMetadata
+import ingest.writers.CollectionMetadata.findMetadata
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController

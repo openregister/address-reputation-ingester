@@ -19,7 +19,7 @@
  *
  */
 
-package services.ingest
+package ingest
 
 import java.util.Date
 import java.util.concurrent.SynchronousQueue
@@ -31,7 +31,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
-import services.writers.OutputWriter
+import ingest.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
 import uk.co.hmrc.logging.StubLogger

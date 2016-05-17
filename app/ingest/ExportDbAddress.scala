@@ -19,9 +19,9 @@
  *
  */
 
-package services.ingest
+package ingest
 
-import services.ingest.Ingester.Street
+import ingest.Ingester.Street
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.osgb.Postcode._
 import uk.co.hmrc.address.services.Capitalisation._

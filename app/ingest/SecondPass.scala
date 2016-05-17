@@ -19,11 +19,11 @@
  *
  */
 
-package services.ingest
+package ingest
 
 import services.exec.Continuer
-import services.ingest.Ingester.Blpu
-import services.writers.OutputWriter
+import ingest.Ingester.Blpu
+import ingest.writers.OutputWriter
 
 class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
 

@@ -19,7 +19,7 @@
  *
  */
 
-package services.writers
+package ingest.writers
 
 import org.scalatest.FunSuite
 
