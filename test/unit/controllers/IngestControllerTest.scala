@@ -140,7 +140,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       then the state model index is set
     """) {
     new context {
-      val model1 = new StateModel("abp", 40, "full")
+      val model1 = new StateModel("abp", 40, Some("full"))
       val model2 = model1.copy(index = Some(101))
       val settings = WriterSettings(1, 0)
       when(outputDBWriter.end(true)) thenReturn model2
@@ -165,7 +165,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       then the state model stays in its current state
     """) {
     new context {
-      val model1 = new StateModel("abp", 40, "full", hasFailed = true)
+      val model1 = new StateModel("abp", 40, Some("full"), hasFailed = true)
       val settings = WriterSettings(1, 0)
 
       // when

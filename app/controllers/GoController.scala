@@ -31,6 +31,7 @@ object KnownProducts {
 
 
 object GoController extends GoController(
+  ControllerConfig.logger,
   ControllerConfig.workerFactory,
   ControllerConfig.sardine,
   FetchController,
@@ -39,7 +40,8 @@ object GoController extends GoController(
 )
 
 
-class GoController(workerFactory: WorkerFactory,
+class GoController(logger: StatusLogger,
+                   workerFactory: WorkerFactory,
                    sardine: SardineWrapper,
                    fetchController: FetchController,
                    ingestController: IngestController,
@@ -54,6 +56,7 @@ class GoController(workerFactory: WorkerFactory,
       workerFactory.worker.push(s"automatically searching", {
         continuer =>
           val tree = sardine.exploreRemoteTree
+          logger.info(tree.toString)
           for (product <- KnownProducts.OSGB) {
             val found = tree.findLatestFor(product)
             if (found.isDefined) {
@@ -74,7 +77,7 @@ class GoController(workerFactory: WorkerFactory,
       require(isAlphaNumeric(variant))
 
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
-      val model = new StateModel(product, epoch, variant, forceChange = forceChange getOrElse false)
+      val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
       pipeline(target, model, settings)
       Accepted
   }

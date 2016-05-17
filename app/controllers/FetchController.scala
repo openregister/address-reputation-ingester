@@ -48,7 +48,7 @@ class FetchController(logger: StatusLogger,
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
-      val model = new StateModel(product, epoch, variant, forceChange = forceChange getOrElse false)
+      val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
       workerFactory.worker.push(s"fetching ${model.pathSegment}", {
         continuer =>
           fetch(model)

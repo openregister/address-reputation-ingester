@@ -4,7 +4,7 @@ start
 
 :goAuto / to / tgt;
 
-:scan the webdav file tree;
+:Scan the remote file tree using webdav.;
 
 -> a tree describing\nthe remote files;
 

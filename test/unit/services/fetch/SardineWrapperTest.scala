@@ -34,6 +34,31 @@ class SardineWrapperTest extends PlaySpec with Mockito {
 
   import StubDavResource._
 
+  val base = "http://somedavserver.com:81/webdav"
+  val baseUrl = new URL(base + "/")
+
+  val productResources = List[DavResource](
+    dir("/webdav/", "webdav"),
+    dir("/webdav/abi/", "abi"),
+    dir("/webdav/abp/", "abp")
+  )
+  val abiEpochResources = List[DavResource](
+    dir("/webdav/abi/", "abi")
+  )
+  val abpEpochResources = List[DavResource](
+    dir("/webdav/abp/", "abp"),
+    dir("/webdav/abp/38/", "38"),
+    dir("/webdav/abp/39/", "39")
+  )
+  val abpE38VariantResources = List[DavResource](
+    dir("/webdav/abp/38/", "38"),
+    dir("/webdav/abp/38/full/", "full")
+  )
+  val abpE39VariantResources = List[DavResource](
+    dir("/webdav/abp/39/", "39"),
+    dir("/webdav/abp/39/full/", "full")
+  )
+
   class Context(zipMedia: String, txtMedia: String) {
     val logger = new StubLogger()
     val status = new StatusLogger(logger)
@@ -41,30 +66,6 @@ class SardineWrapperTest extends PlaySpec with Mockito {
     val sardineFactory = mock[SardineFactory2]
     when(sardineFactory.begin("username", "password")) thenReturn sardine
 
-    val base = "http://somedavserver.com:81/webdav"
-    val baseUrl = new URL(base + "/")
-
-    val productResources = List[DavResource](
-      dir("/webdav/", "webdav"),
-      dir("/webdav/abi/", "abi"),
-      dir("/webdav/abp/", "abp")
-    )
-    val abiEpochResources = List[DavResource](
-      dir("/webdav/abi/", "abi")
-    )
-    val abpEpochResources = List[DavResource](
-      dir("/webdav/abp/", "abp"),
-      dir("/webdav/abp/38/", "38"),
-      dir("/webdav/abp/39/", "39")
-    )
-    val abpE38VariantResources = List[DavResource](
-      dir("/webdav/abp/38/", "38"),
-      dir("/webdav/abp/38/full/", "full")
-    )
-    val abpE39VariantResources = List[DavResource](
-      dir("/webdav/abp/39/", "39"),
-      dir("/webdav/abp/39/full/", "full")
-    )
     val file38Resources = List[DavResource](
       dir("/webdav/abp/38/full/", "full"),
       file("/webdav/abp/38/full/DVD1.zip", "DVD1.zip", zipMedia),

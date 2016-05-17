@@ -4,10 +4,6 @@ start
 
 :go / to / __tgt__ / __product__ / __epoch__ / __variant__;
 
-:Scan the remote file tree using webdav.;
-
--> a tree describing\nthe remote files;
-
 if ( Is __product__ / __epoch__ \n available ?) then (no)
   end
 
@@ -65,6 +61,8 @@ elseif (target?) then (file)
   stop
 
 else (null)
+
+  :Ingest the zip files to **null**.;
   stop
 endif
 

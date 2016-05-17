@@ -21,14 +21,16 @@ import services.fetch.OSGBProduct
 case class StateModel(
                        productName: String = "",
                        epoch: Int = 0,
-                       variant: String = "",
+                       variant: Option[String] = None,
                        index: Option[Int] = None,
                        product: Option[OSGBProduct] = None,
                        forceChange: Boolean = false,
                        hasFailed: Boolean = false
                      ) {
 
-  def pathSegment: String = s"$productName/$epoch/$variant"
+  def pathSegment: String =
+    if (variant.isEmpty) s"$productName/$epoch/..."
+    else s"$productName/$epoch/${variant.get}"
 
   def collectionBaseName: String = s"${productName}_${epoch}"
 }
@@ -36,6 +38,6 @@ case class StateModel(
 
 object StateModel {
   def apply(product: OSGBProduct): StateModel = {
-    new StateModel(product.productName, product.epoch)
+    new StateModel(product.productName, product.epoch, None, None, Some(product))
   }
 }

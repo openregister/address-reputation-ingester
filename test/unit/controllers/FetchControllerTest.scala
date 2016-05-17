@@ -121,7 +121,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
   test("fetch should download files using webdav then unzip every zip file") {
     new context {
       // given
-      val model1 = StateModel("product", 123, "variant")
+      val model1 = StateModel("product", 123, Some("variant"))
       val f1Txt = new File("/a/b/f1.txt")
       val f1Zip = new File("/a/b/f1.zip")
       val f2Txt = new File("/a/b/f2.txt")
@@ -145,7 +145,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
   test("fetch should download files using webdav but only unzip fresh zip files") {
     new context {
       // given
-      val model1 = StateModel("product", 123, "variant")
+      val model1 = StateModel("product", 123, Some("variant"))
       val f1Txt = new File("/a/b/f1.txt")
       val f1Zip = new File("/a/b/f1.zip")
       val f2Txt = new File("/a/b/f2.txt")
@@ -173,7 +173,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
     new context {
       // given
       val product = OSGBProduct("product", 123, List(zip1))
-      val model1 = StateModel("product", 123, "variant", None, Some(product))
+      val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
 
       val f1Txt = new File("/a/b/DVD1.txt")
       val f1Zip = new File("/a/b/DVD1.zip")
@@ -199,7 +199,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
     new context {
       // given
       val product = OSGBProduct("product", 123, List(zip1))
-      val model1 = StateModel("product", 123, "variant", None, Some(product))
+      val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
 
       val f1Txt = new File("/a/b/DVD1.txt")
       val f1Zip = new File("/a/b/DVD1.zip")
@@ -226,7 +226,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
     new context {
       // given
       val product = OSGBProduct("product", 123, List(zip1))
-      val model1 = StateModel("product", 123, "variant", None, Some(product), forceChange = true)
+      val model1 = StateModel("product", 123, Some("variant"), None, Some(product), forceChange = true)
 
       val f1Txt = new File("/a/b/DVD1.txt")
       val f1Zip = new File("/a/b/DVD1.zip")
@@ -249,7 +249,7 @@ class FetchControllerTest extends FunSuite with MockitoSugar {
     new context {
       // given
       val product = OSGBProduct("product", 123, List(zip1))
-      val model1 = StateModel("product", 123, "variant", None, Some(product))
+      val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
 
       val items = List[DownloadItem]()
       when(webdavFetcher.fetchList(product, "product/123/variant", false)) thenReturn items

@@ -57,7 +57,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
     val mongo = mock[CasbahMongoConnection]
     val request = FakeRequest()
-    val model = new StateModel(product, epoch, "", Some(index))
+    val model = new StateModel(product, epoch, None, Some(index))
 
     val switchoverController = new SwitchoverController(workerFactory, mongo, store)
 
@@ -167,7 +167,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn None
 
       val sc = new SwitchoverController(workerFactory, mongo, store)
-      val model1 = new StateModel("abp", 40, "full", Some(9), hasFailed = true)
+      val model1 = new StateModel("abp", 40, Some("full"), Some(9), hasFailed = true)
 
       val model2 = sc.switchIfOK(model1, status)
 
