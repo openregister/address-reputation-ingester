@@ -17,7 +17,7 @@
 package ingest
 
 import java.io._
-import java.util.zip.{ZipEntry, ZipFile}
+import java.util.zip.{ZipEntry, ZipInputStream}
 
 import uk.co.hmrc.address.services.CsvParser
 
@@ -30,25 +30,28 @@ object LoadZip {
 }
 
 
-class ZipWrapper(zipFile: ZipFile, accept: (String) => Boolean) extends Iterator[ZippedCsvIterator] with Closeable {
+class ZipWrapper(zipFile: ZipInputStream, accept: (String) => Boolean) extends Iterator[ZippedCsvIterator] with Closeable {
 
-  def this(file: File, accept: (String) => Boolean) = this(new ZipFile(file), accept)
+  def this(file: File, accept: (String) => Boolean) = this(new ZipInputStream(new FileInputStream(file)), accept)
 
   private var open = true
   private var files = 0
-  private val enumeration = zipFile.entries
+  //  private val enumeration = zipFile.entries
   private var nextCache: Option[ZippedCsvIterator] = None
 
-  if (!enumeration.hasMoreElements) {
-    throw EmptyFileException("Empty file")
-  }
+  //  if (!enumeration.hasMoreElements) {
+  //    throw EmptyFileException("Empty file")
+  //  }
 
+  // scalastyle:off
   private def lookAhead() {
     nextCache = None
-    while (enumeration.hasMoreElements && nextCache.isEmpty) {
-      val zipEntry = enumeration.nextElement()
-      if (accept(zipEntry.getName)) {
-        nextCache = Some(new ZippedCsvIterator(zipFile.getInputStream(zipEntry), zipEntry, this))
+    var zipEntry = zipFile.getNextEntry
+    while (zipEntry != null && nextCache.isEmpty) {
+      if (!zipEntry.isDirectory && accept(zipEntry.getName)) {
+        nextCache = Some(new ZippedCsvIterator(zipFile, zipEntry, this))
+      } else {
+        zipEntry = zipFile.getNextEntry
       }
     }
   }
@@ -80,7 +83,7 @@ class ZipWrapper(zipFile: ZipFile, accept: (String) => Boolean) extends Iterator
 
 class ZippedCsvIterator(is: InputStream, val zipEntry: ZipEntry, container: Closeable) extends Iterator[Array[String]] {
   private var open = true
-  private val data = new InputStreamReader(is)
+  private val data = new InputStreamReader(new NonClosingInputStream(is))
   private val it = CsvParser.split(data)
 
   override def hasNext: Boolean = open && it.hasNext
@@ -105,4 +108,13 @@ class ZippedCsvIterator(is: InputStream, val zipEntry: ZipEntry, container: Clos
   }
 
   override def toString: String = zipEntry.toString
+}
+
+
+class NonClosingInputStream(is: InputStream) extends FilterInputStream(is) {
+  var closed = false
+
+  override def close() {
+    closed = true
+  }
 }

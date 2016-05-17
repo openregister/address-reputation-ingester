@@ -63,9 +63,9 @@ class FetchController(logger: StatusLogger,
         webdavFetcher.fetchAll(s"$url/${model.pathSegment}", model.pathSegment, model.forceChange)
       }
 
-    val freshItems = files.filter(_.fresh)
-    val toUnzip = freshItems.map(_.file)
-    unzipper.unzipList(toUnzip, model.pathSegment)
+//    val freshItems = files.filter(_.fresh)
+//    val toUnzip = freshItems.map(_.file)
+//    unzipper.unzipList(toUnzip, model.pathSegment)
 
     if (files.nonEmpty) model else model.copy(hasFailed = true)
   }
