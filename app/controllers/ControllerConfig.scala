@@ -25,9 +25,9 @@ import java.io.File
 import java.net.URL
 
 import config.ConfigHelper._
+import fetch.{SardineFactory2, SardineWrapper, WebdavFetcher, ZipUnpacker}
 import play.api.Play._
 import services.exec.WorkerFactory
-import services.fetch._
 
 object ControllerConfig {
 

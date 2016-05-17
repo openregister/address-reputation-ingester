@@ -19,13 +19,13 @@
  *
  */
 
-package services.fetch
+package fetch
 
 import java.io.{File, FileInputStream, InputStream}
 import java.nio.file.Files
 import java.util.zip.ZipInputStream
 
-import services.fetch.Utils._
+import fetch.Utils._
 import services.model.StatusLogger
 
 class ZipUnpacker(unpackFolder: File, status: StatusLogger) {

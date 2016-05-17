@@ -16,16 +16,15 @@
  *
  */
 
-package controllers
+package fetch
 
 import java.net.URL
 
+import controllers.ControllerConfig
 import controllers.SimpleValidator._
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
-import services.fetch.{DownloadItem, WebdavFetcher, ZipUnpacker}
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.logging.SimpleLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
@@ -56,7 +55,7 @@ class FetchController(logger: StatusLogger,
       Accepted("ok")
   }
 
-  private[controllers] def fetch(model: StateModel): StateModel = {
+  def fetch(model: StateModel): StateModel = {
     val files: List[DownloadItem] =
       if (model.product.nonEmpty) {
         webdavFetcher.fetchList(model.product.get, model.pathSegment, model.forceChange)

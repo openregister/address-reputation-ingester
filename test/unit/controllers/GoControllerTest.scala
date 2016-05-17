@@ -25,6 +25,7 @@ import java.io.File
 import java.net.URL
 
 import com.github.sardine.Sardine
+import fetch.{FetchController, SardineWrapper, WebDavFile, WebDavTree}
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -34,7 +35,6 @@ import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.exec.{Continuer, WorkQueue}
-import services.fetch.{SardineWrapper, WebDavFile, WebDavTree}
 import services.model.{StateModel, StatusLogger}
 import services.writers._
 import uk.co.hmrc.logging.StubLogger

@@ -28,7 +28,7 @@ import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.exec.WorkQueue
-import services.fetch._
+import fetch._
 import services.model.{StateModel, StatusLogger}
 import services.writers.OutputFileWriterFactory
 import uk.co.hmrc.logging.StubLogger

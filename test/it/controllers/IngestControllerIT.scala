@@ -20,10 +20,10 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 
+import fetch.Utils._
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
-import services.fetch.Utils._
 import services.writers.CollectionMetadata
 
 class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServerUnderTest {

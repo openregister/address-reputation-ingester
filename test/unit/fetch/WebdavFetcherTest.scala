@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package services.fetch
+package fetch
 
 import java.io.{File, FileInputStream}
 import java.net.{URI, URL}
@@ -25,7 +25,7 @@ import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatestplus.play.PlaySpec
 import org.specs2.mock.Mockito
-import services.fetch.Utils._
+import Utils._
 import services.model.StatusLogger
 import uk.co.hmrc.logging.StubLogger
 

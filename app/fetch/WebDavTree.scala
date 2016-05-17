@@ -19,7 +19,7 @@
  *
  */
 
-package services.fetch
+package fetch
 
 import java.net.URL
 

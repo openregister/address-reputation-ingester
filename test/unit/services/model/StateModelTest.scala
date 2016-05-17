@@ -23,8 +23,8 @@ package services.model
 
 import java.net.URL
 
+import fetch.{OSGBProduct, WebDavFile}
 import org.scalatest.{FunSuite, Matchers}
-import services.fetch.{OSGBProduct, WebDavFile}
 
 class StateModelTest extends FunSuite with Matchers {
 

@@ -19,12 +19,12 @@
  *
  */
 
-package services.fetch
+package fetch
 
 import java.io.File
 
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
-import services.fetch.Utils._
+import Utils._
 import services.model.StatusLogger
 import uk.co.hmrc.logging.StubLogger
 

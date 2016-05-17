@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package services.fetch
+package fetch
 
 import java.net.URL
 import java.util

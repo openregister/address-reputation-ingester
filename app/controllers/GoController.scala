@@ -17,9 +17,9 @@
 package controllers
 
 import controllers.SimpleValidator._
+import fetch.{FetchController, SardineWrapper}
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
-import services.fetch.SardineWrapper
 import services.model.{StateModel, StatusLogger}
 import services.writers.WriterSettings
 import uk.co.hmrc.logging.SimpleLogger

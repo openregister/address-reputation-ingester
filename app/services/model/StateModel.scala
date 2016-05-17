@@ -16,7 +16,7 @@
 
 package services.model
 
-import services.fetch.OSGBProduct
+import fetch.OSGBProduct
 
 case class StateModel(
                        productName: String = "",
