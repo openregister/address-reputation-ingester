@@ -17,7 +17,8 @@
 package ingest
 
 import java.io._
-import java.util.zip.{ZipEntry, ZipFile}
+import java.nio.charset.StandardCharsets.UTF_8
+import java.util.zip.{ZipEntry, ZipInputStream}
 
 import uk.co.hmrc.address.services.CsvParser
 
@@ -26,42 +27,61 @@ case class EmptyFileException(msg: String) extends Exception(msg)
 
 
 object LoadZip {
-  def zipReader(file: File, accept: (String) => Boolean = (_) => true): ZipWrapper = new ZipWrapper(file, accept)
+  def zipReader(file: File, accept: (String) => Boolean = (_) => true): ZipWrapper = new ZipWrapper(new ZipInputStream(new FileInputStream(file)), accept)
 }
 
 
-class ZipWrapper(zipFile: ZipFile, accept: (String) => Boolean) extends Iterator[ZippedCsvIterator] with Closeable {
-
-  def this(file: File, accept: (String) => Boolean) = this(new ZipFile(file), accept)
+class ZipWrapper(zipFile: ZipInputStream, accept: (String) => Boolean, private var zipEntry: Option[ZipEntry] = None)
+  extends Iterator[ZippedCsvIterator] with Closeable {
 
   private var open = true
-  private var files = 0
-  private val enumeration = zipFile.entries
   private var nextCache: Option[ZippedCsvIterator] = None
-
-  if (!enumeration.hasMoreElements) {
-    throw EmptyFileException("Empty file")
-  }
+  private var nestedZip: Option[ZipWrapper] = None
 
   private def lookAhead() {
-    nextCache = None
-    while (enumeration.hasMoreElements && nextCache.isEmpty) {
-      val zipEntry = enumeration.nextElement()
-      if (accept(zipEntry.getName)) {
-        nextCache = Some(new ZippedCsvIterator(zipFile.getInputStream(zipEntry), zipEntry, this))
+    if (zipEntry.isEmpty) {
+      zipEntry = Option(zipFile.getNextEntry)
+    }
+    while (zipEntry.isDefined && nextCache.isEmpty && nestedZip.isEmpty) {
+      val name = zipEntry.get.getName
+      if (zipEntry.get.isDirectory) {
+        zipEntry = Option(zipFile.getNextEntry)
+      } else if (name.toLowerCase.endsWith(".zip")) {
+        nestedZip = Some(new ZipWrapper(new ZipInputStream(zipFile, UTF_8), accept))
+      } else if (accept(name)) {
+        nextCache = Some(new ZippedCsvIterator(zipFile, zipEntry.get, this))
+      } else {
+        zipEntry = Option(zipFile.getNextEntry)
       }
     }
   }
 
   lookAhead()
 
-  override def hasNext: Boolean = open && nextCache.isDefined
+  override def hasNext: Boolean = {
+    if (nestedZip.isEmpty) open && nextCache.isDefined
+    else if (nestedZip.get.hasNext) true
+    else {
+      nestedZip = None
+      nextCache = None
+      zipEntry = None
+      lookAhead()
+      hasNext
+    }
+  }
 
   override def next: ZippedCsvIterator = {
-    val thisNext = nextCache.get
-    lookAhead()
-    files += 1
-    thisNext
+    if (nestedZip.isDefined && nestedZip.get.hasNext) {
+      nextCache = None
+      nestedZip.get.next
+
+    } else {
+      val thisNext = nextCache.get
+      nextCache = None
+      zipEntry = None
+      lookAhead()
+      thisNext
+    }
   }
 
   /** Closes the entire ZIP archive. Should be done exactly once after reading all contents. */
@@ -73,17 +93,16 @@ class ZipWrapper(zipFile: ZipFile, accept: (String) => Boolean) extends Iterator
   }
 
   override def toString: String = zipFile.toString
-
-  def nFiles = files
 }
 
 
 class ZippedCsvIterator(is: InputStream, val zipEntry: ZipEntry, container: Closeable) extends Iterator[Array[String]] {
   private var open = true
-  private val data = new InputStreamReader(is)
+  private val ncis = new NonClosingInputStream(is)
+  private val data = new InputStreamReader(ncis)
   private val it = CsvParser.split(data)
 
-  override def hasNext: Boolean = open && it.hasNext
+  override def hasNext: Boolean = open && (ncis.open || it.hasNext)
 
   override def next: Array[String] = {
     try {
@@ -105,4 +124,13 @@ class ZippedCsvIterator(is: InputStream, val zipEntry: ZipEntry, container: Clos
   }
 
   override def toString: String = zipEntry.toString
+}
+
+
+class NonClosingInputStream(is: InputStream) extends FilterInputStream(is) {
+  var open = true
+
+  override def close() {
+    open = false
+  }
 }

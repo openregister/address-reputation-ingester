@@ -1,22 +1,17 @@
 /*
+ * Copyright 2016 HM Revenue & Customs
  *
- *  *
- *  *  * Copyright 2016 HM Revenue & Customs
- *  *  *
- *  *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  *  * you may not use this file except in compliance with the License.
- *  *  * You may obtain a copy of the License at
- *  *  *
- *  *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *  *
- *  *  * Unless required by applicable law or agreed to in writing, software
- *  *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  *  * See the License for the specific language governing permissions and
- *  *  * limitations under the License.
- *  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package ingest
@@ -41,6 +36,7 @@ class LoadZipTest extends FunSuite with Matchers with MockitoSugar {
     val it = zip.next
     assert(it.zipEntry.getName === "SX9090-first20.csv")
     for (i <- 0 until 19) {
+      assert(it.hasNext, i)
       it.next
     }
     assert(it.hasNext)
@@ -48,7 +44,6 @@ class LoadZipTest extends FunSuite with Matchers with MockitoSugar {
     assert(!it.hasNext)
 
     assert(!zip.hasNext)
-    assert(zip.nFiles === 1)
     zip.close()
   }
 
@@ -62,6 +57,7 @@ class LoadZipTest extends FunSuite with Matchers with MockitoSugar {
     val it1 = zip.next
     assert(it1.zipEntry.getName === "SX9090-first20.csv")
     for (i <- 0 until 19) {
+      assert(it1.hasNext, i)
       it1.next
     }
     assert(it1.hasNext)
@@ -83,7 +79,32 @@ class LoadZipTest extends FunSuite with Matchers with MockitoSugar {
     assert(!it3.hasNext)
 
     assert(!zip.hasNext)
-    assert(zip.nFiles === 3)
+    zip.close()
+  }
+
+  test(
+    """given a zip archive containing nested zip files,
+       zipReader should return three iterators over the CSV lines
+    """) {
+    val sample = new File(getClass.getClassLoader.getResource("nested.zip").getFile)
+    val zip = LoadZip.zipReader(sample)
+    assert(zip.hasNext)
+    val it1 = zip.next
+    assert(it1.zipEntry.getName === "SX9090-first3600.csv")
+    for (i <- 0 until 3599) {
+      assert(it1.hasNext, i)
+      it1.next
+    }
+    assert(it1.hasNext)
+    assert(it1.next.mkString(",") === "23,I,3599,10023117016,1110X900059550,osgb1000002274480966,4,7666MA,2008-02-07,,2012-04-03,2008-02-07")
+    assert(!it1.hasNext)
+
+    assert(zip.hasNext)
+    val it2 = zip.next
+    assert(it2.zipEntry.getName === "resources/hello.txt")
+    assert(!it2.hasNext)
+
+    assert(!zip.hasNext)
     zip.close()
   }
 }

@@ -107,6 +107,7 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
 
   private def pass(files: Seq[File], out: OutputWriter, thisPass: Pass): Seq[File] = {
     val passOn = new mutable.ListBuffer[File]()
+    var nFiles = 0
     for (file <- files
          if continuer.isBusy) {
       val dt = new DiagnosticTimer
@@ -120,6 +121,7 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
           val name = next.zipEntry.getName
           statusLogger.info(s"Reading zip entry $name...")
           val r = thisPass.processFile(next, out)
+          nFiles += 1
           neededLater ||= r
         }
         if (neededLater) {
@@ -127,7 +129,7 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
         }
       } finally {
         zip.close()
-        statusLogger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}.", file.getName, dt)
+        statusLogger.info(s"Reading from $nFiles CSV files in {} took {}.", file.getName, dt)
       }
       statusLogger.info(thisPass.sizeInfo)
     }
