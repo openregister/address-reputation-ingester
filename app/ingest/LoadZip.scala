@@ -31,12 +31,13 @@ object LoadZip {
 }
 
 
-class ZipWrapper(zipFile: ZipInputStream, accept: (String) => Boolean, private var zipEntry: Option[ZipEntry] = None)
+class ZipWrapper(zipFile: ZipInputStream, accept: (String) => Boolean, depth: Int = 1)
   extends Iterator[ZippedCsvIterator] with Closeable {
 
   private var open = true
   private var nextCache: Option[ZippedCsvIterator] = None
   private var nestedZip: Option[ZipWrapper] = None
+  private var zipEntry: Option[ZipEntry] = None
 
   private def lookAhead() {
     if (zipEntry.isEmpty) {
@@ -45,12 +46,16 @@ class ZipWrapper(zipFile: ZipInputStream, accept: (String) => Boolean, private v
     while (zipEntry.isDefined && nextCache.isEmpty && nestedZip.isEmpty) {
       val name = zipEntry.get.getName
       if (zipEntry.get.isDirectory) {
+        //println(depth + ": skip dir " + name)
         zipEntry = Option(zipFile.getNextEntry)
       } else if (name.toLowerCase.endsWith(".zip")) {
-        nestedZip = Some(new ZipWrapper(new ZipInputStream(zipFile, UTF_8), accept))
+        nestedZip = Some(new ZipWrapper(new ZipInputStream(zipFile, UTF_8), accept, depth + 1))
+        //println(depth + ": new nested zip " + name)
       } else if (accept(name)) {
         nextCache = Some(new ZippedCsvIterator(zipFile, zipEntry.get, this))
+        //println(depth + ": cache " + zipEntry.get)
       } else {
+        //println(depth + ": skip item " + name)
         zipEntry = Option(zipFile.getNextEntry)
       }
     }
