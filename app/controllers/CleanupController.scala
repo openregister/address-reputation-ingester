@@ -25,14 +25,16 @@ import ingest.IngestControllerHelper
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
 import services.model.StatusLogger
+import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 class CleanupController(logger: StatusLogger,
                         workerFactory: WorkerFactory,
-                        downloadFolder: File) extends BaseController {
+                        downloadFolder: File,
+                        mongoDbConnection: CasbahMongoConnection,
+                        systemMetadata: SystemMetadataStore) extends BaseController {
 
-  def doCleanup(target: String,
-                bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = Action {
+  def doCleanup(target: String): Action[AnyContent] = Action {
     request =>
       require(IngestControllerHelper.isSupportedTarget(target))
 

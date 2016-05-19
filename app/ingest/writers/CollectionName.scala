@@ -21,29 +21,35 @@ package ingest.writers
 
 import config.Divider._
 
+// Normal collections will have all fields defined.
+// However, we allow for absent fields primarily for backward compatibility.
+
 case class CollectionName(productName: String,
-                          epoch: Int,
+                          epoch: Option[Int],
                           index: Option[Int]) {
 
-  def toPrefix: String = s"${productName}_${epoch}"
+  def toPrefix: String = s"${productName}_${epoch.get}"
 
-  override def toString: String = CollectionName.format(productName, epoch, index.get)
+  override def toString: String =
+    if (index.isDefined) CollectionName.format(productName, epoch.get, index.get)
+    else if (epoch.isDefined) toPrefix
+    else productName
 }
 
 
 object CollectionName {
-  def apply(collectionName: String): Option[CollectionName] = {
-    val parts = qsplit(collectionName, '_')
-    if (parts.size == 3) doParseName(parts) else None
-  }
+  def apply(collectionName: String): Option[CollectionName] =
+    if (collectionName.isEmpty) None
+    else {
+      val parts = qsplit(collectionName, '_')
+      if (parts.size <= 3) doParseName(parts) else None
+    }
 
   private def doParseName(parts: List[String]): Option[CollectionName] = {
     try {
-      Some(CollectionName(
-        productName = parts.head,
-        epoch = parts(1).toInt,
-        index = Some(parts(2).toInt)
-      ))
+      val epoch = if (parts.size >= 2) Some(parts(1).toInt) else None
+      val index = if (parts.size >= 3) Some(parts(2).toInt) else None
+      Some(CollectionName(parts.head, epoch, index))
     } catch {
       case n: NumberFormatException => None
     }

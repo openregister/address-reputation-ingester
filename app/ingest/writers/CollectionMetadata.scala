@@ -53,8 +53,6 @@ object CollectionMetadata {
   private val createdAt = "createdAt"
   private val completedAt = "completedAt"
 
-  def existingCollections(db: MongoDB): List[CollectionName] = db.collectionNames.toList.sorted.flatMap(CollectionName(_))
-
   def writeCreationDateTo(collection: MongoCollection, date: Date = new Date()) {
     val filter = MongoDBObject("_id" -> metadata)
     collection.update(filter, $inc(createdAt -> date.getTime), upsert = true)
@@ -64,6 +62,14 @@ object CollectionMetadata {
     val filter = MongoDBObject("_id" -> metadata)
     collection.update(filter, $inc(completedAt -> date.getTime), upsert = true)
   }
+
+  def existingCollections(db: MongoDB): List[CollectionName] =
+    collections(db).flatMap(name => CollectionName(name))
+
+  def existingCollectionMetadata(db: MongoDB): List[CollectionMetadataItem] =
+    collections(db).flatMap(name => findMetadata(db(name)))
+
+  private def collections(db: MongoDB) = db.collectionNames.toList.sorted
 
   def findMetadata(collection: MongoCollection): Option[CollectionMetadataItem] = {
     val name = CollectionName(collection.name)

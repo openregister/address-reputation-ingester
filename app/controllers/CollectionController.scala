@@ -23,7 +23,7 @@ package controllers
 
 import config.ApplicationGlobal
 import controllers.SimpleValidator._
-import ingest.writers.CollectionMetadata.findMetadata
+import ingest.writers.CollectionMetadata
 import play.api.Logger
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
@@ -53,18 +53,16 @@ class CollectionController(workerFactory: WorkerFactory,
   def listCollections: Action[AnyContent] = Action {
     request =>
       val pc = protectedCollections
-      val names = db.collectionNames().toList.sorted
+      val collections = CollectionMetadata.existingCollectionMetadata(db)
       val result =
-        for {name <- names
-             collection = db(name)
-             info = findMetadata(collection)
-             if info.isDefined} yield {
-
-          CollectionInfo(name, collection.size,
+        for (info <- collections) yield {
+          val name = info.name.toString
+          val size = db(name).size
+          CollectionInfo(name, size,
             systemCollections.contains(name),
             pc.contains(name),
-            info.get.createdAt.map(_.toString),
-            info.get.completedAt.map(_.toString))
+            info.createdAt.map(_.toString),
+            info.completedAt.map(_.toString))
         }
 
       Ok(Json.toJson(ListCI(result)))
