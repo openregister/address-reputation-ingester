@@ -17,6 +17,7 @@
 package services.model
 
 import fetch.OSGBProduct
+import ingest.writers.CollectionName
 
 case class StateModel(
                        productName: String = "",
@@ -33,12 +34,16 @@ case class StateModel(
     s"$productName/$epoch/$v"
   }
 
-  def collectionBaseName: String = s"${productName}_${epoch}"
+  def collectionName: CollectionName = CollectionName(productName, epoch, index)
 }
 
 
 object StateModel {
   def apply(product: OSGBProduct): StateModel = {
     new StateModel(product.productName, product.epoch, None, None, Some(product))
+  }
+
+  def apply(collectionName: CollectionName): StateModel = {
+    new StateModel(collectionName.productName, collectionName.epoch, None, collectionName.index, None)
   }
 }

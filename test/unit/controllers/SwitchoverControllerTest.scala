@@ -59,12 +59,12 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
     val mongo = mock[CasbahMongoConnection]
     val request = FakeRequest()
-    val model = new StateModel(product, epoch, None, Some(index))
 
     val switchoverController = new SwitchoverController(workerFactory, mongo, store, auditClient)
 
     intercept[IllegalArgumentException] {
-      switchoverController.switchIfOK(model, status)
+//      switchoverController.switchIfOK(model, status)
+      await(call(switchoverController.doSwitchTo(product, epoch, index), request))
     }
   }
 
@@ -100,6 +100,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(db.collectionExists("abp_40_009")) thenReturn true
       when(db.apply("abp_40_009")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn Some(MongoDBObject("completedAt" -> 0L))
+      when(collection.name) thenReturn "abp_40_009"
 
       val sc = new SwitchoverController(workerFactory, mongo, store, auditClient)
       val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
@@ -147,6 +148,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(db.collectionExists("abp_40_009")) thenReturn true
       when(db.apply("abp_40_009")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn None
+      when(collection.name) thenReturn "abp_40_009"
 
       val sc = new SwitchoverController(workerFactory, mongo, store, auditClient)
       val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
@@ -171,6 +173,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(db.collectionExists("abp_40_009")) thenReturn true
       when(db.apply("abp_40_009")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn None
+      when(collection.name) thenReturn "abp_40_009"
 
       val sc = new SwitchoverController(workerFactory, mongo, store, auditClient)
       val model1 = new StateModel("abp", 40, Some("full"), Some(9), hasFailed = true)

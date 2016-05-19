@@ -54,9 +54,9 @@ class OutputDBWriter(cleardownOnError: Boolean,
 
   private val db = mongoDbConnection.getConfiguredDb
 
-  private val collectionMetadata = new CollectionMetadata(db, model)
+  private val collectionMetadata = new CollectionMetadata(db, model.collectionName)
   val collectionName = collectionMetadata.nextFreeCollectionName
-  private val collection = db(collectionName)
+  private val collection = db(collectionName.toString)
   private val bulk = new BatchedBulkOperation(settings, collection)
 
   private var count = 0
@@ -65,14 +65,13 @@ class OutputDBWriter(cleardownOnError: Boolean,
   def existingTargetThatIsNewerThan(date: Date): Option[String] = {
     collectionMetadata.existingCollectionNames.reverse.find {
       name =>
-        val coll = db(name)
-        val info = CollectionMetadata.findMetadata(coll)
-        info.completedAt.isDefined && info.completedAt.get.after(date)
+        val info = CollectionMetadata.findMetadata(db(name))
+        info.exists(_.completedAfter(date))
     }
   }
 
   def begin() {
-    model = collectionMetadata.revisedModel
+    model = model.copy(index = collectionName.index)
     statusLogger.info(s"Writing new collection '$collectionName'")
     CollectionMetadata.writeCreationDateTo(collection)
   }

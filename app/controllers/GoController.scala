@@ -18,12 +18,11 @@ package controllers
 
 import controllers.SimpleValidator._
 import fetch.{FetchController, SardineWrapper}
+import ingest.writers.WriterSettings
 import ingest.{IngestController, IngestControllerHelper}
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
-import ingest.writers.WriterSettings
-import uk.co.hmrc.logging.SimpleLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 object KnownProducts {

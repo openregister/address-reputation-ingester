@@ -29,7 +29,7 @@ import uk.co.hmrc.address.osgb.DbAddress
 
 class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger) extends OutputWriter {
 
-  val fileRoot = model.collectionBaseName
+  val fileRoot = model.collectionName.toPrefix
   val outputFile = new File(ControllerConfig.outputFolder, s"$fileRoot.txt.gz")
 
   private val bufSize = 32 * 1024

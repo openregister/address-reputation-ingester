@@ -23,13 +23,13 @@ package controllers
 
 import config.ApplicationGlobal
 import controllers.SimpleValidator._
+import ingest.writers.CollectionMetadata.findMetadata
 import play.api.Logger
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{JsPath, Json, Reads, Writes}
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
-import ingest.writers.CollectionMetadata.findMetadata
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -55,14 +55,16 @@ class CollectionController(workerFactory: WorkerFactory,
       val pc = protectedCollections
       val names = db.collectionNames().toList.sorted
       val result =
-        for (name <- names) yield {
-          val collection = db(name)
-          val info = findMetadata(collection)
+        for {name <- names
+             collection = db(name)
+             info = findMetadata(collection)
+             if info.isDefined} yield {
+
           CollectionInfo(name, collection.size,
             systemCollections.contains(name),
             pc.contains(name),
-            info.createdAt.map(_.toString),
-            info.completedAt.map(_.toString))
+            info.get.createdAt.map(_.toString),
+            info.get.completedAt.map(_.toString))
         }
 
       Ok(Json.toJson(ListCI(result)))

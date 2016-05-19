@@ -120,7 +120,7 @@ class WorkerTest extends FunSuite {
     worker.awaitCompletion()
 
     // the exception handler
-    assert(logger.warns.size === 1, logger.all.mkString(",\n"))
+    assert(logger.warns.size === 2, logger.all.mkString(",\n"))
   }
 
   test(

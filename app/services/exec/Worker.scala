@@ -169,6 +169,10 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
       val timer = new DiagnosticTimer
       task.action(this)
       statusLogger.info(s"Finished $info after {}.", timer)
+    } catch {
+      case e: Exception =>
+        statusLogger.warn(e.getClass.getName + " " + e.getMessage)
+        throw e
     } finally {
       doing = ""
     }

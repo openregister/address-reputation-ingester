@@ -17,12 +17,13 @@
 package controllers
 
 import config.ApplicationGlobal
+import controllers.SimpleValidator._
+import ingest.writers.CollectionMetadata
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
 import services.audit.AuditClient
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
-import ingest.writers.CollectionMetadata
 import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
@@ -44,8 +45,9 @@ class SwitchoverController(workerFactory: WorkerFactory,
 
   def doSwitchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = Action {
     request =>
+      require(isAlphaNumeric(product))
       val model = new StateModel(product, epoch, None, Some(index))
-      workerFactory.worker.push(s"switching to ${model.collectionBaseName} ${model.index.get}", {
+      workerFactory.worker.push(s"switching to ${model.collectionName.toString}", {
         continuer =>
           switchIfOK(model, workerFactory.worker.statusLogger)
       })
@@ -63,31 +65,27 @@ class SwitchoverController(workerFactory: WorkerFactory,
 
   private def switch(model: StateModel, status: StatusLogger): StateModel = {
 
-    val baseName = model.collectionBaseName
     if (model.index.isEmpty) {
-      status.warn(s"cannot switch to $baseName with unknown index")
+      status.warn(s"cannot switch to ${model.collectionName.toPrefix} with unknown index")
       model.copy(hasFailed = true)
 
     } else {
-
-      val addressBaseCollectionName = systemMetadata.addressBaseCollectionItem(model.productName)
-
-      // this metadata key/value is checked by all address-lookup nodes once every few minutes
-      val newName = CollectionMetadata.formatName(baseName, model.index.get)
+      val newName = model.collectionName.toString
 
       val db = mongoDbConnection.getConfiguredDb
       if (!db.collectionExists(newName)) {
         status.warn(s"$newName: collection was not found")
         model.copy(hasFailed = true)
       }
-      else if (CollectionMetadata.findMetadata(db(newName)).completedAt.isEmpty) {
-        status.warn(s"$newName: collection is still being written")
-        model.copy(hasFailed = true)
-      }
-      else {
+      else if (CollectionMetadata.findMetadata(db(newName)).exists(_.completedAt.isDefined)) {
+        // this metadata key/value is checked by all address-lookup nodes once every few minutes
         setCollectionName(model.productName, model.epoch, newName)
         status.info(s"Switched over to $newName")
         model // unchanged
+      }
+      else {
+        status.warn(s"$newName: collection is still being written")
+        model.copy(hasFailed = true)
       }
     }
   }

@@ -93,7 +93,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
       // (see similar tests in ExtractorTest)
 
       val metadata = CollectionMetadata.findMetadata(collection)
-      val completedAt = metadata.completedAt.get.getTime
+      val completedAt = metadata.get.completedAt.get.getTime
       assert(start <= completedAt)
       assert(completedAt <= System.currentTimeMillis())
     }
