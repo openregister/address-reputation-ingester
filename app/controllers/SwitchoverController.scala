@@ -31,14 +31,16 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object SwitchoverController extends SwitchoverController(
-  new WorkerFactory,
+  ControllerConfig.logger,
+  ControllerConfig.workerFactory,
   ApplicationGlobal.mongoConnection,
   ApplicationGlobal.metadataStore,
   services.audit.Services.auditClient
 )
 
 
-class SwitchoverController(workerFactory: WorkerFactory,
+class SwitchoverController(status: StatusLogger,
+                           workerFactory: WorkerFactory,
                            mongoDbConnection: CasbahMongoConnection,
                            systemMetadata: SystemMetadataStore,
                            auditClient: AuditClient) extends BaseController {
@@ -49,21 +51,21 @@ class SwitchoverController(workerFactory: WorkerFactory,
       val model = new StateModel(product, epoch, None, Some(index))
       workerFactory.worker.push(s"switching to ${model.collectionName.toString}", {
         continuer =>
-          switchIfOK(model, workerFactory.worker.statusLogger)
+          switchIfOK(model)
       })
       Accepted
   }
 
-  private[controllers] def switchIfOK(model: StateModel, status: StatusLogger): StateModel = {
+  private[controllers] def switchIfOK(model: StateModel): StateModel = {
     if (!model.hasFailed) {
-      switch(model, status)
+      switch(model)
     } else {
       status.info("Switchover was skipped.")
       model // unchanged
     }
   }
 
-  private def switch(model: StateModel, status: StatusLogger): StateModel = {
+  private def switch(model: StateModel): StateModel = {
 
     if (model.index.isEmpty) {
       status.warn(s"cannot switch to ${model.collectionName.toPrefix} with unknown index")

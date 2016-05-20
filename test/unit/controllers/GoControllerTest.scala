@@ -65,8 +65,10 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     val fetchController = mock[FetchController]
     val ingestController = mock[IngestController]
     val switchoverController = mock[SwitchoverController]
+    val collectionController = mock[CollectionController]
 
-    val goController = new GoController(status, workerFactory, sardineWrapper, fetchController, ingestController, switchoverController)
+    val goController = new GoController(status, workerFactory, sardineWrapper,
+      fetchController, ingestController, switchoverController, collectionController)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]
@@ -128,7 +130,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel])
       verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
-      verify(switchoverController, never).switchIfOK(any[StateModel], any[StatusLogger])
+      verify(switchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }
   }
@@ -148,7 +150,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel])
       verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
-      verify(switchoverController, never).switchIfOK(any[StateModel], any[StatusLogger])
+      verify(switchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }
   }
@@ -168,7 +170,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel])
       verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
-      verify(switchoverController).switchIfOK(any[StateModel], any[StatusLogger])
+      verify(switchoverController).switchIfOK(any[StateModel])
       teardown()
     }
   }
@@ -218,7 +220,8 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === ACCEPTED)
       verify(fetchController, times(2)).fetch(any[StateModel])
       verify(ingestController, times(2)).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
-      verify(switchoverController, times(2)).switchIfOK(any[StateModel], any[StatusLogger])
+      verify(switchoverController, times(2)).switchIfOK(any[StateModel])
+      verify(collectionController).cleanup()
       teardown()
     }
   }
@@ -244,7 +247,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === ACCEPTED)
       verify(fetchController, never).fetch(any[StateModel])
       verify(ingestController, never).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
-      verify(switchoverController, never).switchIfOK(any[StateModel], any[StatusLogger])
+      verify(switchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }
   }

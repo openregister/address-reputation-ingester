@@ -36,7 +36,8 @@ object GoController extends GoController(
   ControllerConfig.sardine,
   FetchController,
   IngestController,
-  SwitchoverController
+  SwitchoverController,
+  CollectionController
 )
 
 
@@ -45,7 +46,8 @@ class GoController(logger: StatusLogger,
                    sardine: SardineWrapper,
                    fetchController: FetchController,
                    ingestController: IngestController,
-                   switchoverController: SwitchoverController) extends BaseController {
+                   switchoverController: SwitchoverController,
+                   collectionController: CollectionController) extends BaseController {
 
   def doGoAuto(target: String,
                bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = Action {
@@ -64,6 +66,7 @@ class GoController(logger: StatusLogger,
               pipeline(target, model, settings)
             }
           }
+          collectionController.cleanup()
       })
       Accepted
   }
@@ -90,7 +93,7 @@ class GoController(logger: StatusLogger,
           val model2 = fetchController.fetch(model1)
           val model3 = ingestController.ingestIfOK(model2, worker.statusLogger, settings, target, continuer)
           if (target == "db") {
-            switchoverController.switchIfOK(model3, worker.statusLogger)
+            switchoverController.switchIfOK(model3)
           }
         }
     })

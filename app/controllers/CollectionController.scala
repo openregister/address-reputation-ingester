@@ -27,18 +27,21 @@ import ingest.writers.{CollectionMetadata, CollectionMetadataItem, CollectionNam
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
+import services.model.StatusLogger
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object CollectionController extends CollectionController(
-  new WorkerFactory,
+  ControllerConfig.logger,
+  ControllerConfig.workerFactory,
   ApplicationGlobal.mongoConnection,
   ApplicationGlobal.metadataStore
 )
 
 
-class CollectionController(workerFactory: WorkerFactory,
+class CollectionController(status: StatusLogger,
+                           workerFactory: WorkerFactory,
                            mongoDbConnection: CasbahMongoConnection,
                            systemMetadata: SystemMetadataStore) extends BaseController {
 
@@ -84,27 +87,31 @@ class CollectionController(workerFactory: WorkerFactory,
     request =>
       workerFactory.worker.push("cleaning up obsolete collections", {
         continuer =>
-          val toGo = determineObsoleteCollections
-          deleteObsoleteCollections(toGo)
+          cleanup()
       })
       Accepted
   }
 
-  private[controllers] def determineObsoleteCollections: Set[CollectionName] = {
+  private[controllers] def cleanup() {
+    val toGo = determineObsoleteCollections
+    deleteObsoleteCollections(toGo)
+  }
+
+  private[controllers] def determineObsoleteCollections: Set[CollectionMetadataItem] = {
     // already sorted
     val collections: List[CollectionMetadataItem] = collectionMetadata.existingCollectionMetadata
     val mainCollections = collections.filterNot(cmi => systemCollections.contains(cmi.name.toString))
 
     // all incomplete collections are cullable
-    val incompleteCollections = mainCollections.filter(_.isIncomplete).map(_.name)
-    val completeCollections = mainCollections.filter(_.isComplete).map(_.name)
+    val incompleteCollections = mainCollections.filter(_.isIncomplete)
+    val completeCollections = mainCollections.filter(_.isComplete)
 
-    val cullable: List[List[CollectionName]] =
+    val cullable: List[List[CollectionMetadataItem]] =
       for (product <- KnownProducts.OSGB) yield {
         // already sorted (still)
-        val completeCollectionsForProduct: List[CollectionName] = completeCollections.filter(_.productName == product)
+        val completeCollectionsForProduct: List[CollectionMetadataItem] = completeCollections.filter(_.name.productName == product)
         val inUse = CollectionName(collectionInUseFor(product)).get
-        val i = completeCollectionsForProduct.indexOf(inUse) - 1
+        val i = completeCollectionsForProduct.indexWhere(_.name == inUse) - 1
         if (i < 0) {
           Nil
         } else {
@@ -114,9 +121,11 @@ class CollectionController(workerFactory: WorkerFactory,
     (incompleteCollections ++ cullable.flatten).toSet
   }
 
-  private def deleteObsoleteCollections(unwantedCollections: Traversable[CollectionName]) {
+  private def deleteObsoleteCollections(unwantedCollections: Traversable[CollectionMetadataItem]) {
     for (col <- unwantedCollections) {
-      db(col.toString).drop()
+      val name = col.name.toString
+      status.info(s"Deleting obsolete collection $name")
+      db(name).drop()
     }
   }
 
