@@ -54,8 +54,8 @@ class OutputDBWriter(cleardownOnError: Boolean,
 
   private val db = mongoDbConnection.getConfiguredDb
 
-  private val collectionMetadata = new CollectionMetadata(db, model.collectionName)
-  val collectionName = collectionMetadata.nextFreeCollectionName
+  private val collectionMetadata = new CollectionMetadata(db)
+  val collectionName = collectionMetadata.nextFreeCollectionNameLike(model.collectionName)
   private val collection = db(collectionName.toString)
   private val bulk = new BatchedBulkOperation(settings, collection)
 
@@ -63,10 +63,14 @@ class OutputDBWriter(cleardownOnError: Boolean,
   private var hasError = false
 
   def existingTargetThatIsNewerThan(date: Date): Option[String] = {
-    collectionMetadata.existingCollectionNames.reverse.find {
+    val similar = collectionMetadata.existingCollectionNamesLike(model.collectionName)
+    similar.reverse.find {
       name =>
-        val info = CollectionMetadata.findMetadata(db(name))
-        info.exists(_.completedAfter(date))
+        val cn = CollectionName(name)
+        cn.isDefined && {
+          val info = collectionMetadata.findMetadata(cn.get)
+          info.exists(_.completedAfter(date))
+        }
     }
   }
 

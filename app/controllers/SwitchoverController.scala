@@ -70,16 +70,17 @@ class SwitchoverController(workerFactory: WorkerFactory,
       model.copy(hasFailed = true)
 
     } else {
-      val newName = model.collectionName.toString
+      val newName = model.collectionName
 
       val db = mongoDbConnection.getConfiguredDb
-      if (!db.collectionExists(newName)) {
+      val collectionMetadata = new CollectionMetadata(db)
+      if (!db.collectionExists(newName.toString)) {
         status.warn(s"$newName: collection was not found")
         model.copy(hasFailed = true)
       }
-      else if (CollectionMetadata.findMetadata(db(newName)).exists(_.completedAt.isDefined)) {
+      else if (collectionMetadata.findMetadata(newName).exists(_.completedAt.isDefined)) {
         // this metadata key/value is checked by all address-lookup nodes once every few minutes
-        setCollectionName(model.productName, model.epoch, newName)
+        setCollectionName(model.productName, model.epoch, newName.toString)
         status.info(s"Switched over to $newName")
         model // unchanged
       }

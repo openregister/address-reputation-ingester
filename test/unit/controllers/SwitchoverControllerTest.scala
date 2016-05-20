@@ -63,7 +63,6 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     val switchoverController = new SwitchoverController(workerFactory, mongo, store, auditClient)
 
     intercept[IllegalArgumentException] {
-//      switchoverController.switchIfOK(model, status)
       await(call(switchoverController.doSwitchTo(product, epoch, index), request))
     }
   }
@@ -193,8 +192,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 }
 
 
-class StoredMetadataStub extends StoredMetadataItem {
-  private var _value = "the initial value"
+class StoredMetadataStub(private var _value: String = "the initial value") extends StoredMetadataItem {
 
   override def get: String = _value
 

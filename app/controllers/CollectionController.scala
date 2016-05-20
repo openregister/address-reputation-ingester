@@ -23,37 +23,34 @@ package controllers
 
 import config.ApplicationGlobal
 import controllers.SimpleValidator._
-import ingest.writers.CollectionMetadata
-import play.api.Logger
-import play.api.libs.functional.syntax._
-import play.api.libs.json.Reads._
-import play.api.libs.json.{JsPath, Json, Reads, Writes}
+import ingest.writers.{CollectionMetadata, CollectionMetadataItem, CollectionName}
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
-import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object CollectionController extends CollectionController(
   new WorkerFactory,
-  new LoggerFacade(Logger.logger),
   ApplicationGlobal.mongoConnection,
   ApplicationGlobal.metadataStore
 )
 
 
 class CollectionController(workerFactory: WorkerFactory,
-                           logger: SimpleLogger,
                            mongoDbConnection: CasbahMongoConnection,
                            systemMetadata: SystemMetadataStore) extends BaseController {
 
+  import CollectionInfo._
+
   private lazy val db = mongoDbConnection.getConfiguredDb
+  private lazy val collectionMetadata = new CollectionMetadata(db)
 
   def listCollections: Action[AnyContent] = Action {
     request =>
-      val pc = protectedCollections
-      val collections = CollectionMetadata.existingCollectionMetadata(db)
+      val pc = collectionsInUse
+      val collections = collectionMetadata.existingCollectionMetadata
       val result =
         for (info <- collections) yield {
           val name = info.name.toString
@@ -74,45 +71,59 @@ class CollectionController(workerFactory: WorkerFactory,
         BadRequest(name)
       else if (!db.collectionExists(name)) {
         NotFound
-      } else if (systemCollections.contains(name) || protectedCollections.contains(name)) {
+      } else if (systemCollections.contains(name) || collectionsInUse.contains(name)) {
         BadRequest(name + " cannot be dropped")
       } else {
         db(name).dropCollection()
-        //          TODO SeeOther(routes.CollectionController.listCollections())
+        //TODO reverse routing via SeeOther(routes.CollectionController.listCollections())
         SeeOther("/collections/list")
       }
   }
 
-  private val systemCollections = Set("system.indexes", "admin")
-
-  private def protectedCollections = {
-    val currentAbp = systemMetadata.addressBaseCollectionItem("abp").get
-    val currentAbi = systemMetadata.addressBaseCollectionItem("abi").get
-    Set(currentAbp, currentAbi)
+  def doCleanup(): Action[AnyContent] = Action {
+    request =>
+      workerFactory.worker.push("cleaning up obsolete collections", {
+        continuer =>
+          val toGo = determineObsoleteCollections
+          deleteObsoleteCollections(toGo)
+      })
+      Accepted
   }
 
-  implicit val CollectionInfoReads: Reads[CollectionInfo] = (
-    (JsPath \ "name").read[String] and
-      (JsPath \ "size").read[Int] and
-      (JsPath \ "system").read[Boolean] and
-      (JsPath \ "inUse").read[Boolean] and
-      (JsPath \ "createdAt").readNullable[String] and
-      (JsPath \ "completedAt").readNullable[String]) (CollectionInfo.apply _)
+  private[controllers] def determineObsoleteCollections: Set[CollectionName] = {
+    // already sorted
+    val collections: List[CollectionMetadataItem] = collectionMetadata.existingCollectionMetadata
+    val mainCollections = collections.filterNot(cmi => systemCollections.contains(cmi.name.toString))
 
-  implicit val CollectionInfoWrites: Writes[CollectionInfo] = (
-    (JsPath \ "name").write[String] and
-      (JsPath \ "size").write[Int] and
-      (JsPath \ "system").write[Boolean] and
-      (JsPath \ "inUse").write[Boolean] and
-      (JsPath \ "createdAt").writeNullable[String] and
-      (JsPath \ "completedAt").writeNullable[String]) (unlift(CollectionInfo.unapply))
+    // all incomplete collections are cullable
+    val incompleteCollections = mainCollections.filter(_.isIncomplete).map(_.name)
+    val completeCollections = mainCollections.filter(_.isComplete).map(_.name)
 
-  implicit val ListCollectionInfoWrites: Writes[ListCI] = Json.format[ListCI]
+    val cullable: List[List[CollectionName]] =
+      for (product <- KnownProducts.OSGB) yield {
+        // already sorted (still)
+        val completeCollectionsForProduct: List[CollectionName] = completeCollections.filter(_.productName == product)
+        val inUse = CollectionName(collectionInUseFor(product)).get
+        val i = completeCollectionsForProduct.indexOf(inUse) - 1
+        if (i < 0) {
+          Nil
+        } else {
+          completeCollectionsForProduct.take(i)
+        }
+      }
+    (incompleteCollections ++ cullable.flatten).toSet
+  }
+
+  private def deleteObsoleteCollections(unwantedCollections: Traversable[CollectionName]) {
+    for (col <- unwantedCollections) {
+      db(col.toString).drop()
+    }
+  }
+
+  private val systemCollections = Set("system.indexes", "admin")
+
+  private def collectionInUseFor(product: String): String = systemMetadata.addressBaseCollectionItem(product).get
+
+  private def collectionsInUse: Set[String] = KnownProducts.OSGB.map(n => collectionInUseFor(n)).toSet
 }
 
-
-case class CollectionInfo(name: String, size: Int, system: Boolean, inUse: Boolean,
-                          createdAt: Option[String] = None,
-                          completedAt: Option[String] = None)
-
-case class ListCI(collections: List[CollectionInfo])

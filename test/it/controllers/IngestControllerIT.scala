@@ -24,7 +24,7 @@ import fetch.Utils._
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
-import ingest.writers.CollectionMetadata
+import ingest.writers.{CollectionMetadata, CollectionName}
 
 class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServerUnderTest {
 
@@ -88,11 +88,13 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
 
       verifyOK("/admin/status", "idle")
 
-      val collection = casbahMongoConnection().getConfiguredDb("exeter_1_001")
+      val db = casbahMongoConnection().getConfiguredDb
+      val exeter1 = CollectionName("exeter_1_001").get
+      val collection = db("exeter_1_001")
       collection.size mustBe 30 // 29 records plus 1 metadata
       // (see similar tests in ExtractorTest)
 
-      val metadata = CollectionMetadata.findMetadata(collection)
+      val metadata = new CollectionMetadata(db).findMetadata(exeter1)
       val completedAt = metadata.get.completedAt.get.getTime
       assert(start <= completedAt)
       assert(completedAt <= System.currentTimeMillis())

@@ -26,10 +26,12 @@ import java.util.Date
 import com.mongodb.casbah.Imports._
 
 
-class CollectionMetadata(db: MongoDB, collectionName: CollectionName) {
+class CollectionMetadata(db: MongoDB) {
 
-  lazy val existingCollectionNames: List[String] = {
-    val collectionNamePrefix = collectionName.toPrefix + "_"
+  import CollectionMetadata._
+
+  def existingCollectionNamesLike(name: CollectionName): List[String] = {
+    val collectionNamePrefix = name.toPrefix + "_"
     db.collectionNames.filter(_.startsWith(collectionNamePrefix)).toList.sorted
   }
 
@@ -38,13 +40,32 @@ class CollectionMetadata(db: MongoDB, collectionName: CollectionName) {
     collectionName.substring(u + 1).toInt
   }
 
-  private lazy val nextFreeIndex =
-    if (existingCollectionNames.isEmpty) 1
-    else indexOf(existingCollectionNames.last) + 1
+  private def nextFreeIndex(name: CollectionName) =
+    if (existingCollectionNamesLike(name).isEmpty) 1
+    else indexOf(existingCollectionNamesLike(name).last) + 1
 
-  def nextFreeCollectionName: CollectionName = collectionName.copy(index = Some(nextFreeIndex))
+  def nextFreeCollectionNameLike(name: CollectionName): CollectionName =
+    name.copy(index = Some(nextFreeIndex(name)))
 
-  //  def revisedModel: StateModel = inputModel.copy(index = Some(nextFreeIndex))
+  def existingCollections: List[CollectionName] = {
+    db.collectionNames.toList.sorted.flatMap(name => CollectionName(name))
+  }
+
+  def existingCollectionMetadata: List[CollectionMetadataItem] = {
+    existingCollections.flatMap(name => findMetadata(name))
+  }
+
+  def findMetadata(name: CollectionName): Option[CollectionMetadataItem] = {
+    val collection = db(name.toString)
+    val m = collection.findOneByID(metadata)
+    if (m.isEmpty)
+      Some(CollectionMetadataItem(name))
+    else {
+      val created = Option(m.get.get(createdAt)).map(n => new Date(n.asInstanceOf[Long]))
+      val completed = Option(m.get.get(completedAt)).map(n => new Date(n.asInstanceOf[Long]))
+      Some(CollectionMetadataItem(name, created, completed))
+    }
+  }
 }
 
 
@@ -62,28 +83,6 @@ object CollectionMetadata {
     val filter = MongoDBObject("_id" -> metadata)
     collection.update(filter, $inc(completedAt -> date.getTime), upsert = true)
   }
-
-  def existingCollections(db: MongoDB): List[CollectionName] =
-    collections(db).flatMap(name => CollectionName(name))
-
-  def existingCollectionMetadata(db: MongoDB): List[CollectionMetadataItem] =
-    collections(db).flatMap(name => findMetadata(db(name)))
-
-  private def collections(db: MongoDB) = db.collectionNames.toList.sorted
-
-  def findMetadata(collection: MongoCollection): Option[CollectionMetadataItem] = {
-    val name = CollectionName(collection.name)
-    if (name.isEmpty) None
-    else {
-      val m = collection.findOneByID(metadata)
-      if (m.isEmpty) Some(CollectionMetadataItem(name.get))
-      else {
-        val created = Option(m.get.get(createdAt)).map(n => new Date(n.asInstanceOf[Long]))
-        val completed = Option(m.get.get(completedAt)).map(n => new Date(n.asInstanceOf[Long]))
-        Some(CollectionMetadataItem(name.get, created, completed))
-      }
-    }
-  }
 }
 
 
@@ -92,5 +91,9 @@ case class CollectionMetadataItem(name: CollectionName,
                                   completedAt: Option[Date] = None) {
 
   def completedAfter(date: Date): Boolean = completedAt.isDefined && completedAt.get.after(date)
+
+  def isIncomplete = createdAt.isDefined && completedAt.isEmpty
+
+  def isComplete = createdAt.isDefined && completedAt.isDefined
 }
 

@@ -21,12 +21,22 @@ package controllers
 
 import java.io.File
 
+import config.ApplicationGlobal
 import ingest.IngestControllerHelper
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
 import services.model.StatusLogger
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.gov.hmrc.play.microservice.controller.BaseController
+
+
+object CleanupController extends CleanupController(
+  ControllerConfig.logger,
+  ControllerConfig.workerFactory,
+  ControllerConfig.downloadFolder,
+  ApplicationGlobal.mongoConnection,
+  ApplicationGlobal.metadataStore
+)
 
 class CleanupController(logger: StatusLogger,
                         workerFactory: WorkerFactory,

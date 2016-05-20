@@ -30,7 +30,7 @@ case class CollectionName(productName: String,
 
   def toPrefix: String = s"${productName}_${epoch.get}"
 
-  override def toString: String =
+  override lazy val toString: String =
     if (index.isDefined) CollectionName.format(productName, epoch.get, index.get)
     else if (epoch.isDefined) toPrefix
     else productName
