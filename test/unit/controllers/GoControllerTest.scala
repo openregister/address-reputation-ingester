@@ -26,7 +26,7 @@ import java.net.URL
 
 import com.github.sardine.Sardine
 import fetch.{FetchController, SardineWrapper, WebDavFile, WebDavTree}
-import ingest.IngestController
+import ingest.{IngestController, StubWorkerFactory}
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._

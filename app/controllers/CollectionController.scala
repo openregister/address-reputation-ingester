@@ -57,8 +57,7 @@ class CollectionController(status: StatusLogger,
       val result =
         for (info <- collections) yield {
           val name = info.name.toString
-          val size = db(name).size
-          CollectionInfo(name, size,
+          CollectionInfo(name, info.size,
             systemCollections.contains(name),
             pc.contains(name),
             info.createdAt.map(_.toString),
@@ -72,12 +71,12 @@ class CollectionController(status: StatusLogger,
     request =>
       if (!isAlphaNumOrUnderscore(name))
         BadRequest(name)
-      else if (!db.collectionExists(name)) {
+      else if (!collectionMetadata.collectionExists(name)) {
         NotFound
       } else if (systemCollections.contains(name) || collectionsInUse.contains(name)) {
         BadRequest(name + " cannot be dropped")
       } else {
-        db(name).dropCollection()
+        collectionMetadata.dropCollection(name)
         //TODO reverse routing via SeeOther(routes.CollectionController.listCollections())
         SeeOther("/collections/list")
       }

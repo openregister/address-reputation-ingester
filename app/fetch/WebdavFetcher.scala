@@ -26,7 +26,7 @@ import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
 import scala.collection.JavaConverters._
 
-class WebdavFetcher(factory: SardineWrapper, downloadFolder: File, status: StatusLogger) {
+class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: StatusLogger) {
 
   // Downloads a specified set of remote files, marks them all with a completion marker (.done),
   // then returns the total bytes copied.

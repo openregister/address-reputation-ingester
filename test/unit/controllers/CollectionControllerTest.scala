@@ -23,6 +23,7 @@ import java.util.Date
 
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoCollection, MongoDB}
+import ingest.StubWorkerFactory
 import ingest.writers.{CollectionMetadataItem, CollectionName}
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
@@ -228,11 +229,11 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
 
   val anyDate = Some(new Date(0))
 
-  private def fakeIrrelevantCollection(name: String) = CollectionMetadataItem(CollectionName(name).get, None, None)
+  private def fakeIrrelevantCollection(name: String) = CollectionMetadataItem(CollectionName(name).get, 123, None, None)
 
-  private def fakeIncompleteCollection(name: String) = CollectionMetadataItem(CollectionName(name).get, anyDate, None)
+  private def fakeIncompleteCollection(name: String) = CollectionMetadataItem(CollectionName(name).get, 123, anyDate, None)
 
-  private def fakeCompletedCollection(name: String) = CollectionMetadataItem(CollectionName(name).get, anyDate, anyDate)
+  private def fakeCompletedCollection(name: String) = CollectionMetadataItem(CollectionName(name).get, 123, anyDate, anyDate)
 
   private def convert(cmi: CollectionMetadataItem) =
     if (cmi.completedAt.isDefined) Some(MongoDBObject("createdAt" -> cmi.createdAt.get.getTime, "completedAt" -> cmi.completedAt.get.getTime))

@@ -18,6 +18,7 @@
 
 package fetch
 
+import java.io.File
 import java.net.URL
 
 import controllers.ControllerConfig
@@ -68,5 +69,15 @@ class FetchController(logger: StatusLogger,
     unzipper.unzipList(toUnzip, model.pathSegment)
 
     if (files.nonEmpty) model else model.copy(hasFailed = true)
+  }
+
+  def doCleanup(): Action[AnyContent] = Action {
+    request =>
+      Accepted("ok")
+  }
+
+  private[fetch] def determineObsoleteFiles: List[File] = {
+//    webdavFetcher.downloadFolder.listFiles
+    Nil
   }
 }

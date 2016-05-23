@@ -30,6 +30,12 @@ class CollectionMetadata(db: MongoDB) {
 
   import CollectionMetadata._
 
+  def collectionExists(name: String): Boolean = db.collectionExists(name)
+
+  def dropCollection(name: String) {
+    db(name).dropCollection()
+  }
+
   def existingCollectionNamesLike(name: CollectionName): List[String] = {
     val collectionNamePrefix = name.toPrefix + "_"
     db.collectionNames.filter(_.startsWith(collectionNamePrefix)).toList.sorted
@@ -57,13 +63,14 @@ class CollectionMetadata(db: MongoDB) {
 
   def findMetadata(name: CollectionName): Option[CollectionMetadataItem] = {
     val collection = db(name.toString)
+    val size = collection.size
     val m = collection.findOneByID(metadata)
     if (m.isEmpty)
-      Some(CollectionMetadataItem(name))
+      Some(CollectionMetadataItem(name, size))
     else {
       val created = Option(m.get.get(createdAt)).map(n => new Date(n.asInstanceOf[Long]))
       val completed = Option(m.get.get(completedAt)).map(n => new Date(n.asInstanceOf[Long]))
-      Some(CollectionMetadataItem(name, created, completed))
+      Some(CollectionMetadataItem(name, size, created, completed))
     }
   }
 }
@@ -87,6 +94,7 @@ object CollectionMetadata {
 
 
 case class CollectionMetadataItem(name: CollectionName,
+                                  size: Int,
                                   createdAt: Option[Date] = None,
                                   completedAt: Option[Date] = None) {
 
