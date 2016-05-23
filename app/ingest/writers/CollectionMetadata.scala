@@ -33,7 +33,7 @@ class CollectionMetadata(db: MongoDB) {
   def collectionExists(name: String): Boolean = db.collectionExists(name)
 
   def dropCollection(name: String) {
-    db(name).dropCollection()
+    db(name).drop()
   }
 
   def existingCollectionNamesLike(name: CollectionName): List[String] = {
@@ -46,9 +46,11 @@ class CollectionMetadata(db: MongoDB) {
     collectionName.substring(u + 1).toInt
   }
 
-  private def nextFreeIndex(name: CollectionName) =
-    if (existingCollectionNamesLike(name).isEmpty) 1
-    else indexOf(existingCollectionNamesLike(name).last) + 1
+  private def nextFreeIndex(name: CollectionName) = {
+    val namesLike = existingCollectionNamesLike(name)
+    if (namesLike.isEmpty) 1
+    else indexOf(namesLike.last) + 1
+  }
 
   def nextFreeCollectionNameLike(name: CollectionName): CollectionName =
     name.copy(index = Some(nextFreeIndex(name)))

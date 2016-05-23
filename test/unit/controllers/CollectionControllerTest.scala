@@ -24,7 +24,7 @@ import java.util.Date
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoCollection, MongoDB}
 import ingest.StubWorkerFactory
-import ingest.writers.{CollectionMetadataItem, CollectionName}
+import ingest.writers.{CollectionMetadata, CollectionMetadataItem, CollectionName}
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
 import org.scalatest.FunSuite
@@ -73,7 +73,8 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn convert(cmi)
     }
 
-    val collectionController = new CollectionController(status, workerFactory, casbahMongoConnection, store)
+    val collectionMetadata = new CollectionMetadata(mongoDB)
+    val collectionController = new CollectionController(status, workerFactory, collectionMetadata, store)
 
     def teardown() {
       worker.terminate()

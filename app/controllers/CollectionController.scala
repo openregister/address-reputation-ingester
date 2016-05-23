@@ -28,27 +28,23 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
 import services.model.StatusLogger
-import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object CollectionController extends CollectionController(
   ControllerConfig.logger,
   ControllerConfig.workerFactory,
-  ApplicationGlobal.mongoConnection,
+  ApplicationGlobal.collectionMetadata,
   ApplicationGlobal.metadataStore
 )
 
 
 class CollectionController(status: StatusLogger,
                            workerFactory: WorkerFactory,
-                           mongoDbConnection: CasbahMongoConnection,
+                           collectionMetadata: CollectionMetadata,
                            systemMetadata: SystemMetadataStore) extends BaseController {
 
   import CollectionInfo._
-
-  private lazy val db = mongoDbConnection.getConfiguredDb
-  private lazy val collectionMetadata = new CollectionMetadata(db)
 
   def listCollections: Action[AnyContent] = Action {
     request =>
@@ -124,7 +120,7 @@ class CollectionController(status: StatusLogger,
     for (col <- unwantedCollections) {
       val name = col.name.toString
       status.info(s"Deleting obsolete collection $name")
-      db(name).drop()
+      collectionMetadata.dropCollection(name)
     }
   }
 
