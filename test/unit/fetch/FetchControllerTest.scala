@@ -111,10 +111,10 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
     "use the work queue to download files via webdav" in {
       new context {
         // given
-        val f1Txt = new File("/a/b/f1.txt")
-        val f1Zip = new File("/a/b/f1.zip")
-        val f2Txt = new File("/a/b/f2.txt")
-        val f2Zip = new File("/a/b/f2.zip")
+        val f1Txt = new ZipFile("/a/b/f1.txt")
+        val f1Zip = new ZipFile("/a/b/f1.zip")
+        val f2Txt = new ZipFile("/a/b/f2.txt")
+        val f2Zip = new ZipFile("/a/b/f2.zip")
         val files = List(f1Txt, f1Zip, f2Txt, f2Zip)
         val items = List(DownloadItem.fresh(f1Txt), DownloadItem.fresh(f1Zip), DownloadItem.fresh(f2Txt), DownloadItem.fresh(f2Zip))
         when(webdavFetcher.fetchAll(anyString, anyString, any[Boolean])) thenReturn items
@@ -126,7 +126,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         worker.awaitCompletion()
         assert(response.header.status === 202)
         verify(webdavFetcher).fetchAll(anyString, anyString, any[Boolean])
-        verify(unzipper).unzipList(any[List[File]], anyString)
+        verify(unzipper).unzipList(any[List[ZipFile]], anyString)
         assert(logger.size === 2)
         assert(logger.infos.map(_.message) === List(
           "Info:Starting fetching product/123/variant.",
@@ -140,10 +140,10 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
       new context {
         // given
         val model1 = StateModel("product", 123, Some("variant"))
-        val f1Txt = new File("/a/b/f1.txt")
-        val f1Zip = new File("/a/b/f1.zip")
-        val f2Txt = new File("/a/b/f2.txt")
-        val f2Zip = new File("/a/b/f2.zip")
+        val f1Txt = new ZipFile("/a/b/f1.txt")
+        val f1Zip = new ZipFile("/a/b/f1.zip")
+        val f2Txt = new ZipFile("/a/b/f2.txt")
+        val f2Zip = new ZipFile("/a/b/f2.zip")
         val files = List(f1Txt, f1Zip, f2Txt, f2Zip)
         val items = List(DownloadItem.fresh(f1Txt), DownloadItem.fresh(f1Zip), DownloadItem.fresh(f2Txt), DownloadItem.fresh(f2Zip))
         when(webdavFetcher.fetchAll(s"$url/product/123/variant", "product/123/variant", false)) thenReturn items
@@ -164,10 +164,10 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
       new context {
         // given
         val model1 = StateModel("product", 123, Some("variant"))
-        val f1Txt = new File("/a/b/f1.txt")
-        val f1Zip = new File("/a/b/f1.zip")
-        val f2Txt = new File("/a/b/f2.txt")
-        val f2Zip = new File("/a/b/f2.zip")
+        val f1Txt = new ZipFile("/a/b/f1.txt")
+        val f1Zip = new ZipFile("/a/b/f1.zip")
+        val f2Txt = new ZipFile("/a/b/f2.txt")
+        val f2Zip = new ZipFile("/a/b/f2.zip")
         val items = List(DownloadItem.stale(f1Txt), DownloadItem.stale(f1Zip), DownloadItem.fresh(f2Txt), DownloadItem.fresh(f2Zip))
         when(webdavFetcher.fetchAll(s"$url/product/123/variant", "product/123/variant", false)) thenReturn items
 
@@ -192,8 +192,8 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         val product = OSGBProduct("product", 123, List(zip1))
         val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
 
-        val f1Txt = new File("/a/b/DVD1.txt")
-        val f1Zip = new File("/a/b/DVD1.zip")
+        val f1Txt = new ZipFile("/a/b/DVD1.txt")
+        val f1Zip = new ZipFile("/a/b/DVD1.zip")
         val items = List(DownloadItem.fresh(f1Txt), DownloadItem.fresh(f1Zip))
         when(webdavFetcher.fetchList(product, "product/123/variant", false)) thenReturn items
 
@@ -217,8 +217,8 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         val product = OSGBProduct("product", 123, List(zip1))
         val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
 
-        val f1Txt = new File("/a/b/DVD1.txt")
-        val f1Zip = new File("/a/b/DVD1.zip")
+        val f1Txt = new ZipFile("/a/b/DVD1.txt")
+        val f1Zip = new ZipFile("/a/b/DVD1.zip")
         val items = List(DownloadItem.stale(f1Txt), DownloadItem.stale(f1Zip))
         when(webdavFetcher.fetchList(product, "product/123/variant", false)) thenReturn items
 
@@ -243,8 +243,8 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         val product = OSGBProduct("product", 123, List(zip1))
         val model1 = StateModel("product", 123, Some("variant"), None, Some(product), forceChange = true)
 
-        val f1Txt = new File("/a/b/DVD1.txt")
-        val f1Zip = new File("/a/b/DVD1.zip")
+        val f1Txt = new ZipFile("/a/b/DVD1.txt")
+        val f1Zip = new ZipFile("/a/b/DVD1.zip")
         val items = List(DownloadItem.fresh(f1Txt), DownloadItem.fresh(f1Zip))
         when(webdavFetcher.fetchList(product, "product/123/variant", true)) thenReturn items
 

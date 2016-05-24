@@ -61,18 +61,16 @@ class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: S
 
   private def fetchFile(url: URL, sardine: Sardine, outputDirectory: File, forceFetch: Boolean): DownloadItem = {
     val file = fileOf(url)
-    val outFile = new File(outputDirectory, file)
-    val doneFile = new File(outputDirectory, file + ".done")
-    if (forceFetch || !outFile.exists() || !doneFile.exists() || outFile.lastModified() > doneFile.lastModified()) {
+    val outFile = ZipFile(outputDirectory, file)
+    if (forceFetch || !outFile.exists || outFile.isIncomplete) {
       // pre-existing files are considered incomplete
       outFile.delete()
-      doneFile.delete()
 
       val ff = if (forceFetch) " (forced)" else ""
       status.info(s"Fetching {} to $file$ff.", url)
       val dt = new DiagnosticTimer
       val fetched = doFetchFile(url, sardine, outFile)
-      Files.createFile(doneFile.toPath)
+      outFile.touchDoneFile()
       status.info(s"Fetched $file in {}.", dt)
       DownloadItem.fresh(fetched)
 
@@ -82,7 +80,7 @@ class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: S
     }
   }
 
-  private def doFetchFile(url: URL, sardine: Sardine, outFile: File): File = {
+  private def doFetchFile(url: URL, sardine: Sardine, outFile: ZipFile): ZipFile = {
     val in = sardine.get(url.toExternalForm)
     try {
       Files.copy(in, outFile.toPath)
@@ -106,10 +104,48 @@ class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: S
 }
 
 
-case class DownloadItem(file: File, fresh: Boolean)
+case class DownloadItem(file: ZipFile, fresh: Boolean)
 
 object DownloadItem {
-  def fresh(f: File) = new DownloadItem(f, true)
+  def fresh(f: ZipFile): DownloadItem = new DownloadItem(f, true)
 
-  def stale(f: File) = new DownloadItem(f, false)
+  def stale(f: ZipFile): DownloadItem = new DownloadItem(f, false)
+}
+
+
+case class ZipFile(file: File) {
+  def this(fpath: String) = this(new File(fpath))
+
+  def product: String = file.getParentFile.getParentFile.getParentFile.getName
+
+  def epoch: Int = file.getParentFile.getParentFile.getName.toInt
+
+  def variant: String = file.getParentFile.getName
+
+  val doneFile = new File(file.getParentFile, file.getName + ".done")
+
+  def getName: String = file.getName
+
+  def length: Long = file.length()
+
+  def toPath: Path = file.toPath
+
+  val isZipFile: Boolean = file.getName.toLowerCase.endsWith(".zip")
+
+  def exists: Boolean = file.exists
+
+  def isIncomplete: Boolean = !doneFile.exists || file.lastModified > doneFile.lastModified
+
+  def delete() {
+    file.delete()
+    doneFile.delete()
+  }
+
+  def touchDoneFile() {
+    Files.createFile(doneFile.toPath)
+  }
+}
+
+object ZipFile {
+  def apply(dir: File, name: String): ZipFile = new ZipFile(new File(dir, name))
 }

@@ -71,7 +71,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val downloaded = fetcher.fetchAll(url, "stuff", false)
       // then
       downloaded.size must be(3)
-      downloaded.map(_.file.length()).sum must be(files.map(_.length()).sum)
+      downloaded.map(_.file.length).sum must be(files.map(_.length()).sum)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       stuff.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
@@ -103,7 +103,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val downloaded = fetcher.fetchAll(url, "stuff", false)
       // then
       downloaded.size must be(3)
-      downloaded.map(_.file.length()).sum must be(files.map(_.length()).sum)
+      downloaded.map(_.file.length).sum must be(files.map(_.length()).sum)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       stuff.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
@@ -136,7 +136,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
 
       // then
       downloaded.size must be(3)
-      downloaded.map(_.file.length()).sum must be(files.map(_.length()).sum)
+      downloaded.map(_.file.length).sum must be(files.map(_.length()).sum)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       stuff.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
@@ -198,7 +198,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
 
       // then
       downloaded.size must be(3)
-      downloaded.map(_.file.length()).sum must be(files.map(_.length()).sum)
+      downloaded.map(_.file.length).sum must be(files.map(_.length()).sum)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       stuff.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
@@ -235,7 +235,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val downloaded = fetcher.fetchList(product, "stuff", false)
 
       // then
-      downloaded.map(_.file.length()).sum must be(files.map(_.length()).sum)
+      downloaded.map(_.file.length).sum must be(files.map(_.length()).sum)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       downloadDirectory.toPath.resolve("stuff").toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
@@ -303,7 +303,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val downloaded = fetcher.fetchList(product, "stuff", true)
 
       // then
-      downloaded.map(_.file.length()).sum must be(files.map(_.length()).sum)
+      downloaded.map(_.file.length).sum must be(files.map(_.length()).sum)
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       downloadDirectory.toPath.resolve("stuff").toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
