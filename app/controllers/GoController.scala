@@ -21,7 +21,7 @@ import fetch.{FetchController, SardineWrapper}
 import ingest.writers.WriterSettings
 import ingest.{IngestController, IngestControllerHelper}
 import play.api.mvc.{Action, AnyContent}
-import services.exec.WorkerFactory
+import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -59,14 +59,18 @@ class GoController(logger: StatusLogger,
         continuer =>
           val tree = sardine.exploreRemoteTree
           logger.info(tree.toString)
-          for (product <- KnownProducts.OSGB) {
+          for (product <- KnownProducts.OSGB
+               if continuer.isBusy) {
             val found = tree.findLatestFor(product)
             if (found.isDefined) {
               val model = StateModel(found.get)
-              pipeline(target, model, settings)
+              pipeline(target, model, settings, continuer)
             }
           }
-          collectionController.cleanup()
+          if (continuer.isBusy) {
+            collectionController.cleanup()
+            fetchController.cleanup()
+          }
       })
       Accepted
   }
@@ -81,22 +85,21 @@ class GoController(logger: StatusLogger,
 
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
       val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
-      pipeline(target, model, settings)
+      val worker = workerFactory.worker
+      worker.push(s"automatically loading ${model.pathSegment}", {
+        continuer =>
+          pipeline(target, model, settings, continuer)
+      })
       Accepted
   }
 
-  private def pipeline(target: String, model1: StateModel, settings: WriterSettings) {
-    val worker = workerFactory.worker
-    worker.push(s"automatically loading ${model1.pathSegment}", {
-      continuer =>
-        if (continuer.isBusy) {
-          val model2 = fetchController.fetch(model1)
-          val model3 = ingestController.ingestIfOK(model2, worker.statusLogger, settings, target, continuer)
-          if (target == "db") {
-            switchoverController.switchIfOK(model3)
-          }
-        }
-    })
+  private def pipeline(target: String, model1: StateModel, settings: WriterSettings, continuer: Continuer) {
+    if (continuer.isBusy) {
+      val model2 = fetchController.fetch(model1)
+      val model3 = ingestController.ingestIfOK(model2, logger, settings, target, continuer)
+      if (target == "db") {
+        switchoverController.switchIfOK(model3)
+      }
+    }
   }
-
 }

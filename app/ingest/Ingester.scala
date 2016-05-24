@@ -90,6 +90,7 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
   private[ingest] def ingest(files: Seq[File], out: OutputWriter): Boolean = {
     val dt = new DiagnosticTimer
     val fp = new FirstPass(out, continuer, forwardData)
+    out.begin()
 
     statusLogger.info(s"Starting first pass through ${files.size} files.")
     val fewerFiles = pass(files, out, fp)

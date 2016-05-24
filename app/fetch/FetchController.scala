@@ -85,7 +85,7 @@ class FetchController(logger: StatusLogger,
       Accepted("ok")
   }
 
-  private[fetch] def cleanup() {
+  def cleanup() {
     val dead = determineObsoleteFiles(KnownProducts.OSGB)
     for (dir <- dead) {
       logger.info(s"Deleting ${dir.getPath}/...")

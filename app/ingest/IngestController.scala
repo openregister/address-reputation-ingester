@@ -104,11 +104,12 @@ class IngestController(unpackedFolder: File,
     var result = model
     var failed = false
     try {
-      writer.begin()
       failed = ingesterFactory.ingester(continuer, model, status).ingest(qualifiedDir, writer)
     } finally {
-      status.info("Cleaning up the ingester.")
-      result = writer.end(continuer.isBusy)
+      if (!failed) {
+        status.info("Cleaning up the ingester.")
+        result = writer.end(continuer.isBusy)
+      }
     }
     if (failed) result.copy(hasFailed = true) else result
   }
