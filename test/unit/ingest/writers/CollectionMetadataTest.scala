@@ -38,6 +38,12 @@ import scala.collection.mutable
 class CollectionMetadataTest extends FunSuite with MockitoSugar {
 
   val anyDate = new Date(0)
+  val foo_38_001 = CollectionName("foo_38_001").get
+  val foo_39_001 = CollectionName("foo_39_001").get
+  val foo_40_001 = CollectionName("foo_40_001").get
+  val foo_40_002 = CollectionName("foo_40_002").get
+  val foo_40_003 = CollectionName("foo_40_003").get
+  val foo_41_001 = CollectionName("foo_41_001").get
 
   class Context {
     val casbahMongoConnection = mock[CasbahMongoConnection]
@@ -89,7 +95,7 @@ class CollectionMetadataTest extends FunSuite with MockitoSugar {
 
       val next = collectionMetadata.nextFreeCollectionNameLike(CollectionName("foo_41_000").get)
 
-      assert(next === CollectionName("foo_41_001").get)
+      assert(next === foo_41_001)
       verify(mongoDB).collectionNames()
     }
   }
@@ -111,7 +117,7 @@ class CollectionMetadataTest extends FunSuite with MockitoSugar {
 
       val names = collectionMetadata.existingCollections
 
-      assert(names === List("foo_38_001", "foo_39_001", "foo_40_001", "foo_40_002", "foo_40_003").map(CollectionName(_).get))
+      assert(names === List(foo_38_001, foo_39_001, foo_40_001, foo_40_002, foo_40_003))
       verify(mongoDB).collectionNames()
     }
   }
@@ -144,9 +150,9 @@ class CollectionMetadataTest extends FunSuite with MockitoSugar {
       val names = collectionMetadata.existingCollectionMetadata
 
       //then
-      val cmi38 = CollectionMetadataItem(CollectionName("foo_38_001").get, 138, Some(anyDate), None)
-      val cmi39 = CollectionMetadataItem(CollectionName("foo_39_001").get, 139, None, Some(anyDate))
-      val cmi40 = CollectionMetadataItem(CollectionName("foo_40_001").get, 140, None, None)
+      val cmi38 = CollectionMetadataItem(foo_38_001, 138, Some(anyDate), None)
+      val cmi39 = CollectionMetadataItem(foo_39_001, 139, None, Some(anyDate))
+      val cmi40 = CollectionMetadataItem(foo_40_001, 140, None, None)
       assert(names === List(cmi38, cmi39, cmi40))
     }
   }

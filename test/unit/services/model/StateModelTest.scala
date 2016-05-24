@@ -24,8 +24,12 @@ package services.model
 import java.net.URL
 
 import fetch.{OSGBProduct, WebDavFile}
+import ingest.writers.CollectionName
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuite, Matchers}
 
+@RunWith(classOf[JUnitRunner])
 class StateModelTest extends FunSuite with Matchers {
 
   val base = "http://somedavserver.com:81/webdav"
@@ -40,6 +44,17 @@ class StateModelTest extends FunSuite with Matchers {
     val m = StateModel(p)
 
     m should be(StateModel("abp", 38, None, None, Some(p)))
+  }
+
+  test(
+    """
+      StateModel.apply correctly converts a CollectionName
+    """) {
+    val f1 = WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isZipFile = true)
+    val c = CollectionName("abp", Some(38), Some(1))
+    val m = StateModel(c)
+
+    m should be(StateModel("abp", 38, None, Some(1)))
   }
 
 }

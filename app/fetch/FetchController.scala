@@ -21,8 +21,10 @@ package fetch
 import java.io.File
 import java.net.URL
 
-import controllers.ControllerConfig
+import config.ApplicationGlobal
 import controllers.SimpleValidator._
+import controllers.{ControllerConfig, KnownProducts}
+import ingest.writers.{CollectionMetadata, CollectionName}
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
@@ -34,14 +36,16 @@ object FetchController extends FetchController(
   ControllerConfig.workerFactory,
   ControllerConfig.fetcher,
   ControllerConfig.unzipper,
-  ControllerConfig.remoteServer)
+  ControllerConfig.remoteServer,
+  ApplicationGlobal.collectionMetadata)
 
 
 class FetchController(logger: StatusLogger,
                       workerFactory: WorkerFactory,
                       webdavFetcher: WebdavFetcher,
                       unzipper: ZipUnpacker,
-                      url: URL) extends BaseController {
+                      url: URL,
+                      collectionMetadata: CollectionMetadata) extends BaseController {
 
   def doFetch(product: String, epoch: Int, variant: String, forceChange: Option[Boolean]): Action[AnyContent] = Action {
     request =>
@@ -73,11 +77,47 @@ class FetchController(logger: StatusLogger,
 
   def doCleanup(): Action[AnyContent] = Action {
     request =>
+      val model = new StateModel()
+      workerFactory.worker.push(s"zip file cleanup", {
+        continuer =>
+          cleanup()
+      })
       Accepted("ok")
   }
 
-  private[fetch] def determineObsoleteFiles: List[File] = {
-//    webdavFetcher.downloadFolder.listFiles
-    Nil
+  private[fetch] def cleanup() {
+    val dead = determineObsoleteFiles(KnownProducts.OSGB)
+    for (dir <- dead) {
+      logger.info(s"Deleting ${dir.getPath}/...")
+      Utils.deleteDir(dir)
+    }
   }
+
+  private[fetch] def determineObsoleteFiles(products: List[String]): List[File] = {
+    // already sorted
+    val existingCollections: List[CollectionName] = collectionMetadata.existingCollections
+    val productDirs: List[File] = webdavFetcher.downloadFolder.listFiles.toList
+    val epochDirs: List[File] = productDirs.flatMap(_.listFiles)
+    val filtered = for (p <- products) yield {
+      determineObsoleteFilesFor(p, existingCollections, productDirs)
+    }
+    filtered.flatten.sorted
+  }
+
+  private def determineObsoleteFilesFor(product: String, existingCollections: List[CollectionName], productDirs: List[File]): List[File] = {
+    val relevantCollections = existingCollections.filter(_.productName == product)
+    val relevantEpochs: List[Int] = relevantCollections.flatMap(_.epoch)
+    val relevantDirs = productDirs.filter(_.getName == product)
+    val epochDirs: List[File] = relevantDirs.flatMap(_.listFiles)
+    epochDirs.filterNot {
+      dir =>
+        val name = dir.getName
+        if (numeric.matcher(name).matches) {
+          val epoch = name.toInt
+          relevantEpochs.contains(epoch) || epoch > relevantEpochs.last
+        } else false
+    }
+  }
+
+  private val numeric = "\\d+".r.pattern
 }
