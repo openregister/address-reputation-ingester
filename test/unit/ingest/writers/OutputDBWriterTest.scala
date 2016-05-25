@@ -72,7 +72,7 @@ class OutputDBWriterTest extends FunSuite {
       then targetExistsAndIsNewerThan will return None
     """) {
     new Context("x_4_001", "admin", "x_1_001", "x_2_001", "x_3_001") {
-      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
+      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
 
       val result = outputDBWriter.existingTargetThatIsNewerThan(new Date())
 
@@ -90,7 +90,7 @@ class OutputDBWriterTest extends FunSuite {
       when(collections("x_4_001").findOneByID("metadata")) thenReturn None
       when(collections("x_4_002").findOneByID("metadata")) thenReturn None
 
-      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
+      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
 
       val result = outputDBWriter.existingTargetThatIsNewerThan(yesterday)
 
@@ -109,7 +109,7 @@ class OutputDBWriterTest extends FunSuite {
       when(collections("x_4_001").findOneByID("metadata")) thenReturn Some(metadata)
       when(collections("x_4_002").findOneByID("metadata")) thenReturn Some(metadata)
 
-      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
+      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
 
       val result = outputDBWriter.existingTargetThatIsNewerThan(now)
 
@@ -131,7 +131,7 @@ class OutputDBWriterTest extends FunSuite {
       when(collections("x_4_001").findOneByID("metadata")) thenReturn Some(metadata)
       when(collections("x_4_002").findOneByID("metadata")) thenReturn Some(metadata)
 
-      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
+      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
 
       val result = outputDBWriter.existingTargetThatIsNewerThan(yesterday)
 
@@ -149,7 +149,7 @@ class OutputDBWriterTest extends FunSuite {
     new Context("x_4_005", "admin", "x_4_000", "x_4_001", "x_4_004") {
       val someDBAddress = DbAddress("id1", List("1 Foo Rue"), "Puddletown", "FX1 1XF")
 
-      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
+      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
 
       outputDBWriter.output(someDBAddress)
 
@@ -167,7 +167,7 @@ class OutputDBWriterTest extends FunSuite {
       and then close is called on the mongoDB instance
     """) {
     new Context("x_4_005", "admin", "x_4_000", "x_4_001", "x_4_004") {
-      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0), logger)
+      val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
 
       outputDBWriter.end(true)
 

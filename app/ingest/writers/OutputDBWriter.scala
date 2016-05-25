@@ -25,12 +25,10 @@ import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
 import config.ApplicationGlobal
 import config.ConfigHelper._
-import play.api.Logger
 import play.api.Play._
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
-import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 
 
 class OutputDBWriterFactory extends OutputWriterFactory {
@@ -40,8 +38,7 @@ class OutputDBWriterFactory extends OutputWriterFactory {
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter =
     new OutputDBWriter(cleardownOnError, model, statusLogger,
       ApplicationGlobal.mongoConnection,
-      settings,
-      new LoggerFacade(Logger.logger))
+      settings)
 }
 
 
@@ -49,8 +46,7 @@ class OutputDBWriter(cleardownOnError: Boolean,
                      var model: StateModel,
                      statusLogger: StatusLogger,
                      mongoDbConnection: CasbahMongoConnection,
-                     settings: WriterSettings,
-                     logger: SimpleLogger) extends OutputWriter {
+                     settings: WriterSettings) extends OutputWriter {
 
   private val db = mongoDbConnection.getConfiguredDb
 
