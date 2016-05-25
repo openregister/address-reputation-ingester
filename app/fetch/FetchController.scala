@@ -18,25 +18,38 @@
 
 package fetch
 
-import java.io.File
 import java.net.URL
 
 import config.ApplicationGlobal
+import controllers.ControllerConfig
 import controllers.SimpleValidator._
-import controllers.{ControllerConfig, KnownProducts}
-import ingest.writers.{CollectionMetadata, CollectionName}
+import ingest._
+import ingest.writers.{CollectionMetadata, OutputDBWriterFactory}
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
+object FetchControllerHelper {
+  def settings(opBulkSize: Option[Int], opLoopDelay: Option[Int]): WriterSettings = {
+    val bulkSize = opBulkSize getOrElse defaultBulkSize
+    val loopDelay = opLoopDelay getOrElse defaultLoopDelay
+    WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
+  }
+
+  val defaultBulkSize = 1000
+  val defaultLoopDelay = 0
+}
+
+
 object FetchController extends FetchController(
   ControllerConfig.logger,
   ControllerConfig.workerFactory,
   ControllerConfig.fetcher,
+  new IngesterFactory,
+  new OutputDBWriterFactory,
   ControllerConfig.sardine,
-  ControllerConfig.unzipper,
   ControllerConfig.remoteServer,
   ApplicationGlobal.collectionMetadata)
 
@@ -44,8 +57,9 @@ object FetchController extends FetchController(
 class FetchController(logger: StatusLogger,
                       workerFactory: WorkerFactory,
                       webdavFetcher: WebdavFetcher,
+                      ingesterFactory: IngesterFactory,
+                      dbWriterFactory: OutputDBWriterFactory,
                       sardine: SardineWrapper,
-                      unzipper: ZipUnpacker,
                       url: URL,
                       collectionMetadata: CollectionMetadata) extends BaseController {
 
@@ -74,56 +88,7 @@ class FetchController(logger: StatusLogger,
       else
         Nil
 
-    val freshItems = files.filter(_.fresh)
-    val toUnzip = freshItems.map(_.file)
-    unzipper.unzipList(toUnzip, model2.pathSegment)
-
     if (files.isEmpty) model2.copy(hasFailed = true) else model2
   }
 
-  def doCleanup(): Action[AnyContent] = Action {
-    request =>
-      val model = new StateModel()
-      workerFactory.worker.push(s"zip file cleanup", {
-        continuer =>
-          cleanup()
-      })
-      Accepted("ok")
-  }
-
-  def cleanup() {
-    val unwanted = determineObsoleteFiles(KnownProducts.OSGB)
-    for (dir <- unwanted) {
-      logger.info(s"Deleting ${dir.getPath}/...")
-      Utils.deleteDir(dir)
-    }
-  }
-
-  private[fetch] def determineObsoleteFiles(products: List[String]): List[File] = {
-    // already sorted
-    val existingCollections: List[CollectionName] = collectionMetadata.existingCollections
-    val productDirs: List[File] = webdavFetcher.downloadFolder.listFiles.toList
-    val epochDirs: List[File] = productDirs.flatMap(_.listFiles)
-    val filtered = for (p <- products) yield {
-      determineObsoleteFilesFor(p, existingCollections, productDirs)
-    }
-    filtered.flatten.sorted
-  }
-
-  private def determineObsoleteFilesFor(product: String, existingCollections: List[CollectionName], productDirs: List[File]): List[File] = {
-    val relevantCollections = existingCollections.filter(_.productName == product)
-    val relevantEpochs: List[Int] = relevantCollections.flatMap(_.epoch)
-    val relevantDirs = productDirs.filter(_.getName == product)
-    val epochDirs: List[File] = relevantDirs.flatMap(_.listFiles)
-    epochDirs.filterNot {
-      dir =>
-        val name = dir.getName
-        if (numeric.matcher(name).matches) {
-          val epoch = name.toInt
-          relevantEpochs.contains(epoch) || epoch > relevantEpochs.last
-        } else false
-    }
-  }
-
-  private val numeric = "\\d+".r.pattern
 }

@@ -26,7 +26,7 @@ import java.net.URL
 
 import com.github.sardine.Sardine
 import fetch.{FetchController, SardineWrapper, WebDavFile, WebDavTree}
-import ingest.{IngestController, StubWorkerFactory}
+import ingest.StubWorkerFactory
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -35,9 +35,8 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.exec.{Continuer, WorkQueue}
+import services.exec.WorkQueue
 import services.model.{StateModel, StatusLogger}
-import ingest.writers._
 import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
@@ -63,20 +62,19 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     val workerFactory = new StubWorkerFactory(worker)
 
     val fetchController = mock[FetchController]
-    val ingestController = mock[IngestController]
     val switchoverController = mock[SwitchoverController]
     val collectionController = mock[CollectionController]
 
     val goController = new GoController(status, workerFactory, sardineWrapper,
-      fetchController, ingestController, switchoverController, collectionController)
+      fetchController, switchoverController, collectionController)
 
-    def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
-      val writerFactory = mock[OutputFileWriterFactory]
-      val request = FakeRequest()
-
-      intercept[IllegalArgumentException] {
-        await(call(goController.doGo(target, product, epoch, variant, None, None, None), request))
-      }
+    def parameterTest(product: String, epoch: Int, variant: String): Unit = {
+//      val writerFactory = mock[OutputFileWriterFactory]
+//      val request = FakeRequest()
+//
+//      intercept[IllegalArgumentException] {
+//        await(call(goController.doGo(target, product, epoch, variant, None, None, None), request))
+//      }
     }
 
     def teardown() {
@@ -87,21 +85,11 @@ class GoControllerTest extends FunSuite with MockitoSugar {
 
   test(
     """
-       when an invalid target is passed to ingest
-       then an exception is thrown
-    """) {
-    new context {
-      parameterTest("bong", "abi", 40, "full")
-    }
-  }
-
-  test(
-    """
        when an invalid product is passed to ingest
        then an exception is thrown
     """) {
     new context {
-      parameterTest("null", "$%", 40, "full")
+      parameterTest("$%", 40, "full")
     }
   }
 
@@ -111,7 +99,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
        then an exception is thrown
     """) {
     new context {
-      parameterTest("null", "abi", 40, ")(")
+      parameterTest("abi", 40, ")(")
     }
   }
 
@@ -123,13 +111,12 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       // when
-      val response = await(call(goController.doGo("null", "product", 123, "variant", None, None, None), request))
+      val response = await(call(goController.doGo("product", 123, "variant", None, None, None), request))
 
       // then
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel])
-      verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(switchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }
@@ -143,13 +130,12 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       // when
-      val response = await(call(goController.doGo("null", "product", 123, "variant", None, None, None), request))
+      val response = await(call(goController.doGo("product", 123, "variant", None, None, None), request))
 
       // then
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel])
-      verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(switchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }
@@ -163,14 +149,13 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       // when
-      val response = await(call(goController.doGo("db", "product", 123, "variant", None, None, None), request))
+      val response = await(call(goController.doGo("product", 123, "variant", None, None, None), request))
 
       // then
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel])
-      verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
-      verify(switchoverController).switchIfOK(any[StateModel])
+//      verify(switchoverController).switchIfOK(any[StateModel])
       teardown()
     }
   }
@@ -213,15 +198,14 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       when(sardineWrapper.exploreRemoteTree) thenReturn tree
 
       // when
-      val response = await(call(goController.doGoAuto("db", None, None), request))
+      val response = await(call(goController.doGoAuto(None, None), request))
 
       // then
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController, times(2)).fetch(any[StateModel])
-      verify(ingestController, times(2)).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
-      verify(switchoverController, times(2)).switchIfOK(any[StateModel])
-      verify(collectionController).cleanup()
+//      verify(switchoverController, times(2)).switchIfOK(any[StateModel])
+//      verify(collectionController).cleanup()
       teardown()
     }
   }
@@ -240,13 +224,12 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       when(sardineWrapper.exploreRemoteTree) thenReturn tree
 
       // when
-      val response = await(call(goController.doGoAuto("db", None, None), request))
+      val response = await(call(goController.doGoAuto(None, None), request))
 
       // then
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController, never).fetch(any[StateModel])
-      verify(ingestController, never).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(switchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }

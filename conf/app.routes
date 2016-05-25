@@ -6,13 +6,10 @@ GET    /admin/metrics             com.kenshoo.play.metrics.MetricsController.met
 HEAD   /ping                                         controllers.PingController.ping
 GET    /ping                                         controllers.PingController.ping
 
-GET    /goAuto/to/:target                            controllers.GoController.doGoAuto(target, bulkSize: Option[Int], loopDelay: Option[Int])
-GET    /go/to/:target/:product/:epoch/:variant       controllers.GoController.doGo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
+GET    /goAuto                                       controllers.GoController.doGoAuto(bulkSize: Option[Int], loopDelay: Option[Int])
+GET    /go/:product/:epoch/:variant                  controllers.GoController.doGo(product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
 
 GET    /fetch/:product/:epoch/:variant               fetch.FetchController.doFetch(product, epoch: Int, variant, forceChange: Option[Boolean])
-POST   /fetch/clean                                  fetch.FetchController.doCleanup()
-
-GET    /ingest/to/:target/:product/:epoch/:variant   ingest.IngestController.doIngestTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
 
 GET    /switch/to/:product/:epoch/:index             controllers.SwitchoverController.doSwitchTo(product, epoch: Int, index: Int)
 

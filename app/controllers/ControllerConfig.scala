@@ -25,7 +25,7 @@ import java.io.File
 import java.net.URL
 
 import config.ConfigHelper._
-import fetch.{SardineFactory2, SardineWrapper, WebdavFetcher, ZipUnpacker}
+import fetch.{SardineFactory2, SardineWrapper, WebdavFetcher}
 import play.api.Play._
 import services.exec.WorkerFactory
 
@@ -44,5 +44,4 @@ object ControllerConfig {
 
   val sardine = new SardineWrapper(remoteServer, remoteUser, remotePass, logger, new SardineFactory2)
   val fetcher = new WebdavFetcher(sardine, downloadFolder, logger)
-  val unzipper = new ZipUnpacker(downloadFolder, logger)
 }

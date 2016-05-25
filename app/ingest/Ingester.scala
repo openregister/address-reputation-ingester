@@ -17,96 +17,22 @@
 package ingest
 
 import java.io.File
-import java.util.Date
 
-import config.Divider
+import ingest.writers.OutputDBWriter
 import services.exec.Continuer
-import services.model.{StateModel, StatusLogger}
-import ingest.writers.OutputWriter
+import services.model.StatusLogger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
-import scala.collection.mutable
+import scala.collection.{Iterator, mutable}
 
 object Ingester {
 
-  case class Blpu(postcode: String, logicalStatus: Char) {
-    def pack: String = s"$postcode|$logicalStatus"
-  }
-
-  object Blpu {
-    def unpack(pack: String): Blpu = {
-      val fields = Divider.qsplit(pack, '|')
-      val logicalStatus = if (fields(1).length > 0) fields(1).charAt(0) else '\u0000'
-      Blpu(fields.head, logicalStatus)
-    }
-  }
-
-  case class Street(recordType: Char, streetDescription: String, localityName: String, townName: String) {
-    def filteredDescription: String = if (recordType == '1') streetDescription else ""
-
-    def pack: String = s"$recordType|$streetDescription|$localityName|$townName"
-  }
-
-  object Street {
-    def unpack(pack: String): Street = {
-      val fields = Divider.qsplit(pack, '|')
-      val recordType = if (fields.head.length > 0) fields.head.charAt(0) else '\u0000'
-      Street(recordType, fields(1), fields(2), fields(3))
-    }
-  }
-
-  private[ingest] def listFiles(file: File, extn: String): List[File] =
-    if (!file.isDirectory) Nil
-    else {
-      val (dirs, files) = file.listFiles().toList.partition(_.isDirectory)
-      val zips = files.filter(f => f.getName.toLowerCase.endsWith(extn))
-      val deeper = dirs.flatMap(listFiles(_, extn))
-      zips.sorted ++ deeper
-    }
-
-  val theEpoch = new Date(0)
 }
 
 
-class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger, forwardData: ForwardData = ForwardData.chronicleInMemory()) {
+class Ingester(logger: StatusLogger, continuer: Continuer) {
 
-  def ingest(rootDir: File, out: OutputWriter): Boolean = {
-    val files = Ingester.listFiles(rootDir, ".zip").sorted
-    val youngest = if (files.isEmpty) Ingester.theEpoch else new Date(files.map(_.lastModified).max)
-    val target = out.existingTargetThatIsNewerThan(youngest)
-    if (target.isEmpty) {
-      statusLogger.info(s"Ingesting from $rootDir.")
-      ingest(files, out)
-    } else if (model.forceChange) {
-      statusLogger.info(s"Ingesting from $rootDir (forced update).")
-      ingest(files, out)
-    } else {
-      statusLogger.info(s"Ingest skipped; ${target.get} is up to date.")
-      // Not strictly a failure, this inhibits an immediate automatic switch-over.
-      true // failure
-    }
-  }
-
-  private[ingest] def ingest(files: Seq[File], out: OutputWriter): Boolean = {
-    val dt = new DiagnosticTimer
-    val fp = new FirstPass(out, continuer, forwardData)
-    out.begin()
-
-    statusLogger.info(s"Starting first pass through ${files.size} files.")
-    val fewerFiles = pass(files, out, fp)
-    val fd = fp.firstPass
-    statusLogger.info(s"First pass complete after {}.", dt)
-
-    statusLogger.info(s"Starting second pass through ${fewerFiles.size} files.")
-    val sp = new SecondPass(fd, continuer)
-    pass(fewerFiles, out, sp)
-    statusLogger.info(s"Ingester finished after {}.", dt)
-
-    false // not a failure
-  }
-
-
-  private def pass(files: Seq[File], out: OutputWriter, thisPass: Pass): Seq[File] = {
+  private def pass(files: Seq[File], out: OutputDBWriter): Seq[File] = {
     val passOn = new mutable.ListBuffer[File]()
     for (file <- files
          if continuer.isBusy) {
@@ -119,8 +45,8 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
         while (zip.hasNext && continuer.isBusy) {
           val next = zip.next
           val name = next.zipEntry.getName
-          statusLogger.info(s"Reading zip entry $name...")
-          val r = thisPass.processFile(next, out)
+          logger.info(s"Reading zip entry $name...")
+          val r = processFile(next, out)
           neededLater ||= r
         }
         if (neededLater) {
@@ -128,16 +54,110 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
         }
       } finally {
         zip.close()
-        statusLogger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}.", file.getName, dt)
+        logger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}.", file.getName, dt)
       }
-      statusLogger.info(thisPass.sizeInfo)
     }
     passOn.toList
   }
+
+  // scalastyle:off
+  private def processFile(csvIterator: Iterator[Array[String]], out: OutputDBWriter): Boolean = {
+    var needSecondPass = false
+
+    for (csvLine <- csvIterator
+         if continuer.isBusy) {
+
+      csvLine(OSCsv.RecordIdentifier_idx) match {
+        case OSHeader.RecordId =>
+          OSCsv.setCsvFormatFor(csvLine(OSHeader.Version_Idx))
+
+        case OSBlpu.RecordId =>
+          processBlpu(csvLine)
+
+        case OSLpi.RecordId =>
+          processLPI(csvLine)
+
+        case OSDpa.RecordId =>
+          processDpa(csvLine)
+          needSecondPass = true
+
+        case OSStreet.RecordId =>
+          processStreet(OSStreet(csvLine))
+
+        case OSStreetDescriptor.RecordId if OSStreetDescriptor.isEnglish(csvLine) =>
+          processStreetDescriptor(OSStreetDescriptor(csvLine))
+
+        case _ =>
+      }
+    }
+
+    needSecondPass
+  }
+
+  private def processBlpu(csvLine: Array[String]): Unit = {
+    //    val blpu = OSBlpu(csvLine)
+    //    forwardData.blpu.put(blpu.uprn, Blpu(blpu.postcode, blpu.logicalStatus).pack)
+  }
+
+  private def processDpa(csvLine: Array[String]): Unit = {
+    //    val osDpa = OSDpa(csvLine)
+    //    forwardData.dpa.add(osDpa.uprn)
+  }
+
+  private def processStreet(street: OSStreet): Unit = {
+    //    if (forwardData.streets.containsKey(street.usrn)) {
+    //      val existingStreetStr = forwardData.streets.get(street.usrn)
+    //      val existingStreet = Street.unpack(existingStreetStr)
+    //      forwardData.streets.put(street.usrn, Street(street.recordType, existingStreet.streetDescription, existingStreet.localityName, existingStreet.townName).pack)
+    //    } else {
+    //      forwardData.streets.put(street.usrn, Street(street.recordType, "", "", "").pack)
+    //    }
+  }
+
+  private def processStreetDescriptor(sd: OSStreetDescriptor) {
+    //    if (forwardData.streets.containsKey(sd.usrn)) {
+    //      val existingStreetStr = forwardData.streets.get(sd.usrn)
+    //      val existingStreet = Street.unpack(existingStreetStr)
+    //      forwardData.streets.put(sd.usrn, Street(existingStreet.recordType, sd.description, sd.locality, sd.town).pack)
+    //    } else {
+    //      forwardData.streets.put(sd.usrn, Street('A', sd.description, sd.locality, sd.town).pack)
+    //    }
+  }
+
+  private def processLPI(csvLine: Array[String]) {
+    //    val lpi = OSLpi(csvLine)
+    //
+    //    if (!fd.dpa.contains(lpi.uprn)) {
+    //      if (fd.blpu.containsKey(lpi.uprn)) {
+    //        val packedBlpu = fd.blpu.get(lpi.uprn)
+    //        val blpu = Blpu.unpack(packedBlpu)
+    //
+    //        if (blpu.logicalStatus == lpi.logicalStatus) {
+    //          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets))
+    //          lpiCount += 1
+    //          fd.blpu.remove(lpi.uprn) // need to decide which lpi to use in the firstPass using logic - not first in gets in
+    //        }
+    //      }
+    //    }
+  }
+
+  private def processDPA(csvLine: Array[String]): Unit = {
+    //    val dpa = OSDpa(csvLine)
+    //    out.output(ExportDbAddress.exportDPA(dpa))
+    //    dpaCount += 1
+  }
 }
 
+
+case class WriterSettings(bulkSize: Int, loopDelay: Int)
+
+object WriterSettings {
+  val default = WriterSettings(1, 0)
+}
+
+
 class IngesterFactory {
-  def ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger): Ingester =
-    new Ingester(continuer, model, statusLogger)
+  def ingester(continuer: Continuer, statusLogger: StatusLogger): Ingester =
+    new Ingester(statusLogger, continuer)
 }
 

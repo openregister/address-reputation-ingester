@@ -106,10 +106,6 @@ object OSBlpu {
 
   var idx = v1
 
-  def isUsefulPostcode(csv: Array[String]): Boolean = {
-    csv(idx.postalCode) != "N" // not a postal address
-  }
-
   def apply(csv: Array[String]): OSBlpu =
     OSBlpu(csv(idx.uprn).toLong, csv(idx.logicalStatus).head, csv(idx.postcode))
 }
