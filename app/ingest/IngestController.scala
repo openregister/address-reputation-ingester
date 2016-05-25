@@ -20,10 +20,10 @@ import java.io.File
 
 import controllers.ControllerConfig
 import controllers.SimpleValidator._
+import ingest.writers._
 import play.api.mvc.{Action, AnyContent}
 import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
-import ingest.writers._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
@@ -70,10 +70,8 @@ class IngestController(unpackedFolder: File,
 
       val worker = workerFactory.worker
       worker.push(
-        s"ingesting ${model.pathSegment}", {
-          continuer =>
-            ingestIfOK(model, worker.statusLogger, settings, target, continuer)
-        }
+        s"ingesting ${model.pathSegment}",
+        continuer => ingestIfOK(model, worker.statusLogger, settings, target, continuer)
       )
 
       Accepted(s"Ingestion has started for ${model.pathSegment}")

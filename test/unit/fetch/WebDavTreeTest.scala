@@ -63,7 +63,7 @@ class WebDavTreeTest extends PlaySpec {
 
   "find available" should {
     """
-      discover one product with two epochs
+      discover one specified product with two epochs
       and ignore any unimportant files
     """ in {
       // given
@@ -103,6 +103,46 @@ class WebDavTreeTest extends PlaySpec {
         OSGBProduct("abp", 39, List(abpZip39_1)),
         OSGBProduct("abp", 40, List(abpZip40_1, abpZip40_2))
       ))
+    }
+
+    """
+      discover one specified product with one specified epoch
+      and ignore any unrelated files
+    """ in {
+      // given
+      val tree = WebDavTree(
+        WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
+          WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/abi/39/"), "39", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abi/39/full/"), "full", isDirectory = true, files = List(
+                abiZip39_1,
+                abiTxt39_1
+              ))
+            ))
+          )),
+          WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
+                abpZip39_1,
+                abpTxt39_1
+              ))
+            )),
+            WebDavFile(new URL(base + "/abp/40/"), "40", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abp/40/full/"), "full", isDirectory = true, files = List(
+                abpZip40_1,
+                abpTxt40_1,
+                abpZip40_2,
+                abpTxt40_2
+              ))
+            ))
+          ))
+        )))
+
+      // when
+      val list = tree.findAvailableFor("abp", "39")
+
+      // then
+      list must be(Some(OSGBProduct("abp", 39, List(abpZip39_1))))
     }
   }
 

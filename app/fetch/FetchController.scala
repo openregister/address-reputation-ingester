@@ -35,6 +35,7 @@ object FetchController extends FetchController(
   ControllerConfig.logger,
   ControllerConfig.workerFactory,
   ControllerConfig.fetcher,
+  ControllerConfig.sardine,
   ControllerConfig.unzipper,
   ControllerConfig.remoteServer,
   ApplicationGlobal.collectionMetadata)
@@ -43,6 +44,7 @@ object FetchController extends FetchController(
 class FetchController(logger: StatusLogger,
                       workerFactory: WorkerFactory,
                       webdavFetcher: WebdavFetcher,
+                      sardine: SardineWrapper,
                       unzipper: ZipUnpacker,
                       url: URL,
                       collectionMetadata: CollectionMetadata) extends BaseController {
@@ -53,26 +55,30 @@ class FetchController(logger: StatusLogger,
       require(isAlphaNumeric(variant))
 
       val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
-      workerFactory.worker.push(s"fetching ${model.pathSegment}", {
-        continuer =>
-          fetch(model)
-      })
+      workerFactory.worker.push(s"fetching ${model.pathSegment}", continuer => fetch(model))
       Accepted("ok")
   }
 
-  def fetch(model: StateModel): StateModel = {
-    val files: List[DownloadItem] =
-      if (model.product.nonEmpty) {
-        webdavFetcher.fetchList(model.product.get, model.pathSegment, model.forceChange)
-      } else {
-        webdavFetcher.fetchAll(s"$url/${model.pathSegment}", model.pathSegment, model.forceChange)
+  def fetch(model1: StateModel): StateModel = {
+    val model2 =
+      if (model1.product.isDefined) model1
+      else {
+        val tree = sardine.exploreRemoteTree
+        val found = tree.findAvailableFor(model1.productName, model1.epoch.toString)
+        model1.copy(product = found)
       }
+
+    val files =
+      if (model2.product.isDefined)
+        webdavFetcher.fetchList(model2.product.get, model2.pathSegment, model2.forceChange)
+      else
+        Nil
 
     val freshItems = files.filter(_.fresh)
     val toUnzip = freshItems.map(_.file)
-    unzipper.unzipList(toUnzip, model.pathSegment)
+    unzipper.unzipList(toUnzip, model2.pathSegment)
 
-    if (files.nonEmpty) model else model.copy(hasFailed = true)
+    if (files.isEmpty) model2.copy(hasFailed = true) else model2
   }
 
   def doCleanup(): Action[AnyContent] = Action {
@@ -86,8 +92,8 @@ class FetchController(logger: StatusLogger,
   }
 
   def cleanup() {
-    val dead = determineObsoleteFiles(KnownProducts.OSGB)
-    for (dir <- dead) {
+    val unwanted = determineObsoleteFiles(KnownProducts.OSGB)
+    for (dir <- unwanted) {
       logger.info(s"Deleting ${dir.getPath}/...")
       Utils.deleteDir(dir)
     }

@@ -49,10 +49,7 @@ class SwitchoverController(status: StatusLogger,
     request =>
       require(isAlphaNumeric(product))
       val model = new StateModel(product, epoch, None, Some(index))
-      workerFactory.worker.push(s"switching to ${model.collectionName.toString}", {
-        continuer =>
-          switchIfOK(model)
-      })
+      workerFactory.worker.push(s"switching to ${model.collectionName.toString}",         continuer =>          switchIfOK(model))
       Accepted
   }
 

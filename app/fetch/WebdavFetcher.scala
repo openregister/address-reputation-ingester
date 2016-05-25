@@ -24,8 +24,6 @@ import com.github.sardine.{DavResource, Sardine}
 import services.model.StatusLogger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
-import scala.collection.JavaConverters._
-
 class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: StatusLogger) {
 
   // Downloads a specified set of remote files, marks them all with a completion marker (.done),
@@ -39,21 +37,6 @@ class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: S
     }
   }
 
-  // Searches for remote files, downloads them, marks them all with a completion marker (.done),
-  // then returns the total bytes copied.
-  // Note that this doesn't check the existence of completion marker files on the remote server.
-  def fetchAll(url: String, outputPath: String, forceFetch: Boolean): List[DownloadItem] = {
-    val outputDirectory = resolveAndMkdirs(outputPath)
-    val sardine = factory.begin
-    status.info("Listing {}.", url)
-    val resources = sardine.list(url).asScala.toList.filterNot(_.isDirectory)
-    resources.map {
-      res =>
-        val absoluteUrl = toUrl(url, res)
-        fetchFile(absoluteUrl, sardine, outputDirectory, forceFetch)
-    }
-  }
-
   private def toUrl(base: String, res: DavResource): URL = {
     val myUrl = new URL(base)
     new URL(myUrl.getProtocol, myUrl.getHost, myUrl.getPort, res.getHref.getPath)
@@ -61,7 +44,7 @@ class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: S
 
   private def fetchFile(url: URL, sardine: Sardine, outputDirectory: File, forceFetch: Boolean): DownloadItem = {
     val file = fileOf(url)
-    val outFile = ZipFile(outputDirectory, file)
+    val outFile = DownloadedFile(outputDirectory, file)
     if (forceFetch || !outFile.exists || outFile.isIncomplete) {
       // pre-existing files are considered incomplete
       outFile.delete()
@@ -80,7 +63,7 @@ class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: S
     }
   }
 
-  private def doFetchFile(url: URL, sardine: Sardine, outFile: ZipFile): ZipFile = {
+  private def doFetchFile(url: URL, sardine: Sardine, outFile: DownloadedFile): DownloadedFile = {
     val in = sardine.get(url.toExternalForm)
     try {
       Files.copy(in, outFile.toPath)
@@ -101,51 +84,4 @@ class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: S
     outputDirectory.mkdirs()
     outputDirectory
   }
-}
-
-
-case class DownloadItem(file: ZipFile, fresh: Boolean)
-
-object DownloadItem {
-  def fresh(f: ZipFile): DownloadItem = new DownloadItem(f, true)
-
-  def stale(f: ZipFile): DownloadItem = new DownloadItem(f, false)
-}
-
-
-case class ZipFile(file: File) {
-  def this(fpath: String) = this(new File(fpath))
-
-  def product: String = file.getParentFile.getParentFile.getParentFile.getName
-
-  def epoch: Int = file.getParentFile.getParentFile.getName.toInt
-
-  def variant: String = file.getParentFile.getName
-
-  val doneFile = new File(file.getParentFile, file.getName + ".done")
-
-  def getName: String = file.getName
-
-  def length: Long = file.length()
-
-  def toPath: Path = file.toPath
-
-  val isZipFile: Boolean = file.getName.toLowerCase.endsWith(".zip")
-
-  def exists: Boolean = file.exists
-
-  def isIncomplete: Boolean = !doneFile.exists || file.lastModified > doneFile.lastModified
-
-  def delete() {
-    file.delete()
-    doneFile.delete()
-  }
-
-  def touchDoneFile() {
-    Files.createFile(doneFile.toPath)
-  }
-}
-
-object ZipFile {
-  def apply(dir: File, name: String): ZipFile = new ZipFile(new File(dir, name))
 }

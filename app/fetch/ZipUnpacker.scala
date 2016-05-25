@@ -30,11 +30,11 @@ import services.model.StatusLogger
 
 class ZipUnpacker(unpackFolder: File, status: StatusLogger) {
 
-  def unzipList(zipFiles: List[ZipFile], destPath: String): Int = {
+  def unzipList(zipFiles: List[DownloadedFile], destPath: String): Int = {
     zipFiles.map(z => unzip(z, destPath)).sum
   }
 
-  def unzip(zipFile: ZipFile, destPath: String): Int = {
+  def unzip(zipFile: DownloadedFile, destPath: String): Int = {
     if (zipFile.isZipFile) {
       unzip(new FileInputStream(zipFile.file), destPath)
     } else 0

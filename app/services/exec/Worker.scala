@@ -170,6 +170,10 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
       task.action(this)
       statusLogger.info(s"Finished $info after {}.", timer)
     } catch {
+      case re: RuntimeException =>
+        statusLogger.warn(re.getClass.getName + " " + re.getMessage)
+        statusLogger.tee.warn(doing, re)
+        throw re
       case e: Exception =>
         statusLogger.warn(e.getClass.getName + " " + e.getMessage)
         throw e

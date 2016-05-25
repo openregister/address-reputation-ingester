@@ -187,10 +187,10 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       val tree = WebDavTree(
         WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
           WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true, files = List(
-            WebDavFile(new URL(base + "/api/38/"), "38", isDirectory = true, files = List(
-              WebDavFile(new URL(base + "/api/38/full/"), "full", isDirectory = true, files = List(
-                WebDavFile(new URL(base + "/api/38/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
-                WebDavFile(new URL(base + "/api/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
+            WebDavFile(new URL(base + "/abi/38/"), "38", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abi/38/full/"), "full", isDirectory = true, files = List(
+                WebDavFile(new URL(base + "/abi/38/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                WebDavFile(new URL(base + "/abi/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
               ))
             )))),
           WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(

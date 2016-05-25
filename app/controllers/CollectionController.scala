@@ -80,10 +80,7 @@ class CollectionController(status: StatusLogger,
 
   def doCleanup(): Action[AnyContent] = Action {
     request =>
-      workerFactory.worker.push("cleaning up obsolete collections", {
-        continuer =>
-          cleanup()
-      })
+      workerFactory.worker.push("cleaning up obsolete collections", continuer => cleanup())
       Accepted
   }
 

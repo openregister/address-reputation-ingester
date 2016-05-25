@@ -62,13 +62,23 @@ case class WebDavTree(root: WebDavFile) {
   }
 
   def findAvailableFor(product: String): List[OSGBProduct] = {
-    val matches = root.files.filter(_.fullName == product)
+    val matches = root.files.find(_.fullName == product)
     if (matches.isEmpty) Nil
     else {
-      val epochs = matches.head.files
+      val epochs = matches.get.files
       epochs.flatMap {
         extractOne(product, _)
       }
+    }
+  }
+
+  def findAvailableFor(product: String, epoch: String): Option[OSGBProduct] = {
+    val matches = root.files.find(_.fullName == product)
+    if (matches.isEmpty) None
+    else {
+      val epochs = matches.get.files.find(_.fullName == epoch)
+      if (epochs.isEmpty) None
+      else extractOne(product, epochs.get)
     }
   }
 
