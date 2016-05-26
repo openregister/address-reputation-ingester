@@ -101,6 +101,10 @@ class OutputDBWriter(collectionName: String,
 
     hasError
   }
+
+  def abort() {
+    collection.drop()
+  }
 }
 
 

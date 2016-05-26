@@ -21,6 +21,7 @@ import java.net.URL
 import java.nio.file._
 
 import com.github.sardine.{DavResource, Sardine}
+import services.exec.Continuer
 import services.model.StatusLogger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
@@ -28,12 +29,17 @@ class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: S
 
   // Downloads a specified set of remote files, marks them all with a completion marker (.done),
   // then returns the total bytes copied.
-  def fetchList(product: OSGBProduct, outputPath: String, forceFetch: Boolean): List[DownloadItem] = {
+  def fetchList(product: OSGBProduct, outputPath: String, forceFetch: Boolean, continuer: Continuer, process: File => Unit): List[DownloadItem] = {
     val outputDirectory = resolveAndMkdirs(outputPath)
     val sardine = factory.begin
     product.zips.map {
       webDavFile =>
-        fetchFile(webDavFile.url, sardine, outputDirectory, forceFetch)
+        val file = fileOf(webDavFile.url)
+        if (continuer.isBusy)
+          fetchFile(webDavFile.url, file, sardine, outputDirectory, forceFetch, process)
+        else {
+          DownloadItem.stale(DownloadedFile(outputDirectory, file))
+        }
     }
   }
 
@@ -42,25 +48,18 @@ class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: S
     new URL(myUrl.getProtocol, myUrl.getHost, myUrl.getPort, res.getHref.getPath)
   }
 
-  private def fetchFile(url: URL, sardine: Sardine, outputDirectory: File, forceFetch: Boolean): DownloadItem = {
-    val file = fileOf(url)
+  private def fetchFile(url: URL, file: String, sardine: Sardine, outputDirectory: File, forceFetch: Boolean, process: File => Unit): DownloadItem = {
     val outFile = DownloadedFile(outputDirectory, file)
-    if (forceFetch || !outFile.exists || outFile.isIncomplete) {
-      // pre-existing files are considered incomplete
-      outFile.delete()
+    outFile.delete()
 
-      val ff = if (forceFetch) " (forced)" else ""
-      status.info(s"Fetching {} to $file$ff.", url)
-      val dt = new DiagnosticTimer
-      val fetched = doFetchFile(url, sardine, outFile)
-      outFile.touchDoneFile()
-      status.info(s"Fetched $file in {}.", dt)
-      DownloadItem.fresh(fetched)
-
-    } else {
-      status.info(s"Already had $file.")
-      DownloadItem.stale(outFile)
-    }
+    val ff = if (forceFetch) " (forced)" else ""
+    status.info(s"Fetching {} to $file$ff.", url)
+    val dt = new DiagnosticTimer
+    val fetched = doFetchFile(url, sardine, outFile)
+    outFile.touchDoneFile()
+    status.info(s"Fetched $file in {}.", dt)
+    process(outFile.file)
+    DownloadItem.fresh(fetched)
   }
 
   private def doFetchFile(url: URL, sardine: Sardine, outFile: DownloadedFile): DownloadedFile = {

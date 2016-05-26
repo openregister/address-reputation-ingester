@@ -35,12 +35,15 @@ class Ingester(logger: StatusLogger, continuer: Continuer, writerFactory: Output
 
   val blpuWriter = writerFactory.writer("osgb_blpu", List("uprn"), logger, settings)
   val dpaWriter = writerFactory.writer("osgb_dpa", List("uprn", "postcode"), logger, settings)
-
-  blpuWriter.begin()
-  dpaWriter.begin()
+  val lpiWriter = writerFactory.writer("osgb_lpi", List("uprn"), logger, settings)
+  val sdWriter = writerFactory.writer("osgb_streetdesc", List("usrn"), logger, settings)
+  val streetWriter = writerFactory.writer("osgb_street", List("usrn"), logger, settings)
 
   var blpuCount = 0
   var dpaCount = 0
+  var lpiCount = 0
+  var sdCount = 0
+  var streetCount = 0
 
   def ingestZip(file: File) {
     val dt = new DiagnosticTimer
@@ -56,8 +59,35 @@ class Ingester(logger: StatusLogger, continuer: Continuer, writerFactory: Output
       }
     } finally {
       zip.close()
-      logger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}. BLPUs: $blpuCount, DPAs: $dpaCount.", file.getName, dt)
+      logger.info(s"Reading from ${zip.nFiles} CSV files in ${file.getName} took {}." +
+        s" BLPUs: $blpuCount, DPAs: $dpaCount LPIs: $lpiCount, Streets: $streetCount, Descr: $sdCount.", dt)
     }
+
+    if (!continuer.isBusy) {
+      abort()
+    }
+  }
+
+  def begin() {
+    blpuWriter.begin()
+    dpaWriter.begin()
+    lpiWriter.begin()
+    sdWriter.begin()
+    streetWriter.begin()
+
+    blpuCount = 0
+    dpaCount = 0
+    lpiCount = 0
+    sdCount = 0
+    streetCount = 0
+  }
+
+  private def abort() {
+    blpuWriter.abort()
+    dpaWriter.abort()
+    lpiWriter.abort()
+    sdWriter.abort()
+    streetWriter.abort()
   }
 
   // scalastyle:off
@@ -80,10 +110,10 @@ class Ingester(logger: StatusLogger, continuer: Continuer, writerFactory: Output
           dpa(csvLine)
 
         case OSStreet.RecordId =>
-          street(OSStreet(csvLine))
+          street(csvLine)
 
-        case OSStreetDescriptor.RecordId if OSStreetDescriptor.isEnglish(csvLine) =>
-          streetDescriptor(OSStreetDescriptor(csvLine))
+        case OSStreetDescriptor.RecordId =>
+          streetDescriptor(csvLine)
 
         case _ =>
       }
@@ -98,41 +128,22 @@ class Ingester(logger: StatusLogger, continuer: Continuer, writerFactory: Output
     blpuCount += 1
   }
 
-  private def street(street: OSStreet) {
-    //    if (forwardData.streets.containsKey(street.usrn)) {
-    //      val existingStreetStr = forwardData.streets.get(street.usrn)
-    //      val existingStreet = Street.unpack(existingStreetStr)
-    //      forwardData.streets.put(street.usrn, Street(street.recordType, existingStreet.streetDescription, existingStreet.localityName, existingStreet.townName).pack)
-    //    } else {
-    //      forwardData.streets.put(street.usrn, Street(street.recordType, "", "", "").pack)
-    //    }
+  private def street(csvLine: Array[String]) {
+    val street = OSStreet(csvLine)
+    streetWriter.output(street.normalise)
+    streetCount += 1
   }
 
-  private def streetDescriptor(sd: OSStreetDescriptor) {
-    //    if (forwardData.streets.containsKey(sd.usrn)) {
-    //      val existingStreetStr = forwardData.streets.get(sd.usrn)
-    //      val existingStreet = Street.unpack(existingStreetStr)
-    //      forwardData.streets.put(sd.usrn, Street(existingStreet.recordType, sd.description, sd.locality, sd.town).pack)
-    //    } else {
-    //      forwardData.streets.put(sd.usrn, Street('A', sd.description, sd.locality, sd.town).pack)
-    //    }
+  private def streetDescriptor(csvLine: Array[String]) {
+    val sd = OSStreetDescriptor(csvLine)
+    sdWriter.output(sd.normalise)
+    sdCount += 1
   }
 
   private def lpi(csvLine: Array[String]) {
-    //    val lpi = OSLpi(csvLine)
-    //
-    //    if (!fd.dpa.contains(lpi.uprn)) {
-    //      if (fd.blpu.containsKey(lpi.uprn)) {
-    //        val packedBlpu = fd.blpu.get(lpi.uprn)
-    //        val blpu = Blpu.unpack(packedBlpu)
-    //
-    //        if (blpu.logicalStatus == lpi.logicalStatus) {
-    //          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets))
-    //          lpiCount += 1
-    //          fd.blpu.remove(lpi.uprn) // need to decide which lpi to use in the firstPass using logic - not first in gets in
-    //        }
-    //      }
-    //    }
+    val lpi = OSLpi(csvLine)
+    lpiWriter.output(lpi.normalise)
+    lpiCount += 1
   }
 
   private def dpa(csvLine: Array[String]) {

@@ -85,20 +85,14 @@ class FetchController(logger: StatusLogger,
         model1.copy(product = found)
       }
 
-    val files =
-      if (model2.product.isDefined)
-        webdavFetcher.fetchList(model2.product.get, model2.pathSegment, model2.forceChange)
-      else
-        Nil
-
-    if (files.isEmpty) model2.copy(hasFailed = true)
-    else {
+    if (model2.product.isDefined) {
       val ingester = ingesterFactory.ingester(logger, continuer, dbWriterFactory, settings)
-      for (file <- files) {
-        ingester.ingestZip(file.file.file)
-      }
+      ingester.begin()
+      webdavFetcher.fetchList(model2.product.get, model2.pathSegment, model2.forceChange, continuer, file => ingester.ingestZip(file))
       model2
     }
+    else
+      model2.copy(hasFailed = true)
   }
 
 }
