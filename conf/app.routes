@@ -9,7 +9,7 @@ GET    /ping                                         controllers.PingController.
 GET    /goAuto                                       controllers.GoController.doGoAuto(bulkSize: Option[Int], loopDelay: Option[Int])
 GET    /go/:product/:epoch/:variant                  controllers.GoController.doGo(product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
 
-GET    /fetch/:product/:epoch/:variant               fetch.FetchController.doFetch(product, epoch: Int, variant, forceChange: Option[Boolean])
+GET    /fetch/:product/:epoch/:variant               fetch.FetchController.doFetch(product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
 
 GET    /switch/to/:product/:epoch/:index             controllers.SwitchoverController.doSwitchTo(product, epoch: Int, index: Int)
 

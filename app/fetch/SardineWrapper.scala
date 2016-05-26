@@ -38,7 +38,7 @@ class SardineWrapper(val url: URL, username: String, password: String, logger: S
     var result = WebDavFile(url, "", true, false, false, Nil)
     val buffer = new scala.collection.mutable.ListBuffer[WebDavFile]()
 
-    val resources: List[DavResource] = sardine.list(href).asScala.toList
+    val resources: List[DavResource] = sardine.list(href).asScala.toList.sortWith(davResOrder)
     for (res <- resources) {
       val u = base + res.getHref
       if (u == href && res.isDirectory) {
@@ -53,6 +53,8 @@ class SardineWrapper(val url: URL, username: String, password: String, logger: S
 
     result.copy(files = buffer.toList)
   }
+
+  private def davResOrder(a: DavResource, b: DavResource) = (a.getHref compareTo b.getHref) < 0
 
   private def isTxtFile(res: DavResource): Boolean = {
     res.getContentType == "text/plain" ||

@@ -26,7 +26,7 @@ import controllers.SimpleValidator._
 import ingest._
 import ingest.writers.{CollectionMetadata, OutputDBWriterFactory}
 import play.api.mvc.{Action, AnyContent}
-import services.exec.WorkerFactory
+import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -63,17 +63,20 @@ class FetchController(logger: StatusLogger,
                       url: URL,
                       collectionMetadata: CollectionMetadata) extends BaseController {
 
-  def doFetch(product: String, epoch: Int, variant: String, forceChange: Option[Boolean]): Action[AnyContent] = Action {
+  def doFetch(product: String, epoch: Int, variant: String,
+              bulkSize: Option[Int], loopDelay: Option[Int],
+              forceChange: Option[Boolean]): Action[AnyContent] = Action {
     request =>
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
+      val settings = FetchControllerHelper.settings(bulkSize, loopDelay)
       val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
-      workerFactory.worker.push(s"fetching ${model.pathSegment}", continuer => fetch(model))
+      workerFactory.worker.push(s"fetching ${model.pathSegment}", continuer => fetch(model, settings, continuer))
       Accepted("ok")
   }
 
-  def fetch(model1: StateModel): StateModel = {
+  def fetch(model1: StateModel, settings: WriterSettings, continuer: Continuer): StateModel = {
     val model2 =
       if (model1.product.isDefined) model1
       else {
@@ -88,7 +91,14 @@ class FetchController(logger: StatusLogger,
       else
         Nil
 
-    if (files.isEmpty) model2.copy(hasFailed = true) else model2
+    if (files.isEmpty) model2.copy(hasFailed = true)
+    else {
+      val ingester = ingesterFactory.ingester(logger, continuer, dbWriterFactory, settings)
+      for (file <- files) {
+        ingester.ingestZip(file.file.file)
+      }
+      model2
+    }
   }
 
 }

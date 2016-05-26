@@ -18,52 +18,51 @@ package ingest
 
 import java.io.File
 
-import ingest.writers.OutputDBWriter
+import addressbase._
+import ingest.writers.OutputDBWriterFactory
 import services.exec.Continuer
 import services.model.StatusLogger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
-import scala.collection.{Iterator, mutable}
+import scala.collection.Iterator
 
 object Ingester {
 
 }
 
 
-class Ingester(logger: StatusLogger, continuer: Continuer) {
+class Ingester(logger: StatusLogger, continuer: Continuer, writerFactory: OutputDBWriterFactory, settings: WriterSettings) {
 
-  private def pass(files: Seq[File], out: OutputDBWriter): Seq[File] = {
-    val passOn = new mutable.ListBuffer[File]()
-    for (file <- files
-         if continuer.isBusy) {
-      val dt = new DiagnosticTimer
-      val zip = LoadZip.zipReader(file, (name) => {
-        name.toLowerCase.endsWith(".csv")
-      })
-      try {
-        var neededLater = false
-        while (zip.hasNext && continuer.isBusy) {
-          val next = zip.next
-          val name = next.zipEntry.getName
-          logger.info(s"Reading zip entry $name...")
-          val r = processFile(next, out)
-          neededLater ||= r
-        }
-        if (neededLater) {
-          passOn += file
-        }
-      } finally {
-        zip.close()
-        logger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}.", file.getName, dt)
+  val blpuWriter = writerFactory.writer("osgb_blpu", List("uprn"), logger, settings)
+  val dpaWriter = writerFactory.writer("osgb_dpa", List("uprn", "postcode"), logger, settings)
+
+  blpuWriter.begin()
+  dpaWriter.begin()
+
+  var blpuCount = 0
+  var dpaCount = 0
+
+  def ingestZip(file: File) {
+    val dt = new DiagnosticTimer
+    val zip = LoadZip.zipReader(file, (name) => {
+      name.toLowerCase.endsWith(".csv")
+    })
+    try {
+      while (zip.hasNext && continuer.isBusy) {
+        val next = zip.next
+        val name = next.zipEntry.getName
+        val n = processFile(next)
+        logger.info(s"Read $n lines from zip entry $name.")
       }
+    } finally {
+      zip.close()
+      logger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}. BLPUs: $blpuCount, DPAs: $dpaCount.", file.getName, dt)
     }
-    passOn.toList
   }
 
   // scalastyle:off
-  private def processFile(csvIterator: Iterator[Array[String]], out: OutputDBWriter): Boolean = {
-    var needSecondPass = false
-
+  private def processFile(csvIterator: Iterator[Array[String]]) = {
+    var n = 0
     for (csvLine <- csvIterator
          if continuer.isBusy) {
 
@@ -72,39 +71,34 @@ class Ingester(logger: StatusLogger, continuer: Continuer) {
           OSCsv.setCsvFormatFor(csvLine(OSHeader.Version_Idx))
 
         case OSBlpu.RecordId =>
-          processBlpu(csvLine)
+          blpu(csvLine)
 
         case OSLpi.RecordId =>
-          processLPI(csvLine)
+          lpi(csvLine)
 
         case OSDpa.RecordId =>
-          processDpa(csvLine)
-          needSecondPass = true
+          dpa(csvLine)
 
         case OSStreet.RecordId =>
-          processStreet(OSStreet(csvLine))
+          street(OSStreet(csvLine))
 
         case OSStreetDescriptor.RecordId if OSStreetDescriptor.isEnglish(csvLine) =>
-          processStreetDescriptor(OSStreetDescriptor(csvLine))
+          streetDescriptor(OSStreetDescriptor(csvLine))
 
         case _ =>
       }
+      n += 1
     }
-
-    needSecondPass
+    n
   }
 
-  private def processBlpu(csvLine: Array[String]): Unit = {
-    //    val blpu = OSBlpu(csvLine)
-    //    forwardData.blpu.put(blpu.uprn, Blpu(blpu.postcode, blpu.logicalStatus).pack)
+  private def blpu(csvLine: Array[String]) {
+    val blpu = OSBlpu(csvLine)
+    blpuWriter.output(blpu.normalise)
+    blpuCount += 1
   }
 
-  private def processDpa(csvLine: Array[String]): Unit = {
-    //    val osDpa = OSDpa(csvLine)
-    //    forwardData.dpa.add(osDpa.uprn)
-  }
-
-  private def processStreet(street: OSStreet): Unit = {
+  private def street(street: OSStreet) {
     //    if (forwardData.streets.containsKey(street.usrn)) {
     //      val existingStreetStr = forwardData.streets.get(street.usrn)
     //      val existingStreet = Street.unpack(existingStreetStr)
@@ -114,7 +108,7 @@ class Ingester(logger: StatusLogger, continuer: Continuer) {
     //    }
   }
 
-  private def processStreetDescriptor(sd: OSStreetDescriptor) {
+  private def streetDescriptor(sd: OSStreetDescriptor) {
     //    if (forwardData.streets.containsKey(sd.usrn)) {
     //      val existingStreetStr = forwardData.streets.get(sd.usrn)
     //      val existingStreet = Street.unpack(existingStreetStr)
@@ -124,7 +118,7 @@ class Ingester(logger: StatusLogger, continuer: Continuer) {
     //    }
   }
 
-  private def processLPI(csvLine: Array[String]) {
+  private def lpi(csvLine: Array[String]) {
     //    val lpi = OSLpi(csvLine)
     //
     //    if (!fd.dpa.contains(lpi.uprn)) {
@@ -141,10 +135,10 @@ class Ingester(logger: StatusLogger, continuer: Continuer) {
     //    }
   }
 
-  private def processDPA(csvLine: Array[String]): Unit = {
-    //    val dpa = OSDpa(csvLine)
-    //    out.output(ExportDbAddress.exportDPA(dpa))
-    //    dpaCount += 1
+  private def dpa(csvLine: Array[String]) {
+    val dpa = OSDpa(csvLine)
+    dpaWriter.output(dpa.normalise)
+    dpaCount += 1
   }
 }
 
@@ -157,7 +151,7 @@ object WriterSettings {
 
 
 class IngesterFactory {
-  def ingester(continuer: Continuer, statusLogger: StatusLogger): Ingester =
-    new Ingester(statusLogger, continuer)
+  def ingester(logger: StatusLogger, continuer: Continuer, writerFactory: OutputDBWriterFactory, settings: WriterSettings): Ingester =
+    new Ingester(logger, continuer, writerFactory, settings)
 }
 

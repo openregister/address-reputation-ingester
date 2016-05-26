@@ -18,28 +18,28 @@
 
 package ingest.writers
 
+import addressbase.Document
 import com.mongodb._
 import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
 import config.ApplicationGlobal
 import ingest.WriterSettings
 import services.model.StatusLogger
-import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 
 
 class OutputDBWriterFactory {
 
-  def writer(collectionName: String,
-             indexedField: String, statusLogger: StatusLogger, settings: WriterSettings): OutputDBWriter =
-    new OutputDBWriter(collectionName, indexedField, statusLogger,
+  def writer(collectionName: String, indexedFields: Seq[String],
+             statusLogger: StatusLogger, settings: WriterSettings): OutputDBWriter =
+    new OutputDBWriter(collectionName, indexedFields, statusLogger,
       ApplicationGlobal.mongoConnection,
       settings)
 }
 
 
 class OutputDBWriter(collectionName: String,
-                     indexedField: String,
+                     indexedFields: Seq[String],
                      statusLogger: StatusLogger,
                      mongoDbConnection: CasbahMongoConnection,
                      settings: WriterSettings) {
@@ -58,13 +58,17 @@ class OutputDBWriter(collectionName: String,
     CollectionMetadata.writeCreationDateTo(collection)
   }
 
-  def output(address: DbAddress) {
+  def output(doc: Document) {
+    output(MongoDBObject(doc.tupled))
+  }
+
+  def output(doc: DBObject) {
     try {
-      bulk.insert(address.id, MongoDBObject(address.tupled))
       count += 1
+      bulk.insert(count.toString, doc)
     } catch {
       case me: MongoException =>
-        statusLogger.warn(s"Caught Mongo Exception processing bulk insertion $me")
+        statusLogger.warn(s"Caught MongoDB exception processing bulk insertion $me")
         hasError = true
         throw me
     }
@@ -74,14 +78,16 @@ class OutputDBWriter(collectionName: String,
     if (!hasError) {
       try {
         bulk.close()
-        collection.createIndex(MongoDBObject(indexedField -> 1), MongoDBObject("unique" -> false))
+        for (field <- indexedFields) {
+          collection.createIndex(MongoDBObject(field -> 1), MongoDBObject("unique" -> false))
+        }
         if (completed) {
           // we have finished! let's celebrate
           CollectionMetadata.writeCompletionDateTo(collection)
         }
       } catch {
         case me: MongoException =>
-          statusLogger.warn(s"Caught MongoException committing final bulk insert and creating index $me")
+          statusLogger.warn(s"Caught MongoDB exception committing final bulk insert and creating index $me")
           hasError = true
       }
     }
@@ -92,9 +98,9 @@ class OutputDBWriter(collectionName: String,
     } else {
       statusLogger.info(s"Loaded $count documents.")
     }
+
     hasError
   }
-
 }
 
 

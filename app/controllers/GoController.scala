@@ -88,7 +88,7 @@ class GoController(logger: StatusLogger,
 
   private def pipeline(model1: StateModel, settings: WriterSettings, continuer: Continuer) {
     if (continuer.isBusy) {
-      fetchController.fetch(model1)
+      fetchController.fetch(model1, settings, continuer)
     }
   }
 }
