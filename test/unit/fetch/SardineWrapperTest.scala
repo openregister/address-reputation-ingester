@@ -47,8 +47,8 @@ class SardineWrapperTest extends PlaySpec with Mockito {
   )
   val abpEpochResources = List[DavResource](
     dir("/webdav/abp/", "abp"),
-    dir("/webdav/abp/38/", "38"),
-    dir("/webdav/abp/39/", "39")
+    dir("/webdav/abp/39/", "39"),
+    dir("/webdav/abp/38/", "38")
   )
   val abpE38VariantResources = List[DavResource](
     dir("/webdav/abp/38/", "38"),
@@ -81,7 +81,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
   }
 
   "find available" should {
-    "discover a tree of files using standard media types" in {
+    "discover a sorted tree of files using standard media types" in {
       new Context("application/zip", "text/plain") {
         // given
         when(sardine.list(base + "/")) thenReturn productResources.asJava
@@ -101,16 +101,16 @@ class SardineWrapperTest extends PlaySpec with Mockito {
             WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/abp/38/full/"), "full", isDirectory = true, files = List(
-                  WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
-                  WebDavFile(new URL(base + "/abp/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
+                  WebDavFile(new URL(base + "/abp/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true),
+                  WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isZipFile = true)
                 ))
               )),
               WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
-                  WebDavFile(new URL(base + "/abp/39/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
                   WebDavFile(new URL(base + "/abp/39/full/DVD1.txt"), "DVD1.txt", isPlainText = true),
-                  WebDavFile(new URL(base + "/abp/39/full/DVD2.zip"), "DVD2.zip", isZipFile = true),
-                  WebDavFile(new URL(base + "/abp/39/full/DVD2.txt"), "DVD2.txt", isPlainText = true)
+                  WebDavFile(new URL(base + "/abp/39/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                  WebDavFile(new URL(base + "/abp/39/full/DVD2.txt"), "DVD2.txt", isPlainText = true),
+                  WebDavFile(new URL(base + "/abp/39/full/DVD2.zip"), "DVD2.zip", isZipFile = true)
                 ))
               ))
             ))
@@ -118,7 +118,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
       }
     }
 
-    "discover a tree of files using the file extensions" in {
+    "discover a sorted tree of files using the file extensions" in {
       new Context("application/octet-stream", "application/octet-stream") {
         // given
         when(sardine.list(base + "/")) thenReturn productResources.asJava
@@ -138,16 +138,16 @@ class SardineWrapperTest extends PlaySpec with Mockito {
             WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/abp/38/full/"), "full", isDirectory = true, files = List(
-                  WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
-                  WebDavFile(new URL(base + "/abp/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
+                  WebDavFile(new URL(base + "/abp/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true),
+                  WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isZipFile = true)
                 ))
               )),
               WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
-                  WebDavFile(new URL(base + "/abp/39/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
                   WebDavFile(new URL(base + "/abp/39/full/DVD1.txt"), "DVD1.txt", isPlainText = true),
-                  WebDavFile(new URL(base + "/abp/39/full/DVD2.zip"), "DVD2.zip", isZipFile = true),
-                  WebDavFile(new URL(base + "/abp/39/full/DVD2.txt"), "DVD2.txt", isPlainText = true)
+                  WebDavFile(new URL(base + "/abp/39/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                  WebDavFile(new URL(base + "/abp/39/full/DVD2.txt"), "DVD2.txt", isPlainText = true),
+                  WebDavFile(new URL(base + "/abp/39/full/DVD2.zip"), "DVD2.zip", isZipFile = true)
                 ))
               ))
             ))
