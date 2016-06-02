@@ -59,6 +59,7 @@ class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: S
     outFile.touchDoneFile()
     status.info(s"Fetched $file in {}.", dt)
     process(outFile.file)
+    status.info(s"Fetched and processed $file in {}.", dt)
     DownloadItem.fresh(fetched)
   }
 

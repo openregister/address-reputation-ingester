@@ -120,7 +120,6 @@ class BatchedBulkOperation(settings: WriterSettings, collection: MongoCollection
   }
 
   def insert(id: String, document: DBObject) {
-    //bulk.find(MongoDBObject("_id" -> id)).upsert().update(MongoDBObject("$setOnInsert" -> document))
     bulk.insert(document)
     count += 1
 
