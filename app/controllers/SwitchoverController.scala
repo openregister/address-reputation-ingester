@@ -18,7 +18,7 @@ package controllers
 
 import config.ApplicationGlobal
 import controllers.SimpleValidator._
-import ingest.writers.CollectionMetadata
+import db.CollectionMetadata
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
 import services.audit.AuditClient

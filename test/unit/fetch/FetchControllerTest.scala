@@ -24,8 +24,8 @@ import java.net.URL
 import java.util.Date
 
 import com.github.sardine.Sardine
-import ingest.{IngesterFactory, StubContinuer, StubWorkerFactory, WriterSettings}
-import ingest.writers.{CollectionMetadata, CollectionName, OutputDBWriterFactory}
+import db.{CollectionMetadata, CollectionName, OutputDBWriterFactory}
+import ingest.{StubContinuer, StubWorkerFactory}
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._

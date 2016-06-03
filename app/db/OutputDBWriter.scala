@@ -14,16 +14,17 @@
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
  *
+ *
  */
 
-package ingest.writers
+package db
 
 import addressbase.Document
 import com.mongodb._
 import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
 import config.ApplicationGlobal
-import ingest.WriterSettings
+import fetch.WriterSettings
 import services.model.StatusLogger
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 

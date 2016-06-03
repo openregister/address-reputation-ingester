@@ -23,7 +23,7 @@ package controllers
 
 import config.ApplicationGlobal
 import controllers.SimpleValidator._
-import ingest.writers.{CollectionMetadata, CollectionMetadataItem, CollectionName}
+import db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import services.exec.WorkerFactory

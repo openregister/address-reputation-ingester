@@ -17,7 +17,7 @@
  *
  */
 
-package ingest.writers
+package db
 
 import config.Divider._
 

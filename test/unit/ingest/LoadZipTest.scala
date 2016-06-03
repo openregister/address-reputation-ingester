@@ -23,6 +23,7 @@ package ingest
 
 import java.io.File
 
+import fetch.LoadZip
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar

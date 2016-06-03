@@ -20,7 +20,7 @@ package config
 
 import config.ConfigHelper._
 import controllers.SystemMetadataStoreFactory
-import ingest.writers.CollectionMetadata
+import db.CollectionMetadata
 import play.api.Play._
 import play.api._
 import services.exec.WorkQueue

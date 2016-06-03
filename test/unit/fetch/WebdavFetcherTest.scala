@@ -26,6 +26,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatestplus.play.PlaySpec
 import org.specs2.mock.Mockito
 import Utils._
+import ingest.StubContinuer
 import services.model.StatusLogger
 import uk.co.hmrc.logging.StubLogger
 
@@ -232,7 +233,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)
 
       // when
-      val downloaded = fetcher.fetchList(product, "stuff", false)
+      val downloaded = fetcher.fetchList(product, "stuff", false, new StubContinuer, f => {})
 
       // then
       downloaded.map(_.file.length).sum must be(files.map(_.length()).sum)
@@ -268,7 +269,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)
 
       // when
-      val downloaded = fetcher.fetchList(product, "stuff", false)
+      val downloaded = fetcher.fetchList(product, "stuff", false, new StubContinuer, f => {})
 
       // then
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
@@ -300,7 +301,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)
 
       // when
-      val downloaded = fetcher.fetchList(product, "stuff", true)
+      val downloaded = fetcher.fetchList(product, "stuff", true, new StubContinuer, f => {})
 
       // then
       downloaded.map(_.file.length).sum must be(files.map(_.length()).sum)

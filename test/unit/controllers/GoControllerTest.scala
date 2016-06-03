@@ -25,8 +25,8 @@ import java.io.File
 import java.net.URL
 
 import com.github.sardine.Sardine
-import fetch.{FetchController, SardineWrapper, WebDavFile, WebDavTree}
-import ingest.{StubWorkerFactory, WriterSettings}
+import fetch._
+import ingest.StubWorkerFactory
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -69,12 +69,12 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       fetchController, switchoverController, collectionController)
 
     def parameterTest(product: String, epoch: Int, variant: String): Unit = {
-//      val writerFactory = mock[OutputFileWriterFactory]
-//      val request = FakeRequest()
-//
-//      intercept[IllegalArgumentException] {
-//        await(call(goController.doGo(target, product, epoch, variant, None, None, None), request))
-//      }
+      //      val writerFactory = mock[OutputFileWriterFactory]
+      //      val request = FakeRequest()
+      //
+      //      intercept[IllegalArgumentException] {
+      //        await(call(goController.doGo(target, product, epoch, variant, None, None, None), request))
+      //      }
     }
 
     def teardown() {
@@ -155,7 +155,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel], any[WriterSettings], any[Continuer])
-//      verify(switchoverController).switchIfOK(any[StateModel])
+      //      verify(switchoverController).switchIfOK(any[StateModel])
       teardown()
     }
   }
@@ -204,8 +204,8 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController, times(2)).fetch(any[StateModel], any[WriterSettings], any[Continuer])
-//      verify(switchoverController, times(2)).switchIfOK(any[StateModel])
-//      verify(collectionController).cleanup()
+      //      verify(switchoverController, times(2)).switchIfOK(any[StateModel])
+      //      verify(collectionController).cleanup()
       teardown()
     }
   }

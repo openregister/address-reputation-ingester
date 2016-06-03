@@ -14,9 +14,10 @@
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
  *
+ *
  */
 
-package fetch
+package ingest
 
 import java.net.URL
 
@@ -24,25 +25,14 @@ import config.ApplicationGlobal
 import controllers.ControllerConfig
 import controllers.SimpleValidator._
 import db.{CollectionMetadata, OutputDBWriterFactory}
+import fetch._
 import play.api.mvc.{Action, AnyContent}
 import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
-object FetchControllerHelper {
-  def settings(opBulkSize: Option[Int], opLoopDelay: Option[Int]): WriterSettings = {
-    val bulkSize = opBulkSize getOrElse defaultBulkSize
-    val loopDelay = opLoopDelay getOrElse defaultLoopDelay
-    WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
-  }
-
-  val defaultBulkSize = 1000
-  val defaultLoopDelay = 0
-}
-
-
-object FetchController extends FetchController(
+object TranslateController extends TranslateController(
   ControllerConfig.logger,
   ControllerConfig.workerFactory,
   ControllerConfig.fetcher,
@@ -53,29 +43,29 @@ object FetchController extends FetchController(
   ApplicationGlobal.collectionMetadata)
 
 
-class FetchController(logger: StatusLogger,
-                      workerFactory: WorkerFactory,
-                      webdavFetcher: WebdavFetcher,
-                      ingesterFactory: IngesterFactory,
-                      dbWriterFactory: OutputDBWriterFactory,
-                      sardine: SardineWrapper,
-                      url: URL,
-                      collectionMetadata: CollectionMetadata) extends BaseController {
+class TranslateController(logger: StatusLogger,
+                          workerFactory: WorkerFactory,
+                          webdavFetcher: WebdavFetcher,
+                          ingesterFactory: IngesterFactory,
+                          dbWriterFactory: OutputDBWriterFactory,
+                          sardine: SardineWrapper,
+                          url: URL,
+                          collectionMetadata: CollectionMetadata) extends BaseController {
 
-  def doFetch(product: String, epoch: Int, variant: String,
-              bulkSize: Option[Int], loopDelay: Option[Int],
-              forceChange: Option[Boolean]): Action[AnyContent] = Action {
+  def doTranslate(product: String, epoch: Int, variant: String,
+                  bulkSize: Option[Int], loopDelay: Option[Int],
+                  forceChange: Option[Boolean]): Action[AnyContent] = Action {
     request =>
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
       val settings = FetchControllerHelper.settings(bulkSize, loopDelay)
       val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
-      workerFactory.worker.push(s"fetching ${model.pathSegment}", continuer => fetch(model, settings, continuer))
+      workerFactory.worker.push(s"fetching ${model.pathSegment}", continuer => translate(model, settings, continuer))
       Accepted("ok")
   }
 
-  def fetch(model1: StateModel, settings: WriterSettings, continuer: Continuer): StateModel = {
+  def translate(model1: StateModel, settings: WriterSettings, continuer: Continuer): StateModel = {
     val model2 =
       if (model1.product.isDefined) model1
       else {
@@ -93,5 +83,4 @@ class FetchController(logger: StatusLogger,
     else
       model2.copy(hasFailed = true)
   }
-
 }

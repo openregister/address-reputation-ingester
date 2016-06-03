@@ -21,6 +21,7 @@
 
 package ingest.writers
 
+import db.CollectionName
 import org.scalatest.FunSuite
 
 class CollectionNameTest extends FunSuite {

@@ -17,8 +17,7 @@
 package controllers
 
 import controllers.SimpleValidator._
-import fetch.{FetchController, FetchControllerHelper, SardineWrapper}
-import ingest.WriterSettings
+import fetch.{FetchController, FetchControllerHelper, SardineWrapper, WriterSettings}
 import play.api.mvc.{Action, AnyContent}
 import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}

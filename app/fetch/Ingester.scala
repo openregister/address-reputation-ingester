@@ -1,25 +1,28 @@
 /*
- * Copyright 2016 HM Revenue & Customs
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2016 HM Revenue & Customs
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
-package ingest
+package fetch
 
 import java.io.File
 
 import addressbase._
-import ingest.writers.OutputDBWriterFactory
+import db.OutputDBWriterFactory
 import services.exec.Continuer
 import services.model.StatusLogger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
@@ -31,13 +34,13 @@ object Ingester {
 }
 
 
-class Ingester(logger: StatusLogger, continuer: Continuer, writerFactory: OutputDBWriterFactory, settings: WriterSettings) {
+class Ingester(logger: StatusLogger, continuer: Continuer, writerFactory: OutputDBWriterFactory, settings: WriterSettings, productName: String) {
 
-  val blpuWriter = writerFactory.writer("osgb_blpu", List("uprn"), logger, settings)
-  val dpaWriter = writerFactory.writer("osgb_dpa", List("uprn", "postcode"), logger, settings)
-  val lpiWriter = writerFactory.writer("osgb_lpi", List("uprn"), logger, settings)
-  val sdWriter = writerFactory.writer("osgb_streetdesc", List("usrn"), logger, settings)
-  val streetWriter = writerFactory.writer("osgb_street", List("usrn"), logger, settings)
+  val blpuWriter = writerFactory.writer(productName + "_blpu", List("uprn"), logger, settings)
+  val dpaWriter = writerFactory.writer(productName + "_dpa", List("uprn", "postcode"), logger, settings)
+  val lpiWriter = writerFactory.writer(productName + "_lpi", List("uprn"), logger, settings)
+  val sdWriter = writerFactory.writer(productName + "_streetdesc", List("usrn"), logger, settings)
+  val streetWriter = writerFactory.writer(productName + "_street", List("usrn"), logger, settings)
 
   var blpuCount = 0
   var dpaCount = 0
@@ -162,7 +165,7 @@ object WriterSettings {
 
 
 class IngesterFactory {
-  def ingester(logger: StatusLogger, continuer: Continuer, writerFactory: OutputDBWriterFactory, settings: WriterSettings): Ingester =
-    new Ingester(logger, continuer, writerFactory, settings)
+  def ingester(logger: StatusLogger, continuer: Continuer, writerFactory: OutputDBWriterFactory, settings: WriterSettings, productName: String): Ingester =
+    new Ingester(logger, continuer, writerFactory, settings, productName)
 }
 
