@@ -239,6 +239,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       downloadDirectory.toPath.resolve("stuff").toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
+        "Info:Product bundle: {}",
         "Info:Fetching {} to bar.txt.",
         "Info:Fetched bar.txt in {}.",
         "Info:Fetching {} to baz.txt.",
@@ -274,6 +275,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       downloadDirectory.toPath.resolve("stuff").toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
+        "Info:Product bundle: {}",
         "Info:Already had bar.txt.",
         "Info:Already had baz.txt.",
         "Info:Already had foo.txt."
@@ -307,6 +309,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       downloadDirectory.toPath.resolve("stuff").toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
+        "Info:Product bundle: {}",
         "Info:Fetching {} to bar.txt (forced).",
         "Info:Fetched bar.txt in {}.",
         "Info:Fetching {} to baz.txt (forced).",

@@ -125,10 +125,34 @@ class WebDavTreeTest extends PlaySpec {
         )))
 
       // when
-      val list = tree.findAvailableFor("abp", "39")
+      val product = tree.findAvailableFor("abp", "39")
 
       // then
-      list must be(Some(OSGBProduct("abp", 39, List(leafFile("abp", 39, "DVD1.zip")))))
+      product must be(Some(OSGBProduct("abp", 39, List(leafFile("abp", 39, "DVD1.zip")))))
+    }
+
+    """
+      discover nothing when the set is incomplete
+    """ in {
+      // given
+      val tree = WebDavTree(
+        WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
+          WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/abp/40/"), "40", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abp/40/full/"), "full", isDirectory = true, files = List(
+                leafFile("abp", 40, "DVD1.zip"),
+                leafFile("abp", 40, "DVD1.txt"),
+                leafFile("abp", 40, "DVD2.zip")
+              ))
+            ))
+          ))
+        )))
+
+      // when
+      val list = tree.findAvailableFor("abp")
+
+      // then
+      list must be(Nil)
     }
 
     """
@@ -175,7 +199,7 @@ class WebDavTreeTest extends PlaySpec {
 
       // then
       list must be(Some(OSGBProduct("abp", 40,
-        List(leafFile("abp", 40, "data/001.zip"), leafFile("abp", 40, "data/002.zip"), leafFile("abp", 40, "data/003.zip")))))
+        List(leafFile("abp", 40, "001.zip"), leafFile("abp", 40, "002.zip"), leafFile("abp", 40, "003.zip")))))
     }
   }
 
