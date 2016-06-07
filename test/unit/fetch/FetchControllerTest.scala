@@ -45,8 +45,8 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
   val url = new URL(base)
   val username = "foo"
   val password = "bar"
-  val zip1 = WebDavFile(new URL(base + "/product/123/variant/DVD1.zip"), "DVD1.zip", isZipFile = true)
-  val zip2 = WebDavFile(new URL(base + "/product/123/variant/DVD2.zip"), "DVD2.zip", isZipFile = true)
+  val zip1 = WebDavFile(new URL(base + "/product/123/variant/DVD1.zip"), "DVD1.zip", isDataFile = true)
+  val zip2 = WebDavFile(new URL(base + "/product/123/variant/DVD2.zip"), "DVD2.zip", isDataFile = true)
 
   val outputDirectory = new File(System.getProperty("java.io.tmpdir") + "/fetch-controller-test")
   val downloadDirectory = new File(outputDirectory, "downloads")
@@ -124,7 +124,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
             WebDavFile(new URL(base + "/product/"), "product", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/product/123/"), "123", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/product/123/full/"), "full", isDirectory = true, files = List(
-                  WebDavFile(new URL(base + "/product/123/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                  WebDavFile(new URL(base + "/product/123/full/DVD1.zip"), "DVD1.zip", isDataFile = true),
                   WebDavFile(new URL(base + "/product/123/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
                 ))
               ))
@@ -155,7 +155,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
              |  product/
              |    123/
              |      full/
-             |        DVD1.zip (zip)
+             |        DVD1.zip (data)
              |        DVD1.txt (txt)
              |)""".stripMargin,
           "Info:Finished fetching product/123/variant after {}."
@@ -254,7 +254,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
             WebDavFile(new URL(base + "/product/"), "product", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/product/123/"), "123", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/product/123/full/"), "full", isDirectory = true, files = List(
-                  WebDavFile(new URL(base + "/product/123/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                  WebDavFile(new URL(base + "/product/123/full/DVD1.zip"), "DVD1.zip", isDataFile = true),
                   WebDavFile(new URL(base + "/product/123/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
                 ))
               ))
@@ -293,7 +293,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
             WebDavFile(new URL(base + "/product/"), "product", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/product/123/"), "123", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/product/123/full/"), "full", isDirectory = true, files = List(
-                  WebDavFile(new URL(base + "/product/123/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                  WebDavFile(new URL(base + "/product/123/full/DVD1.zip"), "DVD1.zip", isDataFile = true),
                   WebDavFile(new URL(base + "/product/123/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
                 ))
               ))

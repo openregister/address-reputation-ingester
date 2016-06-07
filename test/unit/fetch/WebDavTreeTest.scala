@@ -33,7 +33,9 @@ class WebDavTreeTest extends PlaySpec {
   val base = "http://somedavserver.com:81/webdav"
 
   private def leafFile(product: String, epoch: Int, name: String) = {
-    WebDavFile(new URL(s"$base/$product/$epoch/full/$name"), name, isZipFile = name.endsWith(".zip"), isPlainText = name.endsWith(".txt"))
+    WebDavFile(new URL(s"$base/$product/$epoch/full/$name"), name,
+      isDataFile = name.endsWith(".zip") || name.endsWith(".csv"),
+      isPlainText = name.endsWith(".txt"))
   }
 
   "WebDavTree.name" should {
@@ -222,15 +224,15 @@ class WebDavTreeTest extends PlaySpec {
           WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
             WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
-                leafFile("abp", 39, "DVD1.zip"),
+                leafFile("abp", 39, "DVD1.csv"),
                 leafFile("abp", 39, "DVD1.txt")
               ))
             )),
             WebDavFile(new URL(base + "/abp/40/"), "40", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/40/full/"), "full", isDirectory = true, files = List(
-                leafFile("abp", 40, "DVD1.zip"),
+                leafFile("abp", 40, "DVD1.csv"),
                 leafFile("abp", 40, "DVD1.txt"),
-                leafFile("abp", 40, "DVD2.zip"),
+                leafFile("abp", 40, "DVD2.csv"),
                 leafFile("abp", 40, "DVD2.txt")
               ))
             ))
@@ -241,7 +243,7 @@ class WebDavTreeTest extends PlaySpec {
       val list = tree.findLatestFor("abp")
 
       // then
-      list must be(Some(OSGBProduct("abp", 40, List(leafFile("abp", 40, "DVD1.zip"), leafFile("abp", 40, "DVD2.zip")))))
+      list must be(Some(OSGBProduct("abp", 40, List(leafFile("abp", 40, "DVD1.csv"), leafFile("abp", 40, "DVD2.csv")))))
     }
   }
 }
