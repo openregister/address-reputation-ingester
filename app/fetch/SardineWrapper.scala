@@ -69,7 +69,7 @@ class SardineWrapper(val url: URL, username: String, password: String, factory: 
   private def extn(filename: String) = {
     val dot = filename.lastIndexOf('.')
     if (dot < 0) ""
-    else filename.substring(dot)
+    else filename.substring(dot).toLowerCase
   }
 }
 

@@ -46,7 +46,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
   val username = "foo"
   val password = "bar"
   val zip1 = WebDavFile(new URL(base + "/product/123/variant/DVD1.zip"), "DVD1.zip", isDataFile = true)
-  val zip2 = WebDavFile(new URL(base + "/product/123/variant/DVD2.zip"), "DVD2.zip", isDataFile = true)
+  val zip2 = WebDavFile(new URL(base + "/product/123/variant/DVD2.ZiP"), "DVD2.ZiP", isDataFile = true)
 
   val outputDirectory = new File(System.getProperty("java.io.tmpdir") + "/fetch-controller-test")
   val downloadDirectory = new File(outputDirectory, "downloads")
@@ -135,7 +135,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         val f1Txt = new DownloadedFile("/a/b/DVD1.txt")
         val f1Zip = new DownloadedFile("/a/b/DVD1.zip")
         val f2Txt = new DownloadedFile("/a/b/DVD2.txt")
-        val f2Zip = new DownloadedFile("/a/b/DVD2.zip")
+        val f2Zip = new DownloadedFile("/a/b/DVD2.ZiP")
         val files = List(f1Txt, f1Zip, f2Txt, f2Zip)
         val items = List(DownloadItem.fresh(f1Txt), DownloadItem.fresh(f1Zip), DownloadItem.fresh(f2Txt), DownloadItem.fresh(f2Zip))
         when(webdavFetcher.fetchList(any[OSGBProduct], anyString, any[Boolean])) thenReturn items

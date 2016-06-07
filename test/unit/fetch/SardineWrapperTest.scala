@@ -174,7 +174,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         // mixture of MIME types because these have been observed on the remote server
         val file39Resources = List[DavResource](
           dir("/webdav/abp/39/full/", "full"),
-          file("/webdav/abp/39/full/file001.csv", "file001.csv", "application/binary"),
+          file("/webdav/abp/39/full/file001.CSV", "file001.CSV", "application/binary"),
           file("/webdav/abp/39/full/file001.txt", "file001.txt", "application/binary"),
           file("/webdav/abp/39/full/file002.csv", "file002.csv", "application/octet-stream"),
           file("/webdav/abp/39/full/file002.txt", "file002.txt", "application/octet-stream")
@@ -196,7 +196,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
               WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = Nil),
               WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
-                  WebDavFile(new URL(base + "/abp/39/full/file001.csv"), "file001.csv", isDataFile = true),
+                  WebDavFile(new URL(base + "/abp/39/full/file001.CSV"), "file001.CSV", isDataFile = true),
                   WebDavFile(new URL(base + "/abp/39/full/file001.txt"), "file001.txt", isPlainText = true),
                   WebDavFile(new URL(base + "/abp/39/full/file002.csv"), "file002.csv", isDataFile = true),
                   WebDavFile(new URL(base + "/abp/39/full/file002.txt"), "file002.txt", isPlainText = true)
@@ -226,7 +226,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
           file("/webdav/abp/39/full/data/file001.txt", "file001.txt", "text/plain"),
           file("/webdav/abp/39/full/data/file002.zip", "file002.zip", "application/zip"),
           file("/webdav/abp/39/full/data/file002.txt", "file002.txt", "text/plain"),
-          file("/webdav/abp/39/full/data/file003.zip", "file003.zip", "application/zip"),
+          file("/webdav/abp/39/full/data/file003.ziP", "file003.ziP", "application/zip"),
           file("/webdav/abp/39/full/data/file003.txt", "file003.txt", "text/plain")
         )
         when(sardine.list(base + "/")) thenReturn productResources.asJava
@@ -259,7 +259,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
                     WebDavFile(new URL(base + "/abp/39/full/data/file002.txt"), "file002.txt", isPlainText = true),
                     WebDavFile(new URL(base + "/abp/39/full/data/file002.zip"), "file002.zip", isDataFile = true),
                     WebDavFile(new URL(base + "/abp/39/full/data/file003.txt"), "file003.txt", isPlainText = true),
-                    WebDavFile(new URL(base + "/abp/39/full/data/file003.zip"), "file003.zip", isDataFile = true)
+                    WebDavFile(new URL(base + "/abp/39/full/data/file003.ziP"), "file003.ziP", isDataFile = true)
                   ))
                 ))
               ))
