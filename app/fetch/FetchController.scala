@@ -64,6 +64,7 @@ class FetchController(logger: StatusLogger,
       if (model1.product.isDefined) model1
       else {
         val tree = sardine.exploreRemoteTree
+        logger.info(tree.toString)
         val found = tree.findAvailableFor(model1.productName, model1.epoch.toString)
         model1.copy(product = found)
       }
@@ -71,8 +72,10 @@ class FetchController(logger: StatusLogger,
     val files =
       if (model2.product.isDefined)
         webdavFetcher.fetchList(model2.product.get, model2.pathSegment, model2.forceChange)
-      else
+      else {
+        logger.info("Nothing new available for " + model1.pathSegment)
         Nil
+      }
 
     val freshItems = files.filter(_.fresh)
     val toUnzip = freshItems.map(_.file)

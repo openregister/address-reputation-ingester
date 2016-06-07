@@ -42,7 +42,7 @@ object ControllerConfig {
   val workerFactory = new WorkerFactory()
   val logger = workerFactory.worker.statusLogger
 
-  val sardine = new SardineWrapper(remoteServer, remoteUser, remotePass, logger, new SardineFactory2)
+  val sardine = new SardineWrapper(remoteServer, remoteUser, remotePass, new SardineFactory2)
   val fetcher = new WebdavFetcher(sardine, downloadFolder, logger)
   val unzipper = new ZipUnpacker(downloadFolder, logger)
 }
