@@ -57,7 +57,7 @@ case class WebDavFile(url: URL, fullName: String,
 case class WebDavTree(root: WebDavFile) {
 
   def findLatestFor(product: String): Option[OSGBProduct] = {
-    val available = findAvailableFor(product).sorted
+    val available: List[OSGBProduct] = findAvailableFor(product).sorted
     available.reverse.headOption
   }
 

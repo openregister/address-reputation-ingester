@@ -173,7 +173,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         // given
         val abpE39VariantDataResources = List[DavResource](
           dir("/webdav/abp/39/full/", "full"),
-          dir("/webdav/abp/39/full/data", "data")
+          dir("/webdav/abp/39/full/data/", "data")
         )
         val file38Resources = List[DavResource](
           dir("/webdav/abp/38/full/", "full"),
@@ -181,7 +181,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
           file("/webdav/abp/38/full/DVD1.txt", "DVD1.txt", "text/plain")
         )
         val file39Resources = List[DavResource](
-          dir("/webdav/abp/39/full/data", "data"),
+          dir("/webdav/abp/39/full/data/", "data"),
           file("/webdav/abp/39/full/data/file001.zip", "file001.zip", "application/zip"),
           file("/webdav/abp/39/full/data/file001.txt", "file001.txt", "text/plain"),
           file("/webdav/abp/39/full/data/file002.zip", "file002.zip", "application/zip"),
