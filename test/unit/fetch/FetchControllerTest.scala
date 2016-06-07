@@ -151,9 +151,16 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         verify(unzipper).unzipList(any[List[DownloadedFile]], anyString)
         assert(logger.infos.map(_.message) === List(
           "Info:Starting fetching product/123/variant.",
+          """Info:WebDavTree(webdav/
+             |  product/
+             |    123/
+             |      full/
+             |        DVD1.zip (zip)
+             |        DVD1.txt (txt)
+             |)""".stripMargin,
           "Info:Finished fetching product/123/variant after {}."
         ))
-        assert(logger.size === 2)
+        assert(logger.size === 3)
         teardown()
       }
     }
