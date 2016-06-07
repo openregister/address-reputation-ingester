@@ -23,7 +23,7 @@ import services.model.StatusLogger
 
 import scala.collection.JavaConverters._
 
-class SardineWrapper(val url: URL, username: String, password: String, logger: StatusLogger, factory: SardineFactory2) {
+class SardineWrapper(val url: URL, username: String, password: String, factory: SardineFactory2) {
 
   def begin: Sardine = factory.begin(username, password)
 
