@@ -16,7 +16,6 @@
 
 package controllers
 
-import config.ConfigHelper
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
