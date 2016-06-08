@@ -16,13 +16,10 @@
 
 package config
 
-import play.api.{Configuration, Play}
+import play.api.Configuration
 import play.api.Mode._
-import play.api.Play._
 
 object ConfigHelper {
-  lazy val appName = mustGetConfigString(Play.current.mode, configuration, "appName")
-
   def mustGetConfigString(config: Configuration, key: String): String = {
     getConfigString(config, key).getOrElse {
       throw new Exception("ERROR: Unable to find config item " + key)
