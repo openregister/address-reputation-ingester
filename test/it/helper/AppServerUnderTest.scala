@@ -16,7 +16,6 @@
 
 package helper
 
-import config.ConfigHelper
 import org.scalatest._
 import org.scalatestplus.play.ServerProvider
 import play.api.libs.ws.{WS, WSResponse}
@@ -44,7 +43,7 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with SequentialN
     */
   lazy val port: Int = Helpers.testServerPort
 
-  lazy val appEndpoint = s"http://localhost:$port/" + ConfigHelper.appName
+  lazy val appEndpoint = s"http://localhost:$port"
 
   abstract override def run(testName: Option[String], args: Args): Status = {
     beforeAppServerStarts()
