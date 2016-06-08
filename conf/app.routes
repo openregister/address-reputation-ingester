@@ -19,6 +19,8 @@ GET    /switch/to/:product/:epoch/:index             controllers.SwitchoverContr
 GET    /admin/cancelTask                             controllers.AdminController.cancelTask
 GET    /admin/status                                 controllers.AdminController.status
 GET    /admin/fullStatus                             controllers.AdminController.fullStatus
+GET    /admin/dirTree                                controllers.AdminController.dirTree
+
 GET    /collections/list                             controllers.CollectionController.listCollections
 DELETE /collections/:name                            controllers.CollectionController.dropCollection(name)
 POST   /collections/clean                            controllers.CollectionController.doCleanup

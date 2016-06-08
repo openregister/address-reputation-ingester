@@ -34,19 +34,19 @@ class SardineWrapper(val url: URL, username: String, password: String, factory: 
 
   private def exploreRemoteTree(base: String, url: URL, sardine: Sardine): WebDavFile = {
     val href = url.toString
-    var result = WebDavFile(url, "", true, false, false, Nil)
+    var result = WebDavFile(url, "", 0L, true, false, false, Nil)
     val buffer = new scala.collection.mutable.ListBuffer[WebDavFile]()
 
     val resources: List[DavResource] = sardine.list(href).asScala.toList.sortWith(davResOrder)
     for (res <- resources) {
       val u = base + res.getHref
       if (u == href && res.isDirectory) {
-        result = WebDavFile(url, res.getName, res.isDirectory, false, false, Nil)
+        result = WebDavFile(url, res.getName, 0L, res.isDirectory, false, false, Nil)
       } else if (res.isDirectory) {
         val x = base + res.getPath
         buffer += exploreRemoteTree(base, new URL(x), sardine)
       } else {
-        buffer += WebDavFile(new URL(u), res.getName, res.isDirectory, isTxtFile(res), isDataFile(res), Nil)
+        buffer += WebDavFile(new URL(u), res.getName, res.getContentLength / 1024, res.isDirectory, isTxtFile(res), isDataFile(res), Nil)
       }
     }
 

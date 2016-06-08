@@ -51,7 +51,7 @@ case class Task(description: String,
 // flow of work cleanly.
 
 object WorkQueue {
-  val singleton = new WorkQueue(new StatusLogger(new LoggerFacade(Logger.logger), 2))
+  val singleton = new WorkQueue(new StatusLogger(new LoggerFacade(Logger.logger)))
 }
 
 

@@ -18,6 +18,10 @@
 
 package controllers
 
+import java.io.File
+import java.net.URL
+
+import fetch.WebDavFile
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import services.exec.WorkQueue
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -50,5 +54,28 @@ class AdminController(worker: WorkQueue) extends BaseController {
     request => {
       Ok(worker.fullStatus).withHeaders(CONTENT_TYPE -> "text/plain")
     }
+  }
+
+  def dirTree(): Action[AnyContent] = Action {
+    request => {
+      val tree = listFiles(ControllerConfig.downloadFolder)
+      Ok(tree.toString).withHeaders(CONTENT_TYPE -> "text/plain")
+    }
+  }
+
+  private def listFiles(dir: File): WebDavFile = {
+    val files = dir.listFiles.toList.sorted
+    val (dirs, plains) = files.partition(_.isDirectory)
+    val subs = dirs.map(listFiles)
+    val others = plains.map(toWebDavFile)
+    WebDavFile(new URL("file://" + dir.getPath), dir.getName, 0L, true, false, false, subs ++ others)
+  }
+
+  private def toWebDavFile(file: File): WebDavFile = {
+    val name = file.getName.toLowerCase
+    WebDavFile(new URL("file://" + file.getPath), file.getName, file.length / 1024,
+      isDirectory = false,
+      isPlainText = name.endsWith(".txt"),
+      isDataFile = name.endsWith(".csv") || name.endsWith(".zip"))
   }
 }

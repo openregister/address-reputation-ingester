@@ -29,7 +29,7 @@ import java.net.URL
   * pimped as a case class. Note that we cannot rely on the file modification
   * timestamps on the remote server.
   */
-case class WebDavFile(url: URL, fullName: String,
+case class WebDavFile(url: URL, fullName: String, kb: Long,
                       isDirectory: Boolean = false, isPlainText: Boolean = false, isDataFile: Boolean = false,
                       files: List[WebDavFile] = Nil) {
 
@@ -42,10 +42,11 @@ case class WebDavFile(url: URL, fullName: String,
   override def toString: String = indentedString("")
 
   private def indentedString(i: String): String = {
+    val length = if (isDirectory) "" else " %10d KiB".format(kb)
     val slash = if (isDirectory) "/" else ""
     val zip = if (isDataFile) " (data)" else ""
-    val txt = if (isPlainText) " (txt)" else ""
-    s"$i$fullName$slash$txt$zip" +
+    val txt = if (isPlainText) " (txt) " else ""
+    s"$i$fullName$slash$txt$zip$length" +
       files.map(_.indentedString(i + "  ")).mkString("\n", "", "")
   }
 }
