@@ -10,7 +10,7 @@ diverse systems within HMRC.
 
 The application is built upon the [Play Framework using Scala](https://www.playframework.com/documentation/2.3.x/ScalaHome).
 
-Timed behaviour is implemented using *cron* externally.
+Timed behaviour is implemented using *cron* externally, indiviual steps can be executed explicitly as required.
 
 ### Licence
 
