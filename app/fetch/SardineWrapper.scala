@@ -19,11 +19,10 @@ package fetch
 import java.net.URL
 
 import com.github.sardine.{DavResource, Sardine}
-import services.model.StatusLogger
 
 import scala.collection.JavaConverters._
 
-class SardineWrapper(val url: URL, username: String, password: String, logger: StatusLogger, factory: SardineFactory2) {
+class SardineWrapper(val url: URL, username: String, password: String, factory: SardineFactory2) {
 
   def begin: Sardine = factory.begin(username, password)
 
@@ -47,7 +46,7 @@ class SardineWrapper(val url: URL, username: String, password: String, logger: S
         val x = base + res.getPath
         buffer += exploreRemoteTree(base, new URL(x), sardine)
       } else {
-        buffer += WebDavFile(new URL(u), res.getName, res.isDirectory, isTxtFile(res), isZipFile(res), Nil)
+        buffer += WebDavFile(new URL(u), res.getName, res.isDirectory, isTxtFile(res), isDataFile(res), Nil)
       }
     }
 
@@ -58,19 +57,26 @@ class SardineWrapper(val url: URL, username: String, password: String, logger: S
 
   private def isTxtFile(res: DavResource): Boolean = {
     res.getContentType == "text/plain" ||
-      (res.getContentType == "application/octet-stream" && extn(res.getName) == ".txt")
+      (SardineWrapper.binaryMimeTypes.contains(res.getContentType) && extn(res.getName) == ".txt")
   }
 
-  private def isZipFile(res: DavResource): Boolean = {
+  private def isDataFile(res: DavResource): Boolean = {
     res.getContentType == "application/zip" ||
-      (res.getContentType == "application/octet-stream" && extn(res.getName) == ".zip")
+      res.getContentType == "text/csv" ||
+      (SardineWrapper.binaryMimeTypes.contains(res.getContentType) && SardineWrapper.dataFileExtensions.contains(extn(res.getName)))
   }
 
   private def extn(filename: String) = {
     val dot = filename.lastIndexOf('.')
     if (dot < 0) ""
-    else filename.substring(dot)
+    else filename.substring(dot).toLowerCase
   }
+}
+
+
+object SardineWrapper {
+  val binaryMimeTypes = Set("application/octet-stream", "application/binary")
+  val dataFileExtensions = Set(".zip", ".csv")
 }
 
 

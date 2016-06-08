@@ -189,22 +189,22 @@ class GoControllerTest extends FunSuite with MockitoSugar {
           WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true, files = List(
             WebDavFile(new URL(base + "/abi/38/"), "38", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abi/38/full/"), "full", isDirectory = true, files = List(
-                WebDavFile(new URL(base + "/abi/38/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                WebDavFile(new URL(base + "/abi/38/full/DVD1.zip"), "DVD1.zip", isDataFile = true),
                 WebDavFile(new URL(base + "/abi/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
               ))
             )))),
           WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
             WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/38/full/"), "full", isDirectory = true, files = List(
-                WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isDataFile = true),
                 WebDavFile(new URL(base + "/abp/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
               ))
             )),
             WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
-                WebDavFile(new URL(base + "/abp/39/full/DVD1.zip"), "DVD1.zip", isZipFile = true),
+                WebDavFile(new URL(base + "/abp/39/full/DVD1.zip"), "DVD1.zip", isDataFile = true),
                 WebDavFile(new URL(base + "/abp/39/full/DVD1.txt"), "DVD1.txt", isPlainText = true),
-                WebDavFile(new URL(base + "/abp/39/full/DVD2.zip"), "DVD2.zip", isZipFile = true),
+                WebDavFile(new URL(base + "/abp/39/full/DVD2.zip"), "DVD2.zip", isDataFile = true),
                 WebDavFile(new URL(base + "/abp/39/full/DVD2.txt"), "DVD2.txt", isPlainText = true)
               ))
             ))

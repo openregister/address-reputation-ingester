@@ -30,7 +30,7 @@ import java.net.URL
   * timestamps on the remote server.
   */
 case class WebDavFile(url: URL, fullName: String,
-                      isDirectory: Boolean = false, isPlainText: Boolean = false, isZipFile: Boolean = false,
+                      isDirectory: Boolean = false, isPlainText: Boolean = false, isDataFile: Boolean = false,
                       files: List[WebDavFile] = Nil) {
 
   val name = {
@@ -43,7 +43,7 @@ case class WebDavFile(url: URL, fullName: String,
 
   private def indentedString(i: String): String = {
     val slash = if (isDirectory) "/" else ""
-    val zip = if (isZipFile) " (zip)" else ""
+    val zip = if (isDataFile) " (data)" else ""
     val txt = if (isPlainText) " (txt)" else ""
     s"$i$fullName$slash$txt$zip" +
       files.map(_.indentedString(i + "  ")).mkString("\n", "", "")
@@ -57,7 +57,7 @@ case class WebDavFile(url: URL, fullName: String,
 case class WebDavTree(root: WebDavFile) {
 
   def findLatestFor(product: String): Option[OSGBProduct] = {
-    val available = findAvailableFor(product).sorted
+    val available: List[OSGBProduct] = findAvailableFor(product).sorted
     available.reverse.headOption
   }
 
@@ -94,16 +94,20 @@ case class WebDavTree(root: WebDavFile) {
   }
 
   private def filterZipsWithTxt(files: List[WebDavFile]): List[WebDavFile] = {
+    val subs = files.filter(_.isDirectory).flatMap(d => filterZipsWithTxt(d.files))
     val names = files.map(_.name).toSet
-    val allPairsExist = names.forall {
+    val txtAndZipNames = names.filter {
+      n =>
+        files.exists(f => f.isPlainText && f.name == n) ||
+          files.exists(f => f.isDataFile && f.name == n)
+    }
+    val allPairsExist = txtAndZipNames.forall {
       n =>
         files.exists(f => f.isPlainText && f.name == n) &&
-          files.exists(f => f.isZipFile && f.name == n)
+          files.exists(f => f.isDataFile && f.name == n)
     }
-    if (allPairsExist)
-      files.filter(_.isZipFile)
-    else
-      Nil
+    val chosen = if (allPairsExist) files.filter(_.isDataFile) else Nil
+    chosen ++ subs
   }
 }
 
