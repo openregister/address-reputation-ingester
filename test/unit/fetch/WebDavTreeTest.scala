@@ -38,6 +38,8 @@ class WebDavTreeTest extends PlaySpec {
       isPlainText = name.endsWith(".txt"))
   }
 
+//  "fix app.conf" should { "" in { fail() }}
+
   "WebDavTree.name" should {
     "handle name with dot" in {
       leafFile("abp", 40, "DVD2.txt").name must be("DVD2")
@@ -112,7 +114,8 @@ class WebDavTreeTest extends PlaySpec {
             WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
                 leafFile("abp", 39, "DVD1.zip"),
-                leafFile("abp", 39, "DVD1.txt")
+                leafFile("abp", 39, "DVD1.txt"),
+                leafFile("abp", 39, "ignore.this")
               ))
             )),
             WebDavFile(new URL(base + "/abp/40/"), "40", isDirectory = true, files = List(
@@ -144,7 +147,7 @@ class WebDavTreeTest extends PlaySpec {
               WebDavFile(new URL(base + "/abp/40/full/"), "full", isDirectory = true, files = List(
                 leafFile("abp", 40, "DVD1.zip"),
                 leafFile("abp", 40, "DVD1.txt"),
-                leafFile("abp", 40, "DVD2.zip")
+                leafFile("abp", 40, "DVD2.zip") // missing txt
               ))
             ))
           ))
@@ -189,7 +192,8 @@ class WebDavTreeTest extends PlaySpec {
                   leafFile("abp", 40, "002.zip"),
                   leafFile("abp", 40, "002.txt"),
                   leafFile("abp", 40, "003.zip"),
-                  leafFile("abp", 40, "003.txt")
+                  leafFile("abp", 40, "003.txt"),
+                  leafFile("abp", 40, "ignore.this")
                 ))
               ))
             ))
@@ -233,7 +237,8 @@ class WebDavTreeTest extends PlaySpec {
                 leafFile("abp", 40, "DVD1.csv"),
                 leafFile("abp", 40, "DVD1.txt"),
                 leafFile("abp", 40, "DVD2.csv"),
-                leafFile("abp", 40, "DVD2.txt")
+                leafFile("abp", 40, "DVD2.txt"),
+                leafFile("abp", 40, "ignore.this")
               ))
             ))
           ))
