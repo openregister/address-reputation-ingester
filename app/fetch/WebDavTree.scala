@@ -96,7 +96,12 @@ case class WebDavTree(root: WebDavFile) {
   private def filterZipsWithTxt(files: List[WebDavFile]): List[WebDavFile] = {
     val subs = files.filter(_.isDirectory).flatMap(d => filterZipsWithTxt(d.files))
     val names = files.map(_.name).toSet
-    val allPairsExist = names.forall {
+    val txtAndZipNames = names.filter {
+      n =>
+        files.exists(f => f.isPlainText && f.name == n) ||
+          files.exists(f => f.isDataFile && f.name == n)
+    }
+    val allPairsExist = txtAndZipNames.forall {
       n =>
         files.exists(f => f.isPlainText && f.name == n) &&
           files.exists(f => f.isDataFile && f.name == n)
