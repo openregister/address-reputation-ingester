@@ -42,12 +42,15 @@ case class WebDavFile(url: URL, fullName: String, kb: Long = 0L,
   override def toString: String = indentedString("")
 
   private def indentedString(i: String): String = {
-    val length = if (isDirectory) "" else " %10d KiB".format(kb)
-    val slash = if (isDirectory) "/" else ""
-    val zip = if (isDataFile) " (data)" else ""
-    val txt = if (isPlainText) " (txt) " else ""
-    s"$i$fullName$slash$txt$zip$length" +
-      files.map(_.indentedString(i + "  ")).mkString("\n", "", "")
+    if (isDirectory) {
+      s"$i$fullName/" +
+        files.map(_.indentedString(i + "  ")).mkString("\n", "", "")
+    } else {
+      val length = " %10d KiB".format(kb)
+      val mark = if (isDataFile) " (data)" else if (isPlainText) " (txt) " else "       "
+      "%s%-50s%s %10d KiB".format(i, fullName, mark, kb) +
+        files.map(_.indentedString(i + "  ")).mkString("\n", "", "")
+    }
   }
 }
 

@@ -155,8 +155,8 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
              |  product/
              |    123/
              |      full/
-             |        DVD1.zip (data)      12345 KiB
-             |        DVD1.txt (txt)           0 KiB
+             |        DVD1.zip                                           (data)      12345 KiB
+             |        DVD1.txt                                           (txt)           0 KiB
              |)""".stripMargin,
           "Info:Finished fetching product/123/variant after {}."
         ))

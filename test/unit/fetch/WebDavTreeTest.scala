@@ -32,13 +32,13 @@ class WebDavTreeTest extends PlaySpec {
 
   val base = "http://somedavserver.com:81/webdav"
 
-  private def leafFile(product: String, epoch: Int, name: String) = {
-    WebDavFile(new URL(s"$base/$product/$epoch/full/$name"), name,
+  private def leafFile(product: String, epoch: Int, name: String, kb: Long = 0L) = {
+    WebDavFile(new URL(s"$base/$product/$epoch/full/$name"), name, kb = kb,
       isDataFile = name.endsWith(".zip") || name.endsWith(".csv"),
       isPlainText = name.endsWith(".txt"))
   }
 
-//  "fix app.conf" should { "" in { fail() }}
+  //  "fix app.conf" should { "" in { fail() }}
 
   "WebDavTree.name" should {
     "handle name with dot" in {
@@ -249,6 +249,71 @@ class WebDavTreeTest extends PlaySpec {
 
       // then
       list must be(Some(OSGBProduct("abp", 40, List(leafFile("abp", 40, "DVD1.csv"), leafFile("abp", 40, "DVD2.csv")))))
+    }
+  }
+
+  "toString" should {
+    """
+      produce helpful listings of files and directories
+    """ in {
+      // given
+      val tree = WebDavTree(
+        WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
+          WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/abi/39/"), "39", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abi/39/full/"), "full", isDirectory = true, files = List(
+                leafFile("abi", 39, "DVD1.zip", 123456L),
+                leafFile("abi", 39, "DVD1.txt", 1L)
+              ))
+            ))
+          )),
+          WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
+                leafFile("abp", 39, "DVD1.csv", 999L),
+                leafFile("abp", 39, "DVD1.txt", 0L)
+              ))
+            )),
+            WebDavFile(new URL(base + "/abp/40/"), "40", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abp/40/full/"), "full", isDirectory = true, files = List(
+                WebDavFile(new URL(base + "/abp/40/full/data/"), "data", isDirectory = true, files = List(
+                  leafFile("abp", 40, "AddressBasePremium_FULL_2016-05-18_001_csv.zip", 8877L),
+                  leafFile("abp", 40, "AddressBasePremium_FULL_2016-05-18_001_csv.txt"),
+                  leafFile("abp", 40, "AddressBasePremium_FULL_2016-05-18_002_csv.zip", 9988L),
+                  leafFile("abp", 40, "AddressBasePremium_FULL_2016-05-18_002_csv.txt"),
+                  leafFile("abp", 40, "ignore.this", 4321L)
+                ))
+              ))
+            ))
+          ))
+        )))
+
+      // when
+      val info = tree.toString
+//      println(info)
+
+      // then
+      info must be(
+        """WebDavTree(webdav/
+          |  abi/
+          |    39/
+          |      full/
+          |        DVD1.zip                                           (data)     123456 KiB
+          |        DVD1.txt                                           (txt)           1 KiB
+          |  abp/
+          |    39/
+          |      full/
+          |        DVD1.csv                                           (data)        999 KiB
+          |        DVD1.txt                                           (txt)           0 KiB
+          |    40/
+          |      full/
+          |        data/
+          |          AddressBasePremium_FULL_2016-05-18_001_csv.zip     (data)       8877 KiB
+          |          AddressBasePremium_FULL_2016-05-18_001_csv.txt     (txt)           0 KiB
+          |          AddressBasePremium_FULL_2016-05-18_002_csv.zip     (data)       9988 KiB
+          |          AddressBasePremium_FULL_2016-05-18_002_csv.txt     (txt)           0 KiB
+          |          ignore.this                                                     4321 KiB
+          |)""".stripMargin)
     }
   }
 }
