@@ -88,18 +88,34 @@ class AdminController(worker: WorkQueue) extends BaseController {
   }
 
   private def listFiles(dir: File): WebDavFile = {
-    val files = dir.listFiles.toList.sorted
-    val (dirs, plains) = files.partition(_.isDirectory)
-    val subs = dirs.map(listFiles)
-    val others = plains.map(toWebDavFile)
-    WebDavFile(new URL("file://" + dir.getPath), dir.getName, 0L, true, false, false, subs ++ others)
+    val list = Option(dir.listFiles)
+    if (list.isEmpty) {
+      toWebDavFile(dir)
+    }
+    else {
+      val files = list.get.toList.sorted
+      val (dirs, plains) = files.partition(_.isDirectory)
+      val subs = dirs.map(listFiles)
+      val others = plains.map(f => toWebDavFile(f))
+      toWebDavFile(dir, subs ++ others)
+    }
   }
 
-  private def toWebDavFile(file: File): WebDavFile = {
+  private def toWebDavFile(file: File, contains: List[WebDavFile] = Nil): WebDavFile = {
+    val url = new URL("file://" + file.getPath)
     val name = file.getName.toLowerCase
-    WebDavFile(new URL("file://" + file.getPath), file.getName, file.length / 1024,
-      isDirectory = false,
+    WebDavFile(url, file.getName, length(file),
+      isDirectory = file.isDirectory,
       isPlainText = name.endsWith(".txt"),
-      isDataFile = name.endsWith(".csv") || name.endsWith(".zip"))
+      isDataFile = name.endsWith(".csv") || name.endsWith(".zip"),
+      files = contains)
+  }
+
+  private def length(file: File): Long = {
+    try {
+      if (file.isDirectory) 0L else file.length / 1024
+    } catch {
+      case se: SecurityException => 0L
+    }
   }
 }
