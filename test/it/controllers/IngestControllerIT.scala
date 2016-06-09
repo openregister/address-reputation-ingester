@@ -84,7 +84,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
 
       verifyOK("/admin/status", "busy ingesting exeter/1/sample")
 
-      assert(waitWhile("/admin/status", "busy ingesting exeter/1/sample", 100000) === true)
+      waitWhile("/admin/status", "busy ingesting exeter/1/sample", 100000)
 
       verifyOK("/admin/status", "idle")
 

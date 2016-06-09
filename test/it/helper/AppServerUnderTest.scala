@@ -81,7 +81,7 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with SequentialN
 
   @tailrec
   final def waitWhile(path: String, currentBody: String, timeout: Int): Boolean = {
-    if(timeout < 0) {
+    if (timeout < 0) {
       false
     } else {
       Thread.sleep(200)
@@ -93,7 +93,7 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with SequentialN
 
   @tailrec
   final def waitUntil(path: String, currentBody: String, timeout: Int): Boolean = {
-    if(timeout < 0) {
+    if (timeout < 0) {
       false
     } else {
       Thread.sleep(200)

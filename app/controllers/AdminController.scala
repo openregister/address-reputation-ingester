@@ -75,10 +75,16 @@ class AdminController(worker: WorkQueue) extends BaseController {
       else if (mb >= 100) "%d MiB".format(mb)
       else "%d KiB".format(kb)
     }
-    val downloadFileStore = Files.getFileStore(ControllerConfig.downloadFolder.toPath)
-    val total = downloadFileStore.getTotalSpace
-    val usable = downloadFileStore.getUsableSpace
-    "Disk space free %s out of total %s".format(memSize(usable), memSize(total))
+    try {
+      val downloadFileStore = Files.getFileStore(ControllerConfig.downloadFolder.toPath)
+      val total = downloadFileStore.getTotalSpace
+      val usable = downloadFileStore.getUsableSpace
+      "Disk space free %s out of total %s.".format(memSize(usable), memSize(total))
+    } catch {
+      // includes i/o and security manager exception, etc
+      case e: Exception =>
+        s"Disk space is unknown (${e.getMessage}})."
+    }
   }
 
   private def listFiles(dir: File): WebDavFile = {
