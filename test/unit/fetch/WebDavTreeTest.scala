@@ -211,7 +211,7 @@ class WebDavTreeTest extends PlaySpec {
 
   "find latest" should {
     """
-      discover one product with one epoch
+      discover one product with one epoch where all zips have corresponding txt markers
       and ignore any unimportant files
     """ in {
       // given
@@ -249,6 +249,41 @@ class WebDavTreeTest extends PlaySpec {
 
       // then
       list must be(Some(OSGBProduct("abp", 40, List(leafFile("abp", 40, "DVD1.csv"), leafFile("abp", 40, "DVD2.csv")))))
+    }
+
+    """
+      discover one product with one epoch where a ready-to-collect.txt marker exists
+      but there are no other txt marker files
+      and ignore any unimportant files
+    """ in {
+      // given
+      val tree = WebDavTree(
+        WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
+          WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
+                leafFile("abp", 39, "DVD1.zip"),
+                leafFile("abp", 39, "DVD1.txt")
+              ))
+            )),
+            WebDavFile(new URL(base + "/abp/40/"), "40", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/abp/40/full/"), "full", isDirectory = true, files = List(
+                WebDavFile(new URL(base + "/abp/40/full/data/"), "data", isDirectory = true, files = List(
+                  leafFile("abp", 40, "ABP_2016-05-18_001_csv.zip"),
+                  leafFile("abp", 40, "ABP_2016-05-18_002_csv.zip"),
+                  leafFile("abp", 40, "ignore.this")
+                )),
+                leafFile("abp", 40, WebDavTree.readyToCollectFile)
+              ))
+            ))
+          ))
+        )))
+
+      // when
+      val list = tree.findLatestFor("abp")
+
+      // then
+      list must be(Some(OSGBProduct("abp", 40, List(leafFile("abp", 40, "ABP_2016-05-18_001_csv.zip"), leafFile("abp", 40, "ABP_2016-05-18_002_csv.zip")))))
     }
   }
 
@@ -290,7 +325,7 @@ class WebDavTreeTest extends PlaySpec {
 
       // when
       val info = tree.toString
-//      println(info)
+      //      println(info)
 
       // then
       info must be(

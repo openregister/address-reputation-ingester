@@ -91,7 +91,8 @@ case class WebDavTree(root: WebDavFile) {
     if (fullFolder.isEmpty) None
     else {
       val files = fullFolder.head.files
-      val possibleDownloads: List[WebDavFile] = filterZipsWithTxt(files)
+      val readyToCollect = files.exists(_.fullName == WebDavTree.readyToCollectFile)
+      val possibleDownloads = if (readyToCollect) filterZips(files) else filterZipsWithTxt(files)
       if (possibleDownloads.isEmpty) None
       else Some(OSGBProduct(product, epoch.fullName.toInt, possibleDownloads))
     }
@@ -113,6 +114,18 @@ case class WebDavTree(root: WebDavFile) {
     val chosen = if (allPairsExist) files.filter(_.isDataFile) else Nil
     chosen ++ subs
   }
+
+  private def filterZips(files: List[WebDavFile]): List[WebDavFile] = {
+    val (subDirs, others) = files.partition(_.isDirectory)
+    val subs = subDirs.flatMap(d => filterZips(d.files))
+    val chosen = files.filter(_.isDataFile)
+    chosen ++ subs
+  }
+}
+
+
+object WebDavTree {
+  val readyToCollectFile = "ready-to-collect.txt"
 }
 
 
