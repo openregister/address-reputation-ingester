@@ -83,7 +83,7 @@ class AdminController(worker: WorkQueue) extends BaseController {
     } catch {
       // includes i/o and security manager exception, etc
       case e: Exception =>
-        s"Disk space is unknown (${e.getMessage}})."
+        s"Disk space is unknown (${e.getMessage})."
     }
   }
 
