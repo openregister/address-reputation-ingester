@@ -124,8 +124,8 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
             WebDavFile(new URL(base + "/product/"), "product", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/product/123/"), "123", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/product/123/full/"), "full", isDirectory = true, files = List(
-                  WebDavFile(new URL(base + "/product/123/full/DVD1.zip"), "DVD1.zip", isDataFile = true),
-                  WebDavFile(new URL(base + "/product/123/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
+                  WebDavFile(new URL(base + "/product/123/full/DVD1.zip"), "DVD1.zip", 12345L, isDataFile = true),
+                  WebDavFile(new URL(base + "/product/123/full/DVD1.txt"), "DVD1.txt", 0L, isPlainText = true)
                 ))
               ))
             ))
@@ -155,8 +155,8 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
              |  product/
              |    123/
              |      full/
-             |        DVD1.zip (data)
-             |        DVD1.txt (txt)
+             |        DVD1.zip (data)      12345 KiB
+             |        DVD1.txt (txt)           0 KiB
              |)""".stripMargin,
           "Info:Finished fetching product/123/variant after {}."
         ))

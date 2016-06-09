@@ -226,7 +226,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       }
       val webDavFiles = files.map {
         f =>
-          WebDavFile(new URL(s"$url${f.getName}"), f.getName, false, false, true, Nil)
+          WebDavFile(new URL(s"$url${f.getName}"), f.getName, 0L, false, false, true, Nil)
       }
       val product = OSGBProduct("abp", 39, webDavFiles)
       val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)
@@ -263,7 +263,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       }
       val webDavFiles = files.map {
         f =>
-          WebDavFile(new URL(s"$url${f.getName}"), f.getName, false, false, true, Nil)
+          WebDavFile(new URL(s"$url${f.getName}"), f.getName, 0L, false, false, true, Nil)
       }
       val product = OSGBProduct("abp", 39, webDavFiles)
       val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)
@@ -296,7 +296,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       }
       val webDavFiles = files.map {
         f =>
-          WebDavFile(new URL(s"$url${f.getName}"), f.getName, false, false, true, Nil)
+          WebDavFile(new URL(s"$url${f.getName}"), f.getName, 0L, false, false, true, Nil)
       }
       val product = OSGBProduct("abp", 39, webDavFiles)
       val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)

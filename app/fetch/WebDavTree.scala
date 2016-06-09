@@ -29,7 +29,7 @@ import java.net.URL
   * pimped as a case class. Note that we cannot rely on the file modification
   * timestamps on the remote server.
   */
-case class WebDavFile(url: URL, fullName: String, kb: Long,
+case class WebDavFile(url: URL, fullName: String, kb: Long = 0L,
                       isDirectory: Boolean = false, isPlainText: Boolean = false, isDataFile: Boolean = false,
                       files: List[WebDavFile] = Nil) {
 
