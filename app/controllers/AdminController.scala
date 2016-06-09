@@ -20,6 +20,7 @@ package controllers
 
 import java.io.File
 import java.net.URL
+import java.nio.file.Files
 
 import fetch.WebDavFile
 import play.api.mvc.{Action, AnyContent, Request, Result}
@@ -59,8 +60,25 @@ class AdminController(worker: WorkQueue) extends BaseController {
   def dirTree(): Action[AnyContent] = Action {
     request => {
       val tree = listFiles(ControllerConfig.downloadFolder)
-      Ok(tree.toString).withHeaders(CONTENT_TYPE -> "text/plain")
+      val disk = reportDiskSpace(ControllerConfig.downloadFolder)
+      val body = tree.toString + "\n" + disk
+      Ok(body).withHeaders(CONTENT_TYPE -> "text/plain")
     }
+  }
+
+  private def reportDiskSpace(dir: File): String = {
+    def memSize(size: Long): String = {
+      val kb = size / 1024
+      val mb = kb / 1024
+      val gb = mb / 1024
+      if (gb >= 100) "%d GiB".format(gb)
+      else if (mb >= 100) "%d MiB".format(mb)
+      else "%d KiB".format(kb)
+    }
+    val downloadFileStore = Files.getFileStore(ControllerConfig.downloadFolder.toPath)
+    val total = downloadFileStore.getTotalSpace
+    val usable = downloadFileStore.getUsableSpace
+    "Disk space free %s out of total %s".format(memSize(usable), memSize(total))
   }
 
   private def listFiles(dir: File): WebDavFile = {

@@ -17,7 +17,7 @@
 package helper
 
 import com.github.simplyscala.MongoEmbedDatabase
-import controllers.{IngestControllerIT, PingIT, SwitchoverControllerIT}
+import controllers._
 import org.scalatest.{Args, Status, Suite}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 
@@ -28,6 +28,8 @@ object EmbeddedMongoSuite extends Suite with MongoEmbedDatabase {
   var HowManyTestSuitesAreUsingThisServerWrapper =
     Set(
       classOf[PingIT],
+      classOf[AdminControllerIT],
+      classOf[CollectionControllerIT],
       classOf[IngestControllerIT],
       classOf[SwitchoverControllerIT]
     ).size
