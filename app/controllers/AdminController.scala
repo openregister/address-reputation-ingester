@@ -65,17 +65,20 @@ class AdminController(worker: WorkQueue) extends BaseController {
     }
   }
 
-  private val logFile = "logs/address-reputation-ingester.log"
+  private val logDir1 = "logs/"
+  private val logDir2 = "../logs/"
+  private val logFile1 = "address-reputation-ingester.log"
+  private val logFile2 = "application.log"
 
   private def readLogFile = {
-    val file1 = new File(logFile)
-    val file2 = new File("../" + logFile)
-    if (file1.exists) {
-      Source.fromFile(file1).mkString
-    } else if (file2.exists) {
-      Source.fromFile(file2).mkString
+    val options = Seq(logDir1 + logFile1, logDir2 + logFile1, logDir1 + logFile2, logDir2 + logFile2)
+    val found = options.map(new File(_)).find(_.exists)
+    if (found.nonEmpty) {
+      found.get.getPath + "\n" +
+        Source.fromFile(found.get).mkString
     } else {
-      "Log file not found in " + new File(".").getCanonicalPath
+      val pwd = new File(".").getCanonicalFile
+      "Log file not found in " + pwd
     }
   }
 
