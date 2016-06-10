@@ -2,7 +2,7 @@
 <configuration>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>logs/address-lookup-ingestor.log</file>
+        <file>logs/address-reputation-ingester.log</file>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>%date{ISO8601} %level %message%n</pattern>
         </encoder>

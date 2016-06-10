@@ -20,6 +20,7 @@ GET    /admin/cancelTask                             controllers.AdminController
 GET    /admin/status                                 controllers.AdminController.status
 GET    /admin/fullStatus                             controllers.AdminController.fullStatus
 GET    /admin/dirTree                                controllers.AdminController.dirTree
+GET    /admin/showLog                                controllers.AdminController.showLog
 
 GET    /collections/list                             controllers.CollectionController.listCollections
 DELETE /collections/:name                            controllers.CollectionController.dropCollection(name)

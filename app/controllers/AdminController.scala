@@ -27,6 +27,8 @@ import play.api.mvc.{Action, AnyContent, Request, Result}
 import services.exec.WorkQueue
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
+import scala.io.Source
+
 object AdminController extends AdminController(WorkQueue.singleton)
 
 class AdminController(worker: WorkQueue) extends BaseController {
@@ -54,6 +56,26 @@ class AdminController(worker: WorkQueue) extends BaseController {
   def fullStatus(): Action[AnyContent] = Action {
     request => {
       Ok(worker.fullStatus).withHeaders(CONTENT_TYPE -> "text/plain")
+    }
+  }
+
+  def showLog(): Action[AnyContent] = Action {
+    request => {
+      Ok(readLogFile).withHeaders(CONTENT_TYPE -> "text/plain")
+    }
+  }
+
+  private val logFile = "logs/address-reputation-ingester.log"
+
+  private def readLogFile = {
+    val file1 = new File(logFile)
+    val file2 = new File("../" + logFile)
+    if (file1.exists) {
+      Source.fromFile(file1).mkString
+    } else if (file2.exists) {
+      Source.fromFile(file2).mkString
+    } else {
+      "Log file not found in " + new File(".").getCanonicalPath
     }
   }
 
