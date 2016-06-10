@@ -83,7 +83,8 @@ class AdminController(worker: WorkQueue) extends BaseController {
     request => {
       val tree = listFiles(ControllerConfig.downloadFolder)
       val disk = reportDiskSpace(ControllerConfig.downloadFolder)
-      val body = tree.toString + "\n" + disk
+      val pwd = System.getenv("PWD")
+      val body = s"${ControllerConfig.downloadFolder}\n$tree\n$disk\nPWD=$pwd"
       Ok(body).withHeaders(CONTENT_TYPE -> "text/plain")
     }
   }

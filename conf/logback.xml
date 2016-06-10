@@ -2,19 +2,15 @@
 
 <configuration>
 
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="uk.gov.hmrc.play.logging.JsonEncoder"/>
-    </appender>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender"/>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <!-- Using '..' because the slug runs with PWD set to a folder with a hashed name inside the base folder. -->
-        <file>../logs/address-reputation-ingester.log</file>
+        <file>logs/address-reputation-ingester.log</file>
         <encoder class="uk.gov.hmrc.play.logging.JsonEncoder"/>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>../logs/address-reputation-ingester.%d{yyyy-MM-dd-HH-mm}.log</fileNamePattern>
+            <fileNamePattern>logs/address-reputation-ingester.%d{yyyy-MM-dd-HH-mm}.log</fileNamePattern>
             <maxFileSize>10MB</maxFileSize>
             <maxHistory>30</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
     </appender>
 
