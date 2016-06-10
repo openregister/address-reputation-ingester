@@ -32,6 +32,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import services.exec.{Continuer, WorkQueue}
 import ingest.Ingester.{Blpu, Street}
+import ingest.store.DbAddress
 import services.model.{StateModel, StatusLogger}
 import ingest.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress

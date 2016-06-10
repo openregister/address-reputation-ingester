@@ -24,6 +24,7 @@ package ingest
 import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
+import ingest.store.DbAddress
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
 import org.scalatest.FunSuite

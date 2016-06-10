@@ -39,6 +39,7 @@ object MicroServiceBuild extends Build with MicroService {
     "uk.gov.hmrc" %% "address-reputation-store" % "0.14.0" withSources()
       excludeAll ExclusionRule(organization = "org.reactivemongo"),
     "org.mongodb" %% "casbah" % "3.1.1",
+    "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.0",
     "ch.qos.logback" % "logback-classic" % "1.1.7",
     "ch.qos.logback" % "logback-core" % "1.1.7",
     "org.slf4j" % "jcl-over-slf4j" % "1.7.21",
