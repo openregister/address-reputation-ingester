@@ -27,6 +27,7 @@ import play.api.mvc.{Action, AnyContent, Request, Result}
 import services.exec.WorkQueue
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
+import scala.annotation.tailrec
 import scala.io.Source
 
 object AdminController extends AdminController(WorkQueue.singleton)
@@ -61,24 +62,33 @@ class AdminController(worker: WorkQueue) extends BaseController {
 
   def showLog(): Action[AnyContent] = Action {
     request => {
-      Ok(readLogFile).withHeaders(CONTENT_TYPE -> "text/plain")
+      Ok(readLogFile(Option(new File(".")))).withHeaders(CONTENT_TYPE -> "text/plain")
     }
   }
 
-  private val logDir1 = "logs/"
-  private val logDir2 = "../logs/"
   private val logFile1 = "address-reputation-ingester.log"
   private val logFile2 = "application.log"
+  private val logFileOptions = Seq(logFile1, logFile2)
 
-  private def readLogFile = {
-    val options = Seq(logDir1 + logFile1, logDir2 + logFile1, logDir1 + logFile2, logDir2 + logFile2)
-    val found = options.map(new File(_)).find(_.exists)
+  private def readLogFile(dir: Option[File]) = {
+    val logDir = findLogDir(dir)
+    val found = if (logDir.nonEmpty) logFileOptions.map(new File(logDir.get, _)).find(_.exists) else None
     if (found.nonEmpty) {
       found.get.getPath + "\n" +
         Source.fromFile(found.get).mkString
     } else {
       val pwd = new File(".").getCanonicalFile
       "Log file not found in " + pwd
+    }
+  }
+
+  @tailrec
+  private def findLogDir(dir: Option[File]): Option[File] = {
+    if (dir.isEmpty) None
+    else {
+      val logDir = new File(dir.get, "logs")
+      if (logDir.exists) Some(logDir)
+      else findLogDir(Option(dir.get.getParentFile))
     }
   }
 
