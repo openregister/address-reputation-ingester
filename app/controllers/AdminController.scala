@@ -100,9 +100,7 @@ object LogFileHelper {
 
   private def testForLogDir(dir: File, name: String): Option[File] = {
     val file1 = new File(dir, name)
-    println(s"file1 $file1")
     val file2 = new File(dir, "logs/" + name)
-    println(s"file2 $file2")
     if (file1.exists) Some(file1)
     else if (file2.exists) Some(file2)
     else None
