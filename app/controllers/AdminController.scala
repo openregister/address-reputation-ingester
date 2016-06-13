@@ -27,7 +27,6 @@ import play.api.mvc.{Action, AnyContent, Request, Result}
 import services.exec.WorkQueue
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-import scala.annotation.tailrec
 import scala.io.Source
 
 object AdminController extends AdminController(WorkQueue.singleton)
@@ -60,49 +59,62 @@ class AdminController(worker: WorkQueue) extends BaseController {
     }
   }
 
-  def showLog(): Action[AnyContent] = Action {
+  def showLog(dir: String): Action[AnyContent] = Action {
     request => {
-      Ok(readLogFile(Option(new File(".")))).withHeaders(CONTENT_TYPE -> "text/plain")
+      val d = if (dir.isEmpty) "." else dir
+      Ok(LogFileHelper.readLogFile(new File(d))).withHeaders(CONTENT_TYPE -> "text/plain")
     }
   }
 
+  def dirTree(): Action[AnyContent] = Action {
+    request => {
+      val treeInfo = DirTreeHelper.dirTreeInfo(ControllerConfig.downloadFolder)
+      Ok(treeInfo).withHeaders(CONTENT_TYPE -> "text/plain")
+    }
+  }
+}
+
+
+object LogFileHelper {
   private val logFile1 = "address-reputation-ingester.log"
   private val logFile2 = "application.log"
-  private val logFileOptions = Seq(logFile1, logFile2)
 
-  private def readLogFile(dir: Option[File]) = {
-    val logDir = findLogDir(dir)
-    val found = if (logDir.nonEmpty) logFileOptions.map(new File(logDir.get, _)).find(_.exists) else None
+  def readLogFile(dir: File): String = {
+    val found = testForLogDir(dir, logFile1) orElse testForLogDir(dir, logFile2)
     if (found.nonEmpty) {
-      found.get.getPath + "\n" +
-        Source.fromFile(found.get).mkString
+      val path = found.get.getPath
+      try {
+        path + "\n" +
+          Source.fromFile(found.get).mkString
+      } catch {
+        case se: SecurityException =>
+          s"Access to $path is forbidden (${se.getMessage})"
+      }
     } else {
       val pwd = new File(".").getCanonicalFile
       "Log file not found in " + pwd
     }
   }
 
-  @tailrec
-  private def findLogDir(dir: Option[File]): Option[File] = {
-    if (dir.isEmpty) None
-    else {
-      val logDir = new File(dir.get, "logs")
-      if (logDir.exists) Some(logDir)
-      else findLogDir(Option(dir.get.getParentFile))
-    }
+  private def testForLogDir(dir: File, name: String): Option[File] = {
+    val file1 = new File(dir, name)
+    val file2 = new File(dir, "logs/" + name)
+    if (file1.exists) Some(file1)
+    else if (file2.exists) Some(file1)
+    None
+  }
+}
+
+
+object DirTreeHelper {
+  def dirTreeInfo(dir: File): String = {
+    val tree = DirTreeHelper.listFiles(dir)
+    val disk = DirTreeHelper.reportDiskSpace(dir)
+    val pwd = System.getenv("PWD")
+    s"$dir\n$tree\n$disk\nPWD=$pwd"
   }
 
-  def dirTree(): Action[AnyContent] = Action {
-    request => {
-      val tree = listFiles(ControllerConfig.downloadFolder)
-      val disk = reportDiskSpace(ControllerConfig.downloadFolder)
-      val pwd = System.getenv("PWD")
-      val body = s"${ControllerConfig.downloadFolder}\n$tree\n$disk\nPWD=$pwd"
-      Ok(body).withHeaders(CONTENT_TYPE -> "text/plain")
-    }
-  }
-
-  private def reportDiskSpace(dir: File): String = {
+  def reportDiskSpace(dir: File): String = {
     def memSize(size: Long): String = {
       val kb = size / 1024
       val mb = kb / 1024
@@ -123,7 +135,7 @@ class AdminController(worker: WorkQueue) extends BaseController {
     }
   }
 
-  private def listFiles(dir: File): WebDavFile = {
+  def listFiles(dir: File): WebDavFile = {
     val list = Option(dir.listFiles)
     if (list.isEmpty) {
       toWebDavFile(dir)
