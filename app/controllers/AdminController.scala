@@ -66,9 +66,10 @@ class AdminController(worker: WorkQueue) extends BaseController {
     }
   }
 
-  def dirTree(): Action[AnyContent] = Action {
+  def dirTree(root: Option[String], max: Option[Int]): Action[AnyContent] = Action {
     request => {
-      val treeInfo = DirTreeHelper.dirTreeInfo(ControllerConfig.downloadFolder)
+      val dir = if (root.isDefined) new File(root.get) else ControllerConfig.downloadFolder
+      val treeInfo = DirTreeHelper.dirTreeInfo(dir, max getOrElse 2)
       Ok(treeInfo).withHeaders(CONTENT_TYPE -> "text/plain")
     }
   }
@@ -110,11 +111,11 @@ object LogFileHelper {
 
 
 object DirTreeHelper {
-  def dirTreeInfo(dir: File): String = {
-    val tree = DirTreeHelper.listFiles(dir)
+  def dirTreeInfo(dir: File, maxDepth: Int): String = {
+    val tree = DirTreeHelper.listFiles(dir, maxDepth)
     val disk = DirTreeHelper.reportDiskSpace(dir)
     val pwd = System.getenv("PWD")
-    s"$dir\n$tree\n$disk\nPWD=$pwd"
+    s"root=$dir (max=$maxDepth)\n$tree\n$disk\nPWD=$pwd"
   }
 
   def reportDiskSpace(dir: File): String = {
@@ -138,15 +139,15 @@ object DirTreeHelper {
     }
   }
 
-  def listFiles(dir: File): WebDavFile = {
+  def listFiles(dir: File, remainingDepth: Int): WebDavFile = {
     val list = Option(dir.listFiles)
-    if (list.isEmpty) {
+    if (list.isEmpty || remainingDepth == 0) {
       toWebDavFile(dir)
     }
     else {
       val files = list.get.toList.sorted
       val (dirs, plains) = files.partition(_.isDirectory)
-      val subs = dirs.map(listFiles)
+      val subs = dirs.map(listFiles(_, remainingDepth - 1))
       val others = plains.map(f => toWebDavFile(f))
       toWebDavFile(dir, subs ++ others)
     }

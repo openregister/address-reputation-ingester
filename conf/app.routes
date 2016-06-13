@@ -19,7 +19,7 @@ GET    /switch/to/:product/:epoch/:index             controllers.SwitchoverContr
 GET    /admin/cancelTask                             controllers.AdminController.cancelTask
 GET    /admin/status                                 controllers.AdminController.status
 GET    /admin/fullStatus                             controllers.AdminController.fullStatus
-GET    /admin/dirTree                                controllers.AdminController.dirTree
+GET    /admin/dirTree                                controllers.AdminController.dirTree(root: Option[String], max: Option[Int])
 GET    /admin/showLog                                controllers.AdminController.showLog(dir: Option[String])
 
 GET    /collections/list                             controllers.CollectionController.listCollections
