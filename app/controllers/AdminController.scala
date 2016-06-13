@@ -18,7 +18,7 @@
 
 package controllers
 
-import java.io.File
+import java.io.{File, IOException}
 import java.net.URL
 import java.nio.file.Files
 
@@ -59,10 +59,10 @@ class AdminController(worker: WorkQueue) extends BaseController {
     }
   }
 
-  def showLog(dir: String): Action[AnyContent] = Action {
+  def showLog(dir: Option[String]): Action[AnyContent] = Action {
     request => {
-      val d = if (dir.isEmpty) "." else dir
-      Ok(LogFileHelper.readLogFile(new File(d))).withHeaders(CONTENT_TYPE -> "text/plain")
+      val d = if (dir.isEmpty) "." else dir.get
+      Ok(LogFileHelper.readLogFile(new File(d).getCanonicalFile)).withHeaders(CONTENT_TYPE -> "text/plain")
     }
   }
 
@@ -89,19 +89,22 @@ object LogFileHelper {
       } catch {
         case se: SecurityException =>
           s"Access to $path is forbidden (${se.getMessage})"
+        case io: IOException =>
+          s"Access to $path failed (${io.getMessage})"
       }
     } else {
-      val pwd = new File(".").getCanonicalFile
-      "Log file not found in " + pwd
+      "Log file not found in " + dir
     }
   }
 
   private def testForLogDir(dir: File, name: String): Option[File] = {
     val file1 = new File(dir, name)
+    println(s"file1 $file1")
     val file2 = new File(dir, "logs/" + name)
+    println(s"file2 $file2")
     if (file1.exists) Some(file1)
-    else if (file2.exists) Some(file1)
-    None
+    else if (file2.exists) Some(file2)
+    else None
   }
 }
 
