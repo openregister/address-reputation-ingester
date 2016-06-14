@@ -16,7 +16,8 @@
 
 package controllers
 
-import play.api.mvc.{AnyContent, Action}
+import config.Provenance
+import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.io.Source
@@ -28,11 +29,7 @@ object PingController extends PingController
 
 trait PingController extends BaseController {
 
-  val stream = getClass.getResourceAsStream("/provenance.json")
-  val versionInfo = Source.fromInputStream(stream).mkString
-  stream.close()
-
   def ping(): Action[AnyContent] = Action { request =>
-    Ok(versionInfo).withHeaders(CONTENT_TYPE -> "application/json")
+    Ok(Provenance.versionInfo).withHeaders(CONTENT_TYPE -> "application/json")
   }
 }
