@@ -32,11 +32,15 @@ import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.PlaySpec
+import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.exec.WorkQueue
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.logging.StubLogger
+
+import scala.concurrent.Future
+import play.api.test.Helpers._
 
 @RunWith(classOf[JUnitRunner])
 class FetchControllerTest extends PlaySpec with MockitoSugar {
@@ -62,13 +66,13 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
 
   trait context {
     val logger = new StubLogger
-    val status = new StatusLogger(logger)
+    val statusLogger = new StatusLogger(logger)
 
     val sardine = mock[Sardine]
     val sardineWrapper = mock[SardineWrapper]
     when(sardineWrapper.begin) thenReturn sardine
 
-    val worker = new WorkQueue(status)
+    val worker = new WorkQueue(statusLogger)
     val workerFactory = new StubWorkerFactory(worker)
 
     val webdavFetcher = mock[WebdavFetcher]
@@ -76,7 +80,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
     val request = FakeRequest()
     val collectionMetadata = mock[CollectionMetadata]
 
-    val fetchController = new FetchController(status, workerFactory, webdavFetcher, sardineWrapper, unzipper, url, collectionMetadata)
+    val fetchController = new FetchController(statusLogger, workerFactory, webdavFetcher, sardineWrapper, unzipper, url, collectionMetadata)
 
     def parameterTest(product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]
@@ -151,16 +155,54 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         verify(unzipper).unzipList(any[List[DownloadedFile]], anyString)
         assert(logger.infos.map(_.message) === List(
           "Info:Starting fetching product/123/variant.",
-          """Info:WebDavTree(webdav/
-             |  product/
-             |    123/
-             |      full/
-             |        DVD1.zip                                           (data)      12345 KiB
-             |        DVD1.txt                                           (txt)           0 KiB
-             |)""".stripMargin,
           "Info:Finished fetching product/123/variant after {}."
         ))
-        assert(logger.size === 3)
+        assert(logger.size === 2)
+        teardown()
+      }
+    }
+  }
+
+  "showRemoteTree" should {
+    "use the work queue to download files via webdav" in {
+      new context {
+        // given
+        val tree = WebDavTree(
+          WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/product/"), "product", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/product/123/"), "123", isDirectory = true, files = List(
+                WebDavFile(new URL(base + "/product/123/full/"), "full", isDirectory = true, files = List(
+                  WebDavFile(new URL(base + "/product/123/full/DVD1.zip"), "DVD1.zip", 12345L, isDataFile = true),
+                  WebDavFile(new URL(base + "/product/123/full/DVD1.txt"), "DVD1.txt", 0L, isPlainText = true)
+                ))
+              ))
+            ))
+          )))
+        when(sardineWrapper.exploreRemoteTree) thenReturn tree
+
+        val f1Txt = new DownloadedFile("/a/b/DVD1.txt")
+        val f1Zip = new DownloadedFile("/a/b/DVD1.zip")
+        val f2Txt = new DownloadedFile("/a/b/DVD2.txt")
+        val f2Zip = new DownloadedFile("/a/b/DVD2.ZiP")
+        val files = List(f1Txt, f1Zip, f2Txt, f2Zip)
+        val items = List(DownloadItem.fresh(f1Txt), DownloadItem.fresh(f1Zip), DownloadItem.fresh(f2Txt), DownloadItem.fresh(f2Zip))
+        when(webdavFetcher.fetchList(any[OSGBProduct], anyString, any[Boolean])) thenReturn items
+        when(sardineWrapper.url) thenReturn new URL("http://foo/bar")
+
+        val result: Future[Result] = call(fetchController.doShowTree(), request)
+
+        // then
+        assert(status(result) === 200)
+        assert(contentAsString(result) ===
+          """http://foo/bar
+            |webdav/
+            |  product/
+            |    123/
+            |      full/
+            |        DVD1.zip                                           (data)      12345 KiB
+            |        DVD1.txt                                           (txt)           0 KiB
+            |""".stripMargin)
+        verify(sardineWrapper).exploreRemoteTree
         teardown()
       }
     }
