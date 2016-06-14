@@ -26,12 +26,16 @@ import java.net.URL
 
 import config.ConfigHelper._
 import fetch.{SardineFactory2, SardineWrapper, WebdavFetcher, ZipUnpacker}
+import play.api.Logger
 import play.api.Play._
 import services.exec.WorkerFactory
 
 object ControllerConfig {
 
-  val remoteServer = new URL(mustGetConfigString(current.mode, current.configuration, "app.remote.server"))
+  private val appRemoteServer = mustGetConfigString(current.mode, current.configuration, "app.remote.server")
+  Logger.info("app.remote.server=" + appRemoteServer)
+
+  val remoteServer = new URL(appRemoteServer)
 
   val remoteUser = mustGetConfigString(current.mode, current.configuration, "app.remote.user")
   val remotePass = mustGetConfigString(current.mode, current.configuration, "app.remote.pass")
