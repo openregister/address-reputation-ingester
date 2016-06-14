@@ -47,7 +47,9 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
     val appName = config.getString("appName").getOrElse("APP NAME NOT SET")
     Logger.info(s"Starting microservice : $appName : in mode : ${app.mode}")
     Logger.info(Provenance.versionInfo)
+    println(Provenance.versionInfo)
     Logger.info(s"address-reputation-ingestor config:\n${config.underlying.toString}\n")
+    println(s"address-reputation-ingestor config:\n${config.underlying.toString}\n")
     super.onStart(app)
   }
 
