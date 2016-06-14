@@ -11,6 +11,7 @@ GET    /go/to/:target/:product/:epoch/:variant       controllers.GoController.do
 
 GET    /fetch/:product/:epoch/:variant               fetch.FetchController.doFetch(product, epoch: Int, variant, forceChange: Option[Boolean])
 POST   /fetch/clean                                  fetch.FetchController.doCleanup()
+GET    /fetch/showRemoteTree                         fetch.FetchController.doShowTree()
 
 GET    /ingest/to/:target/:product/:epoch/:variant   ingest.IngestController.doIngestTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
 

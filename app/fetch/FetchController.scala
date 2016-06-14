@@ -64,7 +64,6 @@ class FetchController(logger: StatusLogger,
       if (model1.product.isDefined) model1
       else {
         val tree = sardine.exploreRemoteTree
-        logger.info(tree.toString)
         val found = tree.findAvailableFor(model1.productName, model1.epoch.toString)
         model1.copy(product = found)
       }
@@ -100,6 +99,11 @@ class FetchController(logger: StatusLogger,
       logger.info(s"Deleting ${dir.getPath}/...")
       Utils.deleteDir(dir)
     }
+  }
+
+  def doShowTree(): Action[AnyContent] = Action {
+    val tree = sardine.exploreRemoteTree
+    Ok(sardine.url + "\n" + tree.root.toString)
   }
 
   private[fetch] def determineObsoleteFiles(products: List[String]): List[File] = {

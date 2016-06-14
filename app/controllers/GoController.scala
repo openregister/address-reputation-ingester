@@ -58,7 +58,6 @@ class GoController(logger: StatusLogger,
       workerFactory.worker.push(s"automatically searching", {
         continuer =>
           val tree = sardine.exploreRemoteTree
-          logger.info(tree.toString)
           for (product <- KnownProducts.OSGB
                if continuer.isBusy) {
             val found = tree.findLatestFor(product)
