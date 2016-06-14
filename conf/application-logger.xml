@@ -5,10 +5,10 @@
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender"/>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/address-reputation-ingester.log</file>
+        <file>address-reputation-ingester.log</file>
         <encoder class="uk.gov.hmrc.play.logging.JsonEncoder"/>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>logs/address-reputation-ingester.%d{yyyy-MM-dd-HH-mm}.log</fileNamePattern>
+            <fileNamePattern>address-reputation-ingester.%d{yyyy-MM-dd-HH-mm}.log</fileNamePattern>
             <maxFileSize>10MB</maxFileSize>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
