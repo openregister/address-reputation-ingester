@@ -1,0 +1,43 @@
+#!/bin/bash
+# To find postcodes grouped by local custodian code.
+#
+# First use abp-deinterleave. And install csvtool (via apt-get)
+# Then use postcodes-by-lcc.
+# Then use border-areas
+
+rm -f split/* *.txt *.tmp
+mkdir -p split
+
+echo splitting by country...
+for f in *; do
+  if [ -f $f ]; then
+    grep '^E,' $f | sed 's#E,##' > split/E-$f
+    grep '^S,' $f | sed 's#S,##' > split/S-$f
+    grep '^W,' $f | sed 's#W,##' > split/W-$f
+  fi
+done
+
+cd split
+rm -f $(wc -l E-* S-* W-* | grep ' 0 ' | sed 's#.*0 ##')
+
+IFS=$'\n'
+echo looking for duplicates...
+for f in E-*; do
+  n=$(echo $f | sed 's#E-##')
+  echo "  $n"
+  if [ -f S-$n ]; then
+    for line in $(cat $f); do
+      grep $line S-$n >> ../eng-sco-border.tmp
+    done
+  fi
+  if [ -f W-$n ]; then
+    for line in $(cat $f); do
+      grep $line W-$n >> ../eng-wal-border.tmp
+    done
+  fi
+done
+
+cd ..
+sort eng-sco-border.tmp | uniq > eng-sco-border.txt
+sort eng-wal-border.tmp | uniq > eng-wal-border.txt
+rm -f *.tmp

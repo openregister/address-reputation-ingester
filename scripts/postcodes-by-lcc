@@ -1,0 +1,37 @@
+#!/bin/bash
+# To find postcodes grouped by local custodian code.
+#
+# First use abp-deinterleave. And install csvtool (via apt-get)
+
+if [ ! -f t21.csv.gz ]; then
+    echo t21.csv.gz: not found.
+    exit 1
+fi
+
+# first remove non-deliverable addresses
+[ -f x21.csv.gz ] || zgrep -v ',"N",' t21.csv.gz | gzip >x21.csv.gz
+
+[ -f outcodes.txt ] || zcat x21.csv.gz | cut -f21 -d, | sed 's#"##' | cut -f1 -d' ' | uniq | sort | uniq > outcodes.txt
+
+rm -f tmp/y21-*
+mkdir -p tmp
+cd tmp
+echo splitting...
+zcat ../x21.csv.gz | split --lines=100000 --additional-suffix=.csv - y21-
+
+rm -f zy*
+
+# 14: lcc
+# 15: country
+# 21: postcode
+for f in y21-*; do
+  echo $f
+  csvtool col 15,21 $f | uniq > z$f
+done
+
+for oc in `cat ../outcodes.txt`; do
+  echo $oc
+  grep -h ",$oc " zy*.csv > $oc.csv
+done
+
+rm zy*.csv

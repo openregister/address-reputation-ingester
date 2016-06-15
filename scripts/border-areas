@@ -1,0 +1,20 @@
+#!/bin/bash
+# To find postcodes grouped by local custodian code.
+#
+# First use abp-deinterleave. And install csvtool (via apt-get)
+# Then use postcodes-by-lcc.
+
+mkdir -p ../borders
+
+for f in *; do
+  # England / Scotland border
+  if grep '^E,' $f >/dev/null && grep '^S,' $f >/dev/null; then
+    echo $f
+    mv $f ../borders/
+  fi
+  # England / Wales border
+  if grep '^E,' $f >/dev/null && grep '^W,' $f >/dev/null; then
+    echo $f
+    mv $f ../borders/
+  fi
+done
