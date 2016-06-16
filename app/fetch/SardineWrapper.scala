@@ -43,8 +43,7 @@ class SardineWrapper(val url: URL, username: String, password: String, factory: 
       if (u == href && res.isDirectory) {
         result = WebDavFile(url, res.getName, 0L, res.isDirectory, false, false, Nil)
       } else if (res.isDirectory) {
-        val x = base + res.getPath
-        buffer += exploreRemoteTree(base, new URL(x), sardine)
+        buffer += exploreRemoteTree(base, new URL(u), sardine)
       } else {
         buffer += WebDavFile(new URL(u), res.getName, res.getContentLength / 1024, res.isDirectory, isTxtFile(res), isDataFile(res), Nil)
       }

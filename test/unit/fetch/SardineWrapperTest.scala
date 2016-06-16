@@ -40,7 +40,8 @@ class SardineWrapperTest extends PlaySpec with Mockito {
   val productResources = List[DavResource](
     dir("/webdav/", "webdav"),
     dir("/webdav/abi/", "abi"),
-    dir("/webdav/abp/", "abp")
+    dir("/webdav/abp/", "abp"),
+    dir("/webdav/Code/", "Code")
   )
   val abiEpochResources = List[DavResource](
     dir("/webdav/abi/", "abi")
@@ -57,6 +58,13 @@ class SardineWrapperTest extends PlaySpec with Mockito {
   val abpE39VariantResources = List[DavResource](
     dir("/webdav/abp/39/", "39"),
     dir("/webdav/abp/39/full/", "full")
+  )
+  val codeResources = List[DavResource](
+    dir("/webdav/Code/", "Code"),
+    dir("/webdav/Code/Not%20used/", "Not used") // note the space character
+  )
+  val codeNotUsedResources = List[DavResource](
+    dir("/webdav/Code/Not%20used/", "Not used") // note the space character
   )
 
   class Context {
@@ -90,12 +98,17 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         when(sardine.list(base + "/abp/39/")) thenReturn abpE39VariantResources.asJava
         when(sardine.list(base + "/abp/38/full/")) thenReturn file38Resources.asJava
         when(sardine.list(base + "/abp/39/full/")) thenReturn file39Resources.asJava
+        when(sardine.list(base + "/Code/")) thenReturn codeResources.asJava
+        when(sardine.list(base + "/Code/Not%20used/")) thenReturn codeNotUsedResources.asJava
         val finder = new SardineWrapper(baseUrl, "username", "password", sardineFactory)
         // when
         val root = finder.exploreRemoteTree
         // then
         root must be(WebDavTree(
           WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/Code/"), "Code", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/Code/Not%20used/"), "Not used", isDirectory = true)
+            )),
             WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true),
             WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = List(
@@ -140,12 +153,17 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         when(sardine.list(base + "/abp/39/")) thenReturn abpE39VariantResources.asJava
         when(sardine.list(base + "/abp/38/full/")) thenReturn file38Resources.asJava
         when(sardine.list(base + "/abp/39/full/")) thenReturn file39Resources.asJava
+        when(sardine.list(base + "/Code/")) thenReturn codeResources.asJava
+        when(sardine.list(base + "/Code/Not%20used/")) thenReturn codeNotUsedResources.asJava
         val finder = new SardineWrapper(baseUrl, "username", "password", sardineFactory)
         // when
         val root = finder.exploreRemoteTree
         // then
         root must be(WebDavTree(
           WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/Code/"), "Code", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/Code/Not%20used/"), "Not used", isDirectory = true)
+            )),
             WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true),
             WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = List(
@@ -185,12 +203,17 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         when(sardine.list(base + "/abp/38/")) thenReturn List[DavResource](dir("/webdav/abp/38/", "38")).asJava
         when(sardine.list(base + "/abp/39/")) thenReturn abpE39VariantResources.asJava
         when(sardine.list(base + "/abp/39/full/")) thenReturn file39Resources.asJava
+        when(sardine.list(base + "/Code/")) thenReturn codeResources.asJava
+        when(sardine.list(base + "/Code/Not%20used/")) thenReturn codeNotUsedResources.asJava
         val finder = new SardineWrapper(baseUrl, "username", "password", sardineFactory)
         // when
         val root = finder.exploreRemoteTree
         // then
         root must be(WebDavTree(
           WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/Code/"), "Code", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/Code/Not%20used/"), "Not used", isDirectory = true)
+            )),
             WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true),
             WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = Nil),
@@ -237,12 +260,17 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         when(sardine.list(base + "/abp/38/full/")) thenReturn file38Resources.asJava
         when(sardine.list(base + "/abp/39/full/")) thenReturn abpE39VariantDataResources.asJava
         when(sardine.list(base + "/abp/39/full/data/")) thenReturn file39Resources.asJava
+        when(sardine.list(base + "/Code/")) thenReturn codeResources.asJava
+        when(sardine.list(base + "/Code/Not%20used/")) thenReturn codeNotUsedResources.asJava
         val finder = new SardineWrapper(baseUrl, "username", "password", sardineFactory)
         // when
         val root = finder.exploreRemoteTree
         // then
         root must be(WebDavTree(
           WebDavFile(new URL(base + "/"), "webdav", isDirectory = true, files = List(
+            WebDavFile(new URL(base + "/Code/"), "Code", isDirectory = true, files = List(
+              WebDavFile(new URL(base + "/Code/Not%20used/"), "Not used", isDirectory = true)
+            )),
             WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true),
             WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = List(
