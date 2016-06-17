@@ -21,6 +21,7 @@ package ingest
 
 import java.io.File
 
+import controllers.PassThroughAction
 import ingest.writers._
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
@@ -36,7 +37,6 @@ import uk.co.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
 class IngestControllerTest extends FunSuite with MockitoSugar {
-
 
   // scalastyle:off
   class context {
@@ -58,7 +58,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val worker = new WorkQueue(status)
     val workerFactory = new StubWorkerFactory(worker)
 
-    val ingestController = new IngestController(folder, dbFactory, fwFactory, nullFactory, ingesterFactory, workerFactory)
+    val ingestController = new IngestController(new PassThroughAction, folder, dbFactory, fwFactory, nullFactory, ingesterFactory, workerFactory)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val folder = new File(".")

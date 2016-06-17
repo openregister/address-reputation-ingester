@@ -69,6 +69,15 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
     }
 
     """
+       * when a wrong password is supplied
+       * the response should be 401
+    """ in {
+      val request = newRequest("GET", "/switch/to/abp/39/4")
+      val response = await(request.withAuth("admin", "wrong", BASIC).execute())
+      assert(response.status === UNAUTHORIZED)
+    }
+
+    """
        * passing bad parameters
        * should give 400
     """ in {

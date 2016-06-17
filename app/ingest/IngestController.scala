@@ -21,7 +21,7 @@ import java.io.File
 import controllers.ControllerConfig
 import controllers.SimpleValidator._
 import ingest.writers._
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -42,6 +42,7 @@ object IngestControllerHelper {
 
 
 object IngestController extends IngestController(
+  ControllerConfig.authAction,
   ControllerConfig.downloadFolder,
   new OutputDBWriterFactory,
   new OutputFileWriterFactory,
@@ -49,7 +50,8 @@ object IngestController extends IngestController(
   new IngesterFactory,
   ControllerConfig.workerFactory)
 
-class IngestController(unpackedFolder: File,
+class IngestController(action: ActionBuilder[Request],
+                       unpackedFolder: File,
                        dbWriterFactory: OutputDBWriterFactory,
                        fileWriterFactory: OutputFileWriterFactory,
                        nullWriterFactory: OutputNullWriterFactory,
@@ -59,7 +61,7 @@ class IngestController(unpackedFolder: File,
 
   def doIngestTo(target: String, product: String, epoch: Int, variant: String,
                  bulkSize: Option[Int], loopDelay: Option[Int],
-                 forceChange: Option[Boolean]): Action[AnyContent] = Action {
+                 forceChange: Option[Boolean]): Action[AnyContent] = action {
     request =>
       require(IngestControllerHelper.isSupportedTarget(target))
       require(isAlphaNumeric(product))

@@ -52,7 +52,6 @@ object ControllerConfig {
 
   val authAction = {
     val basicAuthFilterConfig = BasicAuthenticationFilterConfiguration.parse(current.mode, current.configuration)
-    println(basicAuthFilterConfig)
     new BasicAuthenticatedAction(basicAuthFilterConfig)
   }
 }
