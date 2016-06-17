@@ -24,6 +24,8 @@ import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
+import play.api.http.HeaderNames.{WWW_AUTHENTICATE => _}
+import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.audit.AuditClient
@@ -32,10 +34,17 @@ import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.admin.StoredMetadataItem
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger
+import uk.gov.hmrc.secure.{Salt, Scrambled}
+
+import scala.concurrent.Future
 
 
 @RunWith(classOf[JUnitRunner])
 class SwitchoverControllerTest extends FunSuite with MockitoSugar {
+
+  // password="password"
+  val authConfig = BasicAuthenticationFilterConfiguration("address-reputation-ingester", true, "admin",
+    Scrambled("StfavBn0QDn042NBdycLMPogG+jE6uCE"), Salt("RaTwtD0w8rOweSGf"))
 
   test(
     """
@@ -60,7 +69,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     val mongo = mock[CasbahMongoConnection]
     val request = FakeRequest()
 
-    val switchoverController = new SwitchoverController(status, workerFactory, mongo, store, auditClient)
+    val switchoverController = new SwitchoverController(new PassThroughAction, status, workerFactory, mongo, store, auditClient)
 
     intercept[IllegalArgumentException] {
       await(call(switchoverController.doSwitchTo(product, epoch, index), request))
@@ -101,7 +110,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn Some(MongoDBObject("completedAt" -> 0L))
       when(collection.name) thenReturn "abp_40_009"
 
-      val sc = new SwitchoverController(status, workerFactory, mongo, store, auditClient)
+      val sc = new SwitchoverController(new PassThroughAction, status, workerFactory, mongo, store, auditClient)
       val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
 
       assert(response.header.status / 100 === 2)
@@ -124,7 +133,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     new Context {
       when(db.collectionExists(anyString)) thenReturn false
 
-      val sc = new SwitchoverController(status, workerFactory, mongo, store, auditClient)
+      val sc = new SwitchoverController(new PassThroughAction, status, workerFactory, mongo, store, auditClient)
       val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
 
       testWorker.awaitCompletion()
@@ -149,15 +158,39 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn None
       when(collection.name) thenReturn "abp_40_009"
 
-      val sc = new SwitchoverController(status, workerFactory, mongo, store, auditClient)
+      val sc = new SwitchoverController(new PassThroughAction, status, workerFactory, mongo, store, auditClient)
       val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
 
       testWorker.awaitCompletion()
       testWorker.terminate()
 
+      assert(response.header.status === 202)
       assert(storedItem.get === "the initial value")
       assert(logger.warns.size === 2, logger.all)
       assert(logger.warns.head.message === "Warn:abp_40_009: collection is still being written")
+    }
+  }
+
+  test(
+    """
+      when a request is received without valid basic-auth headers
+      then the response is 401
+      and the stored metadata item for the product in question is left unchanged
+    """) {
+    new Context {
+      when(db.collectionExists("abp_40_009")) thenReturn true
+      when(db.apply("abp_40_009")) thenReturn collection
+      when(collection.findOneByID("metadata")) thenReturn None
+      when(collection.name) thenReturn "abp_40_009"
+
+      val sc = new SwitchoverController(new FailAuthAction, status, workerFactory, mongo, store, auditClient)
+      val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
+
+      testWorker.awaitCompletion()
+      testWorker.terminate()
+
+      assert(response.header.status === 401)
+      assert(storedItem.get === "the initial value")
     }
   }
 
@@ -174,7 +207,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn None
       when(collection.name) thenReturn "abp_40_009"
 
-      val sc = new SwitchoverController(status, workerFactory, mongo, store, auditClient)
+      val sc = new SwitchoverController(new PassThroughAction, status, workerFactory, mongo, store, auditClient)
       val model1 = new StateModel("abp", 40, Some("full"), Some(9), hasFailed = true)
 
       val model2 = sc.switchIfOK(model1)
@@ -201,4 +234,12 @@ class StoredMetadataStub(private var _value: String = "the initial value") exten
   }
 
   override def reset() {}
+}
+
+
+class FailAuthAction extends ActionBuilder[Request] with ActionFilter[Request] {
+
+  val fail = Some(Results.Unauthorized.withHeaders(WWW_AUTHENTICATE -> "some realm"))
+
+  def filter[A](request: Request[A]): Future[Option[Result]] = Future.successful(fail)
 }

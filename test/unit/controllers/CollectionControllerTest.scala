@@ -74,7 +74,7 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
     }
 
     val collectionMetadata = new CollectionMetadata(mongoDB)
-    val collectionController = new CollectionController(status, workerFactory, collectionMetadata, store)
+    val collectionController = new CollectionController(new PassThroughAction, status, workerFactory, collectionMetadata, store)
 
     def teardown() {
       worker.terminate()

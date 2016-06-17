@@ -101,6 +101,18 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
     }
   }
 
+
+  "ingest resource - errors" must {
+    """
+       * passing bad parameters
+       * should give 400
+    """ in {
+      assert(get("/ingest/to/db/abp/not-a-number/full").status === BAD_REQUEST)
+      //TODO fix this assert(get("/ingest/to/db/abp/1/not-a-number").status === BAD_REQUEST)
+    }
+  }
+
+
   override def beforeAppServerStarts() {
     deleteDir(tmpDir)
     val sample = getClass.getClassLoader.getResourceAsStream("exeter/1/sample/SX9090-first3600.zip")

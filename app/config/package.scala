@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import scala.collection.mutable
-
 package object config {
+
   implicit class IDivider(s: String) {
     def divide(c: Char): List[String] = Divider.divide(s, c)
+
     def divideLast(c: Char): List[String] = Divider.divideLast(s, c)
+
     def qsplit(c: Char): List[String] = Divider.qsplit(s, c)
   }
+
 }

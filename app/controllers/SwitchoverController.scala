@@ -20,7 +20,7 @@ import config.ApplicationGlobal
 import controllers.SimpleValidator._
 import ingest.writers.CollectionMetadata
 import play.api.Logger
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.audit.AuditClient
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
@@ -31,6 +31,7 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object SwitchoverController extends SwitchoverController(
+  ControllerConfig.authAction,
   ControllerConfig.logger,
   ControllerConfig.workerFactory,
   ApplicationGlobal.mongoConnection,
@@ -39,17 +40,18 @@ object SwitchoverController extends SwitchoverController(
 )
 
 
-class SwitchoverController(status: StatusLogger,
+class SwitchoverController(action: ActionBuilder[Request],
+                           status: StatusLogger,
                            workerFactory: WorkerFactory,
                            mongoDbConnection: CasbahMongoConnection,
                            systemMetadata: SystemMetadataStore,
                            auditClient: AuditClient) extends BaseController {
 
-  def doSwitchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = Action {
+  def doSwitchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = action {
     request =>
       require(isAlphaNumeric(product))
       val model = new StateModel(product, epoch, None, Some(index))
-      workerFactory.worker.push(s"switching to ${model.collectionName.toString}",         continuer =>          switchIfOK(model))
+      workerFactory.worker.push(s"switching to ${model.collectionName.toString}", continuer => switchIfOK(model))
       Accepted
   }
 

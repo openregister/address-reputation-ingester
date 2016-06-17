@@ -20,7 +20,7 @@ import controllers.SimpleValidator._
 import fetch.{FetchController, SardineWrapper}
 import ingest.writers.WriterSettings
 import ingest.{IngestController, IngestControllerHelper}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -31,6 +31,7 @@ object KnownProducts {
 
 
 object GoController extends GoController(
+  ControllerConfig.authAction,
   ControllerConfig.logger,
   ControllerConfig.workerFactory,
   ControllerConfig.sardine,
@@ -41,7 +42,8 @@ object GoController extends GoController(
 )
 
 
-class GoController(logger: StatusLogger,
+class GoController(action: ActionBuilder[Request],
+                   logger: StatusLogger,
                    workerFactory: WorkerFactory,
                    sardine: SardineWrapper,
                    fetchController: FetchController,
@@ -50,7 +52,7 @@ class GoController(logger: StatusLogger,
                    collectionController: CollectionController) extends BaseController {
 
   def doGoAuto(target: String,
-               bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = Action {
+               bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = action {
     request =>
       require(IngestControllerHelper.isSupportedTarget(target))
 
@@ -76,7 +78,7 @@ class GoController(logger: StatusLogger,
 
   def doGo(target: String, product: String, epoch: Int, variant: String,
            bulkSize: Option[Int], loopDelay: Option[Int],
-           forceChange: Option[Boolean]): Action[AnyContent] = Action {
+           forceChange: Option[Boolean]): Action[AnyContent] = action {
     request =>
       require(IngestControllerHelper.isSupportedTarget(target))
       require(isAlphaNumeric(product))

@@ -20,6 +20,7 @@ import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
 import ingest.writers.CollectionMetadata
+import play.api.libs.ws.WSAuthScheme.BASIC
 import uk.co.hmrc.address.admin.MetadataStore
 import uk.co.hmrc.logging.Stdout
 
@@ -36,7 +37,9 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
       val admin = new MetadataStore(mongo, Stdout)
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
 
-      assert(get("/switch/to/abp/39/3").status === ACCEPTED)
+      val request = newRequest("GET", "/switch/to/abp/39/3")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
       val collectionName = admin.gbAddressBaseCollectionName.get
@@ -54,13 +57,23 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
       CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_004"))
 
-      assert(get("/switch/to/abp/39/4").status === ACCEPTED)
+      val request = newRequest("GET", "/switch/to/abp/39/4")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
       val collectionName = admin.gbAddressBaseCollectionName.get
       assert(collectionName === initialCollectionName)
 
       mongo.close()
+    }
+
+    """
+       * passing bad parameters
+       * should give 400
+    """ in {
+      assert(get("/switch/to/abp/not-a-number/1").status === BAD_REQUEST)
+      assert(get("/switch/to/abp/1/not-a-number").status === BAD_REQUEST)
     }
   }
 
@@ -75,7 +88,9 @@ class SwitchoverControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
       CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_005"))
       CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_005"))
 
-      assert(get("/switch/to/abp/39/5").status === ACCEPTED)
+      val request = newRequest("GET", "/switch/to/abp/39/5")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
       val collectionName = admin.gbAddressBaseCollectionName.get

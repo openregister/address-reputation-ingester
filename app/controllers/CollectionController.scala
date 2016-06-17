@@ -25,13 +25,14 @@ import config.ApplicationGlobal
 import controllers.SimpleValidator._
 import ingest.writers.{CollectionMetadata, CollectionMetadataItem, CollectionName}
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.exec.WorkerFactory
 import services.model.StatusLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object CollectionController extends CollectionController(
+  ControllerConfig.authAction,
   ControllerConfig.logger,
   ControllerConfig.workerFactory,
   ApplicationGlobal.collectionMetadata,
@@ -39,7 +40,8 @@ object CollectionController extends CollectionController(
 )
 
 
-class CollectionController(status: StatusLogger,
+class CollectionController(action: ActionBuilder[Request],
+                           status: StatusLogger,
                            workerFactory: WorkerFactory,
                            collectionMetadata: CollectionMetadata,
                            systemMetadata: SystemMetadataStore) extends BaseController {
@@ -63,7 +65,7 @@ class CollectionController(status: StatusLogger,
       Ok(Json.toJson(ListCI(result)))
   }
 
-  def dropCollection(name: String): Action[AnyContent] = Action {
+  def dropCollection(name: String): Action[AnyContent] = action {
     request =>
       if (!isAlphaNumOrUnderscore(name))
         BadRequest(name)

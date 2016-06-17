@@ -18,7 +18,7 @@ package helper
 
 import org.scalatest._
 import org.scalatestplus.play.ServerProvider
-import play.api.libs.ws.{WS, WSResponse}
+import play.api.libs.ws.{InMemoryBody, WS, WSRequestHolder, WSResponse}
 import play.api.test.Helpers._
 import play.api.test.{FakeApplication, Helpers, TestServer}
 
@@ -62,8 +62,22 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with SequentialN
     }
   }
 
+  //-----------------------------------------------------------------------------------------------
+
+  val defaultContentType = "text/plain; charset=UTF-8"
+
+  def newRequest(method: String, path: String): WSRequestHolder = {
+    WS.url(appEndpoint + path).withMethod(method)
+  }
+
+  def newRequest(method: String, path: String, body: String, contentType: String = defaultContentType): WSRequestHolder = {
+    val contentTypeHdr = "Content-Type" -> contentType
+    val wsBody = InMemoryBody(body.trim.getBytes("UTF-8"))
+    newRequest(method, path).withHeaders(contentTypeHdr).withBody(wsBody)
+  }
+
   def request(method: String, p: String): WSResponse = {
-    await(WS.url(appEndpoint + p).withMethod(method).withHeaders("User-Agent" -> "xyz").execute())
+    await(newRequest(method, p).withHeaders("User-Agent" -> "xyz").execute())
   }
 
   def get(p: String): WSResponse = request("GET", p)

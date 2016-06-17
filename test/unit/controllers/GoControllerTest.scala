@@ -67,7 +67,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     val switchoverController = mock[SwitchoverController]
     val collectionController = mock[CollectionController]
 
-    val goController = new GoController(status, workerFactory, sardineWrapper,
+    val goController = new GoController(new PassThroughAction, status, workerFactory, sardineWrapper,
       fetchController, ingestController, switchoverController, collectionController)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {

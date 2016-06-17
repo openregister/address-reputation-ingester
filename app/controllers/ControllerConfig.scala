@@ -49,4 +49,10 @@ object ControllerConfig {
   val sardine = new SardineWrapper(remoteServer, remoteUser, remotePass, new SardineFactory2)
   val fetcher = new WebdavFetcher(sardine, downloadFolder, logger)
   val unzipper = new ZipUnpacker(downloadFolder, logger)
+
+  val authAction = {
+    val basicAuthFilterConfig = BasicAuthenticationFilterConfiguration.parse(current.mode, current.configuration)
+    println(basicAuthFilterConfig)
+    new BasicAuthenticatedAction(basicAuthFilterConfig)
+  }
 }
