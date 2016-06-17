@@ -57,11 +57,10 @@ case class BasicAuthenticationFilterConfiguration(realm: String, enabled: Boolea
   private val hasher = new PasswordHasher().withSalt(salt)
 
   def matches(other: Option[BasicAuthCredentials]): Boolean = {
-    other match {
-      case None =>
-        false
-      case Some(bac) =>
-        username == bac.username && password == hasher.hash(bac.conjoined)
+    if (other.isEmpty) false
+    else {
+      val supplied = hasher.hash(other.get.conjoined)
+      username == other.get.username && password == supplied
     }
   }
 }

@@ -31,17 +31,17 @@ trait Hasher {
 }
 
 /**
- * Provides a simple API for PBKDF2 password hashing. These algorithms are deliberately slow,
- * providing protection against brute force attacks.
- *
- * Larger values for pbkdf2Iterations will cost more CPU to evaluate; this is deliberate.
- */
-class PasswordHasher(hashByteSize: Int, pbkdf2Iterations: Int) {
+  * Provides a simple API for PBKDF2 password hashing. These algorithms are deliberately slow,
+  * providing protection against brute force attacks.
+  *
+  * Larger values for pbkdf2Iterations will cost more CPU to evaluate; this is deliberate.
+  */
+class PasswordHasher(hashBytes: Int, pbkdf2Iterations: Int) {
 
   /** Constructs an instance with default parameters. */
-  def this() = this(24, 100)
+  def this() = this(PasswordHasher.defaultHashSize, PasswordHasher.defaultIterations)
 
-  require(hashByteSize > 0)
+  require(hashBytes > 0)
   require(pbkdf2Iterations > 0)
 
   val PBKDF2_ALGORITHM = "PBKDF2WithHmacSHA1"
@@ -50,10 +50,10 @@ class PasswordHasher(hashByteSize: Int, pbkdf2Iterations: Int) {
   // val PBKDF2_ALGORITHM: String = "PDBKDF2WithHmacSHA512"
 
   /**
-   * Creates a hash using a specified salt. For a given source string, subsequent calls to this method will
-   * yield the same result provided the same salt is used.
-   * The result is a base64-encoded string.
-   */
+    * Creates a hash using a specified salt. For a given source string, subsequent calls to this method will
+    * yield the same result provided the same salt is used.
+    * The result is a base64-encoded string.
+    */
   @throws(classOf[GeneralSecurityException])
   protected def hashWithSalt(salt: Salt, password: String): Scrambled = {
     val bytes = pbkdf2(password.toCharArray, BasicBase64.decode(salt.value))
@@ -71,7 +71,7 @@ class PasswordHasher(hashByteSize: Int, pbkdf2Iterations: Int) {
 
   @throws(classOf[GeneralSecurityException])
   private def pbkdf2(password: Array[Char], salt: Array[Byte]): Array[Byte] = {
-    val spec = new PBEKeySpec(password, salt, pbkdf2Iterations, hashByteSize * 8)
+    val spec = new PBEKeySpec(password, salt, pbkdf2Iterations, hashBytes * 8)
     val skf = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM)
     skf.generateSecret(spec).getEncoded
   }
@@ -79,17 +79,20 @@ class PasswordHasher(hashByteSize: Int, pbkdf2Iterations: Int) {
 
 
 object PasswordHasher {
+  val defaultHashSize = 24
+  val defaultIterations = 100
+
   /**
-   * Creates a random 24-byte salt. Repeated calls to this method will yield different results.
-   * The result is a base64-encoded string.
-   */
+    * Creates a random 24-byte salt. Repeated calls to this method will yield different results.
+    * The result is a base64-encoded string.
+    */
   @throws(classOf[GeneralSecurityException])
   def newRandomSalt: Salt = newRandomSalt(24)
 
   /**
-   * Creates a random salt. Repeated calls to this method will yield different results.
-   * The result is a base64-encoded string.
-   */
+    * Creates a random salt. Repeated calls to this method will yield different results.
+    * The result is a base64-encoded string.
+    */
   @throws(classOf[GeneralSecurityException])
   def newRandomSalt(saltByteSize: Int): Salt = {
     require(saltByteSize > 0)
@@ -100,19 +103,19 @@ object PasswordHasher {
   }
 
   /**
-   * Compares two hashed strings in length-constant time. This comparison method
-   * is used so that password hashes cannot be extracted from an on-line
-   * system using a timing attack and then attacked off-line.
-   */
+    * Compares two hashed strings in length-constant time. This comparison method
+    * is used so that password hashes cannot be extracted from an on-line
+    * system using a timing attack and then attacked off-line.
+    */
   def slowEquals(a: String, b: String): Boolean = {
     slowEquals(a.getBytes(UTF_8), b.getBytes(UTF_8))
   }
 
   /**
-   * Compares two byte arrays in length-constant time. This comparison method
-   * is used so that password hashes cannot be extracted from an on-line
-   * system using a timing attack and then attacked off-line.
-   */
+    * Compares two byte arrays in length-constant time. This comparison method
+    * is used so that password hashes cannot be extracted from an on-line
+    * system using a timing attack and then attacked off-line.
+    */
   def slowEquals(a: Array[Byte], b: Array[Byte]): Boolean = {
     var diff = a.length ^ b.length
     var i = 0
@@ -125,27 +128,24 @@ object PasswordHasher {
   }
 
   /**
-   * Allows easy generation of hashes.
-   */
+    * Allows easy generation of hashes.
+    */
   def main(args: Array[String]) {
     if (args.length < 2) {
       println("Usage: PasswordHash salt password [hash-bytes] [iterations]")
       println("If salt is '?', a new salt is generated, printed out amd then used for the password hash.")
+      println("Remember that basic authentication requires that the username and password are supplied")
+      println("in the form 'username:password', so you probably need to do this here too.")
       System.exit(0)
     }
 
-    val hashBytes = if (args.length > 2) args(2).toInt else 24
-    val iterations = if (args.length > 3) args(3).toInt else 100
+    val hashBytes = if (args.length > 2) args(2).toInt else defaultHashSize
+    val iterations = if (args.length > 3) args(3).toInt else defaultIterations
 
     val gen = new PasswordHasher(hashBytes, iterations)
-    val salt =
-      if (args(0) != "?") Salt(args(0))
-      else {
-        val s = newRandomSalt(12)
-        println("Salt: " + s.value)
-        s
-      }
+    val salt = if (args(0) != "?") Salt(args(0)) else newRandomSalt(hashBytes)
     val password = args(1)
+    println("Salt: " + salt.value)
     println(gen.withSalt(salt).hash(password).value)
   }
 }
