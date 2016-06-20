@@ -55,5 +55,29 @@ class AdminControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServerU
     }
   }
 
+  "endpoints should be protected by basic auth" must {
+    "status" in {
+      // speceial case - not protected
+    }
+
+    "fullStatus" in {
+      val request = newRequest("GET", "/admin/fullStatus")
+      val response = await(request.execute())
+      assert(response.status === UNAUTHORIZED)
+    }
+
+    "cancelTask" in {
+      val request = newRequest("GET", "/admin/cancelTask")
+      val response = await(request.execute())
+      assert(response.status === UNAUTHORIZED) // when not busy
+    }
+
+    "dirTree" in {
+      val request = newRequest("GET", "/admin/dirTree")
+      val response = await(request.execute())
+      assert(response.status === UNAUTHORIZED)
+    }
+  }
+
 }
 
