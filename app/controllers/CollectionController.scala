@@ -48,7 +48,7 @@ class CollectionController(action: ActionBuilder[Request],
 
   import CollectionInfo._
 
-  def listCollections: Action[AnyContent] = Action {
+  def listCollections: Action[AnyContent] = action {
     request =>
       val pc = collectionsInUse
       val collections = collectionMetadata.existingCollectionMetadata
@@ -65,7 +65,7 @@ class CollectionController(action: ActionBuilder[Request],
       Ok(Json.toJson(ListCI(result)))
   }
 
-  def dropCollection(name: String): Action[AnyContent] = Action {
+  def dropCollection(name: String): Action[AnyContent] = action {
     request =>
       if (!isAlphaNumOrUnderscore(name))
         BadRequest(name)
@@ -80,7 +80,7 @@ class CollectionController(action: ActionBuilder[Request],
       }
   }
 
-  def doCleanup(): Action[AnyContent] = Action {
+  def doCleanup(): Action[AnyContent] = action {
     request =>
       workerFactory.worker.push("cleaning up obsolete collections", continuer => cleanup())
       Accepted

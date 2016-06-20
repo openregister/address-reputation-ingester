@@ -47,5 +47,25 @@ class CollectionControllerIT extends PlaySpec with EmbeddedMongoSuite with AppSe
     }
   }
 
+  "endpoints should be protected by basic auth" must {
+    "list collections" in {
+      val request = newRequest("GET", "/collections/list")
+      val response = await(request.execute())
+      assert(response.status === UNAUTHORIZED)
+    }
+
+    "dropCollection" in {
+      val request = newRequest("DELETE", "/collections/foo")
+      val response = await(request.execute())
+      assert(response.status === UNAUTHORIZED)
+    }
+
+    "clean" in {
+      val request = newRequest("POST", "/collections/clean")
+      val response = await(request.execute())
+      assert(response.status === UNAUTHORIZED)
+    }
+  }
+
 }
 
