@@ -23,17 +23,22 @@ import java.net.URL
 import java.nio.file.Files
 
 import fetch.WebDavFile
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.mvc._
 import services.exec.WorkQueue
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.io.Source
 
-object AdminController extends AdminController(WorkQueue.singleton)
 
-class AdminController(worker: WorkQueue) extends BaseController {
+object AdminController extends AdminController(
+  ControllerConfig.authAction,
+  WorkQueue.singleton)
 
-  def cancelTask(): Action[AnyContent] = Action {
+
+class AdminController(action: ActionBuilder[Request],
+                      worker: WorkQueue) extends BaseController {
+
+  def cancelTask(): Action[AnyContent] = action {
     request => {
       handleCancelTask(request)
     }
@@ -53,20 +58,20 @@ class AdminController(worker: WorkQueue) extends BaseController {
     }
   }
 
-  def fullStatus(): Action[AnyContent] = Action {
+  def fullStatus(): Action[AnyContent] = action {
     request => {
       Ok(worker.fullStatus).withHeaders(CONTENT_TYPE -> "text/plain")
     }
   }
 
-  def showLog(dir: Option[String]): Action[AnyContent] = Action {
+  def showLog(dir: Option[String]): Action[AnyContent] = action {
     request => {
       val d = if (dir.isEmpty) "." else dir.get
       Ok(LogFileHelper.readLogFile(new File(d).getCanonicalFile)).withHeaders(CONTENT_TYPE -> "text/plain")
     }
   }
 
-  def dirTree(root: Option[String], max: Option[Int]): Action[AnyContent] = Action {
+  def dirTree(root: Option[String], max: Option[Int]): Action[AnyContent] = action {
     request => {
       val dir = if (root.isDefined) new File(root.get) else ControllerConfig.downloadFolder
       val treeInfo = DirTreeHelper.dirTreeInfo(dir, max getOrElse 2)

@@ -25,13 +25,14 @@ import config.ApplicationGlobal
 import controllers.SimpleValidator._
 import controllers.{ControllerConfig, KnownProducts}
 import ingest.writers.{CollectionMetadata, CollectionName}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object FetchController extends FetchController(
+  ControllerConfig.authAction,
   ControllerConfig.logger,
   ControllerConfig.workerFactory,
   ControllerConfig.fetcher,
@@ -41,7 +42,8 @@ object FetchController extends FetchController(
   ApplicationGlobal.collectionMetadata)
 
 
-class FetchController(logger: StatusLogger,
+class FetchController(action: ActionBuilder[Request],
+                      logger: StatusLogger,
                       workerFactory: WorkerFactory,
                       webdavFetcher: WebdavFetcher,
                       sardine: SardineWrapper,
@@ -49,7 +51,7 @@ class FetchController(logger: StatusLogger,
                       url: URL,
                       collectionMetadata: CollectionMetadata) extends BaseController {
 
-  def doFetch(product: String, epoch: Int, variant: String, forceChange: Option[Boolean]): Action[AnyContent] = Action {
+  def doFetch(product: String, epoch: Int, variant: String, forceChange: Option[Boolean]): Action[AnyContent] = action {
     request =>
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
@@ -83,7 +85,7 @@ class FetchController(logger: StatusLogger,
     if (files.isEmpty) model2.copy(hasFailed = true) else model2
   }
 
-  def doCleanup(): Action[AnyContent] = Action {
+  def doCleanup(): Action[AnyContent] = action {
     request =>
       val model = new StateModel()
       workerFactory.worker.push(s"zip file cleanup", {
@@ -101,7 +103,7 @@ class FetchController(logger: StatusLogger,
     }
   }
 
-  def doShowTree(): Action[AnyContent] = Action {
+  def doShowTree(): Action[AnyContent] = action {
     val tree = sardine.exploreRemoteTree
     Ok(sardine.url + "\n" + tree.root.toString)
   }

@@ -58,7 +58,8 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val worker = new WorkQueue(status)
     val workerFactory = new StubWorkerFactory(worker)
 
-    val ingestController = new IngestController(new PassThroughAction, folder, dbFactory, fwFactory, nullFactory, ingesterFactory, workerFactory)
+    private val pta = new PassThroughAction
+    val ingestController = new IngestController(pta, folder, dbFactory, fwFactory, nullFactory, ingesterFactory, workerFactory)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val folder = new File(".")

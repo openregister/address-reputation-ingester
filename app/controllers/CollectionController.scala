@@ -65,7 +65,7 @@ class CollectionController(action: ActionBuilder[Request],
       Ok(Json.toJson(ListCI(result)))
   }
 
-  def dropCollection(name: String): Action[AnyContent] = action {
+  def dropCollection(name: String): Action[AnyContent] = Action {
     request =>
       if (!isAlphaNumOrUnderscore(name))
         BadRequest(name)

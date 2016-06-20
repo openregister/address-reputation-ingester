@@ -21,6 +21,7 @@ package controllers
 
 import helper.{AppServerUnderTest, EmbeddedMongoSuite}
 import org.scalatestplus.play.PlaySpec
+import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
 
 class AdminControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServerUnderTest {
@@ -34,18 +35,21 @@ class AdminControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServerU
     }
 
     "fullStatus" in {
-      val response = get("/admin/fullStatus")
+      val request = newRequest("GET", "/admin/fullStatus")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === OK)
       assert(response.body.nonEmpty)
     }
 
     "cancelTask" in {
-      val response = get("/admin/cancelTask")
+      val request = newRequest("GET", "/admin/cancelTask")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === BAD_REQUEST) // when not busy
     }
 
     "dirTree" in {
-      val response = get("/admin/dirTree")
+      val request = newRequest("GET", "/admin/dirTree")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === OK)
       assert(response.body.nonEmpty)
     }

@@ -24,6 +24,7 @@ import java.net.URL
 import java.util.Date
 
 import com.github.sardine.Sardine
+import controllers.PassThroughAction
 import ingest.StubWorkerFactory
 import ingest.writers.{CollectionMetadata, CollectionName, OutputFileWriterFactory}
 import org.junit.runner.RunWith
@@ -64,6 +65,8 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
   val foo_40_001 = CollectionName("foo_40_001").get
   val bar_40_002 = CollectionName("bar_40_002").get
 
+  val pta = new PassThroughAction
+
   trait context {
     val logger = new StubLogger
     val statusLogger = new StatusLogger(logger)
@@ -80,7 +83,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
     val request = FakeRequest()
     val collectionMetadata = mock[CollectionMetadata]
 
-    val fetchController = new FetchController(statusLogger, workerFactory, webdavFetcher, sardineWrapper, unzipper, url, collectionMetadata)
+    val fetchController = new FetchController(pta, statusLogger, workerFactory, webdavFetcher, sardineWrapper, unzipper, url, collectionMetadata)
 
     def parameterTest(product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]
