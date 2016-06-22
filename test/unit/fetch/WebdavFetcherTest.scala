@@ -26,6 +26,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatestplus.play.PlaySpec
 import org.specs2.mock.Mockito
 import Utils._
+import ingest.StubContinuer
 import services.model.StatusLogger
 import uk.co.hmrc.logging.StubLogger
 
@@ -37,6 +38,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
   val outputDirectory = new File(System.getProperty("java.io.tmpdir") + "/webdav-fetcher-test")
   val downloadDirectory = new File(outputDirectory, "downloads")
   val stuff = new File(downloadDirectory, "stuff")
+  val stubContinuer = new StubContinuer
 
   class Context(resourceFolder: String) {
     val logger = new StubLogger()
@@ -232,7 +234,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)
 
       // when
-      val downloaded = fetcher.fetchList(product, "stuff", false)
+      val downloaded = fetcher.fetchList(product, "stuff", stubContinuer, false)
 
       // then
       downloaded.map(_.file.length).sum must be(files.map(_.length()).sum)
@@ -269,7 +271,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)
 
       // when
-      val downloaded = fetcher.fetchList(product, "stuff", false)
+      val downloaded = fetcher.fetchList(product, "stuff", stubContinuer, false)
 
       // then
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
@@ -302,7 +304,7 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
       val fetcher = new WebdavFetcher(sardineFactory, downloadDirectory, status)
 
       // when
-      val downloaded = fetcher.fetchList(product, "stuff", true)
+      val downloaded = fetcher.fetchList(product, "stuff", stubContinuer, true)
 
       // then
       downloaded.map(_.file.length).sum must be(files.map(_.length()).sum)

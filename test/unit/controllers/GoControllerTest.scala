@@ -26,7 +26,7 @@ import java.net.URL
 
 import com.github.sardine.Sardine
 import fetch.{FetchController, SardineWrapper, WebDavFile, WebDavTree}
-import ingest.{IngestController, StubWorkerFactory}
+import ingest.{IngestController, StubContinuer, StubWorkerFactory}
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -128,7 +128,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       // then
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
-      verify(fetchController).fetch(any[StateModel])
+      verify(fetchController).fetch(any[StateModel], any[Continuer])
       verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(switchoverController, never).switchIfOK(any[StateModel])
       teardown()
@@ -148,7 +148,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       // then
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
-      verify(fetchController).fetch(any[StateModel])
+      verify(fetchController).fetch(any[StateModel], any[Continuer])
       verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(switchoverController, never).switchIfOK(any[StateModel])
       teardown()
@@ -168,7 +168,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       // then
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
-      verify(fetchController).fetch(any[StateModel])
+      verify(fetchController).fetch(any[StateModel], any[Continuer])
       verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(switchoverController).switchIfOK(any[StateModel])
       teardown()
@@ -218,7 +218,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       // then
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
-      verify(fetchController, times(2)).fetch(any[StateModel])
+      verify(fetchController, times(2)).fetch(any[StateModel], any[Continuer])
       verify(ingestController, times(2)).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(switchoverController, times(2)).switchIfOK(any[StateModel])
       verify(collectionController).cleanup()
@@ -245,7 +245,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       // then
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
-      verify(fetchController, never).fetch(any[StateModel])
+      verify(fetchController, never).fetch(any[StateModel], any[Continuer])
       verify(ingestController, never).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(switchoverController, never).switchIfOK(any[StateModel])
       teardown()

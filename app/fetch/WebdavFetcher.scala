@@ -21,6 +21,7 @@ import java.net.URL
 import java.nio.file._
 
 import com.github.sardine.{DavResource, Sardine}
+import services.exec.Continuer
 import services.model.StatusLogger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
@@ -28,13 +29,13 @@ class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: S
 
   // Downloads a specified set of remote files, marks them all with a completion marker (.done),
   // then returns the total bytes copied.
-  def fetchList(product: OSGBProduct, outputPath: String, forceFetch: Boolean): List[DownloadItem] = {
+  def fetchList(product: OSGBProduct, outputPath: String, continuer: Continuer, forceFetch: Boolean): List[DownloadItem] = {
     status.info("Product bundle: {}", product)
     val outputDirectory = resolveAndMkdirs(outputPath)
     val sardine = factory.begin
-    product.zips.map {
-      webDavFile =>
-        fetchFile(webDavFile.url, sardine, outputDirectory, forceFetch)
+    for (webDavFile <- product.zips
+         if continuer.isBusy) yield {
+      fetchFile(webDavFile.url, sardine, outputDirectory, forceFetch)
     }
   }
 

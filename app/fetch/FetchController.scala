@@ -26,7 +26,7 @@ import controllers.SimpleValidator._
 import controllers.{ControllerConfig, KnownProducts}
 import ingest.writers.{CollectionMetadata, CollectionName}
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.exec.WorkerFactory
+import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -57,11 +57,11 @@ class FetchController(action: ActionBuilder[Request],
       require(isAlphaNumeric(variant))
 
       val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
-      workerFactory.worker.push(s"fetching ${model.pathSegment}", continuer => fetch(model))
+      workerFactory.worker.push(s"fetching ${model.pathSegment}", continuer => fetch(model, continuer))
       Accepted("ok")
   }
 
-  def fetch(model1: StateModel): StateModel = {
+  def fetch(model1: StateModel, continuer: Continuer): StateModel = {
     val model2 =
       if (model1.product.isDefined) model1
       else {
@@ -72,7 +72,7 @@ class FetchController(action: ActionBuilder[Request],
 
     val files =
       if (model2.product.isDefined)
-        webdavFetcher.fetchList(model2.product.get, model2.pathSegment, model2.forceChange)
+        webdavFetcher.fetchList(model2.product.get, model2.pathSegment, continuer, model2.forceChange)
       else {
         logger.info("Nothing new available for " + model1.pathSegment)
         Nil
