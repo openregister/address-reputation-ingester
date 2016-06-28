@@ -38,7 +38,7 @@ class AdminControllerTest extends FunSuite {
     """
       when cancel task is called
       and no task is executing
-      then a bad request response is returned
+      then an ok response is returned
     """) {
     val logger = new StubLogger
     val status = new StatusLogger(logger)
@@ -49,7 +49,7 @@ class AdminControllerTest extends FunSuite {
     val futureResponse = call(ac.cancelTask(), request)
 
     val response = await(futureResponse)
-    assert(response.header.status === 400)
+    assert(response.header.status === 200)
     worker.terminate()
   }
 
@@ -57,7 +57,7 @@ class AdminControllerTest extends FunSuite {
     """
       when cancel task is called
       and a task is executing
-      then a successful response is returned
+      then an accepted response is returned
     """) {
     val logger = new StubLogger
     val status = new StatusLogger(logger)
@@ -77,7 +77,7 @@ class AdminControllerTest extends FunSuite {
     val futureResponse = call(ac.cancelTask(), request)
 
     val response = await(futureResponse)
-    assert(response.header.status === 200)
+    assert(response.header.status === 202)
     stuff.put(true) // release the lock second time
     worker.awaitCompletion()
     worker.terminate()

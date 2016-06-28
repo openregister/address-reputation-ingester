@@ -38,6 +38,10 @@ object AdminController extends AdminController(
 class AdminController(action: ActionBuilder[Request],
                       worker: WorkQueue) extends BaseController {
 
+  def index: Action[AnyContent] = action {
+    Redirect("/assets/index.html")
+  }
+
   def cancelTask(): Action[AnyContent] = action {
     request => {
       handleCancelTask(request)
@@ -46,9 +50,9 @@ class AdminController(action: ActionBuilder[Request],
 
   def handleCancelTask(request: Request[AnyContent]): Result = {
     if (worker.abort()) {
-      Ok(worker.status)
+      Accepted
     } else {
-      BadRequest(worker.status)
+      Ok("Nothing to cancel").withHeaders(CONTENT_TYPE -> "text/plain")
     }
   }
 

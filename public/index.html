@@ -1,0 +1,85 @@
+<!--
+  ~ /*
+  ~  * Copyright 2016 HM Revenue & Customs
+  ~  *
+  ~  * Licensed under the Apache License, Version 2.0 (the "License");
+  ~  * you may not use this file except in compliance with the License.
+  ~  * You may obtain a copy of the License at
+  ~  *
+  ~  *     http://www.apache.org/licenses/LICENSE-2.0
+  ~  *
+  ~  * Unless required by applicable law or agreed to in writing, software
+  ~  * distributed under the License is distributed on an "AS IS" BASIS,
+  ~  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  * See the License for the specific language governing permissions and
+  ~  * limitations under the License.
+  ~  */
+  ~
+  -->
+
+<!--
+  ~ /*
+  ~  * Copyright 2016 HM Revenue & Customs
+  ~  *
+  ~  * Licensed under the Apache License, Version 2.0 (the "License");
+  ~  * you may not use this file except in compliance with the License.
+  ~  * You may obtain a copy of the License at
+  ~  *
+  ~  *     http://www.apache.org/licenses/LICENSE-2.0
+  ~  *
+  ~  * Unless required by applicable law or agreed to in writing, software
+  ~  * distributed under the License is distributed on an "AS IS" BASIS,
+  ~  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  * See the License for the specific language governing permissions and
+  ~  * limitations under the License.
+  ~  */
+  ~
+  -->
+
+<html>
+<head>
+    <title>Ingester Admin Console</title>
+    <link rel="stylesheet" href="normalize.min.css"/>
+    <link rel="stylesheet" href="style.css"/>
+    <script src="jquery-3.0.0.min.js"></script>
+</head>
+
+<body>
+<div id="wrapper">
+    <div id="header">
+        <h1>Ingester</h1>
+        <h2>Address Reputation Administration</h2>
+    </div>
+
+    <div id="content">
+        <div id="controlsBox" class="box">
+            <div id="mainActions" class="actionBox">
+                <label for="product">Product</label>
+                <input id="product" value="abp" size="5"/>
+                <label for="epoch">Epoch</label>
+                <input id="epoch" value="41" size="5" type="number"/>
+                <label for="force">Force</label>
+                <input id="force" type="checkbox"/>
+                <a id="go" class="button" href="#">Go Fetch/Ingest/Switch</a>
+                <a id="fetch" class="button" href="#">Fetch only</a>
+                <a id="ingest" class="button" href="#">Ingest only</a>
+            </div>
+            <div id="bigActions" class="actionBox">
+                <a id="goAuto" class="button" href="#">Auto Fetch/Ingest/Switch</a>
+                <a id="cancelTask" class="button" href="#">Cancel current task</a>
+            </div>
+            <div id="cleanActions" class="actionBox">
+            </div>
+            <div id="infoActions" class="actionBox">
+                <a id="fullStatusButton" class="button" href="#">Current status</a>
+            </div>
+        </div>
+        <div id="statusBox" class="box">
+            <pre id="console">console</pre>
+            <div id="status"></div>
+        </div>
+    </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

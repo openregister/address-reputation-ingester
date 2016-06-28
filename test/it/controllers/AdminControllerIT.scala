@@ -44,7 +44,7 @@ class AdminControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServerU
     "cancelTask" in {
       val request = newRequest("GET", "/admin/cancelTask")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
-      assert(response.status === BAD_REQUEST) // when not busy
+      assert(response.status === OK) // when not busy
     }
 
     "dirTree" in {
