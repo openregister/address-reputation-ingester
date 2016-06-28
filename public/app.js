@@ -75,9 +75,13 @@ function post(path, refresh) {
 function doStartProductAction(action) {
     var product = $('#product').val();
     var epoch = $('#epoch').val();
+    var variant = $('#variant').val();
     var force = '';
     if ($('#force').is(":checked")) force = "?forceChange=true";
-    get(action + product + '/' + epoch + '/full' + force, true);
+    if (product == '' || epoch == '' || variant == '')
+        alert("Enter the product, epoch and variant");
+    else
+        get(action + product + '/' + epoch + '/' + variant + force, true);
 }
 
 function doGo() {
@@ -114,6 +118,17 @@ function listCol() {
     getAndRefreshConsoleJson('/collections/list');
 }
 
+function switchCol() {
+    getAndRefreshConsoleJson('/collections/list');
+    var colname = $('#colname').val();
+    if (colname == '')
+        alert("Enter the collection name");
+    else {
+        colname = colname.replace(/_/g, '/');
+        get('/switch/to/' + colname, true);
+    }
+}
+
 $(document).ready(
     function () {
         getAndRefreshConsoleJson('/ping');
@@ -127,5 +142,6 @@ $(document).ready(
         $('#cleanFs').click(cleanFs);
         $('#cleanCol').click(cleanCol);
         $('#listCol').click(listCol);
+        $('#switchCol').click(switchCol);
     }
 );
