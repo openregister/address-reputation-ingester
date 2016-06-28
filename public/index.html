@@ -47,38 +47,54 @@
 <body>
 <div id="wrapper">
     <div id="header">
-        <h1>Ingester</h1>
-        <h2>Address Reputation Administration</h2>
+        <h1>Address Reputation Data Ingester</h1>
     </div>
 
-    <div id="content">
+    <div id="controls">
         <div id="controlsBox" class="box">
-            <div id="mainActions" class="actionBox">
-                <label for="product">Product</label>
-                <input id="product" value="abp" size="5"/>
-                <label for="epoch">Epoch</label>
-                <input id="epoch" value="41" size="5" type="number"/>
-                <label for="force">Force</label>
-                <input id="force" type="checkbox"/>
-                <a id="go" class="button" href="#">Go Fetch/Ingest/Switch</a>
-                <a id="fetch" class="button" href="#">Fetch only</a>
-                <a id="ingest" class="button" href="#">Ingest only</a>
-            </div>
-            <div id="bigActions" class="actionBox">
+            <fieldset id="autoActions">
+                <legend>Auto</legend>
                 <a id="goAuto" class="button" href="#">Auto Fetch/Ingest/Switch</a>
                 <a id="cancelTask" class="button" href="#">Cancel current task</a>
-            </div>
-            <div id="cleanActions" class="actionBox">
-            </div>
-            <div id="infoActions" class="actionBox">
+            </fieldset>
+            <fieldset id="mainActions">
+                <legend>Download and Ingest</legend>
+                <label for="product">Product</label>
+                <input id="product" placeholder="abp" size="5"/> +
+                <label for="epoch">Epoch</label>
+                <input id="epoch" value="41" size="5" type="number"/> +
+                <label for="variant">Variant</label>
+                <input id="variant" value="full" size="7"/> +
+                <label for="force">Force</label>
+                <input id="force" type="checkbox"/>
+                <a id="go" class="button" href="#">Go Fetch/Ingest/Switch</a> or
+                <a id="fetch" class="button" href="#">Fetch only</a> or
+                <a id="ingest" class="button" href="#">Ingest only</a>
+            </fieldset>
+            <fieldset id="fileActions">
+                <legend>File System</legend>
+                <a id="cleanFs" class="button" href="#">Auto clean</a> ~
+            </fieldset>
+            <fieldset id="collectionActions">
+                <legend>Mongo Collections</legend>
+                <a id="cleanCol" class="button" href="#">Auto clean</a> ~
+                <a id="listCol" class="button" href="#">List collections</a> ~
+                <label for="colname">Collection</label>
+                <input id="colname" placeholder="abp_40_001" size="10"/>
+                <a id="switchCol" class="button grey" href="#">Switch to</a>
+                <a id="dropCol" class="button grey" href="#">Drop</a>
+            </fieldset>
+            <fieldset id="infoActions">
+                <legend>Information</legend>
                 <a id="fullStatusButton" class="button" href="#">Current status</a>
-            </div>
-        </div>
-        <div id="statusBox" class="box">
-            <pre id="console">console</pre>
-            <div id="status"></div>
+            </fieldset>
         </div>
     </div>
+</div>
+
+<div id="statusBox">
+    <pre id="console">console</pre>
+    <div id="status"></div>
 </div>
 <script src="app.js"></script>
 </body>

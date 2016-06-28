@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  *
  */
 
@@ -36,32 +36,48 @@
  *
  */
 
-function refreshStatus() {
+function refreshStatusContinually() {
     $.get('/admin/status', function (data) {
         // console.log(data);
         $("#status").text(data);
-        setTimeout(refreshStatus, 10000);
+        setTimeout(refreshStatusContinually, 10000);
+    });
+}
+
+function get(path, refresh) {
+    $.get(path, function (data) {
+        $("#console").text(data);
+        if (refresh)
+            setTimeout(fullStatus, 250);
     });
 }
 
 function getAndRefreshConsoleJson(path) {
     $.get(path, function (data) {
-        $("#console").text(JSON.stringify(data));
+        $("#console").text(JSON.stringify(data, null, 2));
     });
 }
 
-function getAndRefreshConsoleText(path) {
-    $.get(path, function (data) {
+function fullStatus() {
+    get('/admin/fullStatus');
+}
+
+function post(path, refresh) {
+    $.post(path, function (data) {
         $("#console").text(data);
+        if (refresh)
+            setTimeout(fullStatus, 250);
     });
 }
+
+//-------------------------------------------------------------------------------------------------
 
 function doStartProductAction(action) {
     var product = $('#product').val();
     var epoch = $('#epoch').val();
     var force = '';
     if ($('#force').is(":checked")) force = "?forceChange=true";
-    getAndRefreshConsoleText(action + product + '/' + epoch + '/full' + force);
+    get(action + product + '/' + epoch + '/full' + force, true);
 }
 
 function doGo() {
@@ -76,27 +92,40 @@ function doIngest() {
     doStartProductAction('/ingest/to/db/');
 }
 
+//-------------------------------------------------------------------------------------------------
+
 function goAuto() {
-    getAndRefreshConsoleText('/goAuto/to/db');
+    get('/goAuto/to/db', true);
 }
 
 function cancelTask() {
-    getAndRefreshConsoleText('/admin/cancelTask');
+    get('/admin/cancelTask', true);
 }
 
-function fullStatus() {
-    getAndRefreshConsoleText('/admin/fullStatus');
+function cleanFs() {
+    post('/fetch/clean', true);
+}
+
+function cleanCol() {
+    post('/collections/clean', true);
+}
+
+function listCol() {
+    getAndRefreshConsoleJson('/collections/list');
 }
 
 $(document).ready(
     function () {
         getAndRefreshConsoleJson('/ping');
-        refreshStatus();
+        refreshStatusContinually();
+        $('#fullStatusButton').click(fullStatus);
         $('#go').click(doGo);
         $('#fetch').click(doFetch);
         $('#ingest').click(doIngest);
         $('#goAuto').click(goAuto);
         $('#cancelTask').click(cancelTask);
-        $('#fullStatusButton').click(fullStatus);
+        $('#cleanFs').click(cleanFs);
+        $('#cleanCol').click(cleanCol);
+        $('#listCol').click(listCol);
     }
 );

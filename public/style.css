@@ -41,17 +41,20 @@ body {
     padding: 0;
     font-family: sans-serif;
     font-size: 0.9em;
-    width: 100%;
+    xwidth: 100%;
 }
 
 #wrapper {
+    width: 100%;
+    z-index:10;
     margin: 0;
     padding: 0;
-    width: 95%;
+    position: fixed;
+    top: 0;
+    left: 0;
 }
 
 #header {
-    width: 100%;
     text-align: center;
     color: #007;
     background: #fff;
@@ -66,32 +69,42 @@ h2 {
 }
 
 .box {
-    width: 100%;
-    border: 1px solid #ddd;
-    padding: 2em;
+    padding: 0.4em 1em;
+    background: #eff;
+}
+
+fieldset {
     margin: 1em 0;
-    background: #eee;
+    padding: 0.8em;
+    background: #dee;
 }
 
 .actionBox {
-    padding: 0.3em 0;
+    border: 1px solid #3aa;
+    background: #cff;
+    margin: 5px 0;
+    padding: 0.6em;
     line-height: 1.2em;
+}
+
+#statusBox {
+    position: absolute;
+    width: 100%;
+    top: 30em;
+    left: 0;
 }
 
 #console {
     padding: 0.5em;
-    color: #888;
-    background: #eee;
-    max-height: 90%;
-    overflow: scroll;
+    color: #555;
+    background: #ffe;
 }
 
 #status {
     margin: 10px 0 0 0;
     padding: 0.5em;
     color: #337f33;
-    background: #dfd;
-    width: 100%;
+    background: #efe;
     border: 1px solid #ccc;
 }
 
@@ -102,4 +115,8 @@ a.button {
     margin: 2px;
     color: inherit;
     background: #fff;
+}
+
+a.button.grey {
+    color: #999;
 }
