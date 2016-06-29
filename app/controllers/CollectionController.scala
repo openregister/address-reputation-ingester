@@ -70,7 +70,7 @@ class CollectionController(action: ActionBuilder[Request],
       if (!isAlphaNumOrUnderscore(name))
         BadRequest(name)
       else if (!collectionMetadata.collectionExists(name)) {
-        NotFound
+        NotFound(name)
       } else if (systemCollections.contains(name) || collectionsInUse.contains(name)) {
         BadRequest(name + " cannot be dropped")
       } else {

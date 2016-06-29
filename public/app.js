@@ -129,7 +129,7 @@ function cancelTask() {
 }
 
 function remoteTree() {
-    get('/fetch/showRemoteTree', true);
+    get('/fetch/showRemoteTree', false);
 }
 
 function cleanFs() {
@@ -164,8 +164,7 @@ function dropCol() {
         alert("Enter the collection name");
     else {
         ajax('DELETE', '/collections/' + colname, function (data) {
-            consoleText(data);
-            setTimeout(fullStatus, 250);
+            setTimeout(listCol, 250);
         });
     }
 }

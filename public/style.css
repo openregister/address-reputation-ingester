@@ -41,7 +41,6 @@ body {
     padding: 0;
     font-family: sans-serif;
     font-size: 0.9em;
-    xwidth: 100%;
 }
 
 #wrapper {
@@ -52,12 +51,14 @@ body {
     position: fixed;
     top: 0;
     left: 0;
+    background: #fff;
 }
 
 #header {
-    text-align: center;
+    text-align: left;
     color: #007;
     background: #fff;
+    padding-left: 1em;
 }
 
 h1 {
@@ -90,6 +91,7 @@ fieldset {
 a.button {
     text-decoration: none;
     border: 2px outset #bbb;
+    border-radius: 8px;
     padding: 4px 4px 3px 4px;
     margin: 2px;
     color: inherit;
@@ -105,16 +107,21 @@ a.button.grey {
 #statusBox {
     position: absolute;
     width: 100%;
-    top: 30.5em;
+    top: 28em;
     left: 0;
 }
 
 #status {
-    margin: 1em;
+    position: fixed;
+    top: 0.5em;
+    right: 0.5em;
+    min-width: 40%;
     padding: 0.5em;
     color: #337f33;
     background: #efe;
+    text-align: center;
     border: 2px inset #ccc;
+    z-index: 20;
 }
 
 #console {
