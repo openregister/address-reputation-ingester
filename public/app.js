@@ -44,30 +44,52 @@ function refreshStatusContinually() {
     });
 }
 
+function consoleText(text) {
+    $("#console").removeClass('error').text(text);
+}
+
+function consoleError(text) {
+    $("#console").addClass('error').text(text);
+}
+
+function ajax(method, path, success) {
+    consoleText('Pending...');
+    $.ajax({
+        method: method,
+        url: path,
+        success: success,
+        error: function (xhr, status, error) {
+            console.log(status);
+            console.log(error);
+            consoleError(status + '\n' + error);
+        }
+    });
+}
+
 function get(path, refresh) {
-    $.get(path, function (data) {
-        $("#console").text(data);
+    ajax('GET', path, function (data) {
+        consoleText(data);
+        if (refresh)
+            setTimeout(fullStatus, 250);
+    });
+}
+
+function post(path, refresh) {
+    ajax('POST', path, function (data) {
+        consoleText(data);
         if (refresh)
             setTimeout(fullStatus, 250);
     });
 }
 
 function getAndRefreshConsoleJson(path) {
-    $.get(path, function (data) {
-        $("#console").text(JSON.stringify(data, null, 2));
+    ajax('GET', path, function (data) {
+        consoleText(JSON.stringify(data, null, 2));
     });
 }
 
 function fullStatus() {
     get('/admin/fullStatus');
-}
-
-function post(path, refresh) {
-    $.post(path, function (data) {
-        $("#console").text(data);
-        if (refresh)
-            setTimeout(fullStatus, 250);
-    });
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -106,6 +128,10 @@ function cancelTask() {
     get('/admin/cancelTask', true);
 }
 
+function remoteTree() {
+    get('/fetch/showRemoteTree', true);
+}
+
 function cleanFs() {
     post('/fetch/clean', true);
 }
@@ -118,8 +144,11 @@ function listCol() {
     getAndRefreshConsoleJson('/collections/list');
 }
 
+function ping() {
+    getAndRefreshConsoleJson('/ping');
+}
+
 function switchCol() {
-    getAndRefreshConsoleJson('/collections/list');
     var colname = $('#colname').val();
     if (colname == '')
         alert("Enter the collection name");
@@ -127,6 +156,30 @@ function switchCol() {
         colname = colname.replace(/_/g, '/');
         get('/switch/to/' + colname, true);
     }
+}
+
+function dropCol() {
+    var colname = $('#colname').val();
+    if (colname == '')
+        alert("Enter the collection name");
+    else {
+        ajax('DELETE', '/collections/' + colname, function (data) {
+            consoleText(data);
+            setTimeout(fullStatus, 250);
+        });
+    }
+}
+
+function dirTree() {
+    var dir = $('#dir').val();
+    if (dir != '')
+        dir = "root=" + dir + "&";
+    var max = $('#dirMax').val();
+    if (max != '')
+        max = "max=" + max;
+    ajax('GET', '/admin/dirTree?' + dir + max, function (data) {
+        consoleText(data);
+    });
 }
 
 $(document).ready(
@@ -143,5 +196,9 @@ $(document).ready(
         $('#cleanCol').click(cleanCol);
         $('#listCol').click(listCol);
         $('#switchCol').click(switchCol);
+        $('#dropCol').click(dropCol);
+        $('#remoteTree').click(remoteTree);
+        $('#ping').click(ping);
+        $('#dirTree').click(dirTree);
     }
 );

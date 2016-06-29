@@ -87,27 +87,6 @@ fieldset {
     line-height: 1.2em;
 }
 
-#statusBox {
-    position: absolute;
-    width: 100%;
-    top: 30em;
-    left: 0;
-}
-
-#console {
-    padding: 0.5em;
-    color: #555;
-    background: #ffe;
-}
-
-#status {
-    margin: 10px 0 0 0;
-    padding: 0.5em;
-    color: #337f33;
-    background: #efe;
-    border: 1px solid #ccc;
-}
-
 a.button {
     text-decoration: none;
     border: 2px outset #bbb;
@@ -119,4 +98,34 @@ a.button {
 
 a.button.grey {
     color: #999;
+}
+
+/*-----------------------------------------------------------------------------------------------*/
+
+#statusBox {
+    position: absolute;
+    width: 100%;
+    top: 30.5em;
+    left: 0;
+}
+
+#status {
+    margin: 1em;
+    padding: 0.5em;
+    color: #337f33;
+    background: #efe;
+    border: 2px inset #ccc;
+}
+
+#console {
+    margin: 1em;
+    padding: 0.5em;
+    color: #555;
+    background: #ffe;
+    border: 2px inset #ccb;
+}
+
+#console.error {
+    color: #b00;
+    background: #fee;
 }

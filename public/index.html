@@ -74,6 +74,11 @@
             <fieldset id="fileActions">
                 <legend>File System</legend>
                 <a id="cleanFs" class="button" href="#">Auto clean</a> ~
+                <label for="dir">Root</label>
+                <input id="dir" value="." size="15"/> +
+                <label for="dirMax">max depth</label>
+                <input id="dirMax" value="2" size="5" type="number"/>
+                <a id="dirTree" class="button" href="#">Dir Tree</a>
             </fieldset>
             <fieldset id="collectionActions">
                 <legend>Mongo Collections</legend>
@@ -82,19 +87,21 @@
                 <label for="colname">Collection</label>
                 <input id="colname" placeholder="abp_40_001" size="10"/>
                 <a id="switchCol" class="button" href="#">Switch to</a>
-                <a id="dropCol" class="button grey" href="#">Drop</a>
+                <a id="dropCol" class="button" href="#">Drop</a>
             </fieldset>
             <fieldset id="infoActions">
                 <legend>Information</legend>
                 <a id="fullStatusButton" class="button" href="#">Current status</a>
+                <a id="remoteTree" class="button" href="#">Remote tree</a>
+                <a id="ping" class="button" href="#">Ping</a>
             </fieldset>
         </div>
     </div>
 </div>
 
 <div id="statusBox">
-    <pre id="console">console</pre>
     <div id="status"></div>
+    <pre id="console"></pre>
 </div>
 <script src="app.js"></script>
 </body>
