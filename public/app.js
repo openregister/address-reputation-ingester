@@ -170,13 +170,22 @@ function dropCol() {
 }
 
 function dirTree() {
-    var dir = $('#dir').val();
+    var dir = $('#dirRoot').val();
     if (dir != '')
         dir = "root=" + dir + "&";
     var max = $('#dirMax').val();
     if (max != '')
         max = "max=" + max;
     ajax('GET', '/admin/dirTree?' + dir + max, function (data) {
+        consoleText(data);
+    });
+}
+
+function showLog() {
+    var dir = $('#logDir').val();
+    if (dir != '')
+        dir = "dir=" + dir;
+    ajax('GET', '/admin/showLog?' + dir, function (data) {
         consoleText(data);
     });
 }
@@ -199,5 +208,6 @@ $(document).ready(
         $('#remoteTree').click(remoteTree);
         $('#ping').click(ping);
         $('#dirTree').click(dirTree);
+        $('#showLog').click(showLog);
     }
 );

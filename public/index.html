@@ -73,8 +73,8 @@
             <fieldset id="fileActions">
                 <legend>File System</legend>
                 <a id="cleanFs" class="button" href="#">Auto clean</a> ~
-                <label for="dir">Root</label>
-                <input id="dir" value="." size="15"/> +
+                <label for="dirRoot">Root</label>
+                <input id="dirRoot" value="." size="15"/> +
                 <label for="dirMax">max depth</label>
                 <input id="dirMax" value="2" size="5" type="number"/>
                 <a id="dirTree" class="button" href="#">Dir Tree</a>
@@ -90,9 +90,12 @@
             </fieldset>
             <fieldset id="infoActions">
                 <legend>Information</legend>
-                <a id="fullStatusButton" class="button" href="#">Current status</a>
-                <a id="remoteTree" class="button" href="#">Remote tree</a>
-                <a id="ping" class="button" href="#">Ping</a>
+                <a id="fullStatusButton" class="button" href="#">Current status</a> ~
+                <a id="remoteTree" class="button" href="#">Remote tree</a> ~
+                <a id="ping" class="button" href="#">Ping</a> ~
+                <label for="logDir">Log dir</label>
+                <input id="logDir" value="." size="15"/>
+                <a id="showLog" class="button" href="#">Show log</a>
             </fieldset>
         </div>
     </div>
