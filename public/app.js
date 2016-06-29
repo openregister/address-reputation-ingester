@@ -40,7 +40,7 @@ function refreshStatusContinually() {
     $.get('/admin/status', function (data) {
         // console.log(data);
         $("#status").text(data);
-        setTimeout(refreshStatusContinually, 10000);
+        setTimeout(refreshStatusContinually, 1000);
     });
 }
 
