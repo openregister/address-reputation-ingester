@@ -54,8 +54,8 @@
         <div id="controlsBox" class="box">
             <fieldset id="autoActions">
                 <legend>Download and Ingest</legend>
-                <a id="goAuto" class="button" href="#">Auto Fetch, Ingest, Switch</a>
-                <a id="cancelTask" class="button" href="#">Cancel current task</a>
+                <a id="goAuto" class="start button" href="#">Auto Fetch, Ingest, Switch</a>
+                <a id="cancelTask" class="stop button" href="#">Cancel current task</a>
                 <br/>
                 <br/>
                 <label for="product">Product</label>
@@ -66,13 +66,13 @@
                 <input id="variant" value="full" size="7"/> +
                 <label for="force">Force</label>
                 <input id="force" type="checkbox"/>
-                <a id="go" class="button" href="#">Go Fetch, Ingest, Switch</a> or
-                <a id="fetch" class="button" href="#">Fetch only</a> or
-                <a id="ingest" class="button" href="#">Ingest only</a>
+                <a id="go" class="start button" href="#">Go Fetch, Ingest, Switch</a> or
+                <a id="fetch" class="start button" href="#">Fetch only</a> or
+                <a id="ingest" class="start button" href="#">Ingest only</a>
             </fieldset>
             <fieldset id="fileActions">
                 <legend>File System</legend>
-                <a id="cleanFs" class="button" href="#">Auto clean</a> ~
+                <a id="cleanFs" class="start button" href="#">Auto clean</a> ~
                 <label for="dirRoot">Root</label>
                 <input id="dirRoot" value="." size="15"/> +
                 <label for="dirMax">max depth</label>
@@ -81,12 +81,12 @@
             </fieldset>
             <fieldset id="collectionActions">
                 <legend>Mongo Collections</legend>
-                <a id="cleanCol" class="button" href="#">Auto clean</a> ~
+                <a id="cleanCol" class="start button" href="#">Auto clean</a> ~
                 <a id="listCol" class="button" href="#">List collections</a> ~
                 <label for="colname">Collection</label>
                 <input id="colname" placeholder="abp_40_001" size="10"/>
-                <a id="switchCol" class="button" href="#">Switch to</a> or
-                <a id="dropCol" class="button" href="#">Drop</a>
+                <a id="switchCol" class="start button" href="#">Switch to</a> or
+                <a id="dropCol" class="stop button" href="#">Drop</a>
             </fieldset>
             <fieldset id="infoActions">
                 <legend>Information</legend>

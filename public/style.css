@@ -71,18 +71,17 @@ h2 {
 
 .box {
     padding: 0.4em 1em;
-    background: #eff;
 }
 
 fieldset {
     margin: 1em 0;
     padding: 0.8em;
-    background: #dee;
+    background: #f4f9fa;
 }
 
 .actionBox {
     border: 1px solid #3aa;
-    background: #cff;
+    background: #eff;
     margin: 5px 0;
     padding: 0.6em;
     line-height: 1.2em;
@@ -95,7 +94,15 @@ a.button {
     padding: 4px 4px 3px 4px;
     margin: 2px;
     color: inherit;
-    background: #fff;
+    background: #ffd;
+}
+
+a.button.start {
+    background: #dfd;
+}
+
+a.button.stop {
+    background: #fdd;
 }
 
 a.button.grey {
