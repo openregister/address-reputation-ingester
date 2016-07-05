@@ -91,7 +91,7 @@ case class OSDpa(uprn: Long,
                  postcode: String) extends Document {
 
   // For use as input to MongoDbObject (hence it's not a Map)
-  def tupled = List(
+  def tupled: List[(String, Any)] = List(
     "uprn" -> uprn,
     "subBuildingName" -> subBuildingName,
     "buildingName" -> buildingName,
