@@ -19,6 +19,10 @@
 
 package addressbase
 
+trait Document {
+  def tupled: List[scala.Tuple2[String, Any]]
+}
+
 // These case classes represent the data model for the parts of AddressBasePremium
 // (https://www.ordnancesurvey.co.uk/business-and-government/products/addressbase-products.html)
 // that we use. Consult the technical reference docs for more info.
@@ -85,41 +89,6 @@ object OSHeader {
 
   val Version_Idx = 7
 }
-
-
-//-------------------------------------------------------------------------------------------------
-
-object OSBlpu {
-  val RecordId = "21"
-
-  import OSCleanup._
-
-  // scalastyle:off
-  val v1 = OSBlpuIdx(
-    uprn = Uprn_Idx,
-    logicalStatus = 4,
-    postalCode = 16,
-    postcode = 17)
-
-  val v2 = OSBlpuIdx(
-    uprn = Uprn_Idx,
-    logicalStatus = 4,
-    postalCode = 19,
-    postcode = 20)
-
-  var idx = v1
-
-  def isUsefulPostcode(csv: Array[String]): Boolean = {
-    csv(idx.postalCode) != "N" // not a postal address
-  }
-
-  def apply(csv: Array[String]): OSBlpu =
-    OSBlpu(csv(idx.uprn).toLong, csv(idx.logicalStatus).head, csv(idx.postcode))
-}
-
-case class OSBlpuIdx(uprn: Int, logicalStatus: Int, postalCode: Int, postcode: Int)
-
-case class OSBlpu(uprn: Long, logicalStatus: Char, postcode: String)
 
 
 //-------------------------------------------------------------------------------------------------
