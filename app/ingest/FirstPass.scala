@@ -21,6 +21,7 @@
 
 package ingest
 
+import addressbase._
 import services.exec.Continuer
 import ingest.Ingester.{Blpu, Street}
 import ingest.writers.OutputWriter

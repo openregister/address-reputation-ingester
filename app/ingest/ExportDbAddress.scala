@@ -21,6 +21,7 @@
 
 package ingest
 
+import addressbase.{OSCleanup, OSDpa, OSLpi}
 import ingest.Ingester.Street
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.osgb.Postcode._

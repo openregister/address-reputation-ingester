@@ -24,6 +24,7 @@ package ingest
 import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
+import addressbase.{OSBlpu, OSCsv, OSLpi}
 import org.junit.runner.RunWith
 import org.mockito.ArgumentCaptor
 import org.mockito.Mockito._
