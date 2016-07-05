@@ -17,7 +17,7 @@
 package services.model
 
 import fetch.OSGBProduct
-import ingest.writers.CollectionName
+import services.db.CollectionName
 
 case class StateModel(
                        productName: String = "",

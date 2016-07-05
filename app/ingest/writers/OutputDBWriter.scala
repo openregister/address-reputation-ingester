@@ -26,6 +26,7 @@ import com.mongodb.casbah.commons.MongoDBObject
 import config.ApplicationGlobal
 import config.ConfigHelper._
 import play.api.Play._
+import services.db.{CollectionMetadata, CollectionName}
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection

@@ -25,7 +25,7 @@ import java.util.Date
 
 import com.github.sardine.Sardine
 import controllers.PassThroughAction
-import ingest.writers.{CollectionMetadata, CollectionName, OutputFileWriterFactory}
+import ingest.writers.OutputFileWriterFactory
 import ingest.{StubContinuer, StubWorkerFactory}
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
@@ -36,6 +36,7 @@ import org.scalatestplus.play.PlaySpec
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import services.db.{CollectionMetadata, CollectionName}
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.logging.StubLogger

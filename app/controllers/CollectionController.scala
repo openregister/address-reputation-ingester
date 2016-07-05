@@ -23,9 +23,9 @@ package controllers
 
 import config.ApplicationGlobal
 import controllers.SimpleValidator._
-import ingest.writers.{CollectionMetadata, CollectionMetadataItem, CollectionName}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
+import services.db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
 import services.exec.WorkerFactory
 import services.model.StatusLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController

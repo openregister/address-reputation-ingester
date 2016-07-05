@@ -24,8 +24,8 @@ import java.net.URL
 import config.ApplicationGlobal
 import controllers.SimpleValidator._
 import controllers.{ControllerConfig, KnownProducts}
-import ingest.writers.{CollectionMetadata, CollectionName}
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
+import services.db.{CollectionMetadata, CollectionName}
 import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
