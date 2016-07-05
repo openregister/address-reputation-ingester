@@ -20,7 +20,9 @@
 package addressbase
 
 trait Document {
-  def tupled: List[scala.Tuple2[String, Any]]
+  def tupled: List[(String, Any)]
+
+  def normalise: Document
 }
 
 // These case classes represent the data model for the parts of AddressBasePremium
@@ -89,78 +91,6 @@ object OSHeader {
 
   val Version_Idx = 7
 }
-
-
-//-------------------------------------------------------------------------------------------------
-
-object OSDpa {
-  val RecordId = "28"
-
-  import OSCleanup._
-
-  // scalastyle:off
-  val v1 = OSDpaIdx(
-    uprn = Uprn_Idx,
-    subBuildingName = 8,
-    buildingName = 9,
-    buildingNumber = 10,
-    dependentThoroughfareName = 11,
-    thoroughfareName = 12,
-    doubleDependentLocality = 13,
-    dependentLocality = 14,
-    postTown = 15,
-    postcode = 16)
-
-  val v2 = OSDpaIdx(
-    uprn = Uprn_Idx,
-    subBuildingName = 7,
-    buildingName = 8,
-    buildingNumber = 9,
-    dependentThoroughfareName = 10,
-    thoroughfareName = 11,
-    doubleDependentLocality = 12,
-    dependentLocality = 13,
-    postTown = 14,
-    postcode = 15)
-
-  var idx = v1
-
-  def apply(csv: Array[String]): OSDpa =
-    OSDpa(
-      csv(idx.uprn).toLong,
-      csv(idx.subBuildingName).trim,
-      csv(idx.buildingName).trim,
-      csv(idx.buildingNumber).trim,
-      csv(idx.dependentThoroughfareName).trim,
-      csv(idx.thoroughfareName).trim,
-      csv(idx.doubleDependentLocality).trim,
-      csv(idx.dependentLocality).trim,
-      csv(idx.postTown).trim,
-      csv(idx.postcode).trim)
-}
-
-case class OSDpaIdx(uprn: Int,
-                    subBuildingName: Int,
-                    buildingName: Int,
-                    buildingNumber: Int,
-                    dependentThoroughfareName: Int,
-                    thoroughfareName: Int,
-                    doubleDependentLocality: Int,
-                    dependentLocality: Int,
-                    postTown: Int,
-                    postcode: Int)
-
-case class OSDpa(uprn: Long,
-                 subBuildingName: String,
-                 buildingName: String,
-                 buildingNumber: String,
-                 dependentThoroughfareName: String,
-                 thoroughfareName: String,
-                 doubleDependentLocality: String,
-                 dependentLocality: String,
-                 postTown: String,
-                 postcode: String)
-
 
 //-------------------------------------------------------------------------------------------------
 
