@@ -37,7 +37,6 @@ object FetchController extends FetchController(
   ControllerConfig.workerFactory,
   ControllerConfig.fetcher,
   ControllerConfig.sardine,
-  ControllerConfig.unzipper,
   ControllerConfig.remoteServer,
   ApplicationGlobal.collectionMetadata)
 
@@ -47,7 +46,6 @@ class FetchController(action: ActionBuilder[Request],
                       workerFactory: WorkerFactory,
                       webdavFetcher: WebdavFetcher,
                       sardine: SardineWrapper,
-                      unzipper: ZipUnpacker,
                       url: URL,
                       collectionMetadata: CollectionMetadata) extends BaseController {
 
@@ -77,10 +75,6 @@ class FetchController(action: ActionBuilder[Request],
         logger.info("Nothing new available for " + model1.pathSegment)
         Nil
       }
-
-    val freshItems = files.filter(_.fresh)
-    val toUnzip = freshItems.map(_.file)
-    unzipper.unzipList(toUnzip, model2.pathSegment)
 
     if (files.isEmpty) model2.copy(hasFailed = true) else model2
   }

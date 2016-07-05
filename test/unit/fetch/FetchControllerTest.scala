@@ -80,11 +80,10 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
     val workerFactory = new StubWorkerFactory(worker)
 
     val webdavFetcher = mock[WebdavFetcher]
-    val unzipper = mock[ZipUnpacker]
     val request = FakeRequest()
     val collectionMetadata = mock[CollectionMetadata]
 
-    val fetchController = new FetchController(pta, statusLogger, workerFactory, webdavFetcher, sardineWrapper, unzipper, url, collectionMetadata)
+    val fetchController = new FetchController(pta, statusLogger, workerFactory, webdavFetcher, sardineWrapper, url, collectionMetadata)
 
     def parameterTest(product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]
@@ -156,7 +155,6 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         assert(response.header.status === 202)
         verify(sardineWrapper).exploreRemoteTree
         verify(webdavFetcher).fetchList(any[OSGBProduct], anyString, any[Continuer], any[Boolean])
-        verify(unzipper).unzipList(any[List[DownloadedFile]], anyString)
         assert(logger.infos.map(_.message) === List(
           "Info:Starting fetching product/123/variant.",
           "Info:Finished fetching product/123/variant after {}."
@@ -234,7 +232,6 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         // then
         assert(model2 === model1)
         verify(webdavFetcher).fetchList(any[OSGBProduct], anyString, any[Continuer], any[Boolean])
-        verify(unzipper).unzipList(files, "product/123/variant")
         assert(logger.size === 0)
         teardown()
       }
@@ -259,7 +256,6 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         // then
         assert(model2 === model1)
         verify(webdavFetcher).fetchList(any[OSGBProduct], anyString, any[Continuer], any[Boolean])
-        verify(unzipper).unzipList(List(f2Txt, f2Zip), "product/123/variant")
         assert(logger.size === 0)
         teardown()
       }
@@ -284,7 +280,6 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         // then
         assert(model2 === model1)
         verify(webdavFetcher).fetchList(product, "product/123/variant", stubContinuer, false)
-        verify(unzipper).unzipList(List(f1Txt, f1Zip), "product/123/variant")
         assert(logger.size === 0)
         teardown()
       }
@@ -322,7 +317,6 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         // then
         assert(model2 === model1)
         verify(webdavFetcher).fetchList(product, "product/123/variant", stubContinuer, false)
-        verify(unzipper).unzipList(Nil, "product/123/variant")
         assert(logger.size === 0)
         teardown()
       }
@@ -361,7 +355,6 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         // then
         assert(model2.hasFailed === false)
         verify(webdavFetcher).fetchList(product, "product/123/variant", stubContinuer, true)
-        verify(unzipper).unzipList(List(f1Txt, f1Zip), "product/123/variant")
         assert(logger.size === 0)
         teardown()
       }
@@ -382,7 +375,6 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         // then
         assert(model2 === model1.copy(hasFailed = true))
         verify(webdavFetcher).fetchList(product, "product/123/variant", stubContinuer, false)
-        verify(unzipper).unzipList(Nil, "product/123/variant")
         assert(logger.size === 0)
         teardown()
       }
