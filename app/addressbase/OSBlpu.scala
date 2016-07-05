@@ -59,5 +59,5 @@ case class OSBlpu(uprn: Long, logicalStatus: Char, postcode: String) extends Doc
     "logicalStatus" -> logicalStatus,
     "postcode" -> postcode)
 
-  def normalise = new OSBlpu(uprn, logicalStatus, Postcode.normalisePostcode(postcode))
+  def normalise: OSBlpu = new OSBlpu(uprn, logicalStatus, Postcode.normalisePostcode(postcode))
 }

@@ -94,47 +94,6 @@ object OSHeader {
 
 //-------------------------------------------------------------------------------------------------
 
-object OSStreet {
-  val RecordId = "11"
-
-  val idx = OSStreetIdx(usrn = OSCleanup.Uprn_Idx, recordType = 4)
-
-  def apply(csv: Array[String]): OSStreet = OSStreet(csv(idx.usrn).toLong, csv(idx.recordType).head)
-}
-
-case class OSStreetIdx(usrn: Int, recordType: Int)
-
-case class OSStreet(usrn: Long, recordType: Char)
-
-
-//-------------------------------------------------------------------------------------------------
-
-object OSStreetDescriptor {
-  val RecordId = "15"
-
-  val idx = OSStreetDescriptorIdx(
-    usrn = OSCleanup.Uprn_Idx,
-    description = 4,
-    locality = 5,
-    town = 6,
-    language = 8)
-
-  def isEnglish(csv: Array[String]): Boolean = csv(idx.language) == "ENG"
-
-  def apply(csv: Array[String]): OSStreetDescriptor = OSStreetDescriptor(
-    csv(idx.usrn).toLong,
-    csv(idx.description).trim,
-    csv(idx.locality).trim,
-    csv(idx.town).trim.intern,
-    csv(idx.language).trim.intern)
-}
-
-case class OSStreetDescriptorIdx(usrn: Int, description: Int, locality: Int, town: Int, language: Int)
-
-case class OSStreetDescriptor(usrn: Long, description: String, locality: String, town: String, language: String)
-
-//-------------------------------------------------------------------------------------------------
-
 object OSCsv {
   // Up to Epoch-38 is variant 1. Later epochs are variant 2.
   // this may well change - see https://jira.tools.tax.service.gov.uk/browse/TXMNT-294

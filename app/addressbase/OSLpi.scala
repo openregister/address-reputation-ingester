@@ -114,7 +114,7 @@ case class OSLpi(uprn: Long,
     "paoText" -> paoText,
     "usrn" -> usrn)
 
-  def normalise = new OSLpi(uprn,
+  def normalise: OSLpi = new OSLpi(uprn,
     logicalStatus,
     saoStartNumber,
     saoStartSuffix,

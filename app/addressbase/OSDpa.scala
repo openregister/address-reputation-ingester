@@ -103,7 +103,7 @@ case class OSDpa(uprn: Long,
     "postTown" -> postTown,
     "postcode" -> postcode)
 
-  def normalise = new OSDpa(uprn, subBuildingName,
+  def normalise: OSDpa = new OSDpa(uprn, subBuildingName,
     buildingName,
     buildingNumber,
     Capitalisation.normaliseAddressLine(dependentThoroughfareName),
