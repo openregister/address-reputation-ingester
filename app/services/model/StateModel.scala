@@ -16,8 +16,8 @@
 
 package services.model
 
-import db.CollectionName
 import fetch.OSGBProduct
+import services.db.CollectionName
 
 case class StateModel(
                        productName: String = "",

@@ -25,12 +25,12 @@ import java.util.Date
 
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoCollection, MongoDB}
-import db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
+import services.db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 
 import scala.collection.mutable

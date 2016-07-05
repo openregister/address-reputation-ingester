@@ -23,11 +23,11 @@ package services.model
 
 import java.net.URL
 
-import db.CollectionName
 import fetch.{OSGBProduct, WebDavFile}
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuite, Matchers}
+import services.db.CollectionName
 
 @RunWith(classOf[JUnitRunner])
 class StateModelTest extends FunSuite with Matchers {

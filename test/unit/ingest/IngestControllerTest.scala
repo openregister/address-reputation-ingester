@@ -19,7 +19,9 @@
 
 package ingest
 
-import ingest.writers._
+import java.io.File
+
+import fetch.FileProcessor
 import services.exec.{Continuer, WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 
@@ -38,4 +40,8 @@ class StubWorkerFactory(w: WorkQueue) extends WorkerFactory {
 
 class StubContinuer extends Continuer {
   override def isBusy: Boolean = true
+}
+
+class StubFileProcessor extends FileProcessor {
+  override def process(f: File) {}
 }

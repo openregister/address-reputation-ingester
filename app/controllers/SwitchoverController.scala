@@ -18,10 +18,10 @@ package controllers
 
 import config.ApplicationGlobal
 import controllers.SimpleValidator._
-import db.CollectionMetadata
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent}
 import services.audit.AuditClient
+import services.db.CollectionMetadata
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}

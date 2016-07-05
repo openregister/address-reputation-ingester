@@ -20,9 +20,9 @@ package config
 
 import config.ConfigHelper._
 import controllers.SystemMetadataStoreFactory
-import db.CollectionMetadata
 import play.api.Play._
 import play.api._
+import services.db.CollectionMetadata
 import services.exec.WorkQueue
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.gov.hmrc.play.config.RunMode

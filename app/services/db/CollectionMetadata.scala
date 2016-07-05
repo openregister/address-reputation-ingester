@@ -17,7 +17,7 @@
  *
  */
 
-package db
+package services.db
 
 import java.util.Date
 

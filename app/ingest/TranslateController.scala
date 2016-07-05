@@ -24,9 +24,9 @@ import java.net.URL
 import config.ApplicationGlobal
 import controllers.ControllerConfig
 import controllers.SimpleValidator._
-import db.{CollectionMetadata, OutputDBWriterFactory}
 import fetch._
 import play.api.mvc.{Action, AnyContent}
+import services.db.{CollectionMetadata, OutputDBWriterFactory}
 import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -77,7 +77,7 @@ class TranslateController(logger: StatusLogger,
     if (model2.product.isDefined) {
       val ingester = ingesterFactory.ingester(logger, continuer, dbWriterFactory, settings, model2.productName)
       ingester.begin()
-      webdavFetcher.fetchList(model2.product.get, model2.pathSegment, model2.forceChange, continuer, file => ingester.ingestZip(file))
+      webdavFetcher.fetchList(model2.product.get, model2.pathSegment, model2.forceChange, continuer, ingester)
       model2
     }
     else

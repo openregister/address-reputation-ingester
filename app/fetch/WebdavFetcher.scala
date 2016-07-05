@@ -25,18 +25,20 @@ import services.exec.Continuer
 import services.model.StatusLogger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
+trait FileProcessor {
+  def process(f: File)
+}
+
 class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: StatusLogger) {
 
-  // Downloads a specified set of remote files, marks them all with a completion marker (.done),
-  // then returns the total bytes copied.
-  def fetchList(product: OSGBProduct, outputPath: String, forceFetch: Boolean, continuer: Continuer, process: File => Unit): List[DownloadItem] = {
+  def fetchList(product: OSGBProduct, outputPath: String, forceFetch: Boolean, continuer: Continuer, processor: FileProcessor): List[DownloadItem] = {
     val outputDirectory = resolveAndMkdirs(outputPath)
     val sardine = factory.begin
     product.zips.map {
       webDavFile =>
         val file = fileOf(webDavFile.url)
         if (continuer.isBusy)
-          fetchFile(webDavFile.url, file, sardine, outputDirectory, forceFetch, process)
+          fetchFile(webDavFile.url, file, sardine, outputDirectory, forceFetch, processor)
         else {
           DownloadItem.stale(DownloadedFile(outputDirectory, file))
         }
@@ -48,7 +50,7 @@ class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: S
     new URL(myUrl.getProtocol, myUrl.getHost, myUrl.getPort, res.getHref.getPath)
   }
 
-  private def fetchFile(url: URL, file: String, sardine: Sardine, outputDirectory: File, forceFetch: Boolean, process: File => Unit): DownloadItem = {
+  private def fetchFile(url: URL, file: String, sardine: Sardine, outputDirectory: File, forceFetch: Boolean, processor: FileProcessor): DownloadItem = {
     val outFile = DownloadedFile(outputDirectory, file)
     outFile.delete()
 
@@ -56,9 +58,8 @@ class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: S
     status.info(s"Fetching {} to $file$ff.", url)
     val dt = new DiagnosticTimer
     val fetched = doFetchFile(url, sardine, outFile)
-    outFile.touchDoneFile()
     status.info(s"Fetched $file in {}.", dt)
-    process(outFile.file)
+    processor.process(outFile.file)
     status.info(s"Fetched and processed $file in {}.", dt)
     DownloadItem.fresh(fetched)
   }

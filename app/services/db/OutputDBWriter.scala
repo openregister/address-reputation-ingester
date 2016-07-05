@@ -17,7 +17,7 @@
  *
  */
 
-package db
+package services.db
 
 import addressbase.Document
 import com.mongodb._

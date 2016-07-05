@@ -20,15 +20,13 @@
 package fetch
 
 import java.io.File
-import java.nio.file.{Files, Path}
+import java.nio.file.Path
 
 
 case class DownloadedFile(file: File) {
   def this(fpath: String) = this(new File(fpath))
 
   val isZipFile: Boolean = file.getName.toLowerCase.endsWith(".zip")
-
-  val doneFile = new File(file.getParentFile, file.getName + ".done")
 
   def product: String = file.getParentFile.getParentFile.getParentFile.getName
 
@@ -44,17 +42,8 @@ case class DownloadedFile(file: File) {
 
   def exists: Boolean = file.exists
 
-  // Indicates a partial / failed download.
-  def isIncomplete: Boolean = !doneFile.exists || file.lastModified > doneFile.lastModified
-
   def delete() {
     file.delete()
-    doneFile.delete()
-  }
-
-  def touchDoneFile() {
-    if (!doneFile.exists)
-      Files.createFile(doneFile.toPath)
   }
 }
 

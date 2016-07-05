@@ -22,7 +22,7 @@ package fetch
 import java.io.File
 
 import addressbase._
-import db.OutputDBWriterFactory
+import services.db.OutputDBWriterFactory
 import services.exec.Continuer
 import services.model.StatusLogger
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
@@ -34,7 +34,8 @@ object Ingester {
 }
 
 
-class Ingester(logger: StatusLogger, continuer: Continuer, writerFactory: OutputDBWriterFactory, settings: WriterSettings, productName: String) {
+class Ingester(logger: StatusLogger, continuer: Continuer, writerFactory: OutputDBWriterFactory, settings: WriterSettings, productName: String)
+  extends FileProcessor {
 
   val blpuWriter = writerFactory.writer(productName + "_blpu", List("uprn"), logger, settings)
   val dpaWriter = writerFactory.writer(productName + "_dpa", List("uprn", "postcode"), logger, settings)
@@ -47,6 +48,10 @@ class Ingester(logger: StatusLogger, continuer: Continuer, writerFactory: Output
   var lpiCount = 0
   var sdCount = 0
   var streetCount = 0
+
+  def process(file: File) {
+    ingestZip(file)
+  }
 
   def ingestZip(file: File) {
     val dt = new DiagnosticTimer
@@ -62,7 +67,11 @@ class Ingester(logger: StatusLogger, continuer: Continuer, writerFactory: Output
       }
     } finally {
       zip.close()
-      logger.info(s"Reading from ${zip.nFiles} CSV files in ${file.getName} took {}." +
+      logger.info(s"Reading from ${
+        zip.nFiles
+      } CSV files in ${
+        file.getName
+      } took {}." +
         s" BLPUs: $blpuCount, DPAs: $dpaCount LPIs: $lpiCount, Streets: $streetCount, Descr: $sdCount.", dt)
     }
 
