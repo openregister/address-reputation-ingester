@@ -19,12 +19,6 @@
 
 package addressbase
 
-trait Document {
-  def tupled: List[(String, Any)]
-
-  def normalise: Document
-}
-
 // These case classes represent the data model for the parts of AddressBasePremium
 // (https://www.ordnancesurvey.co.uk/business-and-government/products/addressbase-products.html)
 // that we use. Consult the technical reference docs for more info.

@@ -19,7 +19,7 @@
 
 package addressbase
 
-import uk.co.hmrc.address.osgb.Postcode
+import uk.co.hmrc.address.osgb.{Document, Postcode}
 
 object OSBlpu {
   val RecordId = "21"

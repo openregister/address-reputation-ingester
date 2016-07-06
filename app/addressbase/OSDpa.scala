@@ -19,7 +19,7 @@
 
 package addressbase
 
-import uk.co.hmrc.address.osgb.Postcode
+import uk.co.hmrc.address.osgb.{Document, Postcode}
 import uk.co.hmrc.address.services.Capitalisation
 
 object OSDpa {

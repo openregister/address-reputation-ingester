@@ -10,6 +10,7 @@ dist
 /.idea
 /*.iml
 /*.ipr
+/*.log
 /out
 /.idea_modules
 /.classpath
