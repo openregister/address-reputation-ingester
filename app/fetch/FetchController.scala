@@ -49,7 +49,7 @@ class FetchController(action: ActionBuilder[Request],
                       url: URL,
                       collectionMetadata: CollectionMetadata) extends BaseController {
 
-  def doFetch(product: String, epoch: Int, variant: String, forceChange: Option[Boolean]): Action[AnyContent] = action {
+  def doFetchToFile(product: String, epoch: Int, variant: String, forceChange: Option[Boolean]): Action[AnyContent] = action {
     request =>
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))

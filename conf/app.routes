@@ -5,27 +5,29 @@ GET    /assets/*file              controllers.Assets.at(path="/public", file)
 GET    /admin/metrics             com.kenshoo.play.metrics.MetricsController.metrics
 
 # ----- Ping -----
-HEAD   /ping                                         controllers.PingController.ping
-GET    /ping                                         controllers.PingController.ping
+HEAD   /ping                                                    controllers.PingController.ping
+GET    /ping                                                    controllers.PingController.ping
 
-GET    /goAuto/to/:target                            controllers.GoController.doGoAuto(target, bulkSize: Option[Int], loopDelay: Option[Int])
-GET    /go/to/:target/:product/:epoch/:variant       controllers.GoController.doGo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
+# store is db | file (local storage area)
+# target is db | file | null (target for processed output records)
+GET    /goAuto/via/file/to/:target                              controllers.GoController.doGoAuto(target, bulkSize: Option[Int], loopDelay: Option[Int])
+GET    /go/via/file/to/:target/:product/:epoch/:variant         controllers.GoController.doGo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
 
-GET    /fetch/:product/:epoch/:variant               fetch.FetchController.doFetch(product, epoch: Int, variant, forceChange: Option[Boolean])
-POST   /fetch/clean                                  fetch.FetchController.doCleanup()
-GET    /fetch/showRemoteTree                         fetch.FetchController.doShowTree()
+GET    /fetch/to/file/:product/:epoch/:variant                  fetch.FetchController.doFetchToFile(product, epoch: Int, variant, forceChange: Option[Boolean])
+POST   /fetch/clean                                             fetch.FetchController.doCleanup()
+GET    /fetch/showRemoteTree                                    fetch.FetchController.doShowTree()
 
-GET    /ingest/to/:target/:product/:epoch/:variant   ingest.IngestController.doIngestTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
+GET    /ingest/from/file/to/:target/:product/:epoch/:variant    ingest.IngestController.doIngestFileTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
 
-GET    /switch/to/:product/:epoch/:index             controllers.SwitchoverController.doSwitchTo(product, epoch: Int, index: Int)
+GET    /switch/to/:product/:epoch/:index                        controllers.SwitchoverController.doSwitchTo(product, epoch: Int, index: Int)
 
-GET    /admin/cancelTask                             controllers.AdminController.cancelTask
-GET    /admin/status                                 controllers.AdminController.status
-GET    /admin/fullStatus                             controllers.AdminController.fullStatus
-GET    /admin/dirTree                                controllers.AdminController.dirTree(root: Option[String], max: Option[Int])
-GET    /admin/showLog                                controllers.AdminController.showLog(dir: Option[String])
+GET    /admin/cancelTask                                        controllers.AdminController.cancelTask
+GET    /admin/status                                            controllers.AdminController.status
+GET    /admin/fullStatus                                        controllers.AdminController.fullStatus
+GET    /admin/dirTree                                           controllers.AdminController.dirTree(root: Option[String], max: Option[Int])
+GET    /admin/showLog                                           controllers.AdminController.showLog(dir: Option[String])
 
-GET    /collections/list                             controllers.CollectionController.listCollections
-DELETE /collections/:name                            controllers.CollectionController.dropCollection(name)
-POST   /collections/clean                            controllers.CollectionController.doCleanup
+GET    /collections/list                                        controllers.CollectionController.listCollections
+DELETE /collections/:name                                       controllers.CollectionController.dropCollection(name)
+POST   /collections/clean                                       controllers.CollectionController.doCleanup
 

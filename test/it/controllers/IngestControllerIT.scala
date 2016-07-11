@@ -51,7 +51,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
     """ in {
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
-      val request = newRequest("GET", "/ingest/to/file/exeter/1/sample?forceChange=true")
+      val request = newRequest("GET", "/ingest/from/file/to/file/exeter/1/sample?forceChange=true")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe ACCEPTED
 
@@ -81,7 +81,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
 
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
-      val request = newRequest("GET", "/ingest/to/db/exeter/1/sample?bulkSize=5&loopDelay=0&forceChange=true")
+      val request = newRequest("GET", "/ingest/from/file/to/db/exeter/1/sample?bulkSize=5&loopDelay=0&forceChange=true")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe ACCEPTED
 
@@ -110,7 +110,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
        * passing bad parameters
        * should give 400
     """ in {
-      assert(get("/ingest/to/db/abp/not-a-number/full").status === BAD_REQUEST)
+      assert(get("/ingest/from/file/to/db/abp/not-a-number/full").status === BAD_REQUEST)
       //TODO fix this assert(get("/ingest/to/db/abp/1/not-a-number").status === BAD_REQUEST)
     }
 
@@ -118,7 +118,7 @@ class IngestControllerIT extends PlaySpec with EmbeddedMongoSuite with AppServer
        * when a wrong password is supplied
        * the response should be 401
     """ in {
-      val request = newRequest("GET", "/ingest/to/db/exeter/1/sample")
+      val request = newRequest("GET", "/ingest/from/file/to/db/exeter/1/sample")
       val response = await(request.withAuth("admin", "wrong", BASIC).execute())
       assert(response.status === UNAUTHORIZED)
     }

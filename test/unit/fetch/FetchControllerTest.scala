@@ -91,7 +91,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
       val request = FakeRequest()
 
       intercept[IllegalArgumentException] {
-        await(call(fetchController.doFetch(product, epoch, variant, None), request))
+        await(call(fetchController.doFetchToFile(product, epoch, variant, None), request))
       }
     }
 
@@ -149,7 +149,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         when(webdavFetcher.fetchList(any[OSGBProduct], anyString, any[Continuer], any[Boolean])) thenReturn items
 
         // when
-        val response = await(call(fetchController.doFetch("product", 123, "variant", Some(true)), request))
+        val response = await(call(fetchController.doFetchToFile("product", 123, "variant", Some(true)), request))
 
         // then
         worker.awaitCompletion()

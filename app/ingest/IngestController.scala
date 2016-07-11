@@ -59,9 +59,9 @@ class IngestController(action: ActionBuilder[Request],
                        workerFactory: WorkerFactory
                       ) extends BaseController {
 
-  def doIngestTo(target: String, product: String, epoch: Int, variant: String,
-                 bulkSize: Option[Int], loopDelay: Option[Int],
-                 forceChange: Option[Boolean]): Action[AnyContent] = action {
+  def doIngestFileTo(target: String, product: String, epoch: Int, variant: String,
+                     bulkSize: Option[Int], loopDelay: Option[Int],
+                     forceChange: Option[Boolean]): Action[AnyContent] = action {
     request =>
       require(IngestControllerHelper.isSupportedTarget(target))
       require(isAlphaNumeric(product))

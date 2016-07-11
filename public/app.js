@@ -107,21 +107,21 @@ function doStartProductAction(action) {
 }
 
 function doGo() {
-    doStartProductAction('/go/to/db/');
+    doStartProductAction('/go/via/file/to/db/');
 }
 
 function doFetch() {
-    doStartProductAction('/fetch/');
+    doStartProductAction('/fetch/to/file/');
 }
 
 function doIngest() {
-    doStartProductAction('/ingest/to/db/');
+    doStartProductAction('/ingest/from/file/to/db/');
 }
 
 //-------------------------------------------------------------------------------------------------
 
 function goAuto() {
-    get('/goAuto/to/db', true);
+    get('/goAuto/via/file/to/db', true);
 }
 
 function cancelTask() {
