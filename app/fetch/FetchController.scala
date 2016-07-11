@@ -81,7 +81,6 @@ class FetchController(action: ActionBuilder[Request],
 
   def doCleanup(): Action[AnyContent] = action {
     request =>
-      val model = new StateModel()
       workerFactory.worker.push(s"zip file cleanup", {
         continuer =>
           cleanup()
