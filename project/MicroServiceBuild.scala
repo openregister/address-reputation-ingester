@@ -28,14 +28,12 @@ object MicroServiceBuild extends Build with MicroService {
 
   val compile = Seq(
     ws excludeAll ExclusionRule(organization = "commons-logging"),
-    "uk.gov.hmrc" %% "play-reactivemongo" % "4.7.1",
+//    "uk.gov.hmrc" %% "play-reactivemongo" % "4.7.1",
     "uk.gov.hmrc" %% "microservice-bootstrap" % "4.2.1",
-    "uk.gov.hmrc" %% "play-authorisation" % "3.1.0",
+//    "uk.gov.hmrc" %% "play-authorisation" % "3.1.0",
     "uk.gov.hmrc" %% "play-health" % "1.1.0",
-    "uk.gov.hmrc" %% "play-url-binders" % "1.0.0",
     "uk.gov.hmrc" %% "play-config" % "2.0.1",
     "uk.gov.hmrc" %% "play-json-logger" % "2.1.1",
-    "uk.gov.hmrc" %% "domain" % "3.3.0",
     "uk.gov.hmrc" %% "address-reputation-store" % "0.15.0" withSources()
       excludeAll ExclusionRule(organization = "org.reactivemongo"),
     "org.mongodb" %% "casbah" % "3.1.1",
