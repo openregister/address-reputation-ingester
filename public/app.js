@@ -36,8 +36,18 @@
  *
  */
 
+var contextPath = '';
+
+function setupContextPath() {
+    var path = window.location.pathname.split( '/' );
+    if (path[1] != 'ui') {
+        contextPath = '/' + path[1];
+    }
+    console.log('contextPath='+contextPath);
+}
+
 function refreshStatusContinually() {
-    $.get('/admin/status', function (data) {
+    $.get(contextPath + '/admin/status', function (data) {
         // console.log(data);
         $("#status").text(data);
         setTimeout(refreshStatusContinually, 1000);
@@ -56,7 +66,7 @@ function ajax(method, path, success) {
     consoleText('Pending...');
     $.ajax({
         method: method,
-        url: path,
+        url: contextPath + path,
         success: success,
         error: function (xhr, status, error) {
             console.log(status);
@@ -199,6 +209,7 @@ function toggleFieldset(id) {
 
 $(document).ready(
     function () {
+        setupContextPath();
         // buttons
         $('#fullStatusButton').click(fullStatus);
         $('#go').click(doGo);
