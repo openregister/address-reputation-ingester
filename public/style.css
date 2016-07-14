@@ -75,8 +75,38 @@ h2 {
 
 fieldset {
     margin: 1em 0;
-    padding: 0.8em;
     background: #f4f9fa;
+}
+
+fieldset.visible {
+    padding: 0.8em;
+}
+
+fieldset.visible legend.toggler {
+    color: #000;
+}
+
+div.upper {
+    padding-bottom: 0.5em;
+}
+
+div.lower {
+    padding-top: 0.5em;
+}
+
+span.spacer1 {
+    display: inline-block;
+    width: 3em;
+}
+
+span.spacer2 {
+    display: inline-block;
+    width: 5em;
+}
+
+legend.toggler {
+    color: #999;
+    cursor: pointer;
 }
 
 .actionBox {
@@ -114,7 +144,7 @@ a.button.grey {
 #statusBox {
     position: absolute;
     width: 100%;
-    top: 28em;
+    top: 3em;
     left: 0;
 }
 

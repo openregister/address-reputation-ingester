@@ -68,7 +68,7 @@ object Ingester {
 }
 
 
-class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger, forwardData: ForwardData = ForwardData.chronicleInMemory()) {
+class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger, forwardData: ForwardData) {
 
   def ingest(rootDir: File, out: OutputWriter): Boolean = {
     val files = Ingester.listFiles(rootDir, ".zip").sorted
@@ -102,6 +102,7 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
     pass(fewerFiles, out, sp)
     statusLogger.info(s"Ingester finished after {}.", dt)
 
+    forwardData.close() // release shared memory etc
     false // not a failure
   }
 
@@ -138,6 +139,6 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
 
 class IngesterFactory {
   def ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger): Ingester =
-    new Ingester(continuer, model, statusLogger)
+    new Ingester(continuer, model, statusLogger, ForwardData.chronicleInMemory())
 }
 

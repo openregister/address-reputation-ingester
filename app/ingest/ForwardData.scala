@@ -21,7 +21,7 @@
 
 package ingest
 
-import java.io.File
+import java.io.{Closeable, File}
 import java.lang.{Long => JLong}
 import java.util
 
@@ -33,9 +33,22 @@ import play.api.Play._
 class ForwardData(
                    val blpu: util.Map[JLong, String],
                    val dpa: util.Set[JLong],
-                   val streets: util.Map[JLong, String]) {
+                   val streets: util.Map[JLong, String]) extends Closeable {
   def sizeInfo: String =
     s"${blpu.size} BLPUs, ${dpa.size} DPAs, ${streets.size} streets"
+
+  def close() {
+    closeCollection(blpu)
+    closeCollection(dpa)
+    closeCollection(streets)
+  }
+
+  private def closeCollection(m: AnyRef) {
+    m match {
+      case c: Closeable => c.close()
+      case _ =>
+    }
+  }
 }
 
 
@@ -49,10 +62,16 @@ object ForwardData {
   private lazy val streetMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.street.mapSize")
   private lazy val streetValueSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.street.valueSize")
 
-  def simpleInstance(): ForwardData = new ForwardData(
+  def simpleHeapInstance(): ForwardData = new ForwardData(
     new util.HashMap[JLong, String](),
     new util.HashSet[JLong](),
     new util.HashMap[JLong, String]()
+  )
+
+  def concurrentHeapInstance(): ForwardData = new ForwardData(
+    new util.concurrent.ConcurrentHashMap[JLong, String](),
+    new util.HashSet[JLong](),
+    new util.concurrent.ConcurrentHashMap[JLong, String]()
   )
 
   def chronicleInMemory(): ForwardData = new ForwardData(

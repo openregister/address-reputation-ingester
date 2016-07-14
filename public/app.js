@@ -98,12 +98,14 @@ function doStartProductAction(action) {
     var product = $('#product').val();
     var epoch = $('#epoch').val();
     var variant = $('#variant').val();
+    var bulkSize = '?bulkSize=' + $('#bulkSize').val();
+    var loopDelay = '&loopDelay=' + $('#loopDelay').val();
     var force = '';
-    if ($('#force').is(":checked")) force = "?forceChange=true";
+    if ($('#force').is(":checked")) force = "&forceChange=true";
     if (product == '' || epoch == '' || variant == '')
         alert("Enter the product, epoch and variant");
     else
-        get(action + product + '/' + epoch + '/' + variant + force, true);
+        get(action + product + '/' + epoch + '/' + variant + bulkSize + loopDelay + force, true);
 }
 
 function doGo() {
@@ -190,10 +192,14 @@ function showLog() {
     });
 }
 
+function toggleFieldset(id) {
+    $(id + ' div').toggle();
+    $(id).toggleClass('visible');
+}
+
 $(document).ready(
     function () {
-        getAndRefreshConsoleJson('/ping');
-        refreshStatusContinually();
+        // buttons
         $('#fullStatusButton').click(fullStatus);
         $('#go').click(doGo);
         $('#fetch').click(doFetch);
@@ -209,5 +215,11 @@ $(document).ready(
         $('#ping').click(ping);
         $('#dirTree').click(dirTree);
         $('#showLog').click(showLog);
+        // view toggles
+        $('#fileActions legend').click(function() { toggleFieldset('#fileActions')} );
+        $('#collectionActions legend').click(function() { toggleFieldset('#collectionActions')});
+        $('#infoActions legend').click(function() { toggleFieldset('#infoActions')});
+        getAndRefreshConsoleJson('/ping');
+        refreshStatusContinually();
     }
 );

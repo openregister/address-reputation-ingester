@@ -49,60 +49,80 @@
     <div id="header">
         <h1>Address Reputation Data Ingester</h1>
     </div>
-
-    <div id="controls">
-        <div id="controlsBox" class="box">
-            <fieldset id="autoActions">
-                <legend>Download and Ingest</legend>
-                <a id="goAuto" class="start button" href="#">Auto Fetch, Ingest, Switch</a>
-                <a id="cancelTask" class="stop button" href="#">Cancel current task</a>
-                <br/>
-                <br/>
-                <label for="product">Product</label>
-                <input id="product" placeholder="abp" size="5"/> +
-                <label for="epoch">Epoch</label>
-                <input id="epoch" value="41" size="5" type="number"/> +
-                <label for="variant">Variant</label>
-                <input id="variant" value="full" size="7"/> +
-                <label for="force">Force</label>
-                <input id="force" type="checkbox"/>
-                <a id="go" class="start button" href="#">Go Fetch, Ingest, Switch</a> or
-                <a id="fetch" class="start button" href="#">Fetch only</a> or
-                <a id="ingest" class="start button" href="#">Ingest only</a>
-            </fieldset>
-            <fieldset id="fileActions">
-                <legend>File System</legend>
-                <a id="cleanFs" class="start button" href="#">Auto clean</a> ~
-                <label for="dirRoot">Root</label>
-                <input id="dirRoot" value="." size="15"/> +
-                <label for="dirMax">max depth</label>
-                <input id="dirMax" value="2" size="5" type="number"/>
-                <a id="dirTree" class="button" href="#">Dir Tree</a>
-            </fieldset>
-            <fieldset id="collectionActions">
-                <legend>Mongo Collections</legend>
-                <a id="cleanCol" class="start button" href="#">Auto clean</a> ~
-                <a id="listCol" class="button" href="#">List collections</a> ~
-                <label for="colname">Collection</label>
-                <input id="colname" placeholder="abp_40_001" size="10"/>
-                <a id="switchCol" class="start button" href="#">Switch to</a> or
-                <a id="dropCol" class="stop button" href="#">Drop</a>
-            </fieldset>
-            <fieldset id="infoActions">
-                <legend>Information</legend>
-                <a id="fullStatusButton" class="button" href="#">Current status</a> ~
-                <a id="remoteTree" class="button" href="#">Remote tree</a> ~
-                <a id="ping" class="button" href="#">Ping</a> ~
-                <label for="logDir">Log dir</label>
-                <input id="logDir" value="." size="15"/>
-                <a id="showLog" class="button" href="#">Show log</a>
-            </fieldset>
-        </div>
-    </div>
+    <div id="status"></div>
 </div>
 
 <div id="statusBox">
-    <div id="status"></div>
+    <div id="controls">
+        <div id="controlsBox" class="box">
+            <fieldset id="autoActions" class="visible">
+                <legend>Download and Ingest</legend>
+                <div class="upper">
+                    <a id="goAuto" class="start button" href="#">Auto Fetch, Ingest, Switch</a>
+                    <span class="spacer1"></span>
+                    <a id="cancelTask" class="stop button" href="#">Cancel current task</a>
+                    <span class="spacer2"></span>
+                    <label for="bulkSize">Bulk size</label>
+                    <input id="bulkSize" value="1000" min="1" size="5" type="number"/> +
+                    <label for="loopDelay">loop delay</label>
+                    <input id="loopDelay" value="0" min="0" size="5" type="number"/> ms
+                </div>
+                <div class="lower">
+                    <label for="product">Product</label>
+                    <input id="product" placeholder="abp" size="5"/> +
+                    <label for="epoch">Epoch</label>
+                    <input id="epoch" value="41" size="5" type="number"/> +
+                    <label for="variant">Variant</label>
+                    <input id="variant" value="full" size="7"/> +
+                    <label for="force">Force</label>
+                    <input id="force" type="checkbox"/>
+                    <a id="go" class="start button" href="#">Go Fetch, Ingest, Switch</a> or
+                    <a id="fetch" class="start button" href="#">Fetch only</a> or
+                    <a id="ingest" class="start button" href="#">Ingest only</a>
+                </div>
+            </fieldset>
+            <fieldset id="fileActions" class="visible">
+                <legend class="toggler">File System</legend>
+                <div>
+                    <a id="cleanFs" class="start button" href="#">Auto clean</a>
+                    <span class="spacer1"></span>
+                    <label for="dirRoot">Root</label>
+                    <input id="dirRoot" value="." size="15"/> +
+                    <label for="dirMax">max depth</label>
+                    <input id="dirMax" value="2" size="5" type="number"/>
+                    <a id="dirTree" class="button" href="#">Dir Tree</a>
+                </div>
+            </fieldset>
+            <fieldset id="collectionActions" class="visible">
+                <legend class="toggler">Mongo Collections</legend>
+                <div>
+                    <a id="cleanCol" class="start button" href="#">Auto clean</a>
+                    <span class="spacer1"></span>
+                    <a id="listCol" class="button" href="#">List collections</a>
+                    <span class="spacer1"></span>
+                    <label for="colname">Collection</label>
+                    <input id="colname" placeholder="abp_40_001" size="10"/>
+                    <a id="switchCol" class="start button" href="#">Switch to</a> or
+                    <a id="dropCol" class="stop button" href="#">Drop</a>
+                </div>
+            </fieldset>
+            <fieldset id="infoActions" class="visible">
+                <legend class="toggler">Information</legend>
+                <div>
+                    <a id="fullStatusButton" class="button" href="#">Current status</a>
+                    <span class="spacer1"></span>
+                    <a id="remoteTree" class="button" href="#">Remote tree</a>
+                    <span class="spacer1"></span>
+                    <a id="ping" class="button" href="#">Ping</a>
+                    <span class="spacer1"></span>
+                    <label for="logDir">Log dir</label>
+                    <input id="logDir" value="." size="15"/>
+                    <a id="showLog" class="button" href="#">Show log</a>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+
     <pre id="console"></pre>
 </div>
 <script src="app.js"></script>

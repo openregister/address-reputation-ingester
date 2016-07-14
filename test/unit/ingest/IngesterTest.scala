@@ -59,6 +59,29 @@ class IngesterTest extends FunSuite with MockitoSugar {
   }
 
 
+  test("at the end of the process, ForwardData is closed") {
+    new context {
+      val mockFile = mock[File]
+      val dummyOut = mock[OutputWriter]
+      val fd = mock[ForwardData]
+
+      when(mockFile.isDirectory) thenReturn true
+      when(mockFile.listFiles) thenReturn Array.empty[File]
+      when(dummyOut.existingTargetThatIsNewerThan(any[Date])) thenReturn None
+
+      worker.push("testing", {
+        continuer =>
+          new Ingester(continuer, model, status, fd).ingest(mockFile, dummyOut)
+          lock.put(true)
+      })
+
+      lock.take()
+      worker.awaitCompletion()
+      verify(fd).close()
+    }
+  }
+
+
   test("Having no files should not throw any exception") {
     new context {
       val mockFile = mock[File]
@@ -129,7 +152,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, model, status, ForwardData.simpleInstance()).ingest(List(sample), out)
+          new Ingester(continuer, model, status, ForwardData.simpleHeapInstance()).ingest(List(sample), out)
           lock.put(true)
       })
 
