@@ -39,7 +39,7 @@ class AdminController(action: ActionBuilder[Request],
                       worker: WorkQueue) extends BaseController {
 
   def index: Action[AnyContent] = action {
-    Redirect("/assets/index.html")
+    Redirect("/ui/index.html")
   }
 
   def cancelTask(): Action[AnyContent] = action {
