@@ -75,8 +75,7 @@ class CollectionController(action: ActionBuilder[Request],
         BadRequest(name + " cannot be dropped")
       } else {
         collectionMetadata.dropCollection(name)
-        //TODO reverse routing via SeeOther(routes.CollectionController.listCollections())
-        SeeOther("/collections/list")
+        Ok
       }
   }
 
