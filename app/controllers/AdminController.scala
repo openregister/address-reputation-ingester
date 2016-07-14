@@ -40,8 +40,7 @@ class AdminController(action: ActionBuilder[Request],
 
   def index: Action[AnyContent] = action {
     request =>
-      request.uri
-      Redirect(request.uri + "/ui/index.html")
+      Redirect("ui/index.html")
   }
 
   def cancelTask(): Action[AnyContent] = action {
