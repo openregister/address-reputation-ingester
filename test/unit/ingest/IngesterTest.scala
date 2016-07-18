@@ -186,7 +186,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       // 24,"I",3390,10023117083,"1110L000163496","ENG",1,2008-03-26,,2008-03-26,2008-03-26,,"",,"","",78,"",,"","",14200711,"1","","","Y"
       // 28,"I",3391,10023117083,,8754179,"","","","",78,"","RIVERMEAD ROAD","","","EXETER","EX2 4RL","S","","","","","","",2014-04-22,2008-03-26,,2012-04-03,2008-03-26
       // 32,"I",3392,10023117083,"1110C000059475","RD","AddressBase Premium Classification Scheme",1.0,2008-03-26,,2012-04-03,2008-03-26
-      assert(addressesProduced(0) === DbAddress("GB10023117083", List("78 Rivermead Road"), "Exeter", "EX2 4RL"))
+      assert(addressesProduced(0) === DbAddress("GB10023117083", List("78 Rivermead Road"), "Exeter", "EX2 4RL", "GB-ENG"))
 
       // 11,"I",1073,14200493,1,1110,2,1990-01-01,1,8,0,1995-06-20,,2007-07-19,1995-06-20,292385.00,093282.00,292285.00,092937.00,10
       // 15,"I",1074,14200493,"LONGBROOK STREET","","EXETER","DEVON","ENG"
@@ -196,7 +196,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       // 23,"I",3412,10023117221,"1110X900059467","osgb1000002274485088",3,"7666MA",2008-07-04,,2012-04-03,2008-07-04
       // 24,"I",3413,10023117221,"1110L000163644","ENG",1,2008-07-04,,2010-07-28,2008-07-04,10,"",,"","",58,"",64,"","ISCA LOFTS",14200493,"1","","","Y"
       // 28,"I",3414,10023117221,100041045306,51232954,"","","10","ISCA LOFTS  58-64",,"","LONGBROOK STREET","","","EXETER","EX4 6AL","S","","","","","","",2014-04-22,2008-07-04,,2012-04-03,2008-07-04
-      assert(addressesProduced(3) === DbAddress("GB10023117221", List("10 Isca Lofts 58-64", "Longbrook Street"), "Exeter", "EX4 6AL")) //TODO This is not really correct
+      assert(addressesProduced(3) === DbAddress("GB10023117221", List("10 Isca Lofts 58-64", "Longbrook Street"), "Exeter", "EX4 6AL", "GB-ENG")) //TODO This is not really correct
 
       // 11,"I",211,14200711,1,1110,2,1990-01-01,1,8,0,2003-07-03,,2007-07-19,2003-07-03,293056.00,091088.00,292978.00,091480.00,10
       // 15,"I",212,14200711,"RIVERMEAD ROAD","","EXETER","DEVON","ENG"
@@ -207,7 +207,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       // 23,"I",3456,10023117082,"1110X900059474","osgb1000002274376928",4,"7666MA",2008-03-26,,2012-04-03,2008-03-26
       // 24,"I",3457,10023117082,"1110L000163495","ENG",1,2008-03-26,,2008-03-26,2008-03-26,,"",,"","",1,"",,"","",14200711,"1","","","Y"
       // 28,"I",3458,10023117082,,8754092,"","","","",1,"","RIVERMEAD ROAD","","","EXETER","EX2 4RH","S","","","","","","",2014-04-22,2008-03-26,,2012-04-03,2008-03-26
-      assert(addressesProduced(9) === DbAddress("GB10023117082", List("1 Rivermead Road"), "Exeter", "EX2 4RH"))
+      assert(addressesProduced(9) === DbAddress("GB10023117082", List("1 Rivermead Road"), "Exeter", "EX2 4RH", "GB-ENG"))
 
       // 11,"I",1391,14200938,1,1110,2,1990-01-01,1,8,0,1995-06-20,,2007-07-19,1995-06-20,292721.00,092367.00,293484.00,091739.00,10
       // 15,"I",1392,14200938,"WONFORD ROAD","","EXETER","DEVON","ENG"
@@ -215,7 +215,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       // 23,"I",3461,10023118022,"1110X014126401","6839763000",,"7666VC",2009-07-03,,2011-07-12,2009-07-03
       // 24,"I",3462,10023118022,"1110L000164456","ENG",1,2009-07-03,,2014-02-26,2009-07-03,,"",,"","ANNEXE",49,"",,"","",14200938,"1","","","N"
       // 32,"I",3463,10023118022,"1110C000059544","R","AddressBase Premium Classification Scheme",1.0,2009-07-03,,2011-07-12,2009-07-03
-      assert(addressesProduced(10) === DbAddress("GB10023118022", List("Annexe", "49 Wonford Road"), "Exeter", "EX2 4UD"))
+      assert(addressesProduced(10) === DbAddress("GB10023118022", List("Annexe", "49 Wonford Road"), "Exeter", "EX2 4UD", "GB-ENG"))
 
       // 11,"I",1951,14200067,1,1110,2,1990-01-01,1,8,0,2003-06-20,,2007-07-19,2003-06-20,292760.00,094294.00,292621.00,094195.00,10
       // 15,"I",1952,14200067,"BEECH AVENUE","","EXETER","DEVON","ENG"
@@ -227,14 +227,14 @@ class IngesterTest extends FunSuite with MockitoSugar {
       // 24,"I",3508,10023117050,"1110L000163459","ENG",1,2008-03-13,,2008-03-13,2008-03-13,,"",,"","",,"",,"","BEECH COTTAGE ANNEXE",14200067,"1","","","Y"
       // 28,"I",3509,10023117050,,52124252,"","","","BEECH COTTAGE",,"","BEECH AVENUE","","","EXETER","EX4 6HE","S","","","","","","",2014-04-22,2014-02-23,,2014-04-04,2014-02-23
       // 32,"I",3510,10023117050,"1110C000059491","RD03","AddressBase Premium Classification Scheme",1.0,2008-03-13,,2012-04-03,2008-03-13
-      assert(addressesProduced(16) === DbAddress("GB10023117050", List("Beech Cottage", "Beech Avenue"), "Exeter", "EX4 6HE"))
+      assert(addressesProduced(16) === DbAddress("GB10023117050", List("Beech Cottage", "Beech Avenue"), "Exeter", "EX4 6HE", "GB-ENG"))
 
       // 11,"I",2747,14200165,1,1110,2,1990-01-01,1,8,0,2003-10-23,,2007-07-19,2003-10-23,291242.00,091755.00,291442.00,091899.00,10
       // 15,"I",2748,14200165,"CHURCH ROAD","ST THOMAS","EXETER","DEVON","ENG"
       // 21,"I",3534,10023118563,1,2,2010-03-04,,291389.00,091904.00,1,1110,2010-03-04,,2013-02-11,2010-03-04,"M","EX2 9DP",10
       // 24,"I",3535,10023118563,"1110L000164998","ENG",1,2010-03-04,,2010-03-04,2010-03-04,,"",,"","",,"",,"","CHAPEL COURT",14200165,"1","","","N"
       // 32,"I",3536,10023118563,"1110C000059540","PP","AddressBase Premium Classification Scheme",1.0,2010-03-04,,2010-03-04,2010-03-04
-      assert(addressesProduced(20) === DbAddress("GB10023118563", List("Chapel Court", "Church Road", "St Thomas"), "Exeter", "EX2 9DP"))
+      assert(addressesProduced(20) === DbAddress("GB10023118563", List("Chapel Court", "Church Road", "St Thomas"), "Exeter", "EX2 9DP", "GB-ENG"))
 
       // 11,"I",3257,14200708,1,1110,2,1990-01-01,1,8,0,2004-12-08,,2007-07-19,2004-12-08,291536.00,092922.00,291712.00,093103.00,10
       // 15,"I",3258,14200708,"RICHMOND ROAD","","EXETER","DEVON","ENG"
@@ -242,7 +242,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       // 23,"I",3538,10023117085,"1110X014145136","5900902000",,"7666VC",2008-03-26,,2012-04-03,2008-03-26
       // 24,"I",3539,10023117085,"1110L000163498","ENG",1,2008-03-26,,2008-03-26,2008-03-26,,"",,"","GROUND FLOOR FRONT",28,"",,"","",14200708,"1","","","Y"
       // 32,"I",3540,10023117085,"1110C000059471","RD06","AddressBase Premium Classification Scheme",1.0,2008-03-26,,2012-04-03,2008-03-26
-      assert(addressesProduced(21) === DbAddress("GB10023117085", List("Ground Floor Front", "28 Richmond Road"), "Exeter", "EX4 4JF"))
+      assert(addressesProduced(21) === DbAddress("GB10023117085", List("Ground Floor Front", "28 Richmond Road"), "Exeter", "EX4 4JF", "GB-ENG"))
     }
   }
 

@@ -58,8 +58,8 @@ class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
         val packedBlpu = fd.blpu.get(lpi.uprn)
         val blpu = Blpu.unpack(packedBlpu)
 
-        if (blpu.logicalStatus == lpi.logicalStatus) {
-          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets))
+        if (blpu.logicalStatus == lpi.logicalStatus && blpu.subCountry != 'J') {
+          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets, blpu.subCountry))
           lpiCount += 1
           fd.blpu.remove(lpi.uprn) // need to decide which lpi to use in the firstPass using logic - not first in gets in
         }
@@ -68,9 +68,18 @@ class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
   }
 
   private def processDPA(csvLine: Array[String], out: OutputWriter): Unit = {
+
     val dpa = OSDpa(csvLine)
-    out.output(ExportDbAddress.exportDPA(dpa))
-    dpaCount += 1
+    val subCountry = if (fd.blpu.containsKey(dpa.uprn)) {
+      val packedBlpu = fd.blpu.get(dpa.uprn)
+      val blpu = Blpu.unpack(packedBlpu)
+      blpu.subCountry
+    } else ' '
+
+    if(subCountry != 'J'){
+      out.output(ExportDbAddress.exportDPA(dpa, subCountry))
+      dpaCount += 1
+    }
   }
 
   def sizeInfo: String = s"Second pass processed $dpaCount DPAs, $lpiCount LPIs."
