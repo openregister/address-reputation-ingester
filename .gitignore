@@ -1,4 +1,3 @@
-
 logs
 project/project
 project/target
@@ -11,6 +10,7 @@ dist
 /*.iml
 /*.ipr
 /*.log
+/*.log.gz
 /out
 /.idea_modules
 /.classpath

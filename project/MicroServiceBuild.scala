@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import sbt._
+import sbt.{ExclusionRule, _}
 import play.PlayImport._
 import play.core.PlayVersion
 
@@ -28,7 +28,9 @@ object MicroServiceBuild extends Build with MicroService {
 
   val compile = Seq(
     ws excludeAll ExclusionRule(organization = "commons-logging"),
-//    "uk.gov.hmrc" %% "play-reactivemongo" % "4.7.1",
+    // netty 3.10 has a breaking API change
+    "io.netty" % "netty" % "3.9.9.Final" force(),
+    //    "uk.gov.hmrc" %% "play-reactivemongo" % "4.7.1",
     "uk.gov.hmrc" %% "microservice-bootstrap" % "4.2.1",
 //    "uk.gov.hmrc" %% "play-authorisation" % "3.1.0",
     "uk.gov.hmrc" %% "play-health" % "1.1.0",
@@ -37,11 +39,13 @@ object MicroServiceBuild extends Build with MicroService {
     "uk.gov.hmrc" %% "address-reputation-store" % "0.15.0" withSources()
       excludeAll ExclusionRule(organization = "org.reactivemongo"),
     "org.mongodb" %% "casbah" % "3.1.1",
+    "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.0" excludeAll ExclusionRule(organization = "io.netty"),
     "ch.qos.logback" % "logback-classic" % "1.1.7",
     "ch.qos.logback" % "logback-core" % "1.1.7",
     "org.slf4j" % "jcl-over-slf4j" % "1.7.21",
-    "com.github.lookfirst" % "sardine" % "5.7"
-      excludeAll ExclusionRule(organization = "org.apache.httpcomponents"), // for some reason this dependency is skipping the local cache and forcing resolution from the internet
+    // for some reason this dependency is skipping the local cache and forcing resolution from the internet
+    // hence the exclusion
+    "com.github.lookfirst" % "sardine" % "5.7" excludeAll ExclusionRule(organization = "org.apache.httpcomponents"),
     "org.apache.httpcomponents" % "httpclient" % "4.5.1",
     "net.openhft" % "chronicle-map" % "3.8.0"
   )
