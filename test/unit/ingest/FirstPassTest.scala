@@ -188,7 +188,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       lock.take()
       worker.awaitCompletion()
       assert(firstPass.forwardData.blpu.size === 1)
-      assert(firstPass.forwardData.blpu.get(320077134L) === "KY10 2PY|1")
+      assert(firstPass.forwardData.blpu.get(320077134L) === "KY10 2PY|1|E")
       assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPAs, 0 streets.")
     }
   }

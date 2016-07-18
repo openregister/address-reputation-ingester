@@ -48,7 +48,7 @@ object OSBlpu {
   }
 
   def apply(csv: Array[String]): OSBlpu =
-    OSBlpu(csv(idx.uprn).toLong, csv(idx.logicalStatus).head, csv(idx.subCountry).head, csv(idx.postcode))
+    OSBlpu(csv(idx.uprn).toLong, csv(idx.logicalStatus).head, if(idx==v1) 'E' else csv(idx.subCountry).head, csv(idx.postcode))
 }
 
 case class OSBlpuIdx(uprn: Int, logicalStatus: Int, subCountry: Int, postalCode: Int, postcode: Int)
