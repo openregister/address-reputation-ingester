@@ -27,11 +27,11 @@ object SardineWrapperEssay {
   def main(args: Array[String]) {
     val status = new StatusLogger(Stdout)
     if (args.length > 2) {
-      val finder = new SardineWrapper(new URL(args(0)), args(1), args(2), new SardineFactory2)
+      val finder = new SardineWrapper(new URL(args(0)), args(1), args(2), None, new SardineFactory2)
       val top = finder.exploreRemoteTree
       Stdout.info(top.toString)
     } else if (args.length > 0) {
-      val finder = new SardineWrapper(new URL(args(0)), "", "", new SardineFactory2)
+      val finder = new SardineWrapper(new URL(args(0)), "", "", None, new SardineFactory2)
       val top = finder.exploreRemoteTree
       Stdout.info(top.toString)
     }

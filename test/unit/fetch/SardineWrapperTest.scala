@@ -72,7 +72,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
     val status = new StatusLogger(logger)
     val sardine = mock[Sardine]
     val sardineFactory = mock[SardineFactory2]
-    when(sardineFactory.begin("username", "password")) thenReturn sardine
+    when(sardineFactory.begin(SardineAuthInfo(baseUrl.getHost, baseUrl.getPort, "username", "password"),None)) thenReturn sardine
   }
 
   "find available" should {
@@ -100,7 +100,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         when(sardine.list(base + "/abp/39/full/")) thenReturn file39Resources.asJava
         when(sardine.list(base + "/Code/")) thenReturn codeResources.asJava
         when(sardine.list(base + "/Code/Not%20used/")) thenReturn codeNotUsedResources.asJava
-        val finder = new SardineWrapper(baseUrl, "username", "password", sardineFactory)
+        val finder = new SardineWrapper(baseUrl, "username", "password", None, sardineFactory)
         // when
         val root = finder.exploreRemoteTree
         // then
@@ -155,7 +155,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         when(sardine.list(base + "/abp/39/full/")) thenReturn file39Resources.asJava
         when(sardine.list(base + "/Code/")) thenReturn codeResources.asJava
         when(sardine.list(base + "/Code/Not%20used/")) thenReturn codeNotUsedResources.asJava
-        val finder = new SardineWrapper(baseUrl, "username", "password", sardineFactory)
+        val finder = new SardineWrapper(baseUrl, "username", "password", None, sardineFactory)
         // when
         val root = finder.exploreRemoteTree
         // then
@@ -205,7 +205,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         when(sardine.list(base + "/abp/39/full/")) thenReturn file39Resources.asJava
         when(sardine.list(base + "/Code/")) thenReturn codeResources.asJava
         when(sardine.list(base + "/Code/Not%20used/")) thenReturn codeNotUsedResources.asJava
-        val finder = new SardineWrapper(baseUrl, "username", "password", sardineFactory)
+        val finder = new SardineWrapper(baseUrl, "username", "password", None, sardineFactory)
         // when
         val root = finder.exploreRemoteTree
         // then
@@ -262,7 +262,7 @@ class SardineWrapperTest extends PlaySpec with Mockito {
         when(sardine.list(base + "/abp/39/full/data/")) thenReturn file39Resources.asJava
         when(sardine.list(base + "/Code/")) thenReturn codeResources.asJava
         when(sardine.list(base + "/Code/Not%20used/")) thenReturn codeNotUsedResources.asJava
-        val finder = new SardineWrapper(baseUrl, "username", "password", sardineFactory)
+        val finder = new SardineWrapper(baseUrl, "username", "password", None, sardineFactory)
         // when
         val root = finder.exploreRemoteTree
         // then
