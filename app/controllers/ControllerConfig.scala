@@ -25,7 +25,7 @@ import java.io.File
 import java.net.URL
 
 import config.ConfigHelper._
-import fetch.{SardineFactory2, SardineWrapper, WebdavFetcher}
+import fetch._
 import play.api.Logger
 import play.api.Play._
 import services.exec.WorkerFactory
@@ -34,6 +34,20 @@ object ControllerConfig {
 
   private val appRemoteServer = mustGetConfigString(current.mode, current.configuration, "app.remote.server")
   Logger.info("app.remote.server=" + appRemoteServer)
+
+  val proxyAuthInfo: Option[SardineAuthInfo] = getConfigString(current.mode, current.configuration, "proxy.host") match {
+    case Some(proxyHost) =>
+      val proxyPort = mustGetConfigString(current.mode, current.configuration, "proxy.port")
+      val proxyProtocol = mustGetConfigString(current.mode, current.configuration, "proxy.protocol")
+      val proxyUser = mustGetConfigString(current.mode, current.configuration, "proxy.username")
+      val proxyPass = mustGetConfigString(current.mode, current.configuration, "proxy.password")
+
+      System.getProperties.put(s"$proxyProtocol.proxyHost", proxyHost)
+      System.getProperties.put(s"$proxyProtocol.proxyPort", proxyPort)
+
+      Some(SardineAuthInfo(proxyHost, proxyPort.toInt, proxyUser, proxyPass))
+    case None => None
+  }
 
   val remoteServer = new URL(appRemoteServer)
 
@@ -46,7 +60,8 @@ object ControllerConfig {
   val workerFactory = new WorkerFactory()
   val logger = workerFactory.worker.statusLogger
 
-  val sardine = new SardineWrapper(remoteServer, remoteUser, remotePass, new SardineFactory2)
+  val sardine = new SardineWrapper(remoteServer, remoteUser, remotePass, proxyAuthInfo, new SardineFactory2)
+
   val fetcher = new WebdavFetcher(sardine, downloadFolder, logger)
 
   val authAction = {
