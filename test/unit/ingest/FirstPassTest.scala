@@ -40,8 +40,8 @@ import uk.co.hmrc.logging.StubLogger
 @RunWith(classOf[JUnitRunner])
 class FirstPassTest extends FunSuite with MockitoSugar {
 
-  // sample data here is in the old format
-  OSCsv.setCsvFormat(1)
+  // sample data here is in the new format
+  OSCsv.setCsvFormat(2)
 
   // test data is long so disable scalastyle check
   // scalastyle:off
@@ -172,8 +172,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     """) {
     new context(
       """
-        |10,"GeoPlace",9999,2011-07-08,1,2011-07-08,16:00:30,"1.0","F"
-        |21,"I",521480,320077134,1,2,2011-09-09,,354661.00,702526.00,1,9066,1992-06-10,,2004-08-10,2004-08-09,"S","KY10 2PY",0
+        |21,"I",413143,320077165,1,2,2011-09-09,,354672.00,702557.00,56.2134155,-2.7323971,1,9066,"S",2012-04-27,,2016-02-10,1992-06-10,"D","KY10 2PY",0
         | """.stripMargin
     ) {
       when(continuer.isBusy) thenReturn true
@@ -188,7 +187,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       lock.take()
       worker.awaitCompletion()
       assert(firstPass.forwardData.blpu.size === 1)
-      assert(firstPass.forwardData.blpu.get(320077134L) === "KY10 2PY|1|E")
+      assert(firstPass.forwardData.blpu.get(320077165L) === "KY10 2PY|1|S")
       assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPAs, 0 streets.")
     }
   }

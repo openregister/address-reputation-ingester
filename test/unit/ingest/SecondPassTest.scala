@@ -42,8 +42,8 @@ import uk.co.hmrc.logging.StubLogger
 @RunWith(classOf[JUnitRunner])
 class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
-  // sample data here is in the old format
-  OSCsv.setCsvFormat(1)
+  // sample data here is in the new format
+  OSCsv.setCsvFormat(2)
 
   // test data is long so disable scalastyle check
   // scalastyle:off
@@ -203,8 +203,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       """
 
     val blpuData =
-    // 0   1  2      3         4 5 6         7 8         9        10 11   12          14         15         16  17        18
-      """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,1,9063,2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
+      """21,"I",801310,131041604,1,2,2008-07-28,,252508.00,654612.00,55.7623040,-4.3521941,1,9063,"S",2012-04-27,,2016-02-10,2007-04-27,"L","G77 6RT",0
       """
 
 
@@ -223,6 +222,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     assert(out.lines === List("Maidenhill Stables", "Locality-Name"))
     assert(out.town === "Town-Name")
     assert(out.postcode === "G77 6RT")
+    assert(out.subCountry === "GB-SCT")
   }
 
 
@@ -236,7 +236,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       """
 
     val blpuData =
-      """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,1,9063,2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
+      """21,"I",801310,131041604,1,2,2008-07-28,,252508.00,654612.00,55.7623040,-4.3521941,1,9063,"S",2012-04-27,,2016-02-10,2007-04-27,"L","G77 6RT",0
       """
 
 
@@ -269,7 +269,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       """
 
     val blpuData =
-      """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,1,9063,2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
+      """21,"I",801310,131041604,1,2,2008-07-28,,252508.00,654612.00,55.7623040,-4.3521941,1,9063,"S",2012-04-27,,2016-02-10,2007-04-27,"L","G77 6RT",0
       """
 
 
@@ -401,5 +401,82 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     assert(dbAdd.id === "GB131041604")
     assert(dbAdd.town === "Lpi-Town-One")
     assert(dbAdd.postcode === "G77 6RT")
+  }
+
+
+  test("Given a BLPU with a country code 'eg.E', a matching subCountry should be returned 'eg.GB-ENG'.") {
+    aTest('E', (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subCountry === "GB-ENG", "Invalid country should be 'England'")
+    })
+    aTest('S', (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subCountry === "GB-SCT", "Invalid country should be 'Scotland'")
+    })
+    aTest('W', (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subCountry === "GB-WLS", "Invalid country should be 'Wales'")
+    })
+    aTest('N', (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subCountry === "GB-NIR", "Invalid country should be 'Northern Ireland'")
+    })
+    aTest('L', (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subCountry === "GB-CHA", "Invalid country should be 'Channel Islands'")
+    })
+    aTest('M', (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subCountry === "GB-IOM", "Invalid country should be 'Isle of Man'")
+    })
+
+  }
+
+  test("Given a BLPU with a country code of unknown(J), nothing is returned.") {
+      aTest('J', (count:Int, addr:DbAddress) => {
+        assert(count === 0)
+      })
+  }
+
+  def aTest( countryCode:Char, f: (Int, DbAddress) => Unit) {
+    new context {
+
+      val lpiData ="""24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
+        """
+
+      val csv = CsvParser.split(lpiData)
+
+      forwardData.blpu.put(131041604L, Blpu("AB12 3CD", '1', countryCode).pack)
+
+      val out = new OutputWriter {
+        var count = 0
+        var addr: DbAddress = _
+
+        def existingTargetThatIsNewerThan(date: Date) = None
+
+        def begin() {}
+
+        def output(out: DbAddress) {
+          addr = out
+          count += 1
+        }
+
+        def end(completed: Boolean) = model
+      }
+
+      when(continuer.isBusy) thenReturn true
+
+      val sp = new SecondPass(forwardData, continuer)
+      worker.push("testing", {
+        continuer =>
+          lock.put(true)
+          sp.processFile(csv, out)
+      })
+
+      lock.take()
+      worker.awaitCompletion()
+      f(out.count, out.addr)
+//      assert(out.count === 0)
+    }
   }
 }
