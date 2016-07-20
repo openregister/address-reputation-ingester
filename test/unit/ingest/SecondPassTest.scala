@@ -211,18 +211,18 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subCountry)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
 
     val streetsMap = new java.util.HashMap[java.lang.Long, String]()
     streetsMap.put(48804683L, Street('A', "streetDescription", "locality-name", "town-name").pack)
 
     val lpi = OSLpi(csvLpiLine)
-    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subCountry)
+    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subdivision)
     assert(out.id === "GB131041604")
     assert(out.lines === List("Maidenhill Stables", "Locality-Name"))
     assert(out.town === "Town-Name")
     assert(out.postcode === "G77 6RT")
-    assert(out.subCountry === "GB-SCT")
+    assert(out.subdivision === "GB-SCT")
   }
 
 
@@ -244,13 +244,13 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subCountry)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
 
     val streetsMap = new java.util.HashMap[java.lang.Long, String]()
     streetsMap.put(48804683L, Street('A', "streetDescription", "locality name", "town-name").pack)
 
     val lpi = OSLpi(csvLpiLine)
-    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subCountry)
+    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subdivision)
     assert(out.id === "GB131041604")
     assert(out.lines === List("1a-2b Maidenhill Stables", "Locality Name"))
     assert(out.town === "Town-Name")
@@ -277,13 +277,13 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subCountry)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
 
     val streetsMap = new java.util.HashMap[java.lang.Long, String]()
     streetsMap.put(48804683L, Street('A', "street From Description", "locality name", "town-name").pack)
 
     val lpi = OSLpi(csvLpiLine)
-    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subCountry)
+    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subdivision)
     assert(out.id === "GB131041604")
     assert(out.lines === List("Locality Name"))
     assert(out.town === "Town-Name")
@@ -316,13 +316,13 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvDpaLine: Array[String] = CsvParser.split(dpaData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subCountry)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
 
     val boolTrue: Boolean = true
     val boolFalse: Boolean = false
 
     val fd = ForwardData.chronicleInMemoryForUnitTest()
-    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus, blpu.subCountry).pack)
+    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus, blpu.subdivision).pack)
     fd.dpa.add(131041604L)
 
     val continuer = mock[Continuer]
@@ -373,13 +373,13 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subCountry)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
 
 
     val boolTrue: Boolean = true
 
     val fd = ForwardData.chronicleInMemoryForUnitTest()
-    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus, blpu.subCountry).pack)
+    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus, blpu.subdivision).pack)
     fd.streets.put(48804683L, Street('A', "lpi-one", "lpi-locality-one", "lpi-town-one").pack)
     fd.streets.put(58804683L, Street('A', "lpi-two", "lpi-locality-two", "lpi-town-two").pack)
 
@@ -404,30 +404,30 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
   }
 
 
-  test("Given a BLPU with a country code 'eg.E', a matching subCountry should be returned 'eg.GB-ENG'.") {
+  test("Given a BLPU with a country code 'eg.E', a matching subdivision should be returned 'eg.GB-ENG'.") {
     aTest('E', (count:Int, addr:DbAddress) => {
       assert(count === 1)
-      assert(addr.subCountry === "GB-ENG", "Invalid country should be 'England'")
+      assert(addr.subdivision === "GB-ENG", "Invalid country should be 'England'")
     })
     aTest('S', (count:Int, addr:DbAddress) => {
       assert(count === 1)
-      assert(addr.subCountry === "GB-SCT", "Invalid country should be 'Scotland'")
+      assert(addr.subdivision === "GB-SCT", "Invalid country should be 'Scotland'")
     })
     aTest('W', (count:Int, addr:DbAddress) => {
       assert(count === 1)
-      assert(addr.subCountry === "GB-WLS", "Invalid country should be 'Wales'")
+      assert(addr.subdivision === "GB-WLS", "Invalid country should be 'Wales'")
     })
     aTest('N', (count:Int, addr:DbAddress) => {
       assert(count === 1)
-      assert(addr.subCountry === "GB-NIR", "Invalid country should be 'Northern Ireland'")
+      assert(addr.subdivision === "GB-NIR", "Invalid country should be 'Northern Ireland'")
     })
     aTest('L', (count:Int, addr:DbAddress) => {
       assert(count === 1)
-      assert(addr.subCountry === "GB-CHA", "Invalid country should be 'Channel Islands'")
+      assert(addr.subdivision === "GB-CHA", "Invalid country should be 'Channel Islands'")
     })
     aTest('M', (count:Int, addr:DbAddress) => {
       assert(count === 1)
-      assert(addr.subCountry === "GB-IOM", "Invalid country should be 'Isle of Man'")
+      assert(addr.subdivision === "GB-IOM", "Invalid country should be 'Isle of Man'")
     })
 
   }

@@ -29,17 +29,17 @@ import uk.co.hmrc.address.services.Capitalisation._
 
 private[ingest] object ExportDbAddress {
 
-  def exportDPA(dpa: OSDpa, subCountry:Char): DbAddress = {
+  def exportDPA(dpa: OSDpa, subdivision: Char): DbAddress = {
     val id = "GB" + dpa.uprn.toString
     val line1 = normaliseAddressLine(dpa.subBuildingName + " " + dpa.buildingName)
     val line2 = normaliseAddressLine(dpa.buildingNumber + " " + dpa.dependentThoroughfareName + " " + dpa.thoroughfareName)
     val line3 = normaliseAddressLine(dpa.doubleDependentLocality + " " + dpa.dependentLocality)
 
-    DbAddress(id, line1, line2, line3, normaliseAddressLine(dpa.postTown), normalisePostcode(dpa.postcode), subCountryName(subCountry))
+    DbAddress(id, line1, line2, line3, normaliseAddressLine(dpa.postTown), normalisePostcode(dpa.postcode), ukHomeCountryName(subdivision))
   }
 
 
-  def exportLPI(lpi: OSLpi, postcode: String, streets: java.util.Map[java.lang.Long, String], subCountry: Char): DbAddress = {
+  def exportLPI(lpi: OSLpi, postcode: String, streets: java.util.Map[java.lang.Long, String], subdivision: Char): DbAddress = {
     val streetString = if (streets.containsKey(lpi.usrn)) streets.get(lpi.usrn) else "X|<SUnknown>|<SUnknown>|<TUnknown>"
     val street = Street.unpack(streetString)
 
@@ -56,17 +56,17 @@ private[ingest] object ExportDbAddress {
       normaliseAddressLine(OSCleanup.removeUninterestingStreets(line3)),
       normaliseAddressLine(street.townName),
       normalisePostcode(postcode),
-      subCountryName(subCountry))
+      ukHomeCountryName(subdivision))
   }
 
-  def subCountryName(subCountry:Char) = subCountry match {
+  private def ukHomeCountryName(subdivision: Char) = subdivision match {
     case 'S' => "GB-SCT"
     case 'E' => "GB-ENG"
     case 'W' => "GB-WLS"
     case 'N' => "GB-NIR"
     case 'L' => "GB-CHA"
     case 'M' => "GB-IOM"
-    case 'J' => "" //this wont be called due to caller of exportDPA removes J before hand
+//    case 'J' => "" // unknown
     case _ => ""
   }
 }

@@ -20,25 +20,25 @@ import java.io.File
 import java.util.Date
 
 import config.Divider
+import ingest.writers.OutputWriter
 import services.exec.Continuer
 import services.model.{StateModel, StatusLogger}
-import ingest.writers.OutputWriter
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
 import scala.collection.mutable
 
 object Ingester {
 
-  case class Blpu(postcode: String, logicalStatus: Char, subCountry: Char) {
-    def pack: String = s"$postcode|$logicalStatus|$subCountry"
+  case class Blpu(postcode: String, logicalStatus: Char, subdivision: Char) {
+    def pack: String = s"$postcode|$logicalStatus|$subdivision"
   }
 
   object Blpu {
     def unpack(pack: String): Blpu = {
       val fields = Divider.qsplit(pack, '|')
       val logicalStatus = if (fields(1).length > 0) fields(1).charAt(0) else '\u0000'
-      val subCountry = if (fields(2).length > 0) fields(2).charAt(0) else '\u0000'
-      Blpu(fields.head, logicalStatus, subCountry)
+      val subdivision = if (fields(2).length > 0) fields(2).charAt(0) else '\u0000'
+      Blpu(fields.head, logicalStatus, subdivision)
     }
   }
 

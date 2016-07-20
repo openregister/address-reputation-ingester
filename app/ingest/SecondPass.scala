@@ -22,9 +22,9 @@
 package ingest
 
 import addressbase.{OSCsv, OSDpa, OSHeader, OSLpi}
-import services.exec.Continuer
 import ingest.Ingester.Blpu
 import ingest.writers.OutputWriter
+import services.exec.Continuer
 
 class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
 
@@ -58,8 +58,8 @@ class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
         val packedBlpu = fd.blpu.get(lpi.uprn)
         val blpu = Blpu.unpack(packedBlpu)
 
-        if (blpu.logicalStatus == lpi.logicalStatus && blpu.subCountry != 'J') {
-          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets, blpu.subCountry))
+        if (blpu.logicalStatus == lpi.logicalStatus && blpu.subdivision != 'J') {
+          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets, blpu.subdivision))
           lpiCount += 1
           fd.blpu.remove(lpi.uprn) // need to decide which lpi to use in the firstPass using logic - not first in gets in
         }
@@ -70,14 +70,14 @@ class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
   private def processDPA(csvLine: Array[String], out: OutputWriter): Unit = {
 
     val dpa = OSDpa(csvLine)
-    val subCountry = if (fd.blpu.containsKey(dpa.uprn)) {
+    val subdivision = if (fd.blpu.containsKey(dpa.uprn)) {
       val packedBlpu = fd.blpu.get(dpa.uprn)
       val blpu = Blpu.unpack(packedBlpu)
-      blpu.subCountry
+      blpu.subdivision
     } else ' '
 
-    if(subCountry != 'J'){
-      out.output(ExportDbAddress.exportDPA(dpa, subCountry))
+    if (subdivision != 'J') {
+      out.output(ExportDbAddress.exportDPA(dpa, subdivision))
       dpaCount += 1
     }
   }
