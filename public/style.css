@@ -173,3 +173,30 @@ a.button.grey {
     color: #b00;
     background: #fee;
 }
+
+/*-----------------------------------------------------------------------------------------------*/
+
+#title span {
+    margin-right: 0.3em;
+}
+
+#realm {
+    margin-left: 0.3em;
+    padding: 2px 0.3em;
+    border: 2px outset #88e;
+}
+
+#realm.Prod {
+    color: #b00;
+    border: 2px outset #fb7;
+}
+
+#realm.Staging {
+    color: #00e;
+}
+
+#realm.Dev,
+#realm.QA {
+    color: #090;
+    border: 2px outset #7e7;
+}

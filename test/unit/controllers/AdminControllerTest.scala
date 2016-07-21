@@ -43,7 +43,7 @@ class AdminControllerTest extends FunSuite {
     val logger = new StubLogger
     val status = new StatusLogger(logger)
     val worker = new WorkQueue(status)
-    val ac = new AdminController(pta, worker)
+    val ac = new AdminController(pta, worker, "")
     val request = FakeRequest()
 
     val futureResponse = call(ac.cancelTask(), request)
@@ -71,7 +71,7 @@ class AdminControllerTest extends FunSuite {
     })
 
     stuff.put(true) // release the lock first time
-    val ac = new AdminController(pta, worker)
+    val ac = new AdminController(pta, worker, "")
     val request = FakeRequest()
 
     val futureResponse = call(ac.cancelTask(), request)

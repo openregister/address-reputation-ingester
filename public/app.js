@@ -207,9 +207,16 @@ function toggleFieldset(id) {
     $(id).toggleClass('visible');
 }
 
+function showTheRealm() {
+    ajax('GET', '/admin/realm', function (data) {
+        $('#realm').addClass(data).text(data);
+    });
+}
+
 $(document).ready(
     function () {
         setupContextPath();
+        showTheRealm();
         // buttons
         $('#fullStatusButton').click(fullStatus);
         $('#go').click(doGo);

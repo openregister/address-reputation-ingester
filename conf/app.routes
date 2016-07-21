@@ -21,6 +21,7 @@ GET    /ingest/from/file/to/:target/:product/:epoch/:variant    ingest.IngestCon
 
 GET    /switch/to/:product/:epoch/:index                        controllers.SwitchoverController.doSwitchTo(product, epoch: Int, index: Int)
 
+GET    /admin/realm                                             controllers.AdminController.realm
 GET    /admin/cancelTask                                        controllers.AdminController.cancelTask
 GET    /admin/status                                            controllers.AdminController.status
 GET    /admin/fullStatus                                        controllers.AdminController.fullStatus

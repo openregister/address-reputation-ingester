@@ -32,6 +32,8 @@ import services.exec.WorkerFactory
 
 object ControllerConfig {
 
+  val realmString = mustGetConfigString(current.mode, current.configuration, "basicAuthentication.realm")
+
   private val appRemoteServer = mustGetConfigString(current.mode, current.configuration, "app.remote.server")
   Logger.info("app.remote.server=" + appRemoteServer)
 

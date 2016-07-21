@@ -32,56 +32,51 @@ import scala.io.Source
 
 object AdminController extends AdminController(
   ControllerConfig.authAction,
-  WorkQueue.singleton)
+  WorkQueue.singleton,
+  ControllerConfig.realmString)
 
 
 class AdminController(action: ActionBuilder[Request],
-                      worker: WorkQueue) extends BaseController {
+                      worker: WorkQueue,
+                      realmString: String) extends BaseController {
 
   def index: Action[AnyContent] = action {
-    request =>
-      Redirect("ui/index.html")
+    Redirect("ui/index.html")
   }
 
   def cancelTask(): Action[AnyContent] = action {
-    request =>
-      handleCancelTask(request)
-  }
-
-  def handleCancelTask(request: Request[AnyContent]): Result = {
     if (worker.abort()) {
       Accepted
     } else {
-      Ok("Nothing to cancel").withHeaders(CONTENT_TYPE -> "text/plain")
+      ok("Nothing to cancel")
     }
   }
 
+  // widely used in tests - so this is *not* basic-auth protected
   def status(): Action[AnyContent] = Action {
-    request => {
-      Ok(worker.status).withHeaders(CONTENT_TYPE -> "text/plain")
-    }
+    ok(worker.status)
   }
 
   def fullStatus(): Action[AnyContent] = action {
-    request => {
-      Ok(worker.fullStatus).withHeaders(CONTENT_TYPE -> "text/plain")
-    }
+    ok(worker.fullStatus)
   }
 
   def showLog(dir: Option[String]): Action[AnyContent] = action {
-    request => {
-      val d = if (dir.isEmpty) "." else dir.get
-      Ok(LogFileHelper.readLogFile(new File(d).getCanonicalFile)).withHeaders(CONTENT_TYPE -> "text/plain")
-    }
+    val d = if (dir.isEmpty) "." else dir.get
+    ok(LogFileHelper.readLogFile(new File(d).getCanonicalFile))
   }
 
   def dirTree(root: Option[String], max: Option[Int]): Action[AnyContent] = action {
-    request => {
-      val dir = if (root.isDefined) new File(root.get) else ControllerConfig.downloadFolder
-      val treeInfo = DirTreeHelper.dirTreeInfo(dir, max getOrElse 2)
-      Ok(treeInfo).withHeaders(CONTENT_TYPE -> "text/plain")
-    }
+    val dir = if (root.isDefined) new File(root.get) else ControllerConfig.downloadFolder
+    val treeInfo = DirTreeHelper.dirTreeInfo(dir, max getOrElse 2)
+    ok(treeInfo)
   }
+
+  def realm: Action[AnyContent] = action {
+    ok(realmString)
+  }
+
+  private def ok(message: String) = Ok(message).withHeaders(CONTENT_TYPE -> "text/plain")
 }
 
 
