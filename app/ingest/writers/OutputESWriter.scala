@@ -18,8 +18,8 @@ package ingest.writers
 
 import java.util.Date
 
-import com.sksamuel.elastic4s.{ElasticClient, _}
 import com.sksamuel.elastic4s.mappings.FieldType.StringType
+import com.sksamuel.elastic4s.{ElasticClient, _}
 import org.elasticsearch.common.settings.Settings
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
@@ -42,15 +42,15 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
       create index ariIndexName shards 5 replicas 0 refreshInterval "-1" mappings {
         mapping(ariDocumentName) fields(
           field("id") typed StringType,
-          field("line1") typed StringType fields (
+          field("line1") typed StringType fields(
             field("raw") typed StringType index NotAnalyzed,
             field("lines") typed StringType
             ),
-          field("line2") typed StringType fields (
+          field("line2") typed StringType fields(
             field("raw") typed StringType index NotAnalyzed,
             field("lines") typed StringType
             ),
-          field("line3") typed StringType fields (
+          field("line3") typed StringType fields(
             field("raw") typed StringType index NotAnalyzed,
             field("lines") typed StringType
             ),
@@ -82,7 +82,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
     //close index update refresh settings etc
     if (bulkCount != 0) {
       client execute {
-        bulk (
+        bulk(
           bulkStatements
         )
       }
@@ -100,7 +100,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
     bulkStatements += i
     if (bulkCount > 1000) {
       client execute {
-        bulk (
+        bulk(
           bulkStatements
         )
       }

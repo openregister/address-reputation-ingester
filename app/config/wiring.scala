@@ -38,7 +38,8 @@ object MicroserviceAuditConnector extends AuditConnector with RunMode {
 
 object MicroserviceAuditFilter extends AuditFilter with AppName {
   override val auditConnector = MicroserviceAuditConnector
-  override def controllerNeedsAuditing(controllerName: String):Boolean = ControllerConfiguration.paramsForController(controllerName).needsAuditing
+
+  override def controllerNeedsAuditing(controllerName: String): Boolean = ControllerConfiguration.paramsForController(controllerName).needsAuditing
 }
 
 //object MicroserviceAuthConnector extends AuthConnector with ServicesConfig {

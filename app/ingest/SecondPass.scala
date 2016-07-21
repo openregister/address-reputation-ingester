@@ -22,9 +22,9 @@
 package ingest
 
 import addressbase.{OSCsv, OSDpa, OSHeader, OSLpi}
-import services.exec.Continuer
 import ingest.Ingester.Blpu
 import ingest.writers.OutputWriter
+import services.exec.Continuer
 
 class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
 

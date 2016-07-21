@@ -24,9 +24,9 @@ import java.nio.charset.StandardCharsets.UTF_8
 // TODO delete this when https://github.com/hmrc/secure/pull/1 has been pulled
 
 /**
- * Simple wrapper for java.util.Base64 basic mode. MIME and URL codecs are not supported.
- * Transcodings always use UTF-8 strings.
- */
+  * Simple wrapper for java.util.Base64 basic mode. MIME and URL codecs are not supported.
+  * Transcodings always use UTF-8 strings.
+  */
 object BasicBase64 {
   def encode(string: String): Array[Byte] = encode(string.getBytes(UTF_8))
 

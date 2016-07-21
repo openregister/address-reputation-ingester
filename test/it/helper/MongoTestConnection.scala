@@ -17,7 +17,7 @@
 package helper
 
 import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
-import com.mongodb.casbah.{MongoClientURI, MongoClient, MongoCollection}
+import com.mongodb.casbah.{MongoClient, MongoClientURI, MongoCollection}
 
 import scala.collection.mutable.ListBuffer
 

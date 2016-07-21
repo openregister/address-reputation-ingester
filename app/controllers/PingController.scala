@@ -20,9 +20,6 @@ import config.Provenance
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-import scala.io.Source
-import play.api.Play._
-
 
 object PingController extends PingController
 

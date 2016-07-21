@@ -20,9 +20,9 @@ import java.io.File
 import java.util.Date
 
 import config.Divider
+import ingest.writers.OutputWriter
 import services.exec.Continuer
 import services.model.{StateModel, StatusLogger}
-import ingest.writers.OutputWriter
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
 import scala.collection.mutable

@@ -38,7 +38,7 @@ class WorkerTest extends FunSuite {
       and then the second should execute to completion
     """) {
     val logger = new StubLogger()
-    val status = new StatusLogger(logger,1)
+    val status = new StatusLogger(logger, 1)
     val worker = new WorkQueue(status)
     val lock1 = new SynchronousQueue[Boolean]()
     val lock2 = new SynchronousQueue[Boolean]()

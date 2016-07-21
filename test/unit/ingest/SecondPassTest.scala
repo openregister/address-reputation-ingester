@@ -25,6 +25,8 @@ import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
 import addressbase.{OSBlpu, OSCsv, OSLpi}
+import ingest.Ingester.{Blpu, Street}
+import ingest.writers.OutputWriter
 import org.junit.runner.RunWith
 import org.mockito.ArgumentCaptor
 import org.mockito.Mockito._
@@ -32,9 +34,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import services.exec.{Continuer, WorkQueue}
-import ingest.Ingester.{Blpu, Street}
 import services.model.{StateModel, StatusLogger}
-import ingest.writers.OutputWriter
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.CsvParser
 import uk.co.hmrc.logging.StubLogger

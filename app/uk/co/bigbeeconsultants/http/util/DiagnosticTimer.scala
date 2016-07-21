@@ -65,6 +65,7 @@ object DiagnosticTimer {
   *
   * This is a bit like the class of the same name in Joda Time, except that the resolution is microseconds
   * in this case.
+  *
   * @param microseconds a number representing a time duration; negative numbers are unusual but not prohibited.
   */
 case class Duration(microseconds: Long) extends Ordered[Duration] {
