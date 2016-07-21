@@ -16,26 +16,27 @@
 
 package helper
 
+import com.github.simplyscala.MongoEmbedDatabase
 import org.scalatest._
 import org.scalatestplus.play.ServerProvider
-import play.api.libs.ws.{InMemoryBody, WS, WSRequestHolder, WSResponse}
-import play.api.test.Helpers._
 import play.api.test.{FakeApplication, Helpers, TestServer}
+import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 
-import scala.annotation.tailrec
-
-trait AppServerUnderTest extends SuiteMixin with ServerProvider with SequentialNestedSuiteExecution {
+trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedDatabase with AppServerTestApi {
   this: Suite =>
 
-  def embeddedMongoSettings: Map[String, String]
+  val mongoTestConnection = new MongoTestConnection(mongoStart())
 
   def appConfiguration: Map[String, String]
+
+  def casbahMongoConnection() = new CasbahMongoConnection(mongoTestConnection.uri)
 
   def beforeAppServerStarts() {}
 
   def afterAppServerStops() {}
 
-  implicit override final lazy val app: FakeApplication = new FakeApplication(additionalConfiguration = embeddedMongoSettings ++ appConfiguration)
+  implicit override final lazy val app: FakeApplication = new FakeApplication(
+    additionalConfiguration = appConfiguration ++ Map(mongoTestConnection.configItem))
 
   /**
     * The port used by the `TestServer`.  By default this will be set to the result returned from
@@ -46,6 +47,7 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with SequentialN
   lazy val appEndpoint = s"http://localhost:$port"
 
   abstract override def run(testName: Option[String], args: Args): Status = {
+    Thread.sleep(10)
     beforeAppServerStarts()
     val testServer = TestServer(port, app)
     testServer.start()
@@ -59,62 +61,8 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with SequentialN
     finally {
       testServer.stop()
       afterAppServerStops()
+      mongoTestConnection.stop()
     }
   }
-
-  //-----------------------------------------------------------------------------------------------
-
-  val defaultContentType = "text/plain; charset=UTF-8"
-
-  def newRequest(method: String, path: String): WSRequestHolder = {
-    WS.url(appEndpoint + path).withMethod(method)
-  }
-
-  def newRequest(method: String, path: String, body: String, contentType: String = defaultContentType): WSRequestHolder = {
-    val contentTypeHdr = "Content-Type" -> contentType
-    val wsBody = InMemoryBody(body.trim.getBytes("UTF-8"))
-    newRequest(method, path).withHeaders(contentTypeHdr).withBody(wsBody)
-  }
-
-  def request(method: String, p: String): WSResponse = {
-    await(newRequest(method, p).withHeaders("User-Agent" -> "xyz").execute())
-  }
-
-  def get(p: String): WSResponse = request("GET", p)
-
-  def verifyOK(path: String, expectedBody: String, expectedContent: String = "text/plain") {
-    verify(path, OK, expectedBody, expectedContent)
-  }
-
-  def verify(path: String, expectedStatus: Int, expectedBody: String, expectedContent: String = "text/plain") {
-    val step = get(path)
-    assert(step.status === expectedStatus)
-    assert(step.header("Content-Type") === Some(expectedContent))
-    assert(step.body === expectedBody)
-  }
-
-  @tailrec
-  final def waitWhile(path: String, currentBody: String, timeout: Int): Boolean = {
-    if (timeout < 0) {
-      false
-    } else {
-      Thread.sleep(200)
-      val step = get(path)
-      if (step.status != OK || step.body != currentBody) true
-      else waitWhile(path, currentBody, timeout - 200)
-    }
-  }
-
-  @tailrec
-  final def waitUntil(path: String, currentBody: String, timeout: Int): Boolean = {
-    if (timeout < 0) {
-      false
-    } else {
-      Thread.sleep(200)
-      val step = get(path)
-      if (step.status == OK && step.body == currentBody) true
-      else waitUntil(path, currentBody, timeout - 200)
-    }
-  }
-
 }
+

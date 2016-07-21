@@ -28,7 +28,7 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object IngestControllerHelper {
-  def isSupportedTarget(target: String): Boolean = Set("db", "file", "null").contains(target)
+  def isSupportedTarget(target: String): Boolean = Set("db", "es", "file", "null").contains(target)
 
   def settings(opBulkSize: Option[Int], opLoopDelay: Option[Int]): WriterSettings = {
     val bulkSize = opBulkSize getOrElse defaultBulkSize
@@ -45,6 +45,7 @@ object IngestController extends IngestController(
   ControllerConfig.authAction,
   ControllerConfig.downloadFolder,
   new OutputDBWriterFactory,
+  new OutputESWriterFactory,
   new OutputFileWriterFactory,
   new OutputNullWriterFactory,
   new IngesterFactory,
@@ -52,9 +53,10 @@ object IngestController extends IngestController(
 
 class IngestController(action: ActionBuilder[Request],
                        unpackedFolder: File,
-                       dbWriterFactory: OutputDBWriterFactory,
-                       fileWriterFactory: OutputFileWriterFactory,
-                       nullWriterFactory: OutputNullWriterFactory,
+                       dbWriterFactory: OutputWriterFactory,
+                       esWriterFactory: OutputWriterFactory,
+                       fileWriterFactory: OutputWriterFactory,
+                       nullWriterFactory: OutputWriterFactory,
                        ingesterFactory: IngesterFactory,
                        workerFactory: WorkerFactory
                       ) extends BaseController {
@@ -117,6 +119,7 @@ class IngestController(action: ActionBuilder[Request],
   private def pickWriter(target: String) = {
     target match {
       case "db" => dbWriterFactory
+      case "es" => esWriterFactory
       case "file" => fileWriterFactory
       case "null" => nullWriterFactory
       case _ =>

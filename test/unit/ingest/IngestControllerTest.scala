@@ -46,20 +46,22 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
     val ingester = mock[Ingester]
     val outputFileWriter = mock[OutputFileWriter]
-    val outputDBWriter = mock[OutputDBWriter]
-    val outputNullWriter = mock[OutputNullWriter]
+    val outputDBWriter = mock[OutputWriter]
+    val outputESWriter = mock[OutputWriter]
+    val outputNullWriter = mock[OutputWriter]
 
     val ingesterFactory = new StubIngesterFactory(ingester)
-    val dbFactory = new StubOutputDBWriterFactory(outputDBWriter)
-    val fwFactory = new StubOutputFileWriterFactory(outputFileWriter)
-    val nullFactory = new StubOutputNullWriterFactory(outputNullWriter)
+    val dbFactory = new StubOutputWriterFactory(outputDBWriter)
+    val esFactory = new StubOutputWriterFactory(outputESWriter)
+    val fwFactory = new StubOutputWriterFactory(outputFileWriter)
+    val nullFactory = new StubOutputWriterFactory(outputNullWriter)
 
     val folder = new File(".")
     val worker = new WorkQueue(status)
     val workerFactory = new StubWorkerFactory(worker)
 
     private val pta = new PassThroughAction
-    val ingestController = new IngestController(pta, folder, dbFactory, fwFactory, nullFactory, ingesterFactory, workerFactory)
+    val ingestController = new IngestController(pta, folder, dbFactory, esFactory, fwFactory, nullFactory, ingesterFactory, workerFactory)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val folder = new File(".")
@@ -198,15 +200,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
   }
 }
 
-class StubOutputFileWriterFactory(w: OutputFileWriter) extends OutputFileWriterFactory {
-  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings) = w
-}
-
-class StubOutputDBWriterFactory(w: OutputDBWriter) extends OutputDBWriterFactory {
-  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter = w
-}
-
-class StubOutputNullWriterFactory(w: OutputNullWriter) extends OutputNullWriterFactory {
+class StubOutputWriterFactory(w: OutputWriter) extends OutputWriterFactory {
   override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter = w
 }
 
