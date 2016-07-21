@@ -30,12 +30,14 @@ object OSBlpu {
   val v1 = OSBlpuIdx(
     uprn = Uprn_Idx,
     logicalStatus = 4,
+    subdivision = -1,
     postalCode = 16,
     postcode = 17)
 
   val v2 = OSBlpuIdx(
     uprn = Uprn_Idx,
     logicalStatus = 4,
+    subdivision = 14,
     postalCode = 19,
     postcode = 20)
 
@@ -45,19 +47,22 @@ object OSBlpu {
     csv(idx.postalCode) != "N" // not a postal address
   }
 
-  def apply(csv: Array[String]): OSBlpu =
-    OSBlpu(csv(idx.uprn).toLong, csv(idx.logicalStatus).head, csv(idx.postcode))
+  def apply(csv: Array[String]): OSBlpu ={
+    val subdivision = if (idx == v1) 'J' else csv(idx.subdivision).head
+    OSBlpu(csv(idx.uprn).toLong, csv(idx.logicalStatus).head, subdivision, csv(idx.postcode))
+  }
 }
 
-case class OSBlpuIdx(uprn: Int, logicalStatus: Int, postalCode: Int, postcode: Int)
+case class OSBlpuIdx(uprn: Int, logicalStatus: Int, subdivision: Int, postalCode: Int, postcode: Int)
 
-case class OSBlpu(uprn: Long, logicalStatus: Char, postcode: String) extends Document {
+case class OSBlpu(uprn: Long, logicalStatus: Char, subdivision: Char, postcode: String) extends Document {
 
   // For use as input to MongoDbObject (hence it's not a Map)
   def tupled: List[(String, Any)] = List(
     "uprn" -> uprn,
     "logicalStatus" -> logicalStatus,
+    "subdivision" -> subdivision,
     "postcode" -> postcode)
 
-  def normalise: OSBlpu = new OSBlpu(uprn, logicalStatus, Postcode.normalisePostcode(postcode))
+  def normalise: OSBlpu = new OSBlpu(uprn, logicalStatus, subdivision, Postcode.normalisePostcode(postcode))
 }

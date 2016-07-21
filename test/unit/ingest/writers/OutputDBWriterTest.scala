@@ -139,7 +139,7 @@ class OutputDBWriterTest extends FreeSpec {
          and the collection name is chosen correctly
         """ in {
           new Context("x_4_005", Set("admin", "x_4_000", "x_4_001", "x_4_004")) {
-            val someDBAddress = DbAddress("id1", List("1 Foo Rue"), "Puddletown", "FX1 1XF")
+            val someDBAddress = DbAddress("id1", List("1 Foo Rue"), Some("Puddletown"), "FX1 1XF", Some("GB-ENG"))
 
             val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
 

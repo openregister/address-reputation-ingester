@@ -48,10 +48,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
   def appConfiguration: Map[String, String] = Map(
     "app.files.downloadFolder" -> s"$tmpDir/download",
-    "app.files.outputFolder" -> s"$tmpDir/output",
-    "app.chronicleMap.blpu.mapSize" -> "50000",
-    "app.chronicleMap.dpa.setSize" -> "5000",
-    "app.chronicleMap.street.mapSize" -> "2000"
+    "app.files.outputFolder" -> s"$tmpDir/output"
   )
 
   //-----------------------------------------------------------------------------------------------
@@ -188,7 +185,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
       val outFile = new File(s"$tmpDir/output/exeter_1.txt.gz")
       outFile.exists() mustBe true
-      outFile.length() mustBe 689L
+      outFile.length() mustBe 709692L
     }
   }
 
@@ -220,7 +217,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       val db = casbahMongoConnection().getConfiguredDb
       val exeter1 = CollectionName("exeter_1_001").get
       val collection = db("exeter_1_001")
-      collection.size mustBe 30 // 29 records plus 1 metadata
+      collection.size mustBe 48738 // 48737 records plus 1 metadata
       // (see similar tests in ExtractorTest)
 
       val metadata = new CollectionMetadata(db).findMetadata(exeter1)
@@ -339,10 +336,10 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
   override def beforeAppServerStarts() {
     deleteDir(tmpDir)
-    val sample = getClass.getClassLoader.getResourceAsStream("exeter/1/sample/SX9090-first3600.zip")
+    val sample = getClass.getClassLoader.getResourceAsStream("exeter/1/sample/addressbase-premium-csv-sample-data.zip")
     val unpackFolder = new File(tmpDir, "download/exeter/1/sample")
     unpackFolder.mkdirs()
-    Files.copy(sample, new File(unpackFolder, "SX9090-first3600.zip").toPath, REPLACE_EXISTING)
+    Files.copy(sample, new File(unpackFolder, "SX9090.zip").toPath, REPLACE_EXISTING)
     sample.close()
   }
 

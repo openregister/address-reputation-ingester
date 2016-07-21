@@ -29,15 +29,16 @@ import scala.collection.mutable
 
 object Ingester {
 
-  case class Blpu(postcode: String, logicalStatus: Char) {
-    def pack: String = s"$postcode|$logicalStatus"
+  case class Blpu(postcode: String, logicalStatus: Char, subdivision: Char) {
+    def pack: String = s"$postcode|$logicalStatus|$subdivision"
   }
 
   object Blpu {
     def unpack(pack: String): Blpu = {
       val fields = Divider.qsplit(pack, '|')
       val logicalStatus = if (fields(1).length > 0) fields(1).charAt(0) else '\u0000'
-      Blpu(fields.head, logicalStatus)
+      val subdivision = if (fields(2).length > 0) fields(2).charAt(0) else '\u0000'
+      Blpu(fields.head, logicalStatus, subdivision)
     }
   }
 
@@ -127,6 +128,10 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
         if (neededLater) {
           passOn += file
         }
+      } catch {
+        case e: Exception =>
+          statusLogger.warn(e.getMessage)
+          statusLogger.tee.warn(e.getMessage, e)
       } finally {
         zip.close()
         statusLogger.info(s"Reading from ${zip.nFiles} CSV files in {} took {}.", file.getName, dt)

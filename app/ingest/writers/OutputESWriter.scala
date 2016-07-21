@@ -20,13 +20,17 @@ import java.util.Date
 
 import com.sksamuel.elastic4s.mappings.FieldType.StringType
 import com.sksamuel.elastic4s.{ElasticClient, _}
+import config.ConfigHelper._
 import org.elasticsearch.common.settings.Settings
+import play.api.Play._
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
 class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: ElasticClient) extends OutputWriter with ElasticDsl {
 
-  val ariIndexName = "address-reputation-data"
+  val ariIndexName = "address-reputation-data" // TODO this is hardwired
+  //  val ariIndexName = model.collectionName.toString
+
   val ariDocumentName = "address"
 
   override def existingTargetThatIsNewerThan(date: Date): Option[String] = {
@@ -42,6 +46,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
       create index ariIndexName shards 5 replicas 0 refreshInterval "-1" mappings {
         mapping(ariDocumentName) fields(
           field("id") typed StringType,
+          //TODO lines should be an array
           field("line1") typed StringType fields(
             field("raw") typed StringType index NotAnalyzed,
             field("lines") typed StringType
@@ -57,6 +62,9 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
           field("town") typed StringType fields (
             field("raw") typed StringType index NotAnalyzed
             ),
+          field("subdivision") typed StringType fields (
+            field("raw") typed StringType index NotAnalyzed
+            ),
           field("postcode") typed StringType fields (
             field("raw") typed StringType index NotAnalyzed
             )
@@ -68,11 +76,13 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
   override def output(a: DbAddress) {
     //Add document to batch
     addBulk(index into ariIndexName -> ariDocumentName fields(
+      //TODO should just use a.tupled
       "id" -> a.id,
       "line1" -> a.line1,
       "line2" -> a.line2,
       "line3" -> a.line3,
-      "town" -> a.town,
+      "town" -> a.town.get,
+      "subdivision" -> a.subdivision.get,
       "postcode" -> a.postcode
       ) id a.id
     )
@@ -113,8 +123,8 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
 }
 
 class OutputESWriterFactory extends OutputWriterFactory {
-  val esSettings: Settings = Settings.settingsBuilder().put("cluster.name", "address-reputation").build();
-  val uri = ElasticsearchClientUri("elasticsearch://localhost:9300")
+  val uri = ElasticsearchClientUri(mustGetConfigString(current.mode, current.configuration, "elastic.uri"))
+  val esSettings: Settings = Settings.settingsBuilder().put("cluster.name", "address-reputation").build()
 
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings) = {
     new OutputESWriter(model, statusLogger, ElasticClient.transport(esSettings, uri))

@@ -40,8 +40,8 @@ import uk.co.hmrc.logging.StubLogger
 @RunWith(classOf[JUnitRunner])
 class FirstPassTest extends FunSuite with MockitoSugar {
 
-  // sample data here is in the old format
-  OSCsv.setCsvFormat(1)
+  // sample data here is in the new format
+  OSCsv.setCsvFormat(2)
 
   // test data is long so disable scalastyle check
   // scalastyle:off
@@ -167,7 +167,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
 
 
   test(
-    """Given an OS-BLPU
+    """Given a v1 OS-BLPU
        the BLPU table will be augmented correctly
     """) {
     new context(
@@ -188,7 +188,35 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       lock.take()
       worker.awaitCompletion()
       assert(firstPass.forwardData.blpu.size === 1)
-      assert(firstPass.forwardData.blpu.get(320077134L) === "KY10 2PY|1")
+      assert(firstPass.forwardData.blpu.get(320077134L) === "KY10 2PY|1|J")
+      assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPAs, 0 streets.")
+    }
+  }
+
+
+  test(
+    """Given a v2 OS-BLPU
+       the BLPU table will be augmented correctly
+    """) {
+    new context(
+      """
+        |10,"NAG Hub - GeoPlace",9999,2016-02-19,0,2016-02-19,23:47:05,"2.0","F"
+        |21,"I",3373,100040219314,1,2,2011-07-12,,294661.00,093744.00,50.7337174,-3.4940473,1,1110,"E",2007-10-24,,2016-02-10,2001-04-04,"D","EX4 8BW",0
+        | """.stripMargin
+    ) {
+      when(continuer.isBusy) thenReturn true
+
+      val firstPass = new FirstPass(dummyOut, continuer, forwardData)
+      worker.push("testing", {
+        continuer =>
+          lock.put(true)
+          firstPass.processFile(csv, dummyOut)
+      })
+
+      lock.take()
+      worker.awaitCompletion()
+      assert(firstPass.forwardData.blpu.size === 1)
+      assert(firstPass.forwardData.blpu.get(100040219314L) === "EX4 8BW|1|E")
       assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPAs, 0 streets.")
     }
   }

@@ -42,8 +42,8 @@ import uk.co.hmrc.logging.StubLogger
 @RunWith(classOf[JUnitRunner])
 class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
-  // sample data here is in the old format
-  OSCsv.setCsvFormat(1)
+  // sample data here is in the new format
+  OSCsv.setCsvFormat(2)
 
   // test data is long so disable scalastyle check
   // scalastyle:off
@@ -70,7 +70,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(131041604L, Blpu("AB12 3CD", '1').pack)
+      forwardData.blpu.put(131041604L, Blpu("AB12 3CD", '1', 'E').pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -117,7 +117,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(131041604L, Blpu("AB12 3CD", '1').pack)
+      forwardData.blpu.put(131041604L, Blpu("AB12 3CD", '1', 'E').pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -162,7 +162,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(0L, Blpu("AB12 3CD", '1').pack)
+      forwardData.blpu.put(0L, Blpu("AB12 3CD", '1', 'E').pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -203,8 +203,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       """
 
     val blpuData =
-    // 0   1  2      3         4 5 6         7 8         9        10 11   12          14         15         16  17        18
-      """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,1,9063,2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
+      """21,"I",801310,131041604,1,2,2008-07-28,,252508.00,654612.00,55.7623040,-4.3521941,1,9063,"S",2012-04-27,,2016-02-10,2007-04-27,"L","G77 6RT",0
       """
 
 
@@ -212,17 +211,18 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
 
     val streetsMap = new java.util.HashMap[java.lang.Long, String]()
     streetsMap.put(48804683L, Street('A', "streetDescription", "locality-name", "town-name").pack)
 
     val lpi = OSLpi(csvLpiLine)
-    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap)
+    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subdivision)
     assert(out.id === "GB131041604")
     assert(out.lines === List("Maidenhill Stables", "Locality-Name"))
-    assert(out.town === "Town-Name")
+    assert(out.town === Some("Town-Name"))
     assert(out.postcode === "G77 6RT")
+    assert(out.subdivision === Some("GB-SCT"))
   }
 
 
@@ -236,7 +236,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       """
 
     val blpuData =
-      """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,1,9063,2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
+      """21,"I",801310,131041604,1,2,2008-07-28,,252508.00,654612.00,55.7623040,-4.3521941,1,9063,"S",2012-04-27,,2016-02-10,2007-04-27,"L","G77 6RT",0
       """
 
 
@@ -244,16 +244,16 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
 
     val streetsMap = new java.util.HashMap[java.lang.Long, String]()
     streetsMap.put(48804683L, Street('A', "streetDescription", "locality name", "town-name").pack)
 
     val lpi = OSLpi(csvLpiLine)
-    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap)
+    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subdivision)
     assert(out.id === "GB131041604")
     assert(out.lines === List("1a-2b Maidenhill Stables", "Locality Name"))
-    assert(out.town === "Town-Name")
+    assert(out.town === Some("Town-Name"))
     assert(out.postcode === "G77 6RT")
   }
 
@@ -269,7 +269,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       """
 
     val blpuData =
-      """21,"I",913235,131041604,1,2,2008-07-28,,252508.00,654612.00,1,9063,2007-04-27,,2009-09-03,2007-04-27,"S","G77 6RT",0
+      """21,"I",801310,131041604,1,2,2008-07-28,,252508.00,654612.00,55.7623040,-4.3521941,1,9063,"S",2012-04-27,,2016-02-10,2007-04-27,"L","G77 6RT",0
       """
 
 
@@ -277,17 +277,18 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
 
     val streetsMap = new java.util.HashMap[java.lang.Long, String]()
     streetsMap.put(48804683L, Street('A', "street From Description", "locality name", "town-name").pack)
 
     val lpi = OSLpi(csvLpiLine)
-    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap)
+    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subdivision)
     assert(out.id === "GB131041604")
     assert(out.lines === List("Locality Name"))
-    assert(out.town === "Town-Name")
+    assert(out.town === Some("Town-Name"))
     assert(out.postcode === "G77 6RT")
+    assert(out.subdivision === Some("GB-SCT"))
   }
 
   test(
@@ -316,13 +317,13 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvDpaLine: Array[String] = CsvParser.split(dpaData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
 
     val boolTrue: Boolean = true
     val boolFalse: Boolean = false
 
     val fd = ForwardData.chronicleInMemoryForUnitTest()
-    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus).pack)
+    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus, blpu.subdivision).pack)
     fd.dpa.add(131041604L)
 
     val continuer = mock[Continuer]
@@ -341,7 +342,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
     val dbAdd = argCap.getValue
     assert(dbAdd.id === "GB131041604")
-    assert(dbAdd.town === "Exeter")
+    assert(dbAdd.town === Some("Exeter"))
     assert(dbAdd.postcode === "EX1 2DN")
   }
 
@@ -373,13 +374,13 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
 
 
     val boolTrue: Boolean = true
 
     val fd = ForwardData.chronicleInMemoryForUnitTest()
-    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus).pack)
+    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus, blpu.subdivision).pack)
     fd.streets.put(48804683L, Street('A', "lpi-one", "lpi-locality-one", "lpi-town-one").pack)
     fd.streets.put(58804683L, Street('A', "lpi-two", "lpi-locality-two", "lpi-town-two").pack)
 
@@ -399,7 +400,84 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
     val dbAdd = argCap.getValue
     assert(dbAdd.id === "GB131041604")
-    assert(dbAdd.town === "Lpi-Town-One")
+    assert(dbAdd.town === Some("Lpi-Town-One"))
     assert(dbAdd.postcode === "G77 6RT")
+  }
+
+
+  test("Given a BLPU with a country code 'eg.E', a matching subdivision should be returned 'eg.GB-ENG'.") {
+    aTest('E', (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subdivision === Some("GB-ENG"), "Invalid country should be 'England'")
+    })
+    aTest('S', (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subdivision === Some("GB-SCT"), "Invalid country should be 'Scotland'")
+    })
+    aTest('W', (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subdivision === Some("GB-WLS"), "Invalid country should be 'Wales'")
+    })
+    aTest('N', (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subdivision === Some("GB-NIR"), "Invalid country should be 'Northern Ireland'")
+    })
+    aTest('L', (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subdivision === Some("GB-CHA"), "Invalid country should be 'Channel Islands'")
+    })
+    aTest('M', (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subdivision === Some("GB-IOM"), "Invalid country should be 'Isle of Man'")
+    })
+
+  }
+
+  test("Given a BLPU with a country code of unknown(J), nothing is returned.") {
+      aTest('J', (count:Int, addr:DbAddress) => {
+        assert(count === 0)
+      })
+  }
+
+  def aTest( countryCode:Char, f: (Int, DbAddress) => Unit) {
+    new context {
+
+      val lpiData ="""24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
+        """
+
+      val csv = CsvParser.split(lpiData)
+
+      forwardData.blpu.put(131041604L, Blpu("AB12 3CD", '1', countryCode).pack)
+
+      val out = new OutputWriter {
+        var count = 0
+        var addr: DbAddress = _
+
+        def existingTargetThatIsNewerThan(date: Date) = None
+
+        def begin() {}
+
+        def output(out: DbAddress) {
+          addr = out
+          count += 1
+        }
+
+        def end(completed: Boolean) = model
+      }
+
+      when(continuer.isBusy) thenReturn true
+
+      val sp = new SecondPass(forwardData, continuer)
+      worker.push("testing", {
+        continuer =>
+          lock.put(true)
+          sp.processFile(csv, out)
+      })
+
+      lock.take()
+      worker.awaitCompletion()
+      f(out.count, out.addr)
+//      assert(out.count === 0)
+    }
   }
 }

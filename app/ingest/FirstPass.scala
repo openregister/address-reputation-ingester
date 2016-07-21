@@ -85,7 +85,7 @@ class FirstPass(out: OutputWriter, continuer: Continuer, val forwardData: Forwar
 
   private def processBlpu(csvLine: Array[String]): Unit = {
     val blpu = OSBlpu(csvLine)
-    forwardData.blpu.put(blpu.uprn, Blpu(blpu.postcode, blpu.logicalStatus).pack)
+    forwardData.blpu.put(blpu.uprn, Blpu(blpu.postcode, blpu.logicalStatus, blpu.subdivision).pack)
   }
 
   private def processDpa(csvLine: Array[String]): Unit = {
@@ -94,9 +94,9 @@ class FirstPass(out: OutputWriter, continuer: Continuer, val forwardData: Forwar
   }
 
   private def processStreet(street: OSStreet): Unit = {
-    if (forwardData.streets.containsKey(street.usrn)) {
-      val existingStreetStr = forwardData.streets.get(street.usrn)
-      val existingStreet = Street.unpack(existingStreetStr)
+    val existingStreetStr = Option(forwardData.streets.get(street.usrn))
+    if (existingStreetStr.isDefined) {
+      val existingStreet = Street.unpack(existingStreetStr.get)
       forwardData.streets.put(street.usrn, Street(street.recordType, existingStreet.streetDescription, existingStreet.localityName, existingStreet.townName).pack)
     } else {
       forwardData.streets.put(street.usrn, Street(street.recordType, "", "", "").pack)
@@ -104,9 +104,9 @@ class FirstPass(out: OutputWriter, continuer: Continuer, val forwardData: Forwar
   }
 
   private def processStreetDescriptor(sd: OSStreetDescriptor) {
-    if (forwardData.streets.containsKey(sd.usrn)) {
-      val existingStreetStr = forwardData.streets.get(sd.usrn)
-      val existingStreet = Street.unpack(existingStreetStr)
+    val existingStreetStr = Option(forwardData.streets.get(sd.usrn))
+    if (existingStreetStr.isDefined) {
+      val existingStreet = Street.unpack(existingStreetStr.get)
       forwardData.streets.put(sd.usrn, Street(existingStreet.recordType, sd.description, sd.locality, sd.town).pack)
     } else {
       forwardData.streets.put(sd.usrn, Street('A', sd.description, sd.locality, sd.town).pack)

@@ -104,9 +104,13 @@ class IngestController(action: ActionBuilder[Request],
     val qualifiedDir = new File(unpackedFolder, model.pathSegment)
     val writer = writerFactory.writer(model, status, settings)
     var result = model
-    var failed = false
+    var failed = true
     try {
       failed = ingesterFactory.ingester(continuer, model, status).ingest(qualifiedDir, writer)
+    } catch {
+      case e: Exception =>
+        status.warn(e.getMessage)
+        status.tee.warn(e.getMessage, e)
     } finally {
       if (!failed) {
         status.info("Cleaning up the ingester.")

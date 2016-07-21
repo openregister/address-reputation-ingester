@@ -29,17 +29,20 @@ import uk.co.hmrc.address.services.Capitalisation._
 
 private[ingest] object ExportDbAddress {
 
-  def exportDPA(dpa: OSDpa): DbAddress = {
+  def exportDPA(dpa: OSDpa, subdivision: Char): DbAddress = {
     val id = "GB" + dpa.uprn.toString
     val line1 = normaliseAddressLine(dpa.subBuildingName + " " + dpa.buildingName)
     val line2 = normaliseAddressLine(dpa.buildingNumber + " " + dpa.dependentThoroughfareName + " " + dpa.thoroughfareName)
     val line3 = normaliseAddressLine(dpa.doubleDependentLocality + " " + dpa.dependentLocality)
 
-    DbAddress(id, line1, line2, line3, normaliseAddressLine(dpa.postTown), normalisePostcode(dpa.postcode))
+    DbAddress(id, line1, line2, line3,
+      Some(normaliseAddressLine(dpa.postTown)),
+      normalisePostcode(dpa.postcode),
+      ukHomeCountryName(subdivision))
   }
 
 
-  def exportLPI(lpi: OSLpi, postcode: String, streets: java.util.Map[java.lang.Long, String]): DbAddress = {
+  def exportLPI(lpi: OSLpi, postcode: String, streets: java.util.Map[java.lang.Long, String], subdivision: Char): DbAddress = {
     val streetString = if (streets.containsKey(lpi.usrn)) streets.get(lpi.usrn) else "X|<SUnknown>|<SUnknown>|<TUnknown>"
     val street = Street.unpack(streetString)
 
@@ -54,7 +57,19 @@ private[ingest] object ExportDbAddress {
       normaliseAddressLine(OSCleanup.removeUninterestingStreets(line1)),
       normaliseAddressLine(OSCleanup.removeUninterestingStreets(line2)),
       normaliseAddressLine(OSCleanup.removeUninterestingStreets(line3)),
-      normaliseAddressLine(street.townName),
-      normalisePostcode(postcode))
+      Some(normaliseAddressLine(street.townName)),
+      normalisePostcode(postcode),
+      ukHomeCountryName(subdivision))
+  }
+
+  private def ukHomeCountryName(subdivision: Char) = subdivision match {
+    case 'S' => Some("GB-SCT")
+    case 'E' => Some("GB-ENG")
+    case 'W' => Some("GB-WLS")
+    case 'N' => Some("GB-NIR")
+    case 'L' => Some("GB-CHA")
+    case 'M' => Some("GB-IOM")
+    //    case 'J' => "" // unknown
+    case _ => None
   }
 }

@@ -28,6 +28,8 @@ import services.exec.Continuer
 
 class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
 
+  val UnknownSubdivision = 'J'
+
   private var dpaCount = 0
   private var lpiCount = 0
 
@@ -54,12 +56,12 @@ class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
     val lpi = OSLpi(csvLine)
 
     if (!fd.dpa.contains(lpi.uprn)) {
-      if (fd.blpu.containsKey(lpi.uprn)) {
-        val packedBlpu = fd.blpu.get(lpi.uprn)
-        val blpu = Blpu.unpack(packedBlpu)
+      val packedBlpu = Option(fd.blpu.get(lpi.uprn))
+      if (packedBlpu.isDefined) {
+        val blpu = Blpu.unpack(packedBlpu.get)
 
-        if (blpu.logicalStatus == lpi.logicalStatus) {
-          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets))
+        if (blpu.logicalStatus == lpi.logicalStatus && blpu.subdivision != UnknownSubdivision) {
+          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets, blpu.subdivision))
           lpiCount += 1
           fd.blpu.remove(lpi.uprn) // need to decide which lpi to use in the firstPass using logic - not first in gets in
         }
@@ -68,9 +70,19 @@ class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
   }
 
   private def processDPA(csvLine: Array[String], out: OutputWriter): Unit = {
+
     val dpa = OSDpa(csvLine)
-    out.output(ExportDbAddress.exportDPA(dpa))
-    dpaCount += 1
+    val packedBlpu = Option(fd.blpu.get(dpa.uprn))
+    val subdivision =
+      if (packedBlpu.isDefined)
+        Blpu.unpack(packedBlpu.get).subdivision
+      else
+        UnknownSubdivision
+
+    if (subdivision != UnknownSubdivision) {
+      out.output(ExportDbAddress.exportDPA(dpa, subdivision))
+      dpaCount += 1
+    }
   }
 
   def sizeInfo: String = s"Second pass processed $dpaCount DPAs, $lpiCount LPIs."
