@@ -26,7 +26,9 @@ import play.api.Play._
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
-class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: ElasticClient) extends OutputWriter with ElasticDsl {
+class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: ElasticClient, settings: WriterSettings) extends OutputWriter with ElasticDsl {
+
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   val ariIndexName = "address-reputation-data" // TODO this is hardwired
   //  val ariIndexName = model.collectionName.toString
@@ -62,10 +64,10 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
           field("town") typed StringType fields (
             field("raw") typed StringType index NotAnalyzed
             ),
-          field("subdivision") typed StringType fields (
+          field("postcode") typed StringType fields (
             field("raw") typed StringType index NotAnalyzed
             ),
-          field("postcode") typed StringType fields (
+          field("subdivision") typed StringType fields (
             field("raw") typed StringType index NotAnalyzed
             )
           )
@@ -82,8 +84,8 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
       "line2" -> a.line2,
       "line3" -> a.line3,
       "town" -> a.town.get,
-      "subdivision" -> a.subdivision.get,
-      "postcode" -> a.postcode
+      "postcode" -> a.postcode,
+      "subdivision" -> a.subdivision.get
       ) id a.id
     )
   }
@@ -108,16 +110,22 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
 
   private def addBulk(i: IndexDefinition) = {
     bulkStatements += i
-    if (bulkCount > 1000) {
-      client execute {
+    bulkCount += 1
+    if (bulkCount >= settings.bulkSize) {
+      bulkCount = 0
+      val fr = client execute {
         bulk(
           bulkStatements
         )
       }
+      fr map {
+        r =>
+          if (r.hasFailures) {
+            statusLogger.warn(r.failureMessage)
+          }
+      }
       bulkStatements.clear()
-      bulkCount = 0
-    } else {
-      bulkCount += 1
+      Thread.sleep(settings.loopDelay)
     }
   }
 }
@@ -127,6 +135,6 @@ class OutputESWriterFactory extends OutputWriterFactory {
   val esSettings: Settings = Settings.settingsBuilder().put("cluster.name", "address-reputation").build()
 
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings) = {
-    new OutputESWriter(model, statusLogger, ElasticClient.transport(esSettings, uri))
+    new OutputESWriter(model, statusLogger, ElasticClient.transport(esSettings, uri), settings)
   }
 }

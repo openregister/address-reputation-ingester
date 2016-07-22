@@ -115,25 +115,32 @@ function doStartProductAction(action) {
     if (product == '' || epoch == '' || variant == '')
         alert("Enter the product, epoch and variant");
     else
-        get(action + product + '/' + epoch + '/' + variant + bulkSize + loopDelay + force, true);
+        get(action + '/' + product + '/' + epoch + '/' + variant + bulkSize + loopDelay + force, true);
+}
+
+function getTarget() {
+    return $('#target').val();
 }
 
 function doGo() {
-    doStartProductAction('/go/via/file/to/db/');
+    var target = getTarget();
+    doStartProductAction('/go/via/file/to/' + target);
 }
 
 function doFetch() {
-    doStartProductAction('/fetch/to/file/');
+    doStartProductAction('/fetch/to/file');
 }
 
 function doIngest() {
-    doStartProductAction('/ingest/from/file/to/db/');
+    var target = getTarget();
+    doStartProductAction('/ingest/from/file/to/' + target);
 }
 
 //-------------------------------------------------------------------------------------------------
 
 function goAuto() {
-    get('/goAuto/via/file/to/db', true);
+    var target = getTarget();
+    get('/goAuto/via/file/to/' + target, true);
 }
 
 function cancelTask() {

@@ -68,13 +68,23 @@
                     <label for="bulkSize">Bulk size</label>
                     <input id="bulkSize" value="1000" min="1" size="5" type="number"/> +
                     <label for="loopDelay">loop delay</label>
-                    <input id="loopDelay" value="0" min="0" size="5" type="number"/> ms
+                    <input id="loopDelay" value="0" min="0" size="5" type="number"/> ms +
+                    <label for="target">to</label>
+                    <select id="target">
+                        <option value="db">db</option>
+                        <option value="es">es</option>
+                        <option value="file">file</option>
+                        <option value="null">null</option>
+                    </select>
                 </div>
                 <div class="lower">
                     <label for="product">Product</label>
-                    <input id="product" placeholder="abp" size="5"/> +
+                    <select id="product">
+                        <option value="abi">abi</option>
+                        <option value="abp">abp</option>
+                    </select> +
                     <label for="epoch">Epoch</label>
-                    <input id="epoch" value="41" size="5" type="number"/> +
+                    <input id="epoch" value="42" size="5" type="number"/> +
                     <label for="variant">Variant</label>
                     <input id="variant" value="full" size="7"/> +
                     <label for="force">Force</label>
