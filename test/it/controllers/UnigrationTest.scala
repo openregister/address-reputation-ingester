@@ -177,9 +177,9 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe ACCEPTED
 
-      verifyOK("/admin/status", "busy ingesting exeter/1/sample")
+      verifyOK("/admin/status", "busy ingesting to file exeter/1/sample")
 
-      assert(waitWhile("/admin/status", "busy ingesting exeter/1/sample", 100000) === true)
+      assert(waitWhile("/admin/status", "busy ingesting to file exeter/1/sample", 100000) === true)
 
       verifyOK("/admin/status", "idle")
 
@@ -208,9 +208,9 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe ACCEPTED
 
-      verifyOK("/admin/status", "busy ingesting exeter/1/sample")
+      verifyOK("/admin/status", "busy ingesting to db exeter/1/sample")
 
-      waitWhile("/admin/status", "busy ingesting exeter/1/sample", 100000)
+      waitWhile("/admin/status", "busy ingesting to db exeter/1/sample", 100000)
 
       verifyOK("/admin/status", "idle")
 

@@ -74,7 +74,7 @@ class IngestController(action: ActionBuilder[Request],
 
       val worker = workerFactory.worker
       worker.push(
-        s"ingesting ${model.pathSegment}",
+        s"ingesting to $target ${model.pathSegment}",
         continuer => ingestIfOK(model, worker.statusLogger, settings, target, continuer)
       )
 

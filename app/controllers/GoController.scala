@@ -57,7 +57,7 @@ class GoController(action: ActionBuilder[Request],
       require(IngestControllerHelper.isSupportedTarget(target))
 
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
-      workerFactory.worker.push(s"automatically searching", {
+      workerFactory.worker.push(s"automatically searching and loading to $target", {
         continuer =>
           val tree = sardine.exploreRemoteTree
           for (product <- KnownProducts.OSGB
@@ -87,7 +87,7 @@ class GoController(action: ActionBuilder[Request],
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
       val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
       val worker = workerFactory.worker
-      worker.push(s"automatically loading ${model.pathSegment}", {
+      worker.push(s"automatically loading to $target ${model.pathSegment}", {
         continuer =>
           pipeline(target, model, settings, continuer)
       })
