@@ -74,8 +74,10 @@ class CollectionController(action: ActionBuilder[Request],
       } else if (systemCollections.contains(name) || collectionsInUse.contains(name)) {
         BadRequest(name + " cannot be dropped")
       } else {
-        collectionMetadata.dropCollection(name)
-        Ok
+        workerFactory.worker.push("dropping collection " + name, continuer => {
+          collectionMetadata.dropCollection(name)
+        })
+        Accepted
       }
   }
 
