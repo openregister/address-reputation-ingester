@@ -31,24 +31,40 @@ trait AppServerTestApi extends Assertions {
 
   def app: Application
 
-  val defaultContentType = "text/plain; charset=UTF-8"
+  val textPlainUTF8 = "text/plain; charset=UTF-8"
+
+  //-----------------------------------------------------------------------------------------------
 
   def newRequest(method: String, path: String): WSRequestHolder = {
-    WS.url(appEndpoint + path)(app).withMethod(method)
+    WS.url(appEndpoint + path)(app).withMethod(method).withRequestTimeout(120 * 1000)
   }
 
-  def newRequest(method: String, path: String, body: String, hdrs: (String, String)*): WSRequestHolder = {
+  def newRequest(method: String, path: String, body: String): WSRequestHolder = {
     val wsBody = InMemoryBody(body.trim.getBytes("UTF-8"))
-    newRequest(method, path).withHeaders(hdrs:_*).withBody(wsBody)
+    newRequest(method, path).withHeaders("Content-Type" -> "application/json").withBody(wsBody)
   }
 
-  def request(method: String, p: String, hdrs: (String, String)*): WSResponse = {
-    await(newRequest(method, p).withHeaders(hdrs:_*).execute())
-  }
+  //-----------------------------------------------------------------------------------------------
 
-  def request(method: String, p: String): WSResponse = request(method, p, "User-Agent" -> "xyz")
+  def request(method: String, path: String, hdrs: (String, String)*): WSResponse =
+    await(newRequest(method, path).withHeaders(hdrs:_*).execute())
 
-  def get(p: String): WSResponse = request("GET", p)
+  def request(method: String, path: String, body: String, hdrs: (String, String)*): WSResponse =
+    await(newRequest(method, path, body).withHeaders(hdrs:_*).execute())
+
+  def get(path: String): WSResponse =
+    await(newRequest("GET", path).withHeaders("User-Agent" -> "xyz").execute())
+
+  def delete(path: String): WSResponse =
+    await(newRequest("DELETE", path).withHeaders("User-Agent" -> "xyz").execute())
+
+  def post(path: String, body: String, ct: String = "application/json") =
+    await(newRequest("POST", path, body).withHeaders("Content-Type" -> ct, "User-Agent" -> "xyz").execute())
+
+  def put(path: String, body: String, ct: String = "application/json") =
+    await(newRequest("PUT", path, body).withHeaders("Content-Type" -> ct, "User-Agent" -> "xyz").execute())
+
+  //-----------------------------------------------------------------------------------------------
 
   def verifyOK(path: String, expectedBody: String, expectedContent: String = "text/plain") {
     verify(path, OK, expectedBody, expectedContent)
