@@ -39,11 +39,11 @@ trait AppServerTestApi extends Assertions {
 
   def newRequest(method: String, path: String, body: String, hdrs: (String, String)*): WSRequestHolder = {
     val wsBody = InMemoryBody(body.trim.getBytes("UTF-8"))
-    newRequest(method, path).withHeaders(hdrs: _*).withBody(wsBody)
+    newRequest(method, path).withHeaders(hdrs:_*).withBody(wsBody)
   }
 
   def request(method: String, p: String, hdrs: (String, String)*): WSResponse = {
-    await(newRequest(method, p).withHeaders(hdrs: _*).execute())
+    await(newRequest(method, p).withHeaders(hdrs:_*).execute())
   }
 
   def request(method: String, p: String): WSResponse = request(method, p, "User-Agent" -> "xyz")
@@ -85,7 +85,12 @@ trait AppServerTestApi extends Assertions {
     }
   }
 
-  def dump(response: WSResponse) = {
+  def dump(response: WSResponse) =
+    new WSResponseDumper(response) // provides a lazy wrapper containing a toString method
+  // (normally there is no need to dump the response)
+}
+
+class WSResponseDumper(response: WSResponse) {
+  override def toString =
     "\n  Got " + response.status + ":" + response.body
-  }
 }
