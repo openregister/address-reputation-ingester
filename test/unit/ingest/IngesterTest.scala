@@ -25,6 +25,7 @@ import java.io.File
 import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
+import ingest.algorithm.Algorithm
 import ingest.writers.OutputWriter
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
@@ -71,7 +72,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, model, status, fd).ingest(mockFile, dummyOut)
+          new Ingester(continuer, Algorithm(), model, status, fd).ingest(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -93,7 +94,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, model, status, ForwardData.chronicleInMemoryForUnitTest()).ingest(mockFile, dummyOut)
+          new Ingester(continuer, Algorithm(), model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingest(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -115,7 +116,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          result = new Ingester(continuer, model, status, ForwardData.chronicleInMemoryForUnitTest()).ingest(mockFile, dummyOut)
+          result = new Ingester(continuer, Algorithm(), model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingest(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -152,7 +153,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, model, status, ForwardData.simpleHeapInstance()).ingest(List(sample), out)
+          new Ingester(continuer, Algorithm(), model, status, ForwardData.simpleHeapInstance("DPA")).ingest(List(sample), out)
           lock.put(true)
       })
 

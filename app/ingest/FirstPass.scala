@@ -23,6 +23,7 @@ package ingest
 
 import addressbase._
 import ingest.Ingester.{Blpu, Street}
+import ingest.algorithm.Algorithm
 import ingest.writers.OutputWriter
 import services.exec.Continuer
 
@@ -36,7 +37,7 @@ trait Pass {
 }
 
 
-class FirstPass(out: OutputWriter, continuer: Continuer, val forwardData: ForwardData) extends Pass {
+class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, val forwardData: ForwardData) extends Pass {
 
   // The simple 'normal' collections
   //  val forwardData = ForwardData.simpleInstance()
@@ -63,11 +64,14 @@ class FirstPass(out: OutputWriter, continuer: Continuer, val forwardData: Forwar
         case OSBlpu.RecordId if OSBlpu.isUsefulPostcode(csvLine) =>
           processBlpu(csvLine)
 
-        case OSLpi.RecordId =>
+        case OSLpi.RecordId if settings.includeLpi =>
+          if (settings.prefer == "LPI")
+            processLpi(csvLine)
           needSecondPass = true
 
-        case OSDpa.RecordId =>
-          processDpa(csvLine)
+        case OSDpa.RecordId if settings.includeDpa =>
+          if (settings.prefer == "DPA")
+            processDpa(csvLine)
           needSecondPass = true
 
         case OSStreet.RecordId =>
@@ -88,9 +92,14 @@ class FirstPass(out: OutputWriter, continuer: Continuer, val forwardData: Forwar
     forwardData.blpu.put(blpu.uprn, Blpu(blpu.postcode, blpu.logicalStatus, blpu.subdivision).pack)
   }
 
+  private def processLpi(csvLine: Array[String]): Unit = {
+    val osLpi = OSLpi(csvLine)
+    forwardData.uprns.add(osLpi.uprn)
+  }
+
   private def processDpa(csvLine: Array[String]): Unit = {
     val osDpa = OSDpa(csvLine)
-    forwardData.dpa.add(osDpa.uprn)
+    forwardData.uprns.add(osDpa.uprn)
   }
 
   private def processStreet(street: OSStreet): Unit = {

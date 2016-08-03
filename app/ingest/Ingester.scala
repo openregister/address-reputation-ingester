@@ -20,6 +20,7 @@ import java.io.File
 import java.util.Date
 
 import config.Divider
+import ingest.algorithm.Algorithm
 import ingest.writers.OutputWriter
 import services.exec.Continuer
 import services.model.{StateModel, StatusLogger}
@@ -69,7 +70,7 @@ object Ingester {
 }
 
 
-class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger, forwardData: ForwardData) {
+class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, statusLogger: StatusLogger, forwardData: ForwardData) {
 
   def ingest(rootDir: File, out: OutputWriter): Boolean = {
     val files = Ingester.listFiles(rootDir, ".zip").sorted
@@ -90,7 +91,7 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
 
   private[ingest] def ingest(files: Seq[File], out: OutputWriter): Boolean = {
     val dt = new DiagnosticTimer
-    val fp = new FirstPass(out, continuer, forwardData)
+    val fp = new FirstPass(out, continuer, settings, forwardData)
     out.begin()
 
     statusLogger.info(s"Starting first pass through ${files.size} files.")
@@ -99,7 +100,7 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
     statusLogger.info(s"First pass complete after {}.", dt)
 
     statusLogger.info(s"Starting second pass through ${fewerFiles.size} files.")
-    val sp = new SecondPass(fd, continuer)
+    val sp = new SecondPass(fd, continuer, settings)
     pass(fewerFiles, out, sp)
     statusLogger.info(s"Ingester finished after {}.", dt)
 
@@ -143,7 +144,7 @@ class Ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogg
 }
 
 class IngesterFactory {
-  def ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger): Ingester =
-    new Ingester(continuer, model, statusLogger, ForwardData.chronicleInMemory())
+  def ingester(continuer: Continuer, settings: Algorithm, model: StateModel, statusLogger: StatusLogger): Ingester =
+    new Ingester(continuer, settings, model, statusLogger, ForwardData.chronicleInMemory(settings.prefer))
 }
 

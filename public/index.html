@@ -63,8 +63,10 @@
                 <div class="upper">
                     <a id="goAuto" class="start button" href="#">Auto Fetch, Ingest, Switch</a>
                     <span class="spacer1"></span>
+
                     <a id="cancelTask" class="stop button" href="#">Cancel current task</a>
-                    <span class="spacer2"></span>
+                </div>
+                <div class="middle">
                     <label for="bulkSize">Bulk size</label>
                     <input id="bulkSize" value="1000" min="1" size="5" type="number"/> +
                     <label for="loopDelay">loop delay</label>
@@ -76,6 +78,22 @@
                         <option value="file">file</option>
                         <option value="null">null</option>
                     </select>
+
+                    <span class="spacer1"></span>
+                    <i>Ingest only:</i>
+                    <label for="include">include</label>
+                    <select id="include">
+                        <option value="DPA,LPI">DPA and LPI</option>
+                        <option value="DPA">DPA only</option>
+                        <option value="LPI">LPI only</option>
+                    </select> +
+                    <label for="prefer">prefer</label>
+                    <select id="prefer">
+                        <option value="DPA">DPA</option>
+                        <option value="LPI">LPI</option>
+                    </select> +
+                    <label for="streets">filter</label>
+                    <input id="streets" value="1" size="2" min="0" max="2" type="number"/>
                 </div>
                 <div class="lower">
                     <label for="product">Product</label>
@@ -87,8 +105,7 @@
                     <input id="epoch" value="42" size="5" type="number"/> +
                     <label for="variant">Variant</label>
                     <input id="variant" value="full" size="7"/> +
-                    <label for="force">Force</label>
-                    <input id="force" type="checkbox"/>
+                    <label for="force">Force</label> <input id="force" type="checkbox"/>
                     <a id="go" class="start button" href="#">Go Fetch, Ingest, Switch</a> or
                     <a id="fetch" class="start button" href="#">Fetch only</a> or
                     <a id="ingest" class="start button" href="#">Ingest only</a>

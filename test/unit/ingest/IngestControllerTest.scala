@@ -22,6 +22,7 @@ package ingest
 import java.io.File
 
 import controllers.PassThroughAction
+import ingest.algorithm.Algorithm
 import ingest.writers._
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
@@ -151,7 +152,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       when(outputDBWriter.end(true)) thenReturn model2
 
       // when
-      val model3 = ingestController.ingestIfOK(model1, status, settings, "db", new StubContinuer)
+      val model3 = ingestController.ingestIfOK(model1, status, settings, Algorithm(), "db", new StubContinuer)
 
       // then
       assert(model3 === model2)
@@ -174,7 +175,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       val settings = WriterSettings(1, 0)
 
       // when
-      val model2 = ingestController.ingestIfOK(model1, status, settings, "null", new StubContinuer)
+      val model2 = ingestController.ingestIfOK(model1, status, settings, Algorithm(), "null", new StubContinuer)
 
       // then
       assert(model2 === model1)
@@ -205,7 +206,7 @@ class StubOutputWriterFactory(w: OutputWriter) extends OutputWriterFactory {
 }
 
 class StubIngesterFactory(i: Ingester) extends IngesterFactory {
-  override def ingester(continuer: Continuer, model: StateModel, statusLogger: StatusLogger): Ingester = i
+  override def ingester(continuer: Continuer, settings: Algorithm, model: StateModel, statusLogger: StatusLogger): Ingester = i
 }
 
 class StubWorkerFactory(w: WorkQueue) extends WorkerFactory {

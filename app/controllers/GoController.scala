@@ -18,6 +18,7 @@ package controllers
 
 import controllers.SimpleValidator._
 import fetch.{FetchController, SardineWrapper}
+import ingest.algorithm.Algorithm
 import ingest.writers.WriterSettings
 import ingest.{IngestController, IngestControllerHelper}
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
@@ -97,7 +98,7 @@ class GoController(action: ActionBuilder[Request],
   private def pipeline(target: String, model1: StateModel, settings: WriterSettings, continuer: Continuer) {
     if (continuer.isBusy) {
       val model2 = fetchController.fetch(model1, continuer)
-      val model3 = ingestController.ingestIfOK(model2, logger, settings, target, continuer)
+      val model3 = ingestController.ingestIfOK(model2, logger, settings, Algorithm(), target, continuer)
       if (target == "db") {
         switchoverController.switchIfOK(model3)
       }

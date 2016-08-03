@@ -26,57 +26,6 @@ package addressbase
 object OSCleanup {
 
   val Uprn_Idx = 3
-
-  def removeUninterestingStreets(s: String): String = {
-    val containedPhrases = List[String](
-      "from ", "pump ", "pumping ", "mast ", "hydraulic ram", "helipad ", "across from", "fire station",
-      "awaiting conversion", "ppg sta", "footway", "bridge", "pipeline", "redevelopment"
-      //      " adjacent to ",
-      //      " adj to ",
-      //      " to east of ",
-      //      " to the east of ",
-      //      " to north of ",
-      //      " to the north of ",
-      //      " to rear of ",
-      //      " to the rear of ",
-      //      " to south of ",
-      //      " to the south of ",
-      //      " to west of ",
-      //      " to the west of "
-    )
-    val startingPhrases = List[String](
-      //      "access to ",
-      //      "adjacent to ",
-      //      "adj to ",
-      //      "back lane from ",
-      //      "back lane to ",
-      //      "bus shelter ",
-      //      "car park ",
-      //      "drive from ",
-      //      "footpath from ",
-      //      "footpath next ",
-      //      "footpath to ",
-      //      "grass verge ",
-      //      "landlords supply ",
-      //      "landlord's supply ",
-      //      "lane from ",
-      //      "lane to ",
-      //      "path leading from ",
-      //      "path leading to ",
-      //      "public footpath to ",
-      //      "road from ",
-      //      "road to ",
-      //      "site supply to ",
-      //      "street from ",
-      //      "street to ",
-      //      "supply to ",
-      //      "track from ",
-      //      "track to "
-    )
-    val sl = s.toLowerCase
-    if (startingPhrases.exists(w => sl.startsWith(w)) || containedPhrases.exists(w => sl.contains(w))) ""
-    else s
-  }
 }
 
 

@@ -90,6 +90,11 @@ div.upper {
     padding-bottom: 0.5em;
 }
 
+div.middle {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+
 div.lower {
     padding-top: 0.5em;
 }

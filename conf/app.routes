@@ -17,7 +17,7 @@ GET    /fetch/to/file/:product/:epoch/:variant                  fetch.FetchContr
 POST   /fetch/clean                                             fetch.FetchController.doCleanup()
 GET    /fetch/showRemoteTree                                    fetch.FetchController.doShowTree()
 
-GET    /ingest/from/file/to/:target/:product/:epoch/:variant    ingest.IngestController.doIngestFileTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
+GET    /ingest/from/file/to/:target/:product/:epoch/:variant    ingest.IngestController.doIngestFileTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean], include: Option[String], prefer: Option[String], streetFilter: Option[Int])
 
 GET    /switch/to/:product/:epoch/:index                        controllers.SwitchoverController.doSwitchTo(product, epoch: Int, index: Int)
 

@@ -104,18 +104,28 @@ function fullStatus() {
 
 //-------------------------------------------------------------------------------------------------
 
+function checkbox(id, key) {
+    var option = '';
+    if ($('#'+id).is(":checked")) option = '&' + key + '=true';
+    return option;
+}
+
 function doStartProductAction(action) {
     var product = $('#product').val();
     var epoch = $('#epoch').val();
     var variant = $('#variant').val();
     var bulkSize = '?bulkSize=' + $('#bulkSize').val();
     var loopDelay = '&loopDelay=' + $('#loopDelay').val();
-    var force = '';
-    if ($('#force').is(":checked")) force = "&forceChange=true";
+    var streets = '&streetFilter=' + $('#streets').val();
+    var include = '&include=' + $('#include').val();
+    var prefer = '&prefer=' + $('#prefer').val();
+    var force = checkbox('force', 'forceChange');
     if (product == '' || epoch == '' || variant == '')
         alert("Enter the product, epoch and variant");
     else
-        get(action + '/' + product + '/' + epoch + '/' + variant + bulkSize + loopDelay + force, true);
+        get(action + '/' + product + '/' + epoch + '/' +
+            variant + bulkSize + loopDelay + force +
+            include + prefer + streets, true);
 }
 
 function getTarget() {

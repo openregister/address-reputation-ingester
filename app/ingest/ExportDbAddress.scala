@@ -21,8 +21,9 @@
 
 package ingest
 
-import addressbase.{OSCleanup, OSDpa, OSLpi}
+import addressbase.{OSDpa, OSLpi}
 import ingest.Ingester.Street
+import ingest.algorithm.Algorithm
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.osgb.Postcode._
 import uk.co.hmrc.address.services.Capitalisation._
@@ -42,7 +43,7 @@ private[ingest] object ExportDbAddress {
   }
 
 
-  def exportLPI(lpi: OSLpi, postcode: String, streets: java.util.Map[java.lang.Long, String], subdivision: Char): DbAddress = {
+  def exportLPI(lpi: OSLpi, postcode: String, streets: java.util.Map[java.lang.Long, String], subdivision: Char, settings: Algorithm): DbAddress = {
     val streetString = if (streets.containsKey(lpi.usrn)) streets.get(lpi.usrn) else "X|<SUnknown>|<SUnknown>|<TUnknown>"
     val street = Street.unpack(streetString)
 
@@ -54,9 +55,9 @@ private[ingest] object ExportDbAddress {
 
     DbAddress(
       "GB" + lpi.uprn.toString,
-      normaliseAddressLine(OSCleanup.removeUninterestingStreets(line1)),
-      normaliseAddressLine(OSCleanup.removeUninterestingStreets(line2)),
-      normaliseAddressLine(OSCleanup.removeUninterestingStreets(line3)),
+      normaliseAddressLine(removeUninterestingStreets(line1, settings)),
+      normaliseAddressLine(removeUninterestingStreets(line2, settings)),
+      normaliseAddressLine(removeUninterestingStreets(line3, settings)),
       Some(normaliseAddressLine(street.townName)),
       normalisePostcode(postcode),
       ukHomeCountryName(subdivision))
@@ -71,5 +72,11 @@ private[ingest] object ExportDbAddress {
     case 'M' => Some("GB-IOM")
     //    case 'J' => "" // unknown
     case _ => None
+  }
+
+  private def removeUninterestingStreets(s: String, settings: Algorithm): String = {
+    val sl = s.toLowerCase
+    if (settings.startingPhrases.exists(w => sl.startsWith(w)) || settings.containedPhrases.exists(w => sl.contains(w))) ""
+    else s
   }
 }

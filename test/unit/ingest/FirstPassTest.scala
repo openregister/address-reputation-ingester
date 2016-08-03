@@ -25,6 +25,7 @@ import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
 import addressbase.OSCsv
+import ingest.algorithm.Algorithm
 import ingest.writers.OutputWriter
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
@@ -55,7 +56,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     val continuer = mock[Continuer]
     val lock = new SynchronousQueue[Boolean]()
     val model = new StateModel()
-    val forwardData = ForwardData.chronicleInMemoryForUnitTest()
+    val forwardData = ForwardData.chronicleInMemoryForUnitTest("DPA")
   }
 
   test(
@@ -67,7 +68,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val firstPass = new FirstPass(dummyOut, continuer, forwardData)
+      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -96,7 +97,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val firstPass = new FirstPass(dummyOut, continuer, forwardData)
+      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -123,7 +124,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val firstPass = new FirstPass(dummyOut, continuer, forwardData)
+      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -150,7 +151,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val firstPass = new FirstPass(dummyOut, continuer, forwardData)
+      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -178,7 +179,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val firstPass = new FirstPass(dummyOut, continuer, forwardData)
+      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -206,7 +207,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val firstPass = new FirstPass(dummyOut, continuer, forwardData)
+      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -249,7 +250,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
         def end(completed: Boolean) = model
       }
 
-      val firstPass = new FirstPass(dummyOut, continuer, forwardData)
+      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -258,8 +259,8 @@ class FirstPassTest extends FunSuite with MockitoSugar {
 
       lock.take()
       worker.awaitCompletion()
-      assert(firstPass.forwardData.dpa.size === 1)
-      assert(firstPass.forwardData.dpa.contains(9051119283L))
+      assert(firstPass.forwardData.uprns.size === 1)
+      assert(firstPass.forwardData.uprns.contains(9051119283L))
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 1 DPAs, 0 streets.")
     }
   }
@@ -273,7 +274,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn false
 
-      val firstPass = new FirstPass(dummyOut, continuer, forwardData)
+      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)

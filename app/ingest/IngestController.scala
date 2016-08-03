@@ -20,6 +20,7 @@ import java.io.File
 
 import controllers.ControllerConfig
 import controllers.SimpleValidator._
+import ingest.algorithm.Algorithm
 import ingest.writers._
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.exec.{Continuer, WorkerFactory}
@@ -61,9 +62,14 @@ class IngestController(action: ActionBuilder[Request],
                        workerFactory: WorkerFactory
                       ) extends BaseController {
 
-  def doIngestFileTo(target: String, product: String, epoch: Int, variant: String,
-                     bulkSize: Option[Int], loopDelay: Option[Int],
-                     forceChange: Option[Boolean]): Action[AnyContent] = action {
+  def doIngestFileTo(
+                      target: String, product: String, epoch: Int, variant: String,
+                      bulkSize: Option[Int], loopDelay: Option[Int],
+                      forceChange: Option[Boolean],
+                      include: Option[String],
+                      prefer: Option[String],
+                      streetFilter: Option[Int]
+                    ): Action[AnyContent] = action {
     request =>
       require(IngestControllerHelper.isSupportedTarget(target))
       require(isAlphaNumeric(product))
@@ -71,11 +77,12 @@ class IngestController(action: ActionBuilder[Request],
 
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
       val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
+      val algorithmSettings = Algorithm(include, prefer, streetFilter)
 
       val worker = workerFactory.worker
       worker.push(
         s"ingesting to $target ${model.pathSegment}",
-        continuer => ingestIfOK(model, worker.statusLogger, settings, target, continuer)
+        continuer => ingestIfOK(model, worker.statusLogger, settings, algorithmSettings, target, continuer)
       )
 
       Accepted(s"Ingestion has started for ${model.pathSegment}")
@@ -83,12 +90,13 @@ class IngestController(action: ActionBuilder[Request],
 
   def ingestIfOK(model: StateModel,
                  status: StatusLogger,
-                 settings: WriterSettings,
+                 writerSettings: WriterSettings,
+                 algorithmSettings: Algorithm,
                  target: String,
                  continuer: Continuer): StateModel = {
     if (!model.hasFailed) {
       val writerFactory = pickWriter(target)
-      ingest(model, status, settings, writerFactory, continuer)
+      ingest(model, status, writerSettings, algorithmSettings, writerFactory, continuer)
     } else {
       status.info("Ingest was skipped.")
       model // unchanged
@@ -97,16 +105,17 @@ class IngestController(action: ActionBuilder[Request],
 
   private def ingest(model: StateModel,
                      status: StatusLogger,
-                     settings: WriterSettings,
+                     writerSettings: WriterSettings,
+                     algorithmSettings: Algorithm,
                      writerFactory: OutputWriterFactory,
                      continuer: Continuer): StateModel = {
 
     val qualifiedDir = new File(unpackedFolder, model.pathSegment)
-    val writer = writerFactory.writer(model, status, settings)
+    val writer = writerFactory.writer(model, status, writerSettings)
     var result = model
     var failed = true
     try {
-      failed = ingesterFactory.ingester(continuer, model, status).ingest(qualifiedDir, writer)
+      failed = ingesterFactory.ingester(continuer, algorithmSettings, model, status).ingest(qualifiedDir, writer)
     } catch {
       case e: Exception =>
         status.warn(e.getMessage)

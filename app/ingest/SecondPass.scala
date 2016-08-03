@@ -23,10 +23,11 @@ package ingest
 
 import addressbase.{OSCsv, OSDpa, OSHeader, OSLpi}
 import ingest.Ingester.Blpu
+import ingest.algorithm.Algorithm
 import ingest.writers.OutputWriter
 import services.exec.Continuer
 
-class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
+class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) extends Pass {
 
   val UnknownSubdivision = 'J'
 
@@ -42,9 +43,11 @@ class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
         case OSHeader.RecordId =>
           OSCsv.setCsvFormatFor(csvLine(OSHeader.Version_Idx))
 
-        case OSLpi.RecordId => processLPI(csvLine, out)
+        case OSLpi.RecordId if settings.includeLpi =>
+          processLPI(csvLine, out)
 
-        case OSDpa.RecordId => processDPA(csvLine, out)
+        case OSDpa.RecordId if settings.includeDpa =>
+          processDPA(csvLine, out)
 
         case _ =>
       }
@@ -55,13 +58,13 @@ class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
   private def processLPI(csvLine: Array[String], out: OutputWriter): Unit = {
     val lpi = OSLpi(csvLine)
 
-    if (!fd.dpa.contains(lpi.uprn)) {
+    if (settings.prefer == "LPI" || !fd.uprns.contains(lpi.uprn)) {
       val packedBlpu = Option(fd.blpu.get(lpi.uprn))
       if (packedBlpu.isDefined) {
         val blpu = Blpu.unpack(packedBlpu.get)
 
         if (blpu.logicalStatus == lpi.logicalStatus && blpu.subdivision != UnknownSubdivision) {
-          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets, blpu.subdivision))
+          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets, blpu.subdivision, settings))
           lpiCount += 1
           fd.blpu.remove(lpi.uprn) // need to decide which lpi to use in the firstPass using logic - not first in gets in
         }
@@ -70,18 +73,20 @@ class SecondPass(fd: ForwardData, continuer: Continuer) extends Pass {
   }
 
   private def processDPA(csvLine: Array[String], out: OutputWriter): Unit = {
-
     val dpa = OSDpa(csvLine)
-    val packedBlpu = Option(fd.blpu.get(dpa.uprn))
-    val subdivision =
-      if (packedBlpu.isDefined)
-        Blpu.unpack(packedBlpu.get).subdivision
-      else
-        UnknownSubdivision
 
-    if (subdivision != UnknownSubdivision) {
-      out.output(ExportDbAddress.exportDPA(dpa, subdivision))
-      dpaCount += 1
+    if (settings.prefer == "DPA" || !fd.uprns.contains(dpa.uprn)) {
+      val packedBlpu = Option(fd.blpu.get(dpa.uprn))
+      val subdivision =
+        if (packedBlpu.isDefined)
+          Blpu.unpack(packedBlpu.get).subdivision
+        else
+          UnknownSubdivision
+
+      if (subdivision != UnknownSubdivision) {
+        out.output(ExportDbAddress.exportDPA(dpa, subdivision))
+        dpaCount += 1
+      }
     }
   }
 
