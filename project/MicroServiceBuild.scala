@@ -34,7 +34,7 @@ object MicroServiceBuild extends Build with MicroService {
     "uk.gov.hmrc" %% "microservice-bootstrap" % "4.2.1",
 //    "uk.gov.hmrc" %% "play-authorisation" % "3.1.0",
     "uk.gov.hmrc" %% "play-health" % "1.1.0",
-    "uk.gov.hmrc" %% "play-config" % "2.0.1",
+    "uk.gov.hmrc" %% "play-config" % "2.1.0",
     "uk.gov.hmrc" %% "play-json-logger" % "2.1.1",
     "uk.gov.hmrc" %% "address-reputation-store" % "1.0.0" withSources()
       excludeAll ExclusionRule(organization = "org.reactivemongo"),
@@ -51,11 +51,11 @@ object MicroServiceBuild extends Build with MicroService {
   )
 
   private def baseTestDependencies(scope: String) = Seq(
-    "org.scalatest" %% "scalatest" % "2.2.4" % scope,
+    "org.scalatest" %% "scalatest" % "2.2.6" % scope,
     "org.scalamock" %% "scalamock-scalatest-support" % "3.2" % scope,
     "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2" % scope,
     "org.pegdown" % "pegdown" % "1.4.2" % scope,
-    "uk.gov.hmrc" %% "hmrctest" % "1.4.0" % scope,
+    "uk.gov.hmrc" %% "hmrctest" % "1.8.0" % scope,
     "org.scalatestplus" %% "play" % "1.2.0" % scope,
     "org.mockito" % "mockito-all" % "1.10.19" % scope,
     "com.pyruby" % "java-stub-server" % "0.14" % scope)
