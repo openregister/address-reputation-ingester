@@ -40,9 +40,6 @@ object MicroServiceBuild extends Build with MicroService {
       excludeAll ExclusionRule(organization = "org.reactivemongo"),
     "org.mongodb" %% "casbah" % "3.1.1",
     "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.0" excludeAll ExclusionRule(organization = "io.netty"),
-    "ch.qos.logback" % "logback-classic" % "1.1.7",
-    "ch.qos.logback" % "logback-core" % "1.1.7",
-    "org.slf4j" % "jcl-over-slf4j" % "1.7.21",
     // for some reason this dependency is skipping the local cache and forcing resolution from the internet
     // hence the exclusion
     "com.github.lookfirst" % "sardine" % "5.7" excludeAll ExclusionRule(organization = "org.apache.httpcomponents"),

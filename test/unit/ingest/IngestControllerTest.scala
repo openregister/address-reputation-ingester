@@ -70,7 +70,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       val request = FakeRequest()
 
       intercept[IllegalArgumentException] {
-        await(call(ingestController.doIngestFileTo(target, product, epoch, variant, None, None, None), request))
+        await(call(ingestController.doIngestFileTo(target, product, epoch, variant, None, None, None, None, None, None), request))
       }
     }
   }
@@ -112,7 +112,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       // when
-      val response = await(call(ingestController.doIngestFileTo("db", "abp", 40, "full", Some(1), Some(0), None), request))
+      val response = await(call(ingestController.doIngestFileTo("db", "abp", 40, "full", Some(1), Some(0), None, None, None, None), request))
 
       // then
       worker.awaitCompletion()
@@ -129,7 +129,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       // when
-      val response = await(call(ingestController.doIngestFileTo("file", "abp", 40, "full", None, None, None), request))
+      val response = await(call(ingestController.doIngestFileTo("file", "abp", 40, "full", None, None, None, None, None, None), request))
 
       // then
       worker.awaitCompletion()
