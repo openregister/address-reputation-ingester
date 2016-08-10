@@ -42,19 +42,17 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
   lazy val collectionMetadata = new CollectionMetadata(mongoConnection.getConfiguredDb)
 
   override def onStart(app: Application) {
-    println("########## onStart ##########")
     val config = app.configuration
     val appName = config.getString("appName").getOrElse("APP NAME NOT SET")
     Logger.info(s"Starting microservice : $appName : in mode : ${app.mode}")
     Logger.info(Provenance.versionInfo)
-    //    Logger.info(s"address-reputation-ingestor config:\n${config.underlying.toString}\n")
     super.onStart(app)
   }
 
   override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = app.configuration.getConfig(s"$env.metrics")
 
   override def onStop(app: Application): Unit = {
-    println("########## onStop ##########")
+    Logger.info(s"Stopping microservice")
     WorkQueue.singleton.terminate()
     mongoConnection.close()
   }

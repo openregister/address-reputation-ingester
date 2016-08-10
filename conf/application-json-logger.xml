@@ -1,25 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <configuration>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="uk.gov.hmrc.play.logging.JsonEncoder"/>
     </appender>
 
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>address-reputation-ingester.log</file>
-        <encoder class="uk.gov.hmrc.play.logging.JsonEncoder"/>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>address-reputation-ingester.%d{yyyy-MM-dd-HH-mm}.log</fileNamePattern>
-            <maxFileSize>10MB</maxFileSize>
-            <maxHistory>30</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
-        </rollingPolicy>
-    </appender>
-
     <logger name="uk.gov" level="INFO"/>
 
     <root level="INFO">
-        <appender-ref ref="FILE"/>
+        <appender-ref ref="STDOUT"/>
     </root>
 </configuration>
