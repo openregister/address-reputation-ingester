@@ -20,6 +20,8 @@
 package services.db
 
 import config.Divider._
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 
 // Normal collections will have all fields defined.
 // However, we allow for absent fields primarily for backward compatibility.
@@ -28,7 +30,14 @@ case class CollectionName(productName: String,
                           epoch: Option[Int],
                           index: Option[Int]) {
 
+  val dateTimeSuffix = {
+    val formatter = DateTimeFormat.forPattern("dd-MM-yyyy_HH-mm")
+    formatter.print(new DateTime())
+  }
+
   def toPrefix: String = s"${productName}_${epoch.get}"
+
+  def asIndexName: String = s"${toPrefix}_${dateTimeSuffix}"
 
   override lazy val toString: String =
     if (index.isDefined) CollectionName.format(productName, epoch.get, index.get)

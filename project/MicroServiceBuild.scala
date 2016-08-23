@@ -39,7 +39,7 @@ object MicroServiceBuild extends Build with MicroService {
     "uk.gov.hmrc" %% "address-reputation-store" % "1.0.0" withSources()
       excludeAll ExclusionRule(organization = "org.reactivemongo"),
     "org.mongodb" %% "casbah" % "3.1.1",
-    "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.0" excludeAll ExclusionRule(organization = "io.netty"),
+    "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.1" excludeAll ExclusionRule(organization = "io.netty"),
     // for some reason this dependency is skipping the local cache and forcing resolution from the internet
     // hence the exclusion
     "com.github.lookfirst" % "sardine" % "5.7" excludeAll ExclusionRule(organization = "org.apache.httpcomponents"),
