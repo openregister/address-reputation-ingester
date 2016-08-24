@@ -18,28 +18,26 @@ package ingest.writers
 
 import java.util.Date
 
-import com.carrotsearch.hppc.ObjectLookupContainer
-import com.sksamuel.elastic4s.ElasticDsl.add
 import com.sksamuel.elastic4s.mappings.FieldType.StringType
 import com.sksamuel.elastic4s.{ElasticClient, _}
 import config.ConfigHelper._
 import org.elasticsearch.action.admin.indices.alias.get.GetAliasesResponse
 import org.elasticsearch.common.settings.Settings
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import play.api.Play._
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
 import scala.concurrent.Future
-import scala.util.Try
+
+object OutputESWriterConfig {
+  val ariAliasName = "address-reputation-data"
+  val ariDocumentName = "address"
+}
 
 class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: ElasticClient, settings: WriterSettings) extends OutputWriter with ElasticDsl {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  val ariAliasName = "address-reputation-data"
-  val ariDocumentName = "address"
   val ariIndexName: String = model.collectionName.asIndexName
 
   override def existingTargetThatIsNewerThan(date: Date): Option[String] = {
@@ -48,10 +46,9 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
 
   override def begin() {
     //connect to ES and prepare index
-    statusLogger.info("1: indexName {}", ariIndexName)
     client execute {
-      create index ariIndexName shards 5 replicas 0 refreshInterval "60s" mappings {
-        mapping(ariDocumentName) fields(
+      create index ariIndexName shards 4 replicas 0 refreshInterval "60s" mappings {
+        mapping(OutputESWriterConfig.ariDocumentName) fields(
           field("id") typed StringType,
           //TODO lines should be an array
           field("line1") typed StringType fields(
@@ -82,7 +79,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
 
   override def output(a: DbAddress) {
     //Add document to batch
-    addBulk(index into ariIndexName -> ariDocumentName fields(
+    addBulk(index into ariIndexName -> OutputESWriterConfig.ariDocumentName fields(
       //TODO should just use a.tupled
       "id" -> a.id,
       "line1" -> a.line1,
@@ -104,41 +101,13 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
         )
       }
     }
-    rollAlias()
-    statusLogger.info("1: indexName {}", ariIndexName)
+
     client execute {
-      update settings ariIndexName set Map("index.refresh_interval" -> "1s")
+      update settings ariIndexName set Map(
+        "index.refresh_interval" -> "1s"
+      )
     }
     model
-  }
-
-  private def rollAlias() = {
-    val alias_resp: Future[GetAliasesResponse] = client execute {
-      getAlias(model.collectionName.productName).on("*")
-    }
-
-    alias_resp.map(gar => {
-      val olc = gar.getAliases().keys
-      val aliasStatements: Array[MutateAliasDefinition] = olc.toArray().flatMap(a => {
-        val alias = a.asInstanceOf[String]
-        Array(remove alias ariAliasName on alias, remove alias model.collectionName.productName on alias)
-      })
-
-      val resp = client execute {
-        aliases(
-          aliasStatements ++
-            Seq(
-              add alias ariAliasName on ariIndexName,
-              add alias model.collectionName.productName on ariIndexName
-            )
-      )}
-      resp.isCompleted
-    })
-
-//      alias => {
-//       Seq(remove alias ariAliasName on alias, remove alias model.collectionName.productName on alias)
-//    })
-
   }
 
   private var bulkCount = 0
@@ -168,7 +137,6 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
 
 class OutputESWriterFactory extends OutputWriterFactory {
   val uri = ElasticsearchClientUri(mustGetConfigString(current.mode, current.configuration, "elastic.uri"))
-
   val esSettings: Settings = Settings.settingsBuilder().put("cluster.name", "address-reputation").build()
 
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputESWriter = {

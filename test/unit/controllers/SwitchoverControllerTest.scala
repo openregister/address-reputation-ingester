@@ -18,6 +18,7 @@ package controllers
 
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoCollection, MongoDB}
+import com.sksamuel.elastic4s.ElasticClient
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -53,14 +54,15 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
        when an invalid product is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("$%", 40, 12)
+    parameterTest("db", "$%", 40, "12")
   }
 
-  def parameterTest(product: String, epoch: Int, index: Int): Unit = {
+  def parameterTest(target: String, product: String, epoch: Int, modifier: String): Unit = {
     val logger = new StubLogger()
     val status = new StatusLogger(logger)
     val testWorker = new WorkQueue(status)
     val auditClient = mock[AuditClient]
+    val elasticClient = mock[ElasticClient]
 
     val workerFactory = new WorkerFactory {
       override def worker = testWorker
@@ -71,10 +73,10 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     val mongo = mock[CasbahMongoConnection]
     val request = FakeRequest()
 
-    val switchoverController = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient)
+    val switchoverController = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticClient)
 
     intercept[IllegalArgumentException] {
-      await(call(switchoverController.doSwitchTo(product, epoch, index), request))
+      await(call(switchoverController.doSwitchTo(target, product, epoch, modifier), request))
     }
   }
 
@@ -82,6 +84,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     val logger = new StubLogger()
     val status = new StatusLogger(logger)
     val auditClient = mock[AuditClient]
+    val elasticClient = mock[ElasticClient]
     val testWorker = new WorkQueue(status)
     val workerFactory = new WorkerFactory {
       override def worker = testWorker
@@ -112,8 +115,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn Some(MongoDBObject("completedAt" -> 0L))
       when(collection.name) thenReturn "abp_40_009"
 
-      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient)
-      val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
+      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticClient)
+      val response = await(call(sc.doSwitchTo("db", "abp", 40, "9"), request))
 
       assert(response.header.status / 100 === 2)
       testWorker.awaitCompletion()
@@ -135,8 +138,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     new Context {
       when(db.collectionExists(anyString)) thenReturn false
 
-      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient)
-      val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
+      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticClient)
+      val response = await(call(sc.doSwitchTo("db", "abp", 40, "9"), request))
 
       testWorker.awaitCompletion()
       testWorker.terminate()
@@ -160,8 +163,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn None
       when(collection.name) thenReturn "abp_40_009"
 
-      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient)
-      val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
+      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticClient)
+      val response = await(call(sc.doSwitchTo("db", "abp", 40, "9"), request))
 
       testWorker.awaitCompletion()
       testWorker.terminate()
@@ -185,8 +188,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn None
       when(collection.name) thenReturn "abp_40_009"
 
-      val sc = new SwitchoverController(new FailAuthAction, status, workerFactory, mongo, store, auditClient)
-      val response = await(call(sc.doSwitchTo("abp", 40, 9), request))
+      val sc = new SwitchoverController(new FailAuthAction, status, workerFactory, mongo, store, auditClient, elasticClient)
+      val response = await(call(sc.doSwitchTo("db", "abp", 40, "9"), request))
 
       testWorker.awaitCompletion()
       testWorker.terminate()
@@ -209,8 +212,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn None
       when(collection.name) thenReturn "abp_40_009"
 
-      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient)
-      val model1 = new StateModel("abp", 40, Some("full"), Some(9), hasFailed = true)
+      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticClient)
+      val model1 = new StateModel("abp", 40, Some("full"), Some(9), None, hasFailed = true)
 
       val model2 = sc.switchIfOK(model1)
 

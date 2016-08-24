@@ -19,7 +19,7 @@ GET    /fetch/showRemoteTree                                    fetch.FetchContr
 
 GET    /ingest/from/file/to/:target/:product/:epoch/:variant    ingest.IngestController.doIngestFileTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean], include: Option[String], prefer: Option[String], streetFilter: Option[Int])
 
-GET    /switch/to/:product/:epoch/:index                        controllers.SwitchoverController.doSwitchTo(product, epoch: Int, index: Int)
+GET    /switch/to/:target/:product/:epoch/:modifier             controllers.SwitchoverController.doSwitchTo(target, product, epoch: Int, modifier)
 
 GET    /admin/realm                                             controllers.AdminController.realm
 GET    /admin/cancelTask                                        controllers.AdminController.cancelTask

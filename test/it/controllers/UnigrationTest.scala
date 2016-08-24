@@ -259,7 +259,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       val admin = new MetadataStore(mongo, Stdout)
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
 
-      val request = newRequest("GET", "/switch/to/abp/39/3")
+      val request = newRequest("GET", "/switch/to/db/abp/39/3")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -279,7 +279,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
       CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_004"))
 
-      val request = newRequest("GET", "/switch/to/abp/39/4")
+      val request = newRequest("GET", "/switch/to/db/abp/39/4")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -294,7 +294,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
        * when a wrong password is supplied
        * the response should be 401
     """ in {
-      val request = newRequest("GET", "/switch/to/abp/39/4")
+      val request = newRequest("GET", "/switch/to/db/abp/39/4")
       val response = await(request.withAuth("admin", "wrong", BASIC).execute())
       assert(response.status === UNAUTHORIZED)
     }
@@ -303,8 +303,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
        * passing bad parameters
        * should give 400
     """ in {
-      assert(get("/switch/to/abp/not-a-number/1").status === BAD_REQUEST)
-      assert(get("/switch/to/abp/1/not-a-number").status === BAD_REQUEST)
+      assert(get("/switch/to/db/abp/not-a-number/1").status === BAD_REQUEST)
     }
   }
 
@@ -320,7 +319,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_005"))
       CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_005"))
 
-      val request = newRequest("GET", "/switch/to/abp/39/5")
+      val request = newRequest("GET", "/switch/to/db/abp/39/5")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)

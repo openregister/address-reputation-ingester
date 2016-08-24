@@ -16,9 +16,19 @@
 
 package controllers
 
+import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s.admin.ClusterHealthDefinition
+import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri, MutateAliasDefinition}
 import config.ApplicationGlobal
+import config.ConfigHelper._
 import controllers.SimpleValidator._
+import ingest.writers.OutputESWriterConfig
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse
+import org.elasticsearch.action.admin.indices.alias.get.GetAliasesResponse
+import org.elasticsearch.cluster.health.ClusterHealthStatus
+import org.elasticsearch.common.settings.Settings
 import play.api.Logger
+import play.api.Play._
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.audit.AuditClient
 import services.db.CollectionMetadata
@@ -29,6 +39,14 @@ import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
+import scala.util.Try
+
+object SwitchoverControllerConfig {
+  val uri = ElasticsearchClientUri(mustGetConfigString(current.mode, current.configuration, "elastic.uri"))
+  val esSettings: Settings = Settings.settingsBuilder().put("cluster.name", "address-reputation").build()
+}
 
 object SwitchoverController extends SwitchoverController(
   ControllerConfig.authAction,
@@ -36,35 +54,47 @@ object SwitchoverController extends SwitchoverController(
   ControllerConfig.workerFactory,
   ApplicationGlobal.mongoConnection,
   ApplicationGlobal.metadataStore,
-  services.audit.Services.auditClient
+  services.audit.Services.auditClient,
+  ElasticClient.transport(SwitchoverControllerConfig.esSettings, SwitchoverControllerConfig.uri)
 )
-
 
 class SwitchoverController(action: ActionBuilder[Request],
                            status: StatusLogger,
                            workerFactory: WorkerFactory,
                            mongoDbConnection: CasbahMongoConnection,
                            systemMetadata: SystemMetadataStore,
-                           auditClient: AuditClient) extends BaseController {
+                           auditClient: AuditClient,
+                           client: ElasticClient) extends BaseController {
 
-  def doSwitchTo(product: String, epoch: Int, index: Int): Action[AnyContent] = action {
+  def isSupportedTarget(target: String): Boolean = Set("db", "es").contains(target)
+
+  def doSwitchTo(target: String, product: String, epoch: Int, modifier: String): Action[AnyContent] = action {
     request =>
       require(isAlphaNumeric(product))
-      val model = new StateModel(product, epoch, None, Some(index))
+      require(isSupportedTarget(target))
+
+      val index = Try(modifier.toInt).toOption
+      val dateStamp = if (index == None) Some(modifier) else None
+
+      val model = new StateModel(product, epoch, None, index, dateStamp, target = target)
       workerFactory.worker.push(s"switching to ${model.collectionName.toString}", continuer => switchIfOK(model))
       Accepted
   }
 
   private[controllers] def switchIfOK(model: StateModel): StateModel = {
     if (!model.hasFailed) {
-      switch(model)
+      if (model.target == "es") {
+        switchEs(model)
+      }
+      else
+        switchDb(model)
     } else {
       status.info("Switchover was skipped.")
       model // unchanged
     }
   }
 
-  private def switch(model: StateModel): StateModel = {
+  private def switchDb(model: StateModel): StateModel = {
 
     if (model.index.isEmpty) {
       status.warn(s"cannot switch to ${model.collectionName.toPrefix} with unknown index")
@@ -92,13 +122,78 @@ class SwitchoverController(action: ActionBuilder[Request],
     }
   }
 
+  private def switchEs(model: StateModel): StateModel = {
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val ariIndexName = model.collectionName.asIndexName
+    val ariAliasName = OutputESWriterConfig.ariAliasName
+
+    client execute {
+      update settings ariIndexName set Map(
+        "index.number_of_replicas" -> "1"
+      )
+    } await
+
+
+    blockUntil("Expected cluster to have green status", 100) { () =>
+      client.execute {
+        get cluster health
+      }.await.getStatus == ClusterHealthStatus.GREEN
+    }
+
+    val gar = client execute {
+      getAlias(model.productName).on("*")
+    } await
+
+    val olc = gar.getAliases().keys
+    val aliasStatements: Array[MutateAliasDefinition] = olc.toArray().flatMap(a => {
+      val aliasIndex = a.asInstanceOf[String]
+      Array(remove alias ariAliasName on aliasIndex, remove alias model.productName on aliasIndex)
+    })
+
+    val resp = client execute {
+      aliases(
+        aliasStatements ++
+          Seq(
+            add alias ariAliasName on ariIndexName,
+            add alias model.productName on ariIndexName
+          )
+      )
+    }
+
+    olc.toArray().foreach(a => {
+      val aliasIndex = a.asInstanceOf[String]
+      val replicaResp = client execute {
+        update settings aliasIndex set Map(
+          "index.number_of_replicas" -> "0"
+        )
+      } await
+    })
+
+    model
+  }
+
+  private def blockUntil(explain: String, waitFor: Int = 10)(predicate: () => Boolean): Unit = {
+
+    var count = 0
+    var done = false
+
+    while (count < waitFor && !done) {
+      Thread.sleep(1000)
+      count = count + 1
+      done = predicate()
+    }
+
+    require(done, s"Failed waiting on: $explain")
+  }
+
   private def setCollectionName(productName: String, epoch: Int, newName: String) {
     val addressBaseCollectionName = systemMetadata.addressBaseCollectionItem(productName)
     addressBaseCollectionName.set(newName)
     auditClient.succeeded(Map("product" -> productName, "epoch" -> epoch.toString, "newCollection" -> newName))
   }
 }
-
 
 class SystemMetadataStoreFactory {
   def newStore(mongo: CasbahMongoConnection): SystemMetadataStore =

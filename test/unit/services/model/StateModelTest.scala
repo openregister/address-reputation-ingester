@@ -43,7 +43,7 @@ class StateModelTest extends FunSuite with Matchers {
     val p = OSGBProduct("abp", 38, List(f1))
     val m = StateModel(p)
 
-    m should be(StateModel("abp", 38, None, None, Some(p)))
+    m should be(StateModel("abp", 38, None, None, None, Some(p)))
   }
 
   test(

@@ -28,10 +28,11 @@ import org.joda.time.format.DateTimeFormat
 
 case class CollectionName(productName: String,
                           epoch: Option[Int],
-                          index: Option[Int]) {
+                          index: Option[Int],
+                          dateStamp: Option[String] = None) {
 
-  val dateTimeSuffix = {
-    val formatter = DateTimeFormat.forPattern("dd-MM-yyyy_HH-mm")
+  val dateTimeSuffix = dateStamp.getOrElse {
+    val formatter = DateTimeFormat.forPattern("dd-MM-yyyy-HH-mm")
     formatter.print(new DateTime())
   }
 
