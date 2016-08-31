@@ -27,9 +27,9 @@ object ElasticsearchHelperConfig {
   private val esSettings: Settings = Settings.settingsBuilder().put("cluster.name", "address-reputation").build()
 
   lazy val getClients: List[ElasticClient] = {
-    mustGetConfigStringList(current.mode, current.configuration, "elastic.uri").map { uri =>
+    mustGetConfigString(current.mode, current.configuration, "elastic.uri").split("\\+").map { uri =>
       ElasticClient.transport(esSettings, uri)
-    }
+    }.toList
   }
 }
 
