@@ -33,6 +33,8 @@ import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.util.Try
 
 object SwitchoverController extends SwitchoverController(
@@ -114,7 +116,9 @@ class SwitchoverController(action: ActionBuilder[Request],
     val ariIndexName = model.collectionName.asIndexName
     val ariAliasName = ElasticsearchHelper.ariAliasName
 
-    esHelper.clients foreach { client =>
+    import scala.concurrent.ExecutionContext.Implicits.global
+    
+    val fr = esHelper.clients map { client => Future {
       if (ElasticsearchHelper.isCluster) {
         status.info(s"Setting replica count to ${ElasticsearchHelper.replicaCount} for $ariAliasName")
         client execute {
@@ -163,7 +167,9 @@ class SwitchoverController(action: ActionBuilder[Request],
           )
         } await
       })
-    }
+    }}
+
+    Await.result(Future.sequence(fr), Duration.Inf)
     model
   }
 

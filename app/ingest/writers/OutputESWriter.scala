@@ -19,13 +19,14 @@ package ingest.writers
 import java.util.Date
 
 import com.sksamuel.elastic4s.mappings.FieldType.StringType
-import com.sksamuel.elastic4s.{ElasticClient, _}
+import com.sksamuel.elastic4s._
 import services.elasticsearch.ElasticsearchHelper
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper: ElasticsearchHelper,
                      settings: WriterSettings) extends OutputWriter with ElasticDsl {
@@ -90,10 +91,18 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
     //close index update refresh settings etc
     esHelper.clients foreach { client =>
       if (bulkCount != 0) {
-        client execute {
+        val fr = client execute {
           bulk(
             bulkStatements
           )
+        }
+
+        Await.ready(fr, Duration.Inf) foreach { br =>
+          if (br.hasFailures) {
+            statusLogger.warn(s"Elasticserch failure processing bulk insertion - ${br.failureMessage}")
+            model = model.copy(hasFailed = true)
+            throw new Exception(s"Elasticserch failure processing bulk insertion - ${br.failureMessage}")
+          }
         }
       }
 
@@ -111,14 +120,11 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
   private var bulkStatements = collection.mutable.Buffer[IndexDefinition]()
 
   private def addBulk(i: IndexDefinition) = {
-
-    import scala.concurrent.ExecutionContext.Implicits.global
-
     bulkStatements += i
     bulkCount += 1
 
     if (bulkCount >= settings.bulkSize) {
-      val fr: List[Future[BulkResult]] = esHelper.clients map { client =>
+      val fr = esHelper.clients map { client =>
         client execute {
           bulk(
             bulkStatements
@@ -128,7 +134,9 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
 
       Await.result(Future.sequence(fr), Duration.Inf) foreach { br =>
         if (br.hasFailures) {
-          statusLogger.warn(br.failureMessage)
+          statusLogger.warn(s"Elasticserch failure processing bulk insertion - ${br.failureMessage}")
+          model = model.copy(hasFailed = true)
+          throw new Exception(s"Elasticserch failure processing bulk insertion - ${br.failureMessage}")
         }
       }
 
