@@ -20,23 +20,12 @@ import java.util.Date
 
 import com.sksamuel.elastic4s.mappings.FieldType.StringType
 import com.sksamuel.elastic4s.{ElasticClient, _}
-import config.ConfigHelper._
-import org.elasticsearch.action.admin.indices.alias.get.GetAliasesResponse
-import org.elasticsearch.common.settings.Settings
-import play.api.Play._
+import services.elasticsearch.ElasticsearchHelper
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
-import scala.concurrent.Future
-
-object OutputESWriterConfig {
-  val ariAliasName = "address-reputation-data"
-  val ariDocumentName = "address"
-}
-
-class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: ElasticClient, settings: WriterSettings) extends OutputWriter with ElasticDsl {
-
-  import scala.concurrent.ExecutionContext.Implicits.global
+class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper: ElasticsearchHelper,
+                     settings: WriterSettings) extends OutputWriter with ElasticDsl {
 
   val ariIndexName: String = model.collectionName.asIndexName
 
@@ -46,40 +35,42 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
 
   override def begin() {
     //connect to ES and prepare index
-    client execute {
-      create index ariIndexName shards 4 replicas 0 refreshInterval "60s" mappings {
-        mapping(OutputESWriterConfig.ariDocumentName) fields(
-          field("id") typed StringType,
-          //TODO lines should be an array
-          field("line1") typed StringType fields(
-            field("raw") typed StringType index NotAnalyzed,
-            field("lines") typed StringType
-            ),
-          field("line2") typed StringType fields(
-            field("raw") typed StringType index NotAnalyzed,
-            field("lines") typed StringType
-            ),
-          field("line3") typed StringType fields(
-            field("raw") typed StringType index NotAnalyzed,
-            field("lines") typed StringType
-            ),
-          field("town") typed StringType fields (
-            field("raw") typed StringType index NotAnalyzed
-            ),
-          field("postcode") typed StringType fields (
-            field("raw") typed StringType index NotAnalyzed
-            ),
-          field("subdivision") typed StringType fields (
-            field("raw") typed StringType index NotAnalyzed
+    esHelper.clients foreach { client =>
+      client execute {
+        create index ariIndexName shards 4 replicas 0 refreshInterval "60s" mappings {
+          mapping(ElasticsearchHelper.ariDocumentName) fields(
+            field("id") typed StringType,
+            //TODO lines should be an array - perhaps?
+            field("line1") typed StringType fields(
+              field("raw") typed StringType index NotAnalyzed,
+              field("lines") typed StringType
+              ),
+            field("line2") typed StringType fields(
+              field("raw") typed StringType index NotAnalyzed,
+              field("lines") typed StringType
+              ),
+            field("line3") typed StringType fields(
+              field("raw") typed StringType index NotAnalyzed,
+              field("lines") typed StringType
+              ),
+            field("town") typed StringType fields (
+              field("raw") typed StringType index NotAnalyzed
+              ),
+            field("postcode") typed StringType fields (
+              field("raw") typed StringType index NotAnalyzed
+              ),
+            field("subdivision") typed StringType fields (
+              field("raw") typed StringType index NotAnalyzed
+              )
             )
-          )
+        }
       }
     }
   }
 
   override def output(a: DbAddress) {
     //Add document to batch
-    addBulk(index into ariIndexName -> OutputESWriterConfig.ariDocumentName fields(
+    addBulk(index into ariIndexName -> ElasticsearchHelper.ariDocumentName fields(
       //TODO should just use a.tupled
       "id" -> a.id,
       "line1" -> a.line1,
@@ -94,19 +85,22 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
 
   override def end(completed: Boolean): StateModel = {
     //close index update refresh settings etc
-    if (bulkCount != 0) {
+    esHelper.clients foreach { client =>
+      if (bulkCount != 0) {
+        client execute {
+          bulk(
+            bulkStatements
+          )
+        }
+      }
+
       client execute {
-        bulk(
-          bulkStatements
+        update settings ariIndexName set Map(
+          "index.refresh_interval" -> "1s"
         )
       }
     }
-
-    client execute {
-      update settings ariIndexName set Map(
-        "index.refresh_interval" -> "1s"
-      )
-    }
+    statusLogger.info(s"Finished ingesting to index $ariIndexName")
     model
   }
 
@@ -114,21 +108,29 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
   private var bulkStatements = collection.mutable.Buffer[IndexDefinition]()
 
   private def addBulk(i: IndexDefinition) = {
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+
     bulkStatements += i
     bulkCount += 1
+
+    esHelper.clients foreach { client =>
+      if (bulkCount >= settings.bulkSize) {
+        val fr = client execute {
+          bulk(
+            bulkStatements
+          )
+        }
+        fr map {
+          r =>
+            if (r.hasFailures) {
+              statusLogger.warn(r.failureMessage)
+            }
+        }
+      }
+    }
     if (bulkCount >= settings.bulkSize) {
       bulkCount = 0
-      val fr = client execute {
-        bulk(
-          bulkStatements
-        )
-      }
-      fr map {
-        r =>
-          if (r.hasFailures) {
-            statusLogger.warn(r.failureMessage)
-          }
-      }
       bulkStatements.clear()
       Thread.sleep(settings.loopDelay)
     }
@@ -136,10 +138,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, client: 
 }
 
 class OutputESWriterFactory extends OutputWriterFactory {
-  val uri = ElasticsearchClientUri(mustGetConfigString(current.mode, current.configuration, "elastic.uri"))
-  val esSettings: Settings = Settings.settingsBuilder().put("cluster.name", "address-reputation").build()
-
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputESWriter = {
-    new OutputESWriter(model, statusLogger, ElasticClient.transport(esSettings, uri), settings)
+    new OutputESWriter(model, statusLogger, ElasticsearchHelper, settings)
   }
 }

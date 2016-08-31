@@ -17,21 +17,15 @@
 package controllers
 
 import com.sksamuel.elastic4s.ElasticDsl._
-import com.sksamuel.elastic4s.admin.ClusterHealthDefinition
-import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri, MutateAliasDefinition}
+import com.sksamuel.elastic4s.MutateAliasDefinition
 import config.ApplicationGlobal
-import config.ConfigHelper._
 import controllers.SimpleValidator._
-import ingest.writers.OutputESWriterConfig
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse
-import org.elasticsearch.action.admin.indices.alias.get.GetAliasesResponse
 import org.elasticsearch.cluster.health.ClusterHealthStatus
-import org.elasticsearch.common.settings.Settings
 import play.api.Logger
-import play.api.Play._
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.audit.AuditClient
 import services.db.CollectionMetadata
+import services.elasticsearch.ElasticsearchHelper
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
@@ -39,14 +33,7 @@ import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
 import scala.util.Try
-
-object SwitchoverControllerConfig {
-  val uri = ElasticsearchClientUri(mustGetConfigString(current.mode, current.configuration, "elastic.uri"))
-  val esSettings: Settings = Settings.settingsBuilder().put("cluster.name", "address-reputation").build()
-}
 
 object SwitchoverController extends SwitchoverController(
   ControllerConfig.authAction,
@@ -55,7 +42,7 @@ object SwitchoverController extends SwitchoverController(
   ApplicationGlobal.mongoConnection,
   ApplicationGlobal.metadataStore,
   services.audit.Services.auditClient,
-  ElasticClient.transport(SwitchoverControllerConfig.esSettings, SwitchoverControllerConfig.uri)
+  ElasticsearchHelper
 )
 
 class SwitchoverController(action: ActionBuilder[Request],
@@ -64,7 +51,7 @@ class SwitchoverController(action: ActionBuilder[Request],
                            mongoDbConnection: CasbahMongoConnection,
                            systemMetadata: SystemMetadataStore,
                            auditClient: AuditClient,
-                           client: ElasticClient) extends BaseController {
+                           esHelper: ElasticsearchHelper) extends BaseController {
 
   def isSupportedTarget(target: String): Boolean = Set("db", "es").contains(target)
 
@@ -124,53 +111,59 @@ class SwitchoverController(action: ActionBuilder[Request],
 
   private def switchEs(model: StateModel): StateModel = {
 
-    import scala.concurrent.ExecutionContext.Implicits.global
-
     val ariIndexName = model.collectionName.asIndexName
-    val ariAliasName = OutputESWriterConfig.ariAliasName
+    val ariAliasName = ElasticsearchHelper.ariAliasName
 
-    client execute {
-      update settings ariIndexName set Map(
-        "index.number_of_replicas" -> "1"
-      )
-    } await
-
-
-    blockUntil("Expected cluster to have green status", 100) { () =>
-      client.execute {
-        get cluster health
-      }.await.getStatus == ClusterHealthStatus.GREEN
-    }
-
-    val gar = client execute {
-      getAlias(model.productName).on("*")
-    } await
-
-    val olc = gar.getAliases().keys
-    val aliasStatements: Array[MutateAliasDefinition] = olc.toArray().flatMap(a => {
-      val aliasIndex = a.asInstanceOf[String]
-      Array(remove alias ariAliasName on aliasIndex, remove alias model.productName on aliasIndex)
-    })
-
-    val resp = client execute {
-      aliases(
-        aliasStatements ++
-          Seq(
-            add alias ariAliasName on ariIndexName,
-            add alias model.productName on ariIndexName
+    esHelper.clients foreach { client =>
+      if (ElasticsearchHelper.isCluster) {
+        status.info(s"Setting replica count to ${ElasticsearchHelper.replicaCount} for $ariAliasName")
+        client execute {
+          update settings ariIndexName set Map(
+            "index.number_of_replicas" -> ElasticsearchHelper.replicaCount
           )
-      )
-    }
+        } await
 
-    olc.toArray().foreach(a => {
-      val aliasIndex = a.asInstanceOf[String]
-      val replicaResp = client execute {
-        update settings aliasIndex set Map(
-          "index.number_of_replicas" -> "0"
-        )
+        status.info(s"Waiting for $ariAliasName to go green after increasing replica count")
+
+        blockUntil("Expected cluster to have green status", 100) { () =>
+          client.execute {
+            get cluster health
+          }.await.getStatus == ClusterHealthStatus.GREEN
+        }
+      }
+
+      val gar = client execute {
+        getAlias(model.productName).on("*")
       } await
-    })
 
+      val olc = gar.getAliases().keys
+      val aliasStatements: Array[MutateAliasDefinition] = olc.toArray().flatMap(a => {
+        val aliasIndex = a.asInstanceOf[String]
+        status.info(s"Removing index $aliasIndex from $ariAliasName and ${model.productName} aliases")
+        Array(remove alias ariAliasName on aliasIndex, remove alias model.productName on aliasIndex)
+      })
+
+      val resp = client execute {
+        aliases(
+          aliasStatements ++
+            Seq(
+              add alias ariAliasName on ariIndexName,
+              add alias model.productName on ariIndexName
+            )
+        )
+      }
+      status.info(s"Adding index $ariIndexName to $ariAliasName and ${model.productName}")
+
+      olc.toArray().foreach(a => {
+        val aliasIndex = a.asInstanceOf[String]
+        status.info(s"Reducing replica count for $aliasIndex to 0")
+        val replicaResp = client execute {
+          update settings aliasIndex set Map(
+            "index.number_of_replicas" -> "0"
+          )
+        } await
+      })
+    }
     model
   }
 
@@ -194,6 +187,7 @@ class SwitchoverController(action: ActionBuilder[Request],
     auditClient.succeeded(Map("product" -> productName, "epoch" -> epoch.toString, "newCollection" -> newName))
   }
 }
+
 
 class SystemMetadataStoreFactory {
   def newStore(mongo: CasbahMongoConnection): SystemMetadataStore =

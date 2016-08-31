@@ -16,8 +16,13 @@
 
 package config
 
+import java.util
+
 import play.api.Configuration
 import play.api.Mode._
+
+import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 object ConfigHelper {
   def mustGetConfigString(config: Configuration, key: String): String = {
@@ -28,6 +33,18 @@ object ConfigHelper {
 
   def mustGetConfigString(mode: Mode, config: Configuration, key: String): String = {
     getConfigString(mode, config, key).getOrElse {
+      throw new Exception(s"ERROR: Unable to find config item $mode.$key or $key")
+    }
+  }
+
+  def mustGetConfigStringList(config: Configuration, key: String): List[String] = {
+    getConfigStringList(config, key).getOrElse {
+      throw new Exception("ERROR: Unable to find config item " + key)
+    }
+  }
+
+  def mustGetConfigStringList(mode: Mode, config: Configuration, key: String): List[String] = {
+    getConfigStringList(mode, config, key).getOrElse {
       throw new Exception(s"ERROR: Unable to find config item $mode.$key or $key")
     }
   }
@@ -51,11 +68,25 @@ object ConfigHelper {
     config.getString(modeKey).orElse(config.getString(key))
   }
 
+  def getConfigStringList(config: Configuration, key: String): Option[List[String]] = config.getStringList(key).map(_.asScala.toList)
+
+  def getConfigStringList(mode: Mode, config: Configuration, key: String): Option[List[String]] = {
+    val modeKey = s"$mode.$key"
+    config.getStringList(modeKey).orElse(config.getStringList(key)).map(_.asScala.toList)
+  }
+
   def getConfigInt(config: Configuration, key: String): Option[Int] = config.getInt(key)
 
   def getConfigInt(mode: Mode, config: Configuration, key: String): Option[Int] = {
     val modeKey = s"$mode.$key"
     config.getInt(modeKey).orElse(config.getInt(key))
+  }
+
+  def getConfigBoolean(config: Configuration, key: String): Option[Boolean] = config.getBoolean(key)
+
+  def getConfigBoolean(mode: Mode, config: Configuration, key: String): Option[Boolean] = {
+    val modeKey = s"$mode.$key"
+    config.getBoolean(modeKey).orElse(config.getBoolean(key))
   }
 
   def replaceHome(string: String): String = {
