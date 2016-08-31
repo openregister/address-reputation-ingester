@@ -24,6 +24,9 @@ import services.elasticsearch.ElasticsearchHelper
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
+
 class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper: ElasticsearchHelper,
                      settings: WriterSettings) extends OutputWriter with ElasticDsl {
 
@@ -114,26 +117,26 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
     bulkStatements += i
     bulkCount += 1
 
-    esHelper.clients foreach { client =>
-      if (bulkCount >= settings.bulkSize) {
-        val fr = client execute {
+    if (bulkCount >= settings.bulkSize) {
+      val fr: List[Future[BulkResult]] = esHelper.clients map { client =>
+        client execute {
           bulk(
             bulkStatements
           )
         }
-        fr map {
-          r =>
-            if (r.hasFailures) {
-              statusLogger.warn(r.failureMessage)
-            }
+      }
+
+      Await.result(Future.sequence(fr), Duration.Inf) foreach { br =>
+        if (br.hasFailures) {
+          statusLogger.warn(br.failureMessage)
         }
       }
-    }
-    if (bulkCount >= settings.bulkSize) {
+
       bulkCount = 0
       bulkStatements.clear()
       Thread.sleep(settings.loopDelay)
     }
+
   }
 }
 
