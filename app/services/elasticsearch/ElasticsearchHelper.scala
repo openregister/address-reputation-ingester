@@ -43,4 +43,5 @@ class ElasticsearchHelper(val clients: List[ElasticClient], val isCluster: Boole
   val replicaCount = "1"
   val ariAliasName = "address-reputation-data"
   val ariDocumentName = "address"
+  val indexAlias = "address-base-index"
 }

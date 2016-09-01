@@ -21,13 +21,21 @@
 
 package controllers
 
+import com.carrotsearch.hppc.ObjectLookupContainer
+import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s.{MutateAliasDefinition, ElasticClient, ElasticsearchClientUri}
 import config.ApplicationGlobal
+import config.ConfigHelper._
 import controllers.SimpleValidator._
+import org.elasticsearch.cluster.health.ClusterHealthStatus
+import org.elasticsearch.common.settings.Settings
+import play.api.Play._
 import play.api.libs.json.Json
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
+import services.elasticsearch.ElasticsearchHelper
 import services.exec.WorkerFactory
-import services.model.StatusLogger
+import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
@@ -36,7 +44,8 @@ object CollectionController extends CollectionController(
   ControllerConfig.logger,
   ControllerConfig.workerFactory,
   ApplicationGlobal.collectionMetadata,
-  ApplicationGlobal.metadataStore
+  ApplicationGlobal.metadataStore,
+  ElasticsearchHelper
 )
 
 
@@ -44,25 +53,72 @@ class CollectionController(action: ActionBuilder[Request],
                            status: StatusLogger,
                            workerFactory: WorkerFactory,
                            collectionMetadata: CollectionMetadata,
-                           systemMetadata: SystemMetadataStore) extends BaseController {
+                           systemMetadata: SystemMetadataStore,
+                           esHelper: ElasticsearchHelper) extends BaseController {
 
   import CollectionInfo._
 
-  def listCollections: Action[AnyContent] = action {
-    request =>
-      val pc = collectionsInUse
-      val collections = collectionMetadata.existingCollectionMetadata
-      val result =
-        for (info <- collections) yield {
-          val name = info.name.toString
-          CollectionInfo(name, info.size,
-            systemCollections.contains(name),
-            pc.contains(name),
-            info.createdAt.map(_.toString),
-            info.completedAt.map(_.toString))
-        }
+  def isSupportedTarget(target: String): Boolean = Set("db", "es").contains(target)
 
+
+  def listCollections(target: String): Action[AnyContent] = action {
+    request =>
+      require(isSupportedTarget(target))
+
+      val result = if(target == "db"){
+        listMongoCollections()
+      } else if(target == "es"){
+        listElasticSearchCollections()
+      } else{
+        List()
+      }
+      
       Ok(Json.toJson(ListCI(result)))
+  }
+
+  def listElasticSearchCollections() : List[CollectionInfo] = {
+
+    esHelper.clients flatMap{ client =>
+
+      val inUse = client execute {
+        getAlias("address-reputation-data")
+      }await
+
+      val test: ObjectLookupContainer[String] = inUse.getAliases().keys
+
+      val inUseIndices: List[String] = test.toArray.map(a => {
+        a.asInstanceOf[String]
+      }).toList
+
+      val gar = client execute {
+        getAlias(ElasticsearchHelper.indexAlias)
+      } await
+
+      val olc = gar.getAliases().keys
+
+      olc.toArray().map(a => {
+        val aliasIndex = a.asInstanceOf[String]
+        status.info(s"Got alias index: $aliasIndex")
+        CollectionInfo(aliasIndex, 0,
+          false,
+          inUseIndices.contains(aliasIndex),
+          None,
+          None)
+      }).toList
+    }
+  }
+
+  def listMongoCollections() : List[CollectionInfo] = {
+    val pc = collectionsInUse
+    val collections = collectionMetadata.existingCollectionMetadata
+    for (info <- collections) yield {
+      val name = info.name.toString
+      CollectionInfo(name, info.size,
+        systemCollections.contains(name),
+        pc.contains(name),
+        info.createdAt.map(_.toString),
+        info.completedAt.map(_.toString))
+      }
   }
 
   def dropCollection(name: String): Action[AnyContent] = action {

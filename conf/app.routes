@@ -28,7 +28,7 @@ GET    /admin/fullStatus                                        controllers.Admi
 GET    /admin/dirTree                                           controllers.AdminController.dirTree(root: Option[String], max: Option[Int])
 GET    /admin/showLog                                           controllers.AdminController.showLog(dir: Option[String])
 
-GET    /collections/list                                        controllers.CollectionController.listCollections
+GET    /collections/list/:target                                controllers.CollectionController.listCollections(target)
 DELETE /collections/:name                                       controllers.CollectionController.dropCollection(name)
 POST   /collections/clean                                       controllers.CollectionController.doCleanup
 

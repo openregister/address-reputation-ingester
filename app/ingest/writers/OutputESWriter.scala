@@ -68,7 +68,11 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
               )
             )
         }
-      }
+      } await
+
+      client execute {
+        aliases (add alias ElasticsearchHelper.indexAlias on ariIndexName)
+      } await
     }
   }
 

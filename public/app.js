@@ -151,7 +151,8 @@ function cleanCol() {
 }
 
 function listCol() {
-    getAndRefreshConsoleJson('/collections/list');
+    var target = getTarget();
+    getAndRefreshConsoleJson('/collections/list/' + target);
 }
 
 function ping() {
