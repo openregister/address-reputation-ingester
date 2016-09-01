@@ -129,7 +129,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       val admin = new MetadataStore(mongo, Stdout)
       CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_5"))
 
-      val request = newRequest("GET", "/collections/list")
+      val request = newRequest("GET", "/collections/list/db")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === OK)
       //      assert(response.body === "foo")
@@ -143,7 +143,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
   "collection endpoints should be protected by basic auth" must {
     "list collections" in {
-      val request = newRequest("GET", "/collections/list")
+      val request = newRequest("GET", "/collections/list/db")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }

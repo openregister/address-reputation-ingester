@@ -30,6 +30,7 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import services.db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
+import services.elasticsearch.ElasticsearchHelper
 import services.exec.WorkQueue
 import services.model.StatusLogger
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
@@ -47,6 +48,7 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
     val workerFactory = new StubWorkerFactory(worker)
     val casbahMongoConnection = mock[CasbahMongoConnection]
     val mongoDB = mock[MongoDB]
+    val helper = mock[ElasticsearchHelper]
 
     val adminCollections = Set(fakeIrrelevantCollection("admin"), fakeIrrelevantCollection("system.indexes"))
     val collectionsInUse = Set(fakeCompletedCollection("abi_39_003"), fakeCompletedCollection("abp_40_005"))
@@ -74,7 +76,7 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
     }
 
     val collectionMetadata = new CollectionMetadata(mongoDB)
-    val collectionController = new CollectionController(new PassThroughAction, status, workerFactory, collectionMetadata, store)
+    val collectionController = new CollectionController(new PassThroughAction, status, workerFactory, collectionMetadata, store, helper)
 
     def teardown() {
       worker.terminate()
