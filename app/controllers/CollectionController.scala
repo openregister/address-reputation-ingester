@@ -98,8 +98,13 @@ class CollectionController(action: ActionBuilder[Request],
 
       olc.toArray().map(a => {
         val aliasIndex = a.asInstanceOf[String]
+        val docs = client.execute{
+          countFrom(aliasIndex)
+        }.await
+        val docCount = docs.getCount.toInt
         status.info(s"Got alias index: $aliasIndex")
-        CollectionInfo(aliasIndex, 0,
+        CollectionInfo(aliasIndex,
+          docCount,
           false,
           inUseIndices.contains(aliasIndex),
           None,
