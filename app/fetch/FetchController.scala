@@ -64,7 +64,7 @@ class FetchController(action: ActionBuilder[Request],
       if (model1.product.isDefined) model1
       else {
         val tree = sardine.exploreRemoteTree
-        val found = tree.findAvailableFor(model1.productName, model1.epoch.toString)
+        val found = tree.findAvailableFor(model1.productName, model1.epoch)
         model1.copy(product = found)
       }
 

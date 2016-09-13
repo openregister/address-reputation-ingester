@@ -60,6 +60,8 @@ case class WebDavFile(url: URL, fullName: String, kb: Long = 0L,
   */
 case class WebDavTree(root: WebDavFile) {
 
+  import WebDavTree._
+
   def findLatestFor(product: String): Option[OSGBProduct] = {
     val available: List[OSGBProduct] = findAvailableFor(product).sorted
     available.reverse.headOption
@@ -76,14 +78,8 @@ case class WebDavTree(root: WebDavFile) {
     }
   }
 
-  def findAvailableFor(product: String, epoch: String): Option[OSGBProduct] = {
-    val matches = root.files.find(_.fullName == product)
-    if (matches.isEmpty) None
-    else {
-      val epochs = matches.get.files.find(_.fullName == epoch)
-      if (epochs.isEmpty) None
-      else extractOne(product, epochs.get)
-    }
+  def findAvailableFor(product: String, epoch: Int): Option[OSGBProduct] = {
+    findAvailableFor(product).find(_.epoch == epoch)
   }
 
   private def extractOne(product: String, epoch: WebDavFile): Option[OSGBProduct] = {
@@ -91,28 +87,10 @@ case class WebDavTree(root: WebDavFile) {
     if (fullFolder.isEmpty) None
     else {
       val files = fullFolder.head.files
-      val readyToCollect = files.exists(_.fullName == WebDavTree.readyToCollectFile)
-      val possibleDownloads = if (readyToCollect) filterZips(files) else filterZipsWithTxt(files)
-      if (possibleDownloads.isEmpty) None
-      else Some(OSGBProduct(product, epoch.fullName.toInt, possibleDownloads))
+      val readyToCollect = files.exists(_.fullName == readyToCollectFile)
+      if (readyToCollect) Some(OSGBProduct(product, epoch.fullName.toInt, filterZips(files)))
+      else None
     }
-  }
-
-  private def filterZipsWithTxt(files: List[WebDavFile]): List[WebDavFile] = {
-    val subs = files.filter(_.isDirectory).flatMap(d => filterZipsWithTxt(d.files))
-    val names = files.map(_.name).toSet
-    val txtAndZipNames = names.filter {
-      n =>
-        files.exists(f => f.isPlainText && f.name == n) ||
-          files.exists(f => f.isDataFile && f.name == n)
-    }
-    val allPairsExist = txtAndZipNames.forall {
-      n =>
-        files.exists(f => f.isPlainText && f.name == n) &&
-          files.exists(f => f.isDataFile && f.name == n)
-    }
-    val chosen = if (allPairsExist) files.filter(_.isDataFile) else Nil
-    chosen ++ subs
   }
 
   private def filterZips(files: List[WebDavFile]): List[WebDavFile] = {

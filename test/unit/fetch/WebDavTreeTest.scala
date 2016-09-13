@@ -29,6 +29,7 @@ import scala.collection.JavaConverters._
 
 @RunWith(classOf[JUnitRunner])
 class WebDavTreeTest extends PlaySpec {
+  import WebDavTree.readyToCollectFile
 
   val base = "http://somedavserver.com:81/webdav"
 
@@ -55,6 +56,7 @@ class WebDavTreeTest extends PlaySpec {
     """
       discover one specified product with two epochs
       and ignore any unimportant files
+      and ignore products except those asked for
     """ in {
       // given
       val tree = WebDavTree(
@@ -63,7 +65,7 @@ class WebDavTreeTest extends PlaySpec {
             WebDavFile(new URL(base + "/abi/39/"), "39", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abi/39/full/"), "full", isDirectory = true, files = List(
                 leafFile("abi", 39, "DVD1.zip"),
-                leafFile("abi", 39, "DVD1.txt")
+                leafFile("abi", 39, readyToCollectFile)
               ))
             ))
           )),
@@ -71,15 +73,14 @@ class WebDavTreeTest extends PlaySpec {
             WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
                 leafFile("abp", 39, "DVD1.zip"),
-                leafFile("abp", 39, "DVD1.txt")
+                leafFile("abp", 39, readyToCollectFile)
               ))
             )),
             WebDavFile(new URL(base + "/abp/40/"), "40", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/40/full/"), "full", isDirectory = true, files = List(
                 leafFile("abp", 40, "DVD1.zip"),
-                leafFile("abp", 40, "DVD1.txt"),
                 leafFile("abp", 40, "DVD2.zip"),
-                leafFile("abp", 40, "DVD2.txt")
+                leafFile("abp", 40, readyToCollectFile)
               ))
             ))
           ))
@@ -98,6 +99,7 @@ class WebDavTreeTest extends PlaySpec {
     """
       discover one specified product with one specified epoch
       and ignore any unrelated files
+      and ignore products except those asked for
     """ in {
       // given
       val tree = WebDavTree(
@@ -105,8 +107,7 @@ class WebDavTreeTest extends PlaySpec {
           WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true, files = List(
             WebDavFile(new URL(base + "/abi/39/"), "39", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abi/39/full/"), "full", isDirectory = true, files = List(
-                leafFile("abi", 39, "DVD1.zip"),
-                leafFile("abi", 39, "DVD1.txt")
+                leafFile("abi", 39, "DVD1.zip")
               ))
             ))
           )),
@@ -114,23 +115,22 @@ class WebDavTreeTest extends PlaySpec {
             WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
                 leafFile("abp", 39, "DVD1.zip"),
-                leafFile("abp", 39, "DVD1.txt"),
+                leafFile("abp", 39, readyToCollectFile),
                 leafFile("abp", 39, "ignore.this")
               ))
             )),
             WebDavFile(new URL(base + "/abp/40/"), "40", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/40/full/"), "full", isDirectory = true, files = List(
                 leafFile("abp", 40, "DVD1.zip"),
-                leafFile("abp", 40, "DVD1.txt"),
                 leafFile("abp", 40, "DVD2.zip"),
-                leafFile("abp", 40, "DVD2.txt")
+                leafFile("abp", 40, readyToCollectFile)
               ))
             ))
           ))
         )))
 
       // when
-      val product = tree.findAvailableFor("abp", "39")
+      val product = tree.findAvailableFor("abp", 39)
 
       // then
       product must be(Some(OSGBProduct("abp", 39, List(leafFile("abp", 39, "DVD1.zip")))))
@@ -146,8 +146,7 @@ class WebDavTreeTest extends PlaySpec {
             WebDavFile(new URL(base + "/abp/40/"), "40", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/40/full/"), "full", isDirectory = true, files = List(
                 leafFile("abp", 40, "DVD1.zip"),
-                leafFile("abp", 40, "DVD1.txt"),
-                leafFile("abp", 40, "DVD2.zip") // missing txt
+                leafFile("abp", 40, "DVD2.zip") // missing ready-to-collect.txt
               ))
             ))
           ))
@@ -170,9 +169,11 @@ class WebDavTreeTest extends PlaySpec {
           WebDavFile(new URL(base + "/abi/"), "abi", isDirectory = true, files = List(
             WebDavFile(new URL(base + "/abi/39/"), "39", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abi/39/full/"), "full", isDirectory = true, files = List(
-                leafFile("abi", 39, "data/001.zip"),
-                leafFile("abi", 39, "data/001.txt")
-              ))
+                WebDavFile(new URL(base + "/abp/39/full/data"), "data", isDirectory = true, files = List(
+                  leafFile("abi", 39, "001.zip")
+                ))
+              )),
+              leafFile("abi", 39, readyToCollectFile) // not in the right place
             ))
           )),
           WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
@@ -180,7 +181,7 @@ class WebDavTreeTest extends PlaySpec {
               WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/abp/39/full/data"), "data", isDirectory = true, files = List(
                   leafFile("abp", 39, "001.zip"),
-                  leafFile("abp", 39, "001.txt")
+                  leafFile("abp", 39, readyToCollectFile) // not in the right place
                 ))
               ))
             )),
@@ -188,30 +189,28 @@ class WebDavTreeTest extends PlaySpec {
               WebDavFile(new URL(base + "/abp/40/full/"), "full", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/abp/40/full/data"), "data", isDirectory = true, files = List(
                   leafFile("abp", 40, "001.zip"),
-                  leafFile("abp", 40, "001.txt"),
                   leafFile("abp", 40, "002.zip"),
-                  leafFile("abp", 40, "002.txt"),
                   leafFile("abp", 40, "003.zip"),
-                  leafFile("abp", 40, "003.txt"),
                   leafFile("abp", 40, "ignore.this")
-                ))
+                )),
+                leafFile("abp", 40, readyToCollectFile) // correct
               ))
             ))
           ))
         )))
 
       // when
-      val list = tree.findAvailableFor("abp", "40")
+      val list = tree.findAvailableFor("abp")
 
       // then
-      list must be(Some(OSGBProduct("abp", 40,
+      list must be(List(OSGBProduct("abp", 40,
         List(leafFile("abp", 40, "001.zip"), leafFile("abp", 40, "002.zip"), leafFile("abp", 40, "003.zip")))))
     }
   }
 
   "find latest" should {
     """
-      discover one product with one epoch where all zips have corresponding txt markers
+      discover one product with one epoch where all products have corresponding ready-to-collect marker
       and ignore any unimportant files
     """ in {
       // given
@@ -221,7 +220,7 @@ class WebDavTreeTest extends PlaySpec {
             WebDavFile(new URL(base + "/abi/39/"), "39", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abi/39/full/"), "full", isDirectory = true, files = List(
                 leafFile("abi", 39, "DVD1.zip"),
-                leafFile("abi", 39, "DVD1.txt")
+                leafFile("abi", 39, readyToCollectFile)
               ))
             ))
           )),
@@ -229,15 +228,14 @@ class WebDavTreeTest extends PlaySpec {
             WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
                 leafFile("abp", 39, "DVD1.csv"),
-                leafFile("abp", 39, "DVD1.txt")
+                leafFile("abp", 39, readyToCollectFile)
               ))
             )),
             WebDavFile(new URL(base + "/abp/40/"), "40", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/40/full/"), "full", isDirectory = true, files = List(
                 leafFile("abp", 40, "DVD1.csv"),
-                leafFile("abp", 40, "DVD1.txt"),
                 leafFile("abp", 40, "DVD2.csv"),
-                leafFile("abp", 40, "DVD2.txt"),
+                leafFile("abp", 40, readyToCollectFile),
                 leafFile("abp", 40, "ignore.this")
               ))
             ))
@@ -263,7 +261,7 @@ class WebDavTreeTest extends PlaySpec {
             WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
                 leafFile("abp", 39, "DVD1.zip"),
-                leafFile("abp", 39, "DVD1.txt")
+                leafFile("abp", 39, readyToCollectFile)
               ))
             )),
             WebDavFile(new URL(base + "/abp/40/"), "40", isDirectory = true, files = List(
@@ -273,7 +271,7 @@ class WebDavTreeTest extends PlaySpec {
                   leafFile("abp", 40, "ABP_2016-05-18_002_csv.zip"),
                   leafFile("abp", 40, "ignore.this")
                 )),
-                leafFile("abp", 40, WebDavTree.readyToCollectFile)
+                leafFile("abp", 40, readyToCollectFile)
               ))
             ))
           ))

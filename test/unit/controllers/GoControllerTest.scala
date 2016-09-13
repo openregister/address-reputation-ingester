@@ -44,6 +44,8 @@ import uk.co.hmrc.logging.StubLogger
 @RunWith(classOf[JUnitRunner])
 class GoControllerTest extends FunSuite with MockitoSugar {
 
+  import WebDavTree.readyToCollectFile
+
   val base = "http://somedavserver.com:81/webdav"
   val baseUrl = new URL(base + "/")
   val username = "foo"
@@ -191,22 +193,21 @@ class GoControllerTest extends FunSuite with MockitoSugar {
             WebDavFile(new URL(base + "/abi/38/"), "38", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abi/38/full/"), "full", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/abi/38/full/DVD1.zip"), "DVD1.zip", isDataFile = true),
-                WebDavFile(new URL(base + "/abi/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
+                WebDavFile(new URL(base + "/abi/38/full/" + readyToCollectFile), readyToCollectFile, isPlainText = true)
               ))
             )))),
           WebDavFile(new URL(base + "/abp/"), "abp", isDirectory = true, files = List(
             WebDavFile(new URL(base + "/abp/38/"), "38", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/38/full/"), "full", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isDataFile = true),
-                WebDavFile(new URL(base + "/abp/38/full/DVD1.txt"), "DVD1.txt", isPlainText = true)
+                WebDavFile(new URL(base + "/abp/38/full/" + readyToCollectFile), readyToCollectFile, isPlainText = true)
               ))
             )),
             WebDavFile(new URL(base + "/abp/39/"), "39", isDirectory = true, files = List(
               WebDavFile(new URL(base + "/abp/39/full/"), "full", isDirectory = true, files = List(
                 WebDavFile(new URL(base + "/abp/39/full/DVD1.zip"), "DVD1.zip", isDataFile = true),
-                WebDavFile(new URL(base + "/abp/39/full/DVD1.txt"), "DVD1.txt", isPlainText = true),
                 WebDavFile(new URL(base + "/abp/39/full/DVD2.zip"), "DVD2.zip", isDataFile = true),
-                WebDavFile(new URL(base + "/abp/39/full/DVD2.txt"), "DVD2.txt", isPlainText = true)
+                WebDavFile(new URL(base + "/abp/39/full/" + readyToCollectFile), readyToCollectFile, isPlainText = true)
               ))
             ))
           ))
