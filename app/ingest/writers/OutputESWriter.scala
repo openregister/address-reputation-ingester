@@ -18,15 +18,15 @@ package ingest.writers
 
 import java.util.Date
 
-import com.sksamuel.elastic4s.mappings.FieldType.StringType
 import com.sksamuel.elastic4s._
-import services.elasticsearch.ElasticsearchHelper
+import com.sksamuel.elastic4s.mappings.FieldType.StringType
+import elasticsearch.ElasticsearchHelper
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper: ElasticsearchHelper,
                      settings: WriterSettings) extends OutputWriter with ElasticDsl {
@@ -42,7 +42,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
     esHelper.clients foreach { client =>
       client execute {
         create index ariIndexName shards 4 replicas 0 refreshInterval "60s" mappings {
-          mapping(ElasticsearchHelper.ariDocumentName) fields(
+          mapping(esHelper.ariDocumentName) fields(
             field("id") typed StringType,
             //TODO lines should be an array - perhaps?
             field("line1") typed StringType fields(
@@ -71,14 +71,14 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
       } await
 
       client execute {
-        aliases (add alias ElasticsearchHelper.indexAlias on ariIndexName)
+        aliases(add alias esHelper.indexAlias on ariIndexName)
       } await
     }
   }
 
   override def output(a: DbAddress) {
     //Add document to batch
-    addBulk(index into ariIndexName -> ElasticsearchHelper.ariDocumentName fields(
+    addBulk(index into ariIndexName -> esHelper.ariDocumentName fields(
       //TODO should just use a.tupled
       "id" -> a.id,
       "line1" -> a.line1,
@@ -138,9 +138,9 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
 
       Await.result(Future.sequence(fr), Duration.Inf) foreach { br =>
         if (br.hasFailures) {
-          statusLogger.warn(s"Elasticserch failure processing bulk insertion - ${br.failureMessage}")
+          statusLogger.warn(s"Elasticsearch failure processing bulk insertion - ${br.failureMessage}")
           model = model.copy(hasFailed = true)
-          throw new Exception(s"Elasticserch failure processing bulk insertion - ${br.failureMessage}")
+          throw new Exception(s"Elasticsearch failure processing bulk insertion - ${br.failureMessage}")
         }
       }
 
@@ -154,6 +154,6 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
 
 class OutputESWriterFactory extends OutputWriterFactory {
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputESWriter = {
-    new OutputESWriter(model, statusLogger, ElasticsearchHelper, settings)
+    new OutputESWriter(model, statusLogger, elasticsearch.Services.elasticSearchService, settings)
   }
 }

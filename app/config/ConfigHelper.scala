@@ -16,13 +16,10 @@
 
 package config
 
-import java.util
-
 import play.api.Configuration
 import play.api.Mode._
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
 
 object ConfigHelper {
   def mustGetConfigString(config: Configuration, key: String): String = {

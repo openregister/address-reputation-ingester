@@ -23,19 +23,14 @@ package controllers
 
 import com.carrotsearch.hppc.ObjectLookupContainer
 import com.sksamuel.elastic4s.ElasticDsl._
-import com.sksamuel.elastic4s.{MutateAliasDefinition, ElasticClient, ElasticsearchClientUri}
 import config.ApplicationGlobal
-import config.ConfigHelper._
 import controllers.SimpleValidator._
-import org.elasticsearch.cluster.health.ClusterHealthStatus
-import org.elasticsearch.common.settings.Settings
-import play.api.Play._
+import elasticsearch.ElasticsearchHelper
 import play.api.libs.json.Json
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
-import services.elasticsearch.ElasticsearchHelper
 import services.exec.WorkerFactory
-import services.model.{StateModel, StatusLogger}
+import services.model.StatusLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
@@ -45,7 +40,7 @@ object CollectionController extends CollectionController(
   ControllerConfig.workerFactory,
   ApplicationGlobal.collectionMetadata,
   ApplicationGlobal.metadataStore,
-  ElasticsearchHelper
+  elasticsearch.Services.elasticSearchService
 )
 
 
@@ -65,24 +60,24 @@ class CollectionController(action: ActionBuilder[Request],
     request =>
       require(isSupportedTarget(target))
 
-      val result = if(target == "db"){
+      val result = if (target == "db") {
         listMongoCollections()
-      } else if(target == "es"){
+      } else if (target == "es") {
         listElasticSearchCollections()
-      } else{
+      } else {
         List()
       }
-      
+
       Ok(Json.toJson(ListCI(result)))
   }
 
-  def listElasticSearchCollections() : List[CollectionInfo] = {
+  def listElasticSearchCollections(): List[CollectionInfo] = {
 
-    esHelper.clients flatMap{ client =>
+    esHelper.clients flatMap { client =>
 
       val inUse = client execute {
         getAlias("address-reputation-data")
-      }await
+      } await
 
       val test: ObjectLookupContainer[String] = inUse.getAliases().keys
 
@@ -91,14 +86,14 @@ class CollectionController(action: ActionBuilder[Request],
       }).toList
 
       val gar = client execute {
-        getAlias(ElasticsearchHelper.indexAlias)
+        getAlias(esHelper.indexAlias)
       } await
 
       val olc = gar.getAliases().keys
 
       olc.toArray().map(a => {
         val aliasIndex = a.asInstanceOf[String]
-        val docs = client.execute{
+        val docs = client.execute {
           countFrom(aliasIndex)
         }.await
         val docCount = docs.getCount.toInt
@@ -113,7 +108,7 @@ class CollectionController(action: ActionBuilder[Request],
     }
   }
 
-  def listMongoCollections() : List[CollectionInfo] = {
+  def listMongoCollections(): List[CollectionInfo] = {
     val pc = collectionsInUse
     val collections = collectionMetadata.existingCollectionMetadata
     for (info <- collections) yield {
@@ -123,7 +118,7 @@ class CollectionController(action: ActionBuilder[Request],
         pc.contains(name),
         info.createdAt.map(_.toString),
         info.completedAt.map(_.toString))
-      }
+    }
   }
 
   def dropCollection(name: String): Action[AnyContent] = action {

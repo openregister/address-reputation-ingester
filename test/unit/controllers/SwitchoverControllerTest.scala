@@ -19,6 +19,7 @@ package controllers
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoCollection, MongoDB}
 import com.sksamuel.elastic4s.ElasticClient
+import elasticsearch.ElasticsearchHelper
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -30,7 +31,6 @@ import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.audit.AuditClient
-import services.elasticsearch.ElasticsearchHelper
 import services.exec.{WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.admin.StoredMetadataItem

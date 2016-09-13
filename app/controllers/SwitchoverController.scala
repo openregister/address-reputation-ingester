@@ -20,12 +20,12 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.MutateAliasDefinition
 import config.ApplicationGlobal
 import controllers.SimpleValidator._
+import elasticsearch.ElasticsearchHelper
 import org.elasticsearch.cluster.health.ClusterHealthStatus
 import play.api.Logger
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.audit.AuditClient
 import services.db.CollectionMetadata
-import services.elasticsearch.ElasticsearchHelper
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
@@ -44,7 +44,7 @@ object SwitchoverController extends SwitchoverController(
   ApplicationGlobal.mongoConnection,
   ApplicationGlobal.metadataStore,
   services.audit.Services.auditClient,
-  ElasticsearchHelper
+  elasticsearch.Services.elasticSearchService
 )
 
 class SwitchoverController(action: ActionBuilder[Request],
@@ -114,16 +114,16 @@ class SwitchoverController(action: ActionBuilder[Request],
   private def switchEs(model: StateModel): StateModel = {
 
     val ariIndexName = model.collectionName.asIndexName
-    val ariAliasName = ElasticsearchHelper.ariAliasName
+    val ariAliasName = esHelper.ariAliasName
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
     val fr = esHelper.clients map { client => Future {
-      if (ElasticsearchHelper.isCluster) {
-        status.info(s"Setting replica count to ${ElasticsearchHelper.replicaCount} for $ariAliasName")
+      if (esHelper.isCluster) {
+        status.info(s"Setting replica count to ${esHelper.replicaCount} for $ariAliasName")
         client execute {
           update settings ariIndexName set Map(
-            "index.number_of_replicas" -> ElasticsearchHelper.replicaCount
+            "index.number_of_replicas" -> esHelper.replicaCount
           )
         } await
 
@@ -140,7 +140,7 @@ class SwitchoverController(action: ActionBuilder[Request],
         getAlias(model.productName).on("*")
       } await
 
-      val olc = gar.getAliases().keys
+      val olc = gar.getAliases.keys
       val aliasStatements: Array[MutateAliasDefinition] = olc.toArray().flatMap(a => {
         val aliasIndex = a.asInstanceOf[String]
         status.info(s"Removing index $aliasIndex from $ariAliasName and ${model.productName} aliases")

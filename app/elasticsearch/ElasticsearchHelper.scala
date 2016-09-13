@@ -14,30 +14,32 @@
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
  *
+ *
  */
 
-package services.elasticsearch
+package elasticsearch
 
 import com.sksamuel.elastic4s.ElasticClient
 import config.ConfigHelper._
 import org.elasticsearch.common.settings.Settings
 import play.api.Play._
 
-object ElasticsearchHelperConfig {
-  private val esSettings: Settings = Settings.settingsBuilder().put("cluster.name", "address-reputation").build()
+object Services {
+
+  private val esSettings = Settings.settingsBuilder().put("cluster.name", "address-reputation").build()
 
   lazy val getClients: List[ElasticClient] = {
     mustGetConfigString(current.mode, current.configuration, "elastic.uri").split("\\+").map { uri =>
       ElasticClient.transport(esSettings, uri)
     }.toList
   }
+
+  lazy val elasticSearchService = new ElasticsearchHelper(
+    getClients,
+    getConfigBoolean(current.mode, current.configuration, "elastic.is-cluster").getOrElse(true)
+  )
 }
 
-
-object ElasticsearchHelper extends ElasticsearchHelper(
-  ElasticsearchHelperConfig.getClients,
-  getConfigBoolean(current.mode, current.configuration, "elastic.is-cluster").getOrElse(true)
-)
 
 class ElasticsearchHelper(val clients: List[ElasticClient], val isCluster: Boolean) {
   val replicaCount = "1"
