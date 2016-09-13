@@ -147,7 +147,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       val model1 = new StateModel("abp", 40, Some("full"))
-      val model2 = model1.copy(index = Some(101))
+      val model2 = model1.copy(version = Some(101))
       val settings = WriterSettings(1, 0)
       when(outputDBWriter.end(true)) thenReturn model2
 

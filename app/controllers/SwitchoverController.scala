@@ -62,10 +62,10 @@ class SwitchoverController(action: ActionBuilder[Request],
       require(isAlphaNumeric(product))
       require(isSupportedTarget(target))
 
-      val index = Try(modifier.toInt).toOption
-      val dateStamp = if (index == None) Some(modifier) else None
+      val version = Try(modifier.toInt).toOption
+      val dateStamp = if (version.isEmpty) Some(modifier) else None
 
-      val model = new StateModel(product, epoch, None, index, dateStamp, target = target)
+      val model = new StateModel(product, epoch, None, version, dateStamp, target = target)
       workerFactory.worker.push(s"switching to ${model.collectionName.toString}", continuer => switchIfOK(model))
       Accepted
   }
@@ -85,7 +85,7 @@ class SwitchoverController(action: ActionBuilder[Request],
 
   private def switchDb(model: StateModel): StateModel = {
 
-    if (model.index.isEmpty) {
+    if (model.version.isEmpty) {
       status.warn(s"cannot switch to ${model.collectionName.toPrefix} with unknown index")
       model.copy(hasFailed = true)
 
@@ -117,7 +117,7 @@ class SwitchoverController(action: ActionBuilder[Request],
     val ariAliasName = ElasticsearchHelper.ariAliasName
 
     import scala.concurrent.ExecutionContext.Implicits.global
-    
+
     val fr = esHelper.clients map { client => Future {
       if (ElasticsearchHelper.isCluster) {
         status.info(s"Setting replica count to ${ElasticsearchHelper.replicaCount} for $ariAliasName")
@@ -167,7 +167,8 @@ class SwitchoverController(action: ActionBuilder[Request],
           )
         } await
       })
-    }}
+    }
+    }
 
     Await.result(Future.sequence(fr), Duration.Inf)
     model

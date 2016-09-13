@@ -72,7 +72,7 @@ class OutputDBWriter(cleardownOnError: Boolean,
   }
 
   def begin() {
-    model = model.copy(index = collectionName.index)
+    model = model.copy(version = collectionName.version)
     statusLogger.info(s"Writing new collection '$collectionName'")
     CollectionMetadata.writeCreationDateTo(collection)
   }

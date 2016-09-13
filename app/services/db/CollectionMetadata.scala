@@ -51,7 +51,7 @@ class CollectionMetadata(db: MongoDB) {
   }
 
   def nextFreeCollectionNameLike(name: CollectionName): CollectionName =
-    name.copy(index = Some(nextFreeIndex(name)))
+    name.copy(version = Some(nextFreeIndex(name)))
 
   def existingCollections: List[CollectionName] = {
     db.collectionNames.toList.sorted.flatMap(name => CollectionName(name))

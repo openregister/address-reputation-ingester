@@ -23,7 +23,7 @@ case class StateModel(
                        productName: String = "",
                        epoch: Int = 0,
                        variant: Option[String] = None,
-                       index: Option[Int] = None,
+                       version: Option[Int] = None,
                        dateStamp: Option[String] = None,
                        product: Option[OSGBProduct] = None,
                        target: String = "db",
@@ -36,7 +36,7 @@ case class StateModel(
     s"$productName/$epoch/$v"
   }
 
-  def collectionName: CollectionName = CollectionName(productName, Some(epoch), index, dateStamp)
+  def collectionName: CollectionName = CollectionName(productName, Some(epoch), version, dateStamp)
 }
 
 
@@ -46,6 +46,6 @@ object StateModel {
   }
 
   def apply(collectionName: CollectionName): StateModel = {
-    new StateModel(collectionName.productName, collectionName.epoch.get, None, collectionName.index, collectionName.dateStamp, None)
+    new StateModel(collectionName.productName, collectionName.epoch.get, None, collectionName.version, collectionName.dateStamp, None)
   }
 }
