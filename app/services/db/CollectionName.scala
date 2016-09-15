@@ -32,7 +32,7 @@ case class CollectionName(productName: String,
                           dateStamp: Option[String] = None) {
 
   val dateTimeSuffix = dateStamp.getOrElse {
-    val formatter = DateTimeFormat.forPattern("dd-MM-yyyy-HH-mm")
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd-HH-mm")
     formatter.print(new DateTime())
   }
 

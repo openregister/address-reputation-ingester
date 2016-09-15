@@ -29,7 +29,8 @@ object Services {
   private val esSettings = Settings.settingsBuilder().put("cluster.name", "address-reputation").build()
 
   lazy val getClients: List[ElasticClient] = {
-    mustGetConfigString(current.mode, current.configuration, "elastic.uri").split("\\+").map { uri =>
+    val connectionString = mustGetConfigString(current.mode, current.configuration, "elastic.uri")
+    connectionString.split("\\+").map { uri =>
       ElasticClient.transport(esSettings, uri)
     }.toList
   }
@@ -45,5 +46,5 @@ class ElasticsearchHelper(val clients: List[ElasticClient], val isCluster: Boole
   val replicaCount = "1"
   val ariAliasName = "address-reputation-data"
   val ariDocumentName = "address"
-  val indexAlias = "address-base-index"
+  val indexAlias = "addressbase-index"
 }
