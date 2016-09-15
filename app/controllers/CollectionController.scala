@@ -133,18 +133,19 @@ class CollectionController(action: ActionBuilder[Request],
       }
   }
 
-  def doCleanup(): Action[AnyContent] = action {
+  def doCleanup(target: String): Action[AnyContent] = action {
     request =>
-      workerFactory.worker.push("cleaning up obsolete collections", continuer => cleanup())
+      workerFactory.worker.push("cleaning up obsolete collections", continuer => cleanup(target))
       Accepted
   }
 
-  private[controllers] def cleanup() {
-    val toGo = determineObsoleteCollections
-    deleteObsoleteCollections(toGo)
+  private[controllers] def cleanup(target: String) {
+    //TODO switch on target
+    val toGo = determineObsoleteMongoCollections
+    deleteObsoleteMongoCollections(toGo)
   }
 
-  private[controllers] def determineObsoleteCollections: Set[CollectionMetadataItem] = {
+  private[controllers] def determineObsoleteMongoCollections: Set[CollectionMetadataItem] = {
     // already sorted
     val collections: List[CollectionMetadataItem] = collectionMetadata.existingCollectionMetadata
     val mainCollections = collections.filterNot(cmi => systemCollections.contains(cmi.name.toString))
@@ -168,10 +169,10 @@ class CollectionController(action: ActionBuilder[Request],
     (incompleteCollections ++ cullable.flatten).toSet
   }
 
-  private def deleteObsoleteCollections(unwantedCollections: Traversable[CollectionMetadataItem]) {
+  private def deleteObsoleteMongoCollections(unwantedCollections: Traversable[CollectionMetadataItem]) {
     for (col <- unwantedCollections) {
       val name = col.name.toString
-      status.info(s"Deleting obsolete collection $name")
+      status.info(s"Deleting obsolete MongoDB collection $name")
       collectionMetadata.dropCollection(name)
     }
   }

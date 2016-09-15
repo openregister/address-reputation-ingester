@@ -216,7 +216,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
       new context {
         // given
         val product = OSGBProduct("product", 123, List(zip1))
-        val model1 = StateModel("product", 123, Some("variant"), None, None, Some(product))
+        val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
 
         val f0Txt = new DownloadedFile("/a/b/" + readyToCollectFile)
         val f1Zip = new DownloadedFile("/a/b/f1.zip")
@@ -240,7 +240,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
       new context {
         // given
         val product = OSGBProduct("product", 123, List(zip1))
-        val model1 = StateModel("product", 123, Some("variant"), None, None, Some(product))
+        val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
 
         val f0Txt = new DownloadedFile("/a/b/" + readyToCollectFile)
         val f1Zip = new DownloadedFile("/a/b/f1.zip")
@@ -265,7 +265,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
     """ in {
       new context {
         val product = OSGBProduct("product", 123, List(zip1))
-        val model1 = StateModel("product", 123, Some("variant"), None, None, Some(product))
+        val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
 
         val f1Txt = new DownloadedFile("/a/b/product/123/variant/" + readyToCollectFile)
         val f1Zip = new DownloadedFile("/a/b/product/123/variant/DVD1.zip")
@@ -302,7 +302,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         when(sardineWrapper.exploreRemoteTree) thenReturn tree
 
         val product = OSGBProduct("product", 123, List(zip1))
-        val model1 = StateModel("product", 123, Some("variant"), None, None, Some(product))
+        val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
 
         val f1Txt = new DownloadedFile("/a/b/" + readyToCollectFile)
         val f1Zip = new DownloadedFile("/a/b/DVD1.zip")
@@ -340,7 +340,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         when(sardineWrapper.exploreRemoteTree) thenReturn tree
 
         val product = OSGBProduct("product", 123, List(zip1))
-        val model1 = StateModel("product", 123, Some("variant"), None, None, Some(product), forceChange = true)
+        val model1 = StateModel("product", 123, Some("variant"), None, Some(product), forceChange = true)
 
         val f1Txt = new DownloadedFile("/a/b/" + readyToCollectFile)
         val f1Zip = new DownloadedFile("/a/b/DVD1.zip")
@@ -362,7 +362,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
       new context {
         // given
         val product = OSGBProduct("product", 123, List(zip1))
-        val model1 = StateModel("product", 123, Some("variant"), None, None, Some(product))
+        val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
 
         val items = List[DownloadItem]()
         when(webdavFetcher.fetchList(product, "product/123/variant", stubContinuer, false)) thenReturn items

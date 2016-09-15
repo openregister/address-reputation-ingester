@@ -39,12 +39,12 @@ import scala.collection.mutable
 class CollectionMetadataTest extends FunSuite with MockitoSugar {
 
   val anyDate = new Date(0)
-  val foo_38_001 = CollectionName("foo_38_001").get
-  val foo_39_001 = CollectionName("foo_39_001").get
-  val foo_40_001 = CollectionName("foo_40_001").get
-  val foo_40_002 = CollectionName("foo_40_002").get
-  val foo_40_003 = CollectionName("foo_40_003").get
-  val foo_41_001 = CollectionName("foo_41_001").get
+  val foo_38_ts1 = CollectionName("foo_38_ts1").get
+  val foo_39_ts1 = CollectionName("foo_39_ts1").get
+  val foo_40_ts1 = CollectionName("foo_40_ts1").get
+  val foo_40_ts2 = CollectionName("foo_40_ts2").get
+  val foo_40_ts3 = CollectionName("foo_40_ts3").get
+  val foo_41_ts1 = CollectionName("foo_41_ts1").get
 
   class Context {
     val casbahMongoConnection = mock[CasbahMongoConnection]
@@ -80,45 +80,22 @@ class CollectionMetadataTest extends FunSuite with MockitoSugar {
   test("existingCollectionNamesLike returns collection names starting with a specified prefix") {
     new Context {
       val collection = mock[MongoCollection]
-      when(mongoDB.collectionNames()) thenReturn mutable.Set() ++ Set("foo_38_001", "foo_39_001", "foo_40_001", "foo_40_002", "foo_40_003")
+      when(mongoDB.collectionNames()) thenReturn mutable.Set() ++ Set("foo_38_ts1", "foo_39_ts1", "foo_40_ts1", "foo_40_ts2", "foo_40_ts3")
 
-      val names = collectionMetadata.existingCollectionNamesLike(CollectionName("foo_40_001").get)
+      val names = collectionMetadata.existingCollectionNamesLike(CollectionName("foo_40_ts1").get)
 
-      assert(names === List("foo_40_001", "foo_40_002", "foo_40_003"))
-      verify(mongoDB).collectionNames()
-    }
-  }
-
-  test("given that there are no similar collections, nextFreeCollectionNameLike returns a collection name with index 1") {
-    new Context {
-      val collection = mock[MongoCollection]
-      when(mongoDB.collectionNames()) thenReturn mutable.Set() ++ Set("foo_38_001", "foo_39_001", "foo_40_001")
-
-      val next = collectionMetadata.nextFreeCollectionNameLike(CollectionName("foo_41_000").get)
-
-      assert(next === foo_41_001)
-      verify(mongoDB).collectionNames()
-    }
-  }
-
-  test("given that similar collections exist, nextFreeCollectionNameLike returns a collection name with the next index") {
-    new Context {
-      when(mongoDB.collectionNames()) thenReturn mutable.Set() ++ Set("foo_38_001", "foo_39_001", "foo_40_001", "foo_40_002", "foo_40_003")
-
-      val next = collectionMetadata.nextFreeCollectionNameLike(CollectionName("foo_40_003").get)
-
-      assert(next === CollectionName("foo_40_004").get)
+      assert(names === List(CollectionName("foo_40_ts1").get, CollectionName("foo_40_ts2").get, CollectionName("foo_40_ts3").get))
       verify(mongoDB).collectionNames()
     }
   }
 
   test("existingCollections returns collection names") {
     new Context {
-      when(mongoDB.collectionNames()) thenReturn mutable.Set() ++ Set("foo_38_001", "foo_39_001", "foo_40_001", "foo_40_002", "foo_40_003")
+      when(mongoDB.collectionNames()) thenReturn mutable.Set() ++ Set("foo_38_ts1", "foo_39_ts1", "foo_40_ts1", "foo_40_ts2", "foo_40_ts3")
 
       val names = collectionMetadata.existingCollections
 
-      assert(names === List(foo_38_001, foo_39_001, foo_40_001, foo_40_002, foo_40_003))
+      assert(names === List(foo_38_ts1, foo_39_ts1, foo_40_ts1, foo_40_ts2, foo_40_ts3))
       verify(mongoDB).collectionNames()
     }
   }
@@ -129,15 +106,15 @@ class CollectionMetadataTest extends FunSuite with MockitoSugar {
       val collection38 = mock[MongoCollection]
       val collection39 = mock[MongoCollection]
       val collection40 = mock[MongoCollection]
-      when(mongoDB.collectionNames()) thenReturn mutable.Set() ++ Set("foo_38_001", "foo_39_001", "foo_40_001")
+      when(mongoDB.collectionNames()) thenReturn mutable.Set() ++ Set("foo_38_ts1", "foo_39_ts1", "foo_40_ts1")
 
-      when(mongoDB("foo_38_001")) thenReturn collection38
-      when(mongoDB("foo_39_001")) thenReturn collection39
-      when(mongoDB("foo_40_001")) thenReturn collection40
+      when(mongoDB("foo_38_ts1")) thenReturn collection38
+      when(mongoDB("foo_39_ts1")) thenReturn collection39
+      when(mongoDB("foo_40_ts1")) thenReturn collection40
 
-      when(collection38.name) thenReturn "foo_38_001"
-      when(collection39.name) thenReturn "foo_39_001"
-      when(collection40.name) thenReturn "abp_40_001"
+      when(collection38.name) thenReturn "foo_38_ts1"
+      when(collection39.name) thenReturn "foo_39_ts1"
+      when(collection40.name) thenReturn "abp_40_ts1"
 
       when(collection38.size) thenReturn 138
       when(collection39.size) thenReturn 139
@@ -151,9 +128,9 @@ class CollectionMetadataTest extends FunSuite with MockitoSugar {
       val names = collectionMetadata.existingCollectionMetadata
 
       //then
-      val cmi38 = CollectionMetadataItem(foo_38_001, 138, Some(anyDate), None)
-      val cmi39 = CollectionMetadataItem(foo_39_001, 139, None, Some(anyDate))
-      val cmi40 = CollectionMetadataItem(foo_40_001, 140, None, None)
+      val cmi38 = CollectionMetadataItem(foo_38_ts1, 138, Some(anyDate), None)
+      val cmi39 = CollectionMetadataItem(foo_39_ts1, 139, None, Some(anyDate))
+      val cmi40 = CollectionMetadataItem(foo_40_ts1, 140, None, None)
       assert(names === List(cmi38, cmi39, cmi40))
     }
   }

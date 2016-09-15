@@ -18,7 +18,6 @@ package controllers
 
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoCollection, MongoDB}
-import com.sksamuel.elastic4s.ElasticClient
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -55,10 +54,10 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
        when an invalid product is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("db", "$%", 40, "12")
+    parameterTest("db", "$%", 40, "2001-02-03-04-05")
   }
 
-  def parameterTest(target: String, product: String, epoch: Int, modifier: String): Unit = {
+  def parameterTest(target: String, product: String, epoch: Int, timestamp: String): Unit = {
     val logger = new StubLogger()
     val status = new StatusLogger(logger)
     val testWorker = new WorkQueue(status)
@@ -74,10 +73,11 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     val mongo = mock[CasbahMongoConnection]
     val request = FakeRequest()
 
-    val switchoverController = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticSearchHelper)
+    val switchoverController = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticSearchHelper,
+      scala.concurrent.ExecutionContext.Implicits.global)
 
     intercept[IllegalArgumentException] {
-      await(call(switchoverController.doSwitchTo(target, product, epoch, modifier), request))
+      await(call(switchoverController.doSwitchTo(target, product, epoch, timestamp), request))
     }
   }
 
@@ -111,21 +111,22 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       and an audit message is logged that describes the change
     """) {
     new Context {
-      when(db.collectionExists("abp_40_009")) thenReturn true
-      when(db.apply("abp_40_009")) thenReturn collection
+      when(db.collectionExists("abp_40_2001-02-03-04-05")) thenReturn true
+      when(db.apply("abp_40_2001-02-03-04-05")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn Some(MongoDBObject("completedAt" -> 0L))
-      when(collection.name) thenReturn "abp_40_009"
+      when(collection.name) thenReturn "abp_40_2001-02-03-04-05"
 
-      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticSearchHelper)
-      val response = await(call(sc.doSwitchTo("db", "abp", 40, "9"), request))
+      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticSearchHelper,
+        scala.concurrent.ExecutionContext.Implicits.global)
+      val response = await(call(sc.doSwitchTo("db", "abp", 40, "2001-02-03-04-05"), request))
 
       assert(response.header.status / 100 === 2)
       testWorker.awaitCompletion()
       testWorker.terminate()
 
-      assert(storedItem.get === "abp_40_009")
+      assert(storedItem.get === "abp_40_2001-02-03-04-05")
 
-      verify(auditClient).succeeded(Map("product" -> "abp", "epoch" -> "40", "newCollection" -> "abp_40_009"))
+      verify(auditClient).succeeded(Map("product" -> "abp", "epoch" -> "40", "newCollection" -> "abp_40_2001-02-03-04-05"))
     }
   }
 
@@ -139,15 +140,16 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     new Context {
       when(db.collectionExists(anyString)) thenReturn false
 
-      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticSearchHelper)
-      val response = await(call(sc.doSwitchTo("db", "abp", 40, "9"), request))
+      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticSearchHelper,
+        scala.concurrent.ExecutionContext.Implicits.global)
+      val response = await(call(sc.doSwitchTo("db", "abp", 40, "2001-02-03-04-05"), request))
 
       testWorker.awaitCompletion()
       testWorker.terminate()
 
       assert(storedItem.get === "the initial value")
       assert(logger.warns.size === 2, logger.all)
-      assert(logger.warns.head.message === "Warn:abp_40_009: collection was not found")
+      assert(logger.warns.head.message === "Warn:abp_40_2001-02-03-04-05: collection was not found")
     }
   }
 
@@ -159,13 +161,14 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       and the stored metadata item for the product in question is left unchanged
     """) {
     new Context {
-      when(db.collectionExists("abp_40_009")) thenReturn true
-      when(db.apply("abp_40_009")) thenReturn collection
+      when(db.collectionExists("abp_40_2001-02-03-04-05")) thenReturn true
+      when(db.apply("abp_40_2001-02-03-04-05")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn None
-      when(collection.name) thenReturn "abp_40_009"
+      when(collection.name) thenReturn "abp_40_2001-02-03-04-05"
 
-      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticSearchHelper)
-      val response = await(call(sc.doSwitchTo("db", "abp", 40, "9"), request))
+      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticSearchHelper,
+        scala.concurrent.ExecutionContext.Implicits.global)
+      val response = await(call(sc.doSwitchTo("db", "abp", 40, "2001-02-03-04-05"), request))
 
       testWorker.awaitCompletion()
       testWorker.terminate()
@@ -173,7 +176,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === 202)
       assert(storedItem.get === "the initial value")
       assert(logger.warns.size === 2, logger.all)
-      assert(logger.warns.head.message === "Warn:abp_40_009: collection is still being written")
+      assert(logger.warns.head.message === "Warn:abp_40_2001-02-03-04-05: collection is still being written")
     }
   }
 
@@ -184,13 +187,14 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       and the stored metadata item for the product in question is left unchanged
     """) {
     new Context {
-      when(db.collectionExists("abp_40_009")) thenReturn true
-      when(db.apply("abp_40_009")) thenReturn collection
+      when(db.collectionExists("abp_40_ts9")) thenReturn true
+      when(db.apply("abp_40_ts9")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn None
-      when(collection.name) thenReturn "abp_40_009"
+      when(collection.name) thenReturn "abp_40_ts9"
 
-      val sc = new SwitchoverController(new FailAuthAction, status, workerFactory, mongo, store, auditClient, elasticSearchHelper)
-      val response = await(call(sc.doSwitchTo("db", "abp", 40, "9"), request))
+      val sc = new SwitchoverController(new FailAuthAction, status, workerFactory, mongo, store, auditClient, elasticSearchHelper,
+        scala.concurrent.ExecutionContext.Implicits.global)
+      val response = await(call(sc.doSwitchTo("db", "abp", 40, "2001-02-03-04-05"), request))
 
       testWorker.awaitCompletion()
       testWorker.terminate()
@@ -208,13 +212,14 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       and the state model stays in its current state
     """) {
     new Context {
-      when(db.collectionExists("abp_40_009")) thenReturn true
-      when(db.apply("abp_40_009")) thenReturn collection
+      when(db.collectionExists("abp_40_ts9")) thenReturn true
+      when(db.apply("abp_40_ts9")) thenReturn collection
       when(collection.findOneByID("metadata")) thenReturn None
-      when(collection.name) thenReturn "abp_40_009"
+      when(collection.name) thenReturn "abp_40_ts9"
 
-      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticSearchHelper)
-      val model1 = new StateModel("abp", 40, Some("full"), Some(9), None, hasFailed = true)
+      val sc = new SwitchoverController(pta, status, workerFactory, mongo, store, auditClient, elasticSearchHelper,
+        scala.concurrent.ExecutionContext.Implicits.global)
+      val model1 = new StateModel("abp", 40, Some("full"), Some("2001-02-03-04-05"), hasFailed = true)
 
       val model2 = sc.switchIfOK(model1)
 

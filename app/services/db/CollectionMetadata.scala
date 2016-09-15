@@ -34,24 +34,11 @@ class CollectionMetadata(db: MongoDB) {
     db(name).drop()
   }
 
-  def existingCollectionNamesLike(name: CollectionName): List[String] = {
+  def existingCollectionNamesLike(name: CollectionName): List[CollectionName] = {
     val collectionNamePrefix = name.toPrefix + "_"
-    db.collectionNames.filter(_.startsWith(collectionNamePrefix)).toList.sorted
+    val stringNames = db.collectionNames.filter(_.startsWith(collectionNamePrefix)).toList.sorted
+    stringNames.flatMap(s => CollectionName.apply(s))
   }
-
-  private def indexOf(collectionName: String): Int = {
-    val u = collectionName.lastIndexOf('_')
-    collectionName.substring(u + 1).toInt
-  }
-
-  private def nextFreeIndex(name: CollectionName) = {
-    val namesLike = existingCollectionNamesLike(name)
-    if (namesLike.isEmpty) 1
-    else indexOf(namesLike.last) + 1
-  }
-
-  def nextFreeCollectionNameLike(name: CollectionName): CollectionName =
-    name.copy(version = Some(nextFreeIndex(name)))
 
   def existingCollections: List[CollectionName] = {
     db.collectionNames.toList.sorted.flatMap(name => CollectionName(name))

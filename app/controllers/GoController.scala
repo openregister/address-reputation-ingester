@@ -55,7 +55,7 @@ class GoController(action: ActionBuilder[Request],
   def doGoAuto(target: String,
                bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = action {
     request =>
-      require(IngestControllerHelper.isSupportedTarget(target))
+      require(IngestControllerHelper.allowedTargets.contains(target))
 
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
       workerFactory.worker.push(s"automatically searching and loading to $target", {
@@ -70,7 +70,7 @@ class GoController(action: ActionBuilder[Request],
             }
           }
           if (continuer.isBusy) {
-            collectionController.cleanup()
+            collectionController.cleanup(target)
             fetchController.cleanup()
           }
       })
@@ -81,7 +81,7 @@ class GoController(action: ActionBuilder[Request],
            bulkSize: Option[Int], loopDelay: Option[Int],
            forceChange: Option[Boolean]): Action[AnyContent] = action {
     request =>
-      require(IngestControllerHelper.isSupportedTarget(target))
+      require(IngestControllerHelper.allowedTargets.contains(target))
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
@@ -99,8 +99,9 @@ class GoController(action: ActionBuilder[Request],
     if (continuer.isBusy) {
       val model2 = fetchController.fetch(model1, continuer)
       val model3 = ingestController.ingestIfOK(model2, logger, settings, Algorithm(), target, continuer)
-      if (target == "db") {
-        switchoverController.switchIfOK(model3)
+      target match {
+        case "es" | "db" => switchoverController.switchIfOK(model3)
+        case _ => // no further actiton
       }
     }
   }

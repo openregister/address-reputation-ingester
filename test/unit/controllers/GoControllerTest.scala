@@ -223,7 +223,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       verify(fetchController, times(2)).fetch(any[StateModel], any[Continuer])
       verify(ingestController, times(2)).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
       verify(switchoverController, times(2)).switchIfOK(any[StateModel])
-      verify(collectionController).cleanup()
+      verify(collectionController).cleanup("db")
       teardown()
     }
   }

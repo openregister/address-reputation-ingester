@@ -30,5 +30,5 @@ GET    /admin/showLog                                           controllers.Admi
 
 GET    /collections/list/:target                                controllers.CollectionController.listCollections(target)
 DELETE /collections/:target/:name                               controllers.CollectionController.dropCollection(target, name)
-POST   /collections/clean                                       controllers.CollectionController.doCleanup
+POST   /collections/clean/:target                               controllers.CollectionController.doCleanup(target)
 

@@ -29,7 +29,7 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object IngestControllerHelper {
-  def isSupportedTarget(target: String): Boolean = Set("db", "es", "file", "null").contains(target)
+  val allowedTargets = Set("db", "es", "file", "null")
 
   def settings(opBulkSize: Option[Int], opLoopDelay: Option[Int]): WriterSettings = {
     val bulkSize = opBulkSize getOrElse defaultBulkSize
@@ -71,7 +71,7 @@ class IngestController(action: ActionBuilder[Request],
                       streetFilter: Option[Int]
                     ): Action[AnyContent] = action {
     request =>
-      require(IngestControllerHelper.isSupportedTarget(target))
+      require(IngestControllerHelper.allowedTargets.contains(target))
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
@@ -96,7 +96,8 @@ class IngestController(action: ActionBuilder[Request],
                  continuer: Continuer): StateModel = {
     if (!model.hasFailed) {
       val writerFactory = pickWriter(target)
-      ingest(model, status, writerSettings, algorithmSettings, writerFactory, continuer)
+      val modelWithTimestamp = model.withNewTimestamp
+      ingest(modelWithTimestamp, status, writerSettings, algorithmSettings, writerFactory, continuer)
     } else {
       status.info("Ingest was skipped.")
       model // unchanged

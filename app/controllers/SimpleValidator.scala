@@ -31,6 +31,9 @@ object SimpleValidator {
   def isAlphaNumOrUnderscore(param: String, maxLength: Int = 20): Boolean =
     param.length <= maxLength && alphaNumUscorePattern.matcher(param).matches()
 
+  def isTimestamp(param: String): Boolean =
+    param.length == 16 && timestampPattern.matcher(param).matches()
+
   private val alphaNumPattern = "[a-z0-9]+".r.pattern
 
   private val alphaNumUscorePattern = "[a-z0-9_]+".r.pattern
@@ -39,4 +42,6 @@ object SimpleValidator {
     param.length <= 10 && numPattern.matcher(param).matches()
 
   private val numPattern = "[0-9]+".r.pattern
+
+  private val timestampPattern = "20[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2}".r.pattern
 }

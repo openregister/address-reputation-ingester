@@ -31,13 +31,14 @@ import scala.concurrent.{Await, Future}
 class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper: ElasticsearchHelper,
                      settings: WriterSettings) extends OutputWriter with ElasticDsl {
 
-  val ariIndexName: String = model.collectionName.asIndexName
+  val ariIndexName: String = model.collectionName.toString
 
   override def existingTargetThatIsNewerThan(date: Date): Option[String] = {
     None
   }
 
   override def begin() {
+    //TODO write creation timestamp metadata to the index
     //connect to ES and prepare index
     esHelper.clients foreach { client =>
       client execute {
@@ -70,6 +71,8 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
         }
       } await
 
+      //TODO move switchover to the switchover controller
+      //TODO remove the existing alias, if any
       client execute {
         aliases(add alias esHelper.indexAlias on ariIndexName)
       } await
@@ -116,6 +119,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
         )
       }
     }
+    //TODO write completion metadata to the index
     statusLogger.info(s"Finished ingesting to index $ariIndexName")
     model
   }

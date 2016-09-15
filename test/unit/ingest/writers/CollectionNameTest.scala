@@ -27,14 +27,14 @@ import services.db.CollectionName
 class CollectionNameTest extends FunSuite {
 
   test("format CollectionName") {
-    assert(CollectionName("fooey", Some(1), Some(2)).toString === "fooey_1_002")
-    assert(CollectionName("fooey", Some(40), Some(13)).toString === "fooey_40_013")
+    assert(CollectionName("fooey", Some(1), Some("ts2")).toString === "fooey_1_ts2")
+    assert(CollectionName("fooey", Some(40), Some("ts13")).toString === "fooey_40_ts13")
     assert(CollectionName("fooey", Some(40), None).toString === "fooey_40")
     assert(CollectionName("fooey", None, None).toString === "fooey")
   }
 
   test("CollectionName prefix") {
-    assert(CollectionName("fooey", Some(1), Some(2)).toPrefix === "fooey_1")
+    assert(CollectionName("fooey", Some(1), Some("ts2")).toPrefix === "fooey_1")
     assert(CollectionName("fooey", Some(40), None).toPrefix === "fooey_40")
   }
 
@@ -44,9 +44,8 @@ class CollectionNameTest extends FunSuite {
     assert(CollectionName("foo_bar") === None)
     assert(CollectionName("foo_bar_baz") === None)
     assert(CollectionName("abp_40") === Some(CollectionName("abp", Some(40), None)))
-    assert(CollectionName("abp_40_002") === Some(CollectionName("abp", Some(40), Some(2))))
-    assert(CollectionName("abp_40_002_zz") === None)
-    assert(CollectionName("abp_40_foo") === None)
-    assert(CollectionName("abp_foo_002") === None)
+    assert(CollectionName("abp_40_ts2") === Some(CollectionName("abp", Some(40), Some("ts2"))))
+    assert(CollectionName("abp_40_ts2_zz") === None)
+    assert(CollectionName("abp_foo_ts2") === None)
   }
 }

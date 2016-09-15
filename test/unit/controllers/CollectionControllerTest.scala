@@ -51,11 +51,11 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
     val helper = mock[ElasticsearchHelper]
 
     val adminCollections = Set(fakeIrrelevantCollection("admin"), fakeIrrelevantCollection("system.indexes"))
-    val collectionsInUse = Set(fakeCompletedCollection("abi_39_003"), fakeCompletedCollection("abp_40_005"))
+    val collectionsInUse = Set(fakeCompletedCollection("abi_39_ts3"), fakeCompletedCollection("abp_40_ts5"))
 
     val store = mock[MongoSystemMetadataStore]
-    val abi = new StoredMetadataStub("abi_39_003")
-    val abp = new StoredMetadataStub("abp_40_005")
+    val abi = new StoredMetadataStub("abi_39_ts3")
+    val abp = new StoredMetadataStub("abp_40_ts5")
     when(store.addressBaseCollectionItem("abi")) thenReturn abi
     when(store.addressBaseCollectionItem("abp")) thenReturn abp
 
@@ -87,13 +87,13 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
     """
       given that there are irrelevant collections
       and there are no previous collections for each product
-      then determineObsoleteCollections should choose none of them
+      then determineObsoleteMongoCollections should choose none of them
     """) {
     new Context(Set(
       fakeIrrelevantCollection("foo"),
       fakeIrrelevantCollection("bar")
     )) {
-      val chosen = collectionController.determineObsoleteCollections
+      val chosen = collectionController.determineObsoleteMongoCollections
       assert(chosen === Set())
     }
   }
@@ -101,30 +101,30 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
   test(
     """
       given that there are some previous completed collections for each product
-      then determineObsoleteCollections should choose all but the last of them,
+      then determineObsoleteMongoCollections should choose all but the last of them,
       not counting the one currently in use
     """) {
     new Context(Set(
-      fakeCompletedCollection("abi_38_001"),
-      fakeCompletedCollection("abi_39_001"),
-      fakeCompletedCollection("abi_39_002"),
-      // collection in use: abi_39_003
-      fakeCompletedCollection("abp_39_007"),
-      fakeCompletedCollection("abp_40_001"),
-      fakeCompletedCollection("abp_40_002"),
-      fakeCompletedCollection("abp_40_003"),
-      fakeCompletedCollection("abp_40_004"),
-      // collection in use: abp_40_005
+      fakeCompletedCollection("abi_38_ts1"),
+      fakeCompletedCollection("abi_39_ts1"),
+      fakeCompletedCollection("abi_39_ts2"),
+      // collection in use: abi_39_ts3
+      fakeCompletedCollection("abp_39_ts7"),
+      fakeCompletedCollection("abp_40_ts1"),
+      fakeCompletedCollection("abp_40_ts2"),
+      fakeCompletedCollection("abp_40_ts3"),
+      fakeCompletedCollection("abp_40_ts4"),
+      // collection in use: abp_40_ts5
       fakeIrrelevantCollection("bar")
     )) {
-      val chosen = collectionController.determineObsoleteCollections
+      val chosen = collectionController.determineObsoleteMongoCollections
       assert(chosen.map(_.name.toString) === Set(
-        "abi_38_001",
-        "abi_39_001",
-        "abp_39_007",
-        "abp_40_001",
-        "abp_40_002",
-        "abp_40_003"
+        "abi_38_ts1",
+        "abi_39_ts1",
+        "abp_39_ts7",
+        "abp_40_ts1",
+        "abp_40_ts2",
+        "abp_40_ts3"
       ))
     }
   }
@@ -136,29 +136,29 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
       and leave all the future ones
     """) {
     new Context(Set(
-      fakeCompletedCollection("abi_38_001"),
-      fakeCompletedCollection("abi_39_001"),
-      fakeCompletedCollection("abi_39_002"),
-      // collection in use: abi_39_003
-      fakeCompletedCollection("abi_39_004"),
-      fakeCompletedCollection("abp_39_007"),
-      fakeCompletedCollection("abp_40_001"),
-      fakeCompletedCollection("abp_40_002"),
-      fakeCompletedCollection("abp_40_003"),
-      fakeCompletedCollection("abp_40_004"),
-      // collection in use: abp_40_005
-      fakeCompletedCollection("abp_41_001"),
-      fakeCompletedCollection("abp_41_002"),
+      fakeCompletedCollection("abi_38_ts1"),
+      fakeCompletedCollection("abi_39_ts1"),
+      fakeCompletedCollection("abi_39_ts2"),
+      // collection in use: abi_39_ts3
+      fakeCompletedCollection("abi_39_ts4"),
+      fakeCompletedCollection("abp_39_ts7"),
+      fakeCompletedCollection("abp_40_ts1"),
+      fakeCompletedCollection("abp_40_ts2"),
+      fakeCompletedCollection("abp_40_ts3"),
+      fakeCompletedCollection("abp_40_ts4"),
+      // collection in use: abp_40_ts5
+      fakeCompletedCollection("abp_41_ts1"),
+      fakeCompletedCollection("abp_41_ts2"),
       fakeIrrelevantCollection("bar")
     )) {
-      val chosen = collectionController.determineObsoleteCollections
+      val chosen = collectionController.determineObsoleteMongoCollections
       assert(chosen.map(_.name.toString) === Set(
-        "abi_38_001",
-        "abi_39_001",
-        "abp_39_007",
-        "abp_40_001",
-        "abp_40_002",
-        "abp_40_003"
+        "abi_38_ts1",
+        "abi_39_ts1",
+        "abp_39_ts7",
+        "abp_40_ts1",
+        "abp_40_ts2",
+        "abp_40_ts3"
       ))
     }
   }
@@ -169,34 +169,34 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
       then determineObsoleteCollections should choose all of them
     """) {
     new Context(Set(
-      fakeIncompleteCollection("abi_38_001"),
-      fakeIncompleteCollection("abi_39_001"),
-      fakeIncompleteCollection("abi_39_002"),
-      // collection in use: abi_39_003
-      fakeIncompleteCollection("abi_39_004"),
-      fakeIncompleteCollection("abp_39_007"),
-      fakeIncompleteCollection("abp_40_001"),
-      fakeIncompleteCollection("abp_40_002"),
-      fakeIncompleteCollection("abp_40_003"),
-      fakeIncompleteCollection("abp_40_004"),
-      // collection in use: abp_40_005
-      fakeIncompleteCollection("abp_41_001"),
-      fakeIncompleteCollection("abp_41_002"),
+      fakeIncompleteCollection("abi_38_ts1"),
+      fakeIncompleteCollection("abi_39_ts1"),
+      fakeIncompleteCollection("abi_39_ts2"),
+      // collection in use: abi_39_ts3
+      fakeIncompleteCollection("abi_39_ts4"),
+      fakeIncompleteCollection("abp_39_ts7"),
+      fakeIncompleteCollection("abp_40_ts1"),
+      fakeIncompleteCollection("abp_40_ts2"),
+      fakeIncompleteCollection("abp_40_ts3"),
+      fakeIncompleteCollection("abp_40_ts4"),
+      // collection in use: abp_40_ts5
+      fakeIncompleteCollection("abp_41_ts1"),
+      fakeIncompleteCollection("abp_41_ts2"),
       fakeIrrelevantCollection("bar")
     )) {
-      val chosen = collectionController.determineObsoleteCollections
+      val chosen = collectionController.determineObsoleteMongoCollections
       assert(chosen.map(_.name.toString) === Set(
-        "abi_38_001",
-        "abi_39_001",
-        "abi_39_002",
-        "abi_39_004",
-        "abp_39_007",
-        "abp_40_001",
-        "abp_40_002",
-        "abp_40_003",
-        "abp_40_004",
-        "abp_41_001",
-        "abp_41_002"
+        "abi_38_ts1",
+        "abi_39_ts1",
+        "abi_39_ts2",
+        "abi_39_ts4",
+        "abp_39_ts7",
+        "abp_40_ts1",
+        "abp_40_ts2",
+        "abp_40_ts3",
+        "abp_40_ts4",
+        "abp_41_ts1",
+        "abp_41_ts2"
       ))
     }
   }
@@ -208,25 +208,25 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
       and there should be a log message for each one
     """) {
     new Context(Set(
-      fakeIncompleteCollection("abi_38_001"),
-      fakeCompletedCollection("abi_39_001"),
-      fakeCompletedCollection("abi_39_002"),
-      // collection in use: abi_39_003
-      fakeIncompleteCollection("abi_39_004"),
-      fakeCompletedCollection("abi_39_005"),
+      fakeIncompleteCollection("abi_38_ts1"),
+      fakeCompletedCollection("abi_39_ts1"),
+      fakeCompletedCollection("abi_39_ts2"),
+      // collection in use: abi_39_ts3
+      fakeIncompleteCollection("abi_39_ts4"),
+      fakeCompletedCollection("abi_39_ts5"),
       fakeIrrelevantCollection("foo"),
       fakeIrrelevantCollection("bar")
     )) {
-      collectionController.cleanup()
+      collectionController.cleanup("db")
       assert(logger.all.size === 3, logger.all.mkString(","))
       assert(logger.infos.map(_.message).toSet == Set(
-        "Info:Deleting obsolete collection abi_38_001",
-        "Info:Deleting obsolete collection abi_39_001",
-        "Info:Deleting obsolete collection abi_39_004"
+        "Info:Deleting obsolete MongoDB collection abi_38_ts1",
+        "Info:Deleting obsolete MongoDB collection abi_39_ts1",
+        "Info:Deleting obsolete MongoDB collection abi_39_ts4"
       ))
-      verify(collectionMap("abi_38_001")).drop()
-      verify(collectionMap("abi_39_001")).drop()
-      verify(collectionMap("abi_39_004")).drop()
+      verify(collectionMap("abi_38_ts1")).drop()
+      verify(collectionMap("abi_39_ts1")).drop()
+      verify(collectionMap("abi_39_ts4")).drop()
     }
   }
 

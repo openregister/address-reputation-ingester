@@ -28,20 +28,12 @@ import org.joda.time.format.DateTimeFormat
 
 case class CollectionName(productName: String,
                           epoch: Option[Int],
-                          version: Option[Int],
-                          dateStamp: Option[String] = None) {
-
-  val dateTimeSuffix = dateStamp.getOrElse {
-    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd-HH-mm")
-    formatter.print(new DateTime())
-  }
+                          timestamp: Option[String] = None) {
 
   def toPrefix: String = s"${productName}_${epoch.get}"
 
-  def asIndexName: String = s"${toPrefix}_${dateTimeSuffix}"
-
   override lazy val toString: String =
-    if (version.isDefined) CollectionName.format(productName, epoch.get, version.get)
+    if (timestamp.isDefined) CollectionName.format(productName, epoch.get, timestamp.get)
     else if (epoch.isDefined) toPrefix
     else productName
 }
@@ -58,13 +50,13 @@ object CollectionName {
   private def doParseName(parts: List[String]): Option[CollectionName] = {
     try {
       val epoch = if (parts.size >= 2) Some(parts(1).toInt) else None
-      val version = if (parts.size >= 3) Some(parts(2).toInt) else None
-      Some(CollectionName(parts.head, epoch, version))
+      val timestamp = if (parts.size >= 3) Some(parts(2)) else None
+      Some(CollectionName(parts.head, epoch, timestamp))
     } catch {
       case n: NumberFormatException => None
     }
   }
 
-  def format(productName: String, epoch: Int, version: Int): String = "%s_%d_%03d".format(productName, epoch, version)
+  def format(productName: String, epoch: Int, timestamp: String): String = "%s_%d_%s".format(productName, epoch, timestamp)
 }
 

@@ -43,7 +43,7 @@ class StateModelTest extends FunSuite with Matchers {
     val p = OSGBProduct("abp", 38, List(f1))
     val m = StateModel(p)
 
-    m should be(StateModel("abp", 38, None, None, None, Some(p)))
+    m should be(StateModel("abp", 38, None, None,  Some(p)))
   }
 
   test(
@@ -51,10 +51,10 @@ class StateModelTest extends FunSuite with Matchers {
       StateModel.apply correctly converts a CollectionName
     """) {
     val f1 = WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isDataFile = true)
-    val c = CollectionName("abp", Some(38), Some(1))
+    val c = CollectionName("abp", Some(38), Some("ts1"))
     val m = StateModel(c)
 
-    m should be(StateModel("abp", 38, None, Some(1)))
+    m should be(StateModel("abp", 38, None, Some("ts1")))
   }
 
 }

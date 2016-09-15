@@ -26,7 +26,7 @@ import com.mongodb.casbah.commons.MongoDBObject
 import config.ApplicationGlobal
 import config.ConfigHelper._
 import play.api.Play._
-import services.db.{CollectionMetadata, CollectionName}
+import services.db.CollectionMetadata
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
@@ -52,7 +52,7 @@ class OutputDBWriter(cleardownOnError: Boolean,
   private val db = mongoDbConnection.getConfiguredDb
 
   private val collectionMetadata = new CollectionMetadata(db)
-  val collectionName = collectionMetadata.nextFreeCollectionNameLike(model.collectionName)
+  val collectionName = model.collectionName
   private val collection = db(collectionName.toString)
   private val bulk = new BatchedBulkOperation(settings, collection)
 
@@ -60,19 +60,16 @@ class OutputDBWriter(cleardownOnError: Boolean,
   private var hasError = false
 
   def existingTargetThatIsNewerThan(date: Date): Option[String] = {
-    val similar = collectionMetadata.existingCollectionNamesLike(model.collectionName)
-    similar.reverse.find {
+    val similar = collectionMetadata.existingCollectionNamesLike(collectionName)
+    val found = similar.reverse.find {
       name =>
-        val cn = CollectionName(name)
-        cn.isDefined && {
-          val info = collectionMetadata.findMetadata(cn.get)
-          info.exists(_.completedAfter(date))
-        }
+        val info = collectionMetadata.findMetadata(name)
+        info.exists(_.completedAfter(date))
     }
+    found.map(_.toString)
   }
 
   def begin() {
-    model = model.copy(version = collectionName.version)
     statusLogger.info(s"Writing new collection '$collectionName'")
     CollectionMetadata.writeCreationDateTo(collection)
   }

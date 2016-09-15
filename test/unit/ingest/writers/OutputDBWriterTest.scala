@@ -42,19 +42,19 @@ class OutputDBWriterTest extends FreeSpec {
   val now = new Date()
   val yesterday = new Date(now.getTime - 86400000L)
 
-  class Context(nextFree: String, collectionNames: Set[String]) {
+  class Context(timestamp: String, collectionNames: Set[String]) {
     val casbahMongoConnection = mock[CasbahMongoConnection]
     val mongoDB = mock[MongoDB]
     val bulk = mock[BulkWriteOperation]
     val logger = new StubLogger()
-    val model = new StateModel("x", 4)
+    val model = new StateModel(productName = "x", epoch = 4, timestamp = Some(timestamp))
     val status = new StatusLogger(logger)
 
     when(casbahMongoConnection.getConfiguredDb) thenReturn mongoDB
 
     when(mongoDB.collectionNames()) thenReturn (mutable.Set() ++ collectionNames)
 
-    val all = collectionNames + nextFree
+    val all = collectionNames + ("x_4_" + timestamp)
     val collections = all.map(n => n -> mock[MongoCollection]).toMap
 
     for (n <- all) {
@@ -69,7 +69,7 @@ class OutputDBWriterTest extends FreeSpec {
   "targetExistsAndIsNewerThan" - {
     "when the model has no corresponding collection yet" - {
       "then targetExistsAndIsNewerThan will return None" in {
-        new Context("x_4_001", Set("admin", "x_1_001", "x_2_001", "x_3_001")) {
+        new Context("ts1", Set("admin", "x_1_ts1", "x_2_ts1", "x_3_ts1")) {
           val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
 
           val result = outputDBWriter.existingTargetThatIsNewerThan(new Date())
@@ -82,9 +82,9 @@ class OutputDBWriterTest extends FreeSpec {
 
     "when the model has corresponding collections without any completion dates" - {
       "then targetExistsAndIsNewerThan will return None" in {
-        new Context("x_4_003", Set("admin", "x_4_001", "x_4_002")) {
-          when(collections("x_4_001").findOneByID("metadata")) thenReturn None
-          when(collections("x_4_002").findOneByID("metadata")) thenReturn None
+        new Context("ts3", Set("admin", "x_4_ts1", "x_4_ts2")) {
+          when(collections("x_4_ts1").findOneByID("metadata")) thenReturn None
+          when(collections("x_4_ts2").findOneByID("metadata")) thenReturn None
 
           val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
 
@@ -98,10 +98,10 @@ class OutputDBWriterTest extends FreeSpec {
 
     "when the model has corresponding collections with old completion dates" - {
       "then targetExistsAndIsNewerThan will return None" in {
-        new Context("x_4_003", Set("admin", "x_4_001", "x_4_002")) {
+        new Context("ts3", Set("admin", "x_4_ts1", "x_4_ts2")) {
           val metadata = MongoDBObject("completedAt" -> yesterday.getTime)
-          when(collections("x_4_001").findOneByID("metadata")) thenReturn Some(metadata)
-          when(collections("x_4_002").findOneByID("metadata")) thenReturn Some(metadata)
+          when(collections("x_4_ts1").findOneByID("metadata")) thenReturn Some(metadata)
+          when(collections("x_4_ts2").findOneByID("metadata")) thenReturn Some(metadata)
 
           val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
 
@@ -115,19 +115,19 @@ class OutputDBWriterTest extends FreeSpec {
 
     "when the model has corresponding collections with newish completion dates" - {
       "then targetExistsAndIsNewerThan will return the last collection name" in {
-        new Context("x_4_003", Set("admin", "x_4_001", "x_4_002")) {
+        new Context("ts3", Set("admin", "x_4_ts1", "x_4_ts2")) {
           val now = new Date()
           val yesterday = new Date(now.getTime - 86400000L)
 
           val metadata = MongoDBObject("completedAt" -> now.getTime)
-          when(collections("x_4_001").findOneByID("metadata")) thenReturn Some(metadata)
-          when(collections("x_4_002").findOneByID("metadata")) thenReturn Some(metadata)
+          when(collections("x_4_ts1").findOneByID("metadata")) thenReturn Some(metadata)
+          when(collections("x_4_ts2").findOneByID("metadata")) thenReturn Some(metadata)
 
           val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
 
           val result = outputDBWriter.existingTargetThatIsNewerThan(yesterday)
 
-          assert(result === Some("x_4_002"))
+          assert(result === Some("x_4_ts2"))
         }
       }
     }
@@ -138,14 +138,14 @@ class OutputDBWriterTest extends FreeSpec {
          then an insert is invoked
          and the collection name is chosen correctly
         """ in {
-          new Context("x_4_005", Set("admin", "x_4_000", "x_4_001", "x_4_004")) {
+          new Context("ts5", Set("admin", "x_4_ts0", "x_4_ts1", "x_4_ts4")) {
             val someDBAddress = DbAddress("id1", List("1 Foo Rue"), Some("Puddletown"), "FX1 1XF", Some("GB-ENG"))
 
             val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
 
             outputDBWriter.output(someDBAddress)
 
-            assert(outputDBWriter.collectionName.toString === "x_4_005")
+            assert(outputDBWriter.collectionName.toString === "x_4_ts5")
             verify(bulk, times(1)).insert(any[DBObject])
           }
         }
@@ -159,13 +159,13 @@ class OutputDBWriterTest extends FreeSpec {
          and an index is created for the postcode field
          and then close is called on the mongoDB instance
         """ in {
-          new Context("x_4_005", Set("admin", "x_4_000", "x_4_001", "x_4_004")) {
+          new Context("ts5", Set("admin", "x_4_ts0", "x_4_ts1", "x_4_ts4")) {
             val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
 
             outputDBWriter.end(true)
 
-            verify(collections("x_4_005")).update(any[DBObject], any[DBObject], any[Boolean], any[Boolean], any[WriteConcern], any[Option[Boolean]])
-            verify(collections("x_4_005")).createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
+            verify(collections("x_4_ts5")).update(any[DBObject], any[DBObject], any[Boolean], any[Boolean], any[WriteConcern], any[Option[Boolean]])
+            verify(collections("x_4_ts5")).createIndex(MongoDBObject("postcode" -> 1), MongoDBObject("unique" -> false))
           }
         }
       }

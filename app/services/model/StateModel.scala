@@ -17,14 +17,15 @@
 package services.model
 
 import fetch.OSGBProduct
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import services.db.CollectionName
 
 case class StateModel(
                        productName: String = "",
                        epoch: Int = 0,
                        variant: Option[String] = None,
-                       version: Option[Int] = None,
-                       dateStamp: Option[String] = None,
+                       timestamp: Option[String] = None,
                        product: Option[OSGBProduct] = None,
                        target: String = "db",
                        forceChange: Boolean = false,
@@ -36,16 +37,22 @@ case class StateModel(
     s"$productName/$epoch/$v"
   }
 
-  def collectionName: CollectionName = CollectionName(productName, Some(epoch), version, dateStamp)
+  def withNewTimestamp: StateModel = {
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd-HH-mm")
+    val timestamp = formatter.print(new DateTime())
+    copy(timestamp = Some(timestamp))
+  }
+
+  def collectionName: CollectionName = CollectionName(productName, Some(epoch), timestamp)
 }
 
 
 object StateModel {
   def apply(product: OSGBProduct): StateModel = {
-    new StateModel(product.productName, product.epoch, None, None, None, Some(product))
+    new StateModel(product.productName, product.epoch, None, None, Some(product))
   }
 
   def apply(collectionName: CollectionName): StateModel = {
-    new StateModel(collectionName.productName, collectionName.epoch.get, None, collectionName.version, collectionName.dateStamp, None)
+    new StateModel(collectionName.productName, collectionName.epoch.get, None, collectionName.timestamp, None)
   }
 }

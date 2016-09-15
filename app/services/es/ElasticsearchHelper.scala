@@ -26,7 +26,10 @@ import play.api.Play._
 
 object Services {
 
-  private val esSettings = Settings.settingsBuilder().put("cluster.name", "address-reputation").build()
+  private val esSettings = {
+    val clusterName = mustGetConfigString(current.mode, current.configuration, "elastic.clustername")
+    Settings.settingsBuilder().put("cluster.name", clusterName).build()
+  }
 
   lazy val getClients: List[ElasticClient] = {
     val connectionString = mustGetConfigString(current.mode, current.configuration, "elastic.uri")

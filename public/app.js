@@ -109,12 +109,16 @@ function doStartProductAction(action) {
             include + prefer + streets, true);
 }
 
-function getTarget() {
-    return $('#target').val();
+function getTarget1() {
+    return $('#target1').val();
+}
+
+function getTarget2() {
+    return $('#target2').val();
 }
 
 function doGo() {
-    var target = getTarget();
+    var target = getTarget1();
     doStartProductAction('/go/via/file/to/' + target);
 }
 
@@ -123,14 +127,14 @@ function doFetch() {
 }
 
 function doIngest() {
-    var target = getTarget();
+    var target = getTarget1();
     doStartProductAction('/ingest/from/file/to/' + target);
 }
 
 //-------------------------------------------------------------------------------------------------
 
 function goAuto() {
-    var target = getTarget();
+    var target = getTarget1();
     get('/goAuto/via/file/to/' + target, true);
 }
 
@@ -147,11 +151,12 @@ function cleanFs() {
 }
 
 function cleanCol() {
-    post('/collections/clean', true);
+    var target = getTarget2();
+    post('/collections/clean/' + target, true);
 }
 
 function listCol() {
-    var target = getTarget();
+    var target = getTarget2();
     getAndRefreshConsoleJson('/collections/list/' + target);
 }
 
@@ -161,7 +166,7 @@ function ping() {
 
 function switchCol() {
     var colname = $('#colname').val();
-    var target = getTarget();
+    var target = getTarget2();
     if (colname == '')
         alert("Enter the collection name");
     else {
@@ -172,7 +177,7 @@ function switchCol() {
 
 function dropCol() {
     var colname = $('#colname').val();
-    var target = getTarget();
+    var target = getTarget2();
     if (colname == '')
         alert("Enter the collection name");
     else {
@@ -214,6 +219,10 @@ function showTheRealm() {
     });
 }
 
+function updateTogglerLabel() {
+    $('#collectionActions legend').text(getTarget2() + " collections");
+}
+
 $(document).ready(
     function () {
         setupContextPath();
@@ -234,6 +243,7 @@ $(document).ready(
         $('#ping').click(ping);
         $('#dirTree').click(dirTree);
         $('#showLog').click(showLog);
+        $('#target2').change(updateTogglerLabel);
         // view toggles
         $('#fileActions legend').click(function() { toggleFieldset('#fileActions')} );
         $('#collectionActions legend').click(function() { toggleFieldset('#collectionActions')});
