@@ -17,12 +17,13 @@
  *
  */
 
-package controllers
+package controllers.db
 
 import java.util.Date
 
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoCollection, MongoDB}
+import controllers.{MongoSystemMetadataStore, PassThroughAction, StoredMetadataStub}
 import ingest.StubWorkerFactory
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
@@ -76,7 +77,7 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
     }
 
     val collectionMetadata = new CollectionMetadata(mongoDB)
-    val collectionController = new CollectionController(new PassThroughAction, status, workerFactory, collectionMetadata, store, helper)
+    val collectionController = new CollectionController(new PassThroughAction, status, workerFactory, collectionMetadata, store)
 
     def teardown() {
       worker.terminate()
@@ -87,13 +88,13 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
     """
       given that there are irrelevant collections
       and there are no previous collections for each product
-      then determineObsoleteMongoCollections should choose none of them
+      then determineObsoleteCollections should choose none of them
     """) {
     new Context(Set(
       fakeIrrelevantCollection("foo"),
       fakeIrrelevantCollection("bar")
     )) {
-      val chosen = collectionController.determineObsoleteMongoCollections
+      val chosen = collectionController.determineObsoleteCollections
       assert(chosen === Set())
     }
   }
@@ -101,7 +102,7 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
   test(
     """
       given that there are some previous completed collections for each product
-      then determineObsoleteMongoCollections should choose all but the last of them,
+      then determineObsoleteCollections should choose all but the last of them,
       not counting the one currently in use
     """) {
     new Context(Set(
@@ -117,7 +118,7 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
       // collection in use: abp_40_ts5
       fakeIrrelevantCollection("bar")
     )) {
-      val chosen = collectionController.determineObsoleteMongoCollections
+      val chosen = collectionController.determineObsoleteCollections
       assert(chosen.map(_.name.toString) === Set(
         "abi_38_ts1",
         "abi_39_ts1",
@@ -151,7 +152,7 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
       fakeCompletedCollection("abp_41_ts2"),
       fakeIrrelevantCollection("bar")
     )) {
-      val chosen = collectionController.determineObsoleteMongoCollections
+      val chosen = collectionController.determineObsoleteCollections
       assert(chosen.map(_.name.toString) === Set(
         "abi_38_ts1",
         "abi_39_ts1",
@@ -184,7 +185,7 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
       fakeIncompleteCollection("abp_41_ts2"),
       fakeIrrelevantCollection("bar")
     )) {
-      val chosen = collectionController.determineObsoleteMongoCollections
+      val chosen = collectionController.determineObsoleteCollections
       assert(chosen.map(_.name.toString) === Set(
         "abi_38_ts1",
         "abi_39_ts1",
@@ -217,7 +218,7 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
       fakeIrrelevantCollection("foo"),
       fakeIrrelevantCollection("bar")
     )) {
-      collectionController.cleanup("db")
+      collectionController.cleanup()
       assert(logger.all.size === 3, logger.all.mkString(","))
       assert(logger.infos.map(_.message).toSet == Set(
         "Info:Deleting obsolete MongoDB collection abi_38_ts1",

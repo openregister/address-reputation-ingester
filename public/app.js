@@ -152,12 +152,12 @@ function cleanFs() {
 
 function cleanCol() {
     var target = getTarget2();
-    post('/collections/clean/' + target, true);
+    post('/' + target + '/collections/clean', true);
 }
 
 function listCol() {
     var target = getTarget2();
-    getAndRefreshConsoleJson('/collections/list/' + target);
+    getAndRefreshConsoleJson('/' + target + '/collections/list');
 }
 
 function ping() {
@@ -181,7 +181,7 @@ function dropCol() {
     if (colname == '')
         alert("Enter the collection name");
     else {
-        ajax('DELETE', '/collections/' + target + '/' + colname, function (data) {
+        ajax('DELETE', '/' + target + '/collections/' + colname, function (data) {
             setTimeout(listCol, 250);
         });
     }

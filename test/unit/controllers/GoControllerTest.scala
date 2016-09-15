@@ -68,10 +68,12 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     val fetchController = mock[FetchController]
     val ingestController = mock[IngestController]
     val switchoverController = mock[SwitchoverController]
-    val collectionController = mock[CollectionController]
+    val dbCollectionController = mock[db.CollectionController]
+    val esCollectionController = mock[es.CollectionController]
 
     val goController = new GoController(new PassThroughAction, status, workerFactory, sardineWrapper,
-      fetchController, ingestController, switchoverController, collectionController)
+      fetchController, ingestController, switchoverController,
+      dbCollectionController, esCollectionController)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]
@@ -223,7 +225,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       verify(fetchController, times(2)).fetch(any[StateModel], any[Continuer])
       verify(ingestController, times(2)).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
       verify(switchoverController, times(2)).switchIfOK(any[StateModel])
-      verify(collectionController).cleanup("db")
+      verify(dbCollectionController).cleanup()
       teardown()
     }
   }

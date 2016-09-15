@@ -18,6 +18,7 @@ package controllers
 
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoCollection, MongoDB}
+import ingest.StubWorkerFactory
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -60,13 +61,12 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
   def parameterTest(target: String, product: String, epoch: Int, timestamp: String): Unit = {
     val logger = new StubLogger()
     val status = new StatusLogger(logger)
-    val testWorker = new WorkQueue(status)
     val auditClient = mock[AuditClient]
     val elasticSearchHelper = mock[ElasticsearchHelper]
 
-    val workerFactory = new WorkerFactory {
-      override def worker = testWorker
-    }
+    val worker = new WorkQueue(status)
+    val workerFactory = new StubWorkerFactory(worker)
+
     val store = mock[MongoSystemMetadataStore]
     when(store.addressBaseCollectionItem(anyString)) thenThrow new IllegalArgumentException()
 
@@ -86,10 +86,9 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     val status = new StatusLogger(logger)
     val auditClient = mock[AuditClient]
     val elasticSearchHelper = mock[ElasticsearchHelper]
-    val testWorker = new WorkQueue(status)
-    val workerFactory = new WorkerFactory {
-      override def worker = testWorker
-    }
+
+    val worker = new WorkQueue(status)
+    val workerFactory = new StubWorkerFactory(worker)
 
     val storedItem = new StoredMetadataStub()
     val store = mock[MongoSystemMetadataStore]
@@ -121,8 +120,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       val response = await(call(sc.doSwitchTo("db", "abp", 40, "2001-02-03-04-05"), request))
 
       assert(response.header.status / 100 === 2)
-      testWorker.awaitCompletion()
-      testWorker.terminate()
+      worker.awaitCompletion()
+      worker.terminate()
 
       assert(storedItem.get === "abp_40_2001-02-03-04-05")
 
@@ -144,8 +143,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
         scala.concurrent.ExecutionContext.Implicits.global)
       val response = await(call(sc.doSwitchTo("db", "abp", 40, "2001-02-03-04-05"), request))
 
-      testWorker.awaitCompletion()
-      testWorker.terminate()
+      worker.awaitCompletion()
+      worker.terminate()
 
       assert(storedItem.get === "the initial value")
       assert(logger.warns.size === 2, logger.all)
@@ -170,8 +169,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
         scala.concurrent.ExecutionContext.Implicits.global)
       val response = await(call(sc.doSwitchTo("db", "abp", 40, "2001-02-03-04-05"), request))
 
-      testWorker.awaitCompletion()
-      testWorker.terminate()
+      worker.awaitCompletion()
+      worker.terminate()
 
       assert(response.header.status === 202)
       assert(storedItem.get === "the initial value")
@@ -196,8 +195,8 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
         scala.concurrent.ExecutionContext.Implicits.global)
       val response = await(call(sc.doSwitchTo("db", "abp", 40, "2001-02-03-04-05"), request))
 
-      testWorker.awaitCompletion()
-      testWorker.terminate()
+      worker.awaitCompletion()
+      worker.terminate()
 
       assert(response.header.status === 401)
       assert(storedItem.get === "the initial value")
@@ -223,14 +222,14 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
       val model2 = sc.switchIfOK(model1)
 
-      testWorker.awaitCompletion()
+      worker.awaitCompletion()
 
       assert(model2 === model1)
       assert(storedItem.get === "the initial value")
       assert(logger.size === 1, logger.all.mkString("\n"))
       assert(logger.infos.map(_.message) === List("Info:Switchover was skipped."))
 
-      testWorker.terminate()
+      worker.terminate()
     }
   }
 }

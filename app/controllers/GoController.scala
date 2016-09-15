@@ -39,7 +39,8 @@ object GoController extends GoController(
   FetchController,
   IngestController,
   SwitchoverController,
-  CollectionController
+  db.CollectionController,
+  es.CollectionController
 )
 
 
@@ -50,7 +51,8 @@ class GoController(action: ActionBuilder[Request],
                    fetchController: FetchController,
                    ingestController: IngestController,
                    switchoverController: SwitchoverController,
-                   collectionController: CollectionController) extends BaseController {
+                   dbCollectionController: db.CollectionController,
+                   esCollectionController: es.CollectionController) extends BaseController {
 
   def doGoAuto(target: String,
                bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = action {
@@ -70,7 +72,11 @@ class GoController(action: ActionBuilder[Request],
             }
           }
           if (continuer.isBusy) {
-            collectionController.cleanup(target)
+            target match {
+              case "db" => dbCollectionController.cleanup()
+              case "es" => esCollectionController.cleanup()
+              case _ => // no action
+            }
             fetchController.cleanup()
           }
       })
@@ -101,7 +107,7 @@ class GoController(action: ActionBuilder[Request],
       val model3 = ingestController.ingestIfOK(model2, logger, settings, Algorithm(), target, continuer)
       target match {
         case "es" | "db" => switchoverController.switchIfOK(model3)
-        case _ => // no further actiton
+        case _ => // no further action
       }
     }
   }

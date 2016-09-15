@@ -122,14 +122,14 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
   "list collections" must {
     """
-       * return the sorted list of collections
+       * return the sorted list of MongoDB collections
        * along with the completion dates (if present)
     """ in {
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
-      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_5"))
+      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_ts5"))
 
-      val request = newRequest("GET", "/collections/list/db")
+      val request = newRequest("GET", "/db/collections/list")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === OK)
       //      assert(response.body === "foo")
@@ -137,45 +137,77 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       assert(waitUntil("/admin/status", "idle", 100000) === true)
       mongo.close()
     }
+
+    """
+       * return the sorted list of ES collections
+       * along with the completion dates (if present)
+    """ ignore {
+//      val mongo = casbahMongoConnection()
+//      val admin = new MetadataStore(mongo, Stdout)
+//      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_ts5"))
+//
+//      val request = newRequest("GET", "/es/collections/list")
+//      val response = await(request.withAuth("admin", "password", BASIC).execute())
+//      assert(response.status === OK)
+//
+//      assert(waitUntil("/admin/status", "idle", 100000) === true)
+//      mongo.close()
+    }
   }
 
   //-----------------------------------------------------------------------------------------------
 
   "collection endpoints should be protected by basic auth" must {
     "list Mongo collections" in {
-      val request = newRequest("GET", "/collections/list/db")
+      val request = newRequest("GET", "/db/collections/list")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
     "list ES collections" in {
-      val request = newRequest("GET", "/collections/list/es")
+      val request = newRequest("GET", "/es/collections/list")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
     "drop Mongo collection" in {
-      val request = newRequest("DELETE", "/collections/db/foo")
+      val request = newRequest("DELETE", "/db/collections/foo")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
     "drop ES collection" in {
-      val request = newRequest("DELETE", "/collections/es/foo")
+      val request = newRequest("DELETE", "/es/collections/foo")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
     "clean db" in {
-      val request = newRequest("POST", "/collections/clean/db")
+      val request = newRequest("POST", "/db/collections/clean")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
     "clean es" in {
-      val request = newRequest("POST", "/collections/clean/es")
+      val request = newRequest("POST", "/es/collections/clean")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
+    }
+  }
+
+  //-----------------------------------------------------------------------------------------------
+
+  "collection endpoints" must {
+    "drop unknown Mongo collection should give NOT_FOUND" in {
+      val request = newRequest("DELETE", "/db/collections/2001-12-31-01-02")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      response.status mustBe NOT_FOUND
+    }
+
+    "drop unknown ES collection should give NOT_FOUND" in {
+      val request = newRequest("DELETE", "/es/collections/2001-12-31-01-02")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      response.status mustBe NOT_FOUND
     }
   }
 

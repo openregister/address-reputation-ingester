@@ -1,30 +1,28 @@
 /*
  *
+ *  * Copyright 2016 HM Revenue & Customs
  *  *
- *  *  * Copyright 2016 HM Revenue & Customs
- *  *  *
- *  *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  *  * you may not use this file except in compliance with the License.
- *  *  * You may obtain a copy of the License at
- *  *  *
- *  *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *  *
- *  *  * Unless required by applicable law or agreed to in writing, software
- *  *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  *  * See the License for the specific language governing permissions and
- *  *  * limitations under the License.
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
  *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
  *
  */
 
-package controllers
+package controllers.es
 
 import com.carrotsearch.hppc.ObjectLookupContainer
 import com.sksamuel.elastic4s.ElasticDsl._
 import config.ApplicationGlobal
-import controllers.SimpleValidator._
+import controllers._
 import play.api.libs.json.Json
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
@@ -57,18 +55,13 @@ class CollectionController(action: ActionBuilder[Request],
     new IllegalArgumentException(s"'$target' is not a supported target.")
   }
 
-  def listCollections(target: String): Action[AnyContent] = action {
+  def doListCollections(): Action[AnyContent] = action {
     request =>
-      val result = target match {
-        case "db" => listMongoCollections()
-        case "es" => listElasticSearchCollections()
-        case _ => throw unsupportedTarget(target)
-      }
-
+      val result = listCollections()
       Ok(Json.toJson(ListCI(result)))
   }
 
-  private def listElasticSearchCollections(): List[CollectionInfo] = {
+  private def listCollections(): List[CollectionInfo] = {
     esHelper.clients flatMap { client =>
 
       val inUse = client execute {
@@ -104,22 +97,10 @@ class CollectionController(action: ActionBuilder[Request],
     }
   }
 
-  private def listMongoCollections(): List[CollectionInfo] = {
-    val pc = collectionsInUse
-    val collections = collectionMetadata.existingCollectionMetadata
-    for (info <- collections) yield {
-      val name = info.name.toString
-      CollectionInfo(name, info.size,
-        systemCollections.contains(name),
-        pc.contains(name),
-        info.createdAt.map(_.toString),
-        info.completedAt.map(_.toString))
-    }
-  }
-
-  def dropCollection(target: String, name: String): Action[AnyContent] = action {
+  def doDropCollection(name: String): Action[AnyContent] = action {
     request =>
-      if (!isAlphaNumOrUnderscore(name))
+      val cn = CollectionName(name)
+      if (cn.isEmpty)
         BadRequest(name)
       else if (!collectionMetadata.collectionExists(name)) {
         NotFound(name)
@@ -133,19 +114,18 @@ class CollectionController(action: ActionBuilder[Request],
       }
   }
 
-  def doCleanup(target: String): Action[AnyContent] = action {
+  def doCleanup(): Action[AnyContent] = action {
     request =>
-      workerFactory.worker.push("cleaning up obsolete collections", continuer => cleanup(target))
+      workerFactory.worker.push("cleaning up obsolete collections", continuer => cleanup())
       Accepted
   }
 
-  private[controllers] def cleanup(target: String) {
-    //TODO switch on target
-    val toGo = determineObsoleteMongoCollections
-    deleteObsoleteMongoCollections(toGo)
+  private[controllers] def cleanup() {
+    val toGo = determineObsoleteCollections
+    deleteObsoleteCollections(toGo)
   }
 
-  private[controllers] def determineObsoleteMongoCollections: Set[CollectionMetadataItem] = {
+  private[controllers] def determineObsoleteCollections: Set[CollectionMetadataItem] = {
     // already sorted
     val collections: List[CollectionMetadataItem] = collectionMetadata.existingCollectionMetadata
     val mainCollections = collections.filterNot(cmi => systemCollections.contains(cmi.name.toString))
@@ -169,7 +149,7 @@ class CollectionController(action: ActionBuilder[Request],
     (incompleteCollections ++ cullable.flatten).toSet
   }
 
-  private def deleteObsoleteMongoCollections(unwantedCollections: Traversable[CollectionMetadataItem]) {
+  private def deleteObsoleteCollections(unwantedCollections: Traversable[CollectionMetadataItem]) {
     for (col <- unwantedCollections) {
       val name = col.name.toString
       status.info(s"Deleting obsolete MongoDB collection $name")
