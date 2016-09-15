@@ -172,10 +172,11 @@ function switchCol() {
 
 function dropCol() {
     var colname = $('#colname').val();
+    var target = getTarget();
     if (colname == '')
         alert("Enter the collection name");
     else {
-        ajax('DELETE', '/collections/' + colname, function (data) {
+        ajax('DELETE', '/collections/' + target + '/' + colname, function (data) {
             setTimeout(listCol, 250);
         });
     }

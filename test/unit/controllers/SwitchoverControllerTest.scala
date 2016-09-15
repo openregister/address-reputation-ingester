@@ -19,7 +19,6 @@ package controllers
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoCollection, MongoDB}
 import com.sksamuel.elastic4s.ElasticClient
-import elasticsearch.ElasticsearchHelper
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -31,6 +30,7 @@ import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.audit.AuditClient
+import services.es.ElasticsearchHelper
 import services.exec.{WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.admin.StoredMetadataItem
@@ -68,7 +68,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     val workerFactory = new WorkerFactory {
       override def worker = testWorker
     }
-    val store = mock[SystemMetadataStore]
+    val store = mock[MongoSystemMetadataStore]
     when(store.addressBaseCollectionItem(anyString)) thenThrow new IllegalArgumentException()
 
     val mongo = mock[CasbahMongoConnection]
@@ -92,7 +92,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     }
 
     val storedItem = new StoredMetadataStub()
-    val store = mock[SystemMetadataStore]
+    val store = mock[MongoSystemMetadataStore]
     when(store.addressBaseCollectionItem("abp")) thenReturn storedItem
 
     val request = FakeRequest()

@@ -25,10 +25,10 @@ import com.carrotsearch.hppc.ObjectLookupContainer
 import com.sksamuel.elastic4s.ElasticDsl._
 import config.ApplicationGlobal
 import controllers.SimpleValidator._
-import elasticsearch.ElasticsearchHelper
 import play.api.libs.json.Json
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
+import services.es.{ElasticsearchHelper, Services}
 import services.exec.WorkerFactory
 import services.model.StatusLogger
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -40,7 +40,7 @@ object CollectionController extends CollectionController(
   ControllerConfig.workerFactory,
   ApplicationGlobal.collectionMetadata,
   ApplicationGlobal.metadataStore,
-  elasticsearch.Services.elasticSearchService
+  Services.elasticSearchService
 )
 
 
@@ -48,38 +48,34 @@ class CollectionController(action: ActionBuilder[Request],
                            status: StatusLogger,
                            workerFactory: WorkerFactory,
                            collectionMetadata: CollectionMetadata,
-                           systemMetadata: SystemMetadataStore,
+                           systemMetadata: MongoSystemMetadataStore,
                            esHelper: ElasticsearchHelper) extends BaseController {
 
   import CollectionInfo._
 
-  def isSupportedTarget(target: String): Boolean = Set("db", "es").contains(target)
-
+  private def unsupportedTarget(target: String) = {
+    new IllegalArgumentException(s"'$target' is not a supported target.")
+  }
 
   def listCollections(target: String): Action[AnyContent] = action {
     request =>
-      require(isSupportedTarget(target))
-
-      val result = if (target == "db") {
-        listMongoCollections()
-      } else if (target == "es") {
-        listElasticSearchCollections()
-      } else {
-        List()
+      val result = target match {
+        case "db" => listMongoCollections()
+        case "es" => listElasticSearchCollections()
+        case _ => throw unsupportedTarget(target)
       }
 
       Ok(Json.toJson(ListCI(result)))
   }
 
-  def listElasticSearchCollections(): List[CollectionInfo] = {
-
+  private def listElasticSearchCollections(): List[CollectionInfo] = {
     esHelper.clients flatMap { client =>
 
       val inUse = client execute {
         getAlias("address-reputation-data")
       } await
 
-      val test: ObjectLookupContainer[String] = inUse.getAliases().keys
+      val test: ObjectLookupContainer[String] = inUse.getAliases.keys
 
       val inUseIndices: List[String] = test.toArray.map(a => {
         a.asInstanceOf[String]
@@ -89,7 +85,7 @@ class CollectionController(action: ActionBuilder[Request],
         getAlias(esHelper.indexAlias)
       } await
 
-      val olc = gar.getAliases().keys
+      val olc = gar.getAliases.keys
 
       olc.toArray().map(a => {
         val aliasIndex = a.asInstanceOf[String]
@@ -108,7 +104,7 @@ class CollectionController(action: ActionBuilder[Request],
     }
   }
 
-  def listMongoCollections(): List[CollectionInfo] = {
+  private def listMongoCollections(): List[CollectionInfo] = {
     val pc = collectionsInUse
     val collections = collectionMetadata.existingCollectionMetadata
     for (info <- collections) yield {
@@ -121,7 +117,7 @@ class CollectionController(action: ActionBuilder[Request],
     }
   }
 
-  def dropCollection(name: String): Action[AnyContent] = action {
+  def dropCollection(target: String, name: String): Action[AnyContent] = action {
     request =>
       if (!isAlphaNumOrUnderscore(name))
         BadRequest(name)

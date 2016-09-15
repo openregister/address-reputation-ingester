@@ -20,7 +20,7 @@ import java.util.Date
 
 import com.sksamuel.elastic4s._
 import com.sksamuel.elastic4s.mappings.FieldType.StringType
-import elasticsearch.ElasticsearchHelper
+import services.es.{ElasticsearchHelper, Services}
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
@@ -154,6 +154,6 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
 
 class OutputESWriterFactory extends OutputWriterFactory {
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputESWriter = {
-    new OutputESWriter(model, statusLogger, elasticsearch.Services.elasticSearchService, settings)
+    new OutputESWriter(model, statusLogger, Services.elasticSearchService, settings)
   }
 }

@@ -17,7 +17,7 @@
  *
  */
 
-package elasticsearch
+package services.es
 
 import com.sksamuel.elastic4s.ElasticClient
 import config.ConfigHelper._

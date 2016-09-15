@@ -19,7 +19,7 @@
 package config
 
 import config.ConfigHelper._
-import controllers.SystemMetadataStoreFactory
+import controllers.MongoSystemMetadataStoreFactory
 import play.api.Play._
 import play.api._
 import services.db.CollectionMetadata
@@ -37,7 +37,7 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
     new CasbahMongoConnection(mongoDbUri)
   }
 
-  lazy val metadataStore = new SystemMetadataStoreFactory().newStore(mongoConnection)
+  lazy val metadataStore = new MongoSystemMetadataStoreFactory().newStore(mongoConnection)
 
   lazy val collectionMetadata = new CollectionMetadata(mongoConnection.getConfiguredDb)
 

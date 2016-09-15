@@ -20,12 +20,12 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.MutateAliasDefinition
 import config.ApplicationGlobal
 import controllers.SimpleValidator._
-import elasticsearch.ElasticsearchHelper
 import org.elasticsearch.cluster.health.ClusterHealthStatus
 import play.api.Logger
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.audit.AuditClient
 import services.db.CollectionMetadata
+import services.es.{ElasticsearchHelper, Services}
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
@@ -44,14 +44,14 @@ object SwitchoverController extends SwitchoverController(
   ApplicationGlobal.mongoConnection,
   ApplicationGlobal.metadataStore,
   services.audit.Services.auditClient,
-  elasticsearch.Services.elasticSearchService
+  Services.elasticSearchService
 )
 
 class SwitchoverController(action: ActionBuilder[Request],
                            status: StatusLogger,
                            workerFactory: WorkerFactory,
                            mongoDbConnection: CasbahMongoConnection,
-                           systemMetadata: SystemMetadataStore,
+                           systemMetadata: MongoSystemMetadataStore,
                            auditClient: AuditClient,
                            esHelper: ElasticsearchHelper) extends BaseController {
 
@@ -196,13 +196,13 @@ class SwitchoverController(action: ActionBuilder[Request],
 }
 
 
-class SystemMetadataStoreFactory {
-  def newStore(mongo: CasbahMongoConnection): SystemMetadataStore =
-    new SystemMetadataStore(mongo, new LoggerFacade(Logger.logger))
+class MongoSystemMetadataStoreFactory {
+  def newStore(mongo: CasbahMongoConnection): MongoSystemMetadataStore =
+    new MongoSystemMetadataStore(mongo, new LoggerFacade(Logger.logger))
 }
 
 
-class SystemMetadataStore(mongo: CasbahMongoConnection, logger: SimpleLogger) {
+class MongoSystemMetadataStore(mongo: CasbahMongoConnection, logger: SimpleLogger) {
   private val store = new MetadataStore(mongo, logger)
   private val table = Map(
     "abp" -> store.gbAddressBaseCollectionName,

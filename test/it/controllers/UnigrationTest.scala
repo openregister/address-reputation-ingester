@@ -142,14 +142,26 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
   //-----------------------------------------------------------------------------------------------
 
   "collection endpoints should be protected by basic auth" must {
-    "list collections" in {
+    "list Mongo collections" in {
       val request = newRequest("GET", "/collections/list/db")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
-    "dropCollection" in {
-      val request = newRequest("DELETE", "/collections/foo")
+    "list ES collections" in {
+      val request = newRequest("GET", "/collections/list/es")
+      val response = await(request.execute())
+      assert(response.status === UNAUTHORIZED)
+    }
+
+    "drop Mongo collection" in {
+      val request = newRequest("DELETE", "/collections/db/foo")
+      val response = await(request.execute())
+      assert(response.status === UNAUTHORIZED)
+    }
+
+    "drop ES collection" in {
+      val request = newRequest("DELETE", "/collections/es/foo")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }

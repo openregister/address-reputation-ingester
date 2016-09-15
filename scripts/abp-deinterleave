@@ -4,7 +4,7 @@
 # $1: gz or zip
 mode=${1:-zip}
 
-if [ "$1" = "zip" ]; then
+if [ "$mode" = "zip" ]; then
   mkdir -p ../unpacked
   for f in *.zip; do
     echo "unpack $f"
@@ -28,7 +28,7 @@ for t in 11 15 21 23 24 28 29 30 31 32; do
   nice gzip ../types/t$t.csv
 done
 
-if [ "$1" = "zip" ]; then
+if [ "$mode" = "zip" ]; then
   cd ..
   rm -r unpacked
 fi

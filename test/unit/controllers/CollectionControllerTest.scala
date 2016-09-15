@@ -23,7 +23,6 @@ import java.util.Date
 
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoCollection, MongoDB}
-import elasticsearch.ElasticsearchHelper
 import ingest.StubWorkerFactory
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
@@ -31,6 +30,7 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import services.db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
+import services.es.ElasticsearchHelper
 import services.exec.WorkQueue
 import services.model.StatusLogger
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
@@ -53,7 +53,7 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
     val adminCollections = Set(fakeIrrelevantCollection("admin"), fakeIrrelevantCollection("system.indexes"))
     val collectionsInUse = Set(fakeCompletedCollection("abi_39_003"), fakeCompletedCollection("abp_40_005"))
 
-    val store = mock[SystemMetadataStore]
+    val store = mock[MongoSystemMetadataStore]
     val abi = new StoredMetadataStub("abi_39_003")
     val abp = new StoredMetadataStub("abp_40_005")
     when(store.addressBaseCollectionItem("abi")) thenReturn abi
