@@ -17,7 +17,7 @@
  *
  */
 
-package services.db
+package services.mongo
 
 import java.util.Date
 
@@ -25,7 +25,7 @@ import com.mongodb.casbah.Imports._
 import services.DbFacade
 
 
-class CollectionMetadata(db: MongoDB) extends DbFacade {
+class CollectionMetadata(val db: MongoDB, val systemMetadata: MongoSystemMetadataStore) extends DbFacade {
 
   import CollectionMetadata._
 
@@ -48,6 +48,14 @@ class CollectionMetadata(db: MongoDB) extends DbFacade {
       val completed = Option(m.get.get(completedAt)).map(n => new Date(n.asInstanceOf[Long]))
       Some(CollectionMetadataItem(name, size, created, completed))
     }
+  }
+
+  def getCollectionInUseFor(product: String): Option[CollectionName] =
+    CollectionName(systemMetadata.addressBaseCollectionItem(product).get)
+
+  def setCollectionInUseFor(name: CollectionName) {
+    val addressBaseCollectionName = systemMetadata.addressBaseCollectionItem(name.productName)
+    addressBaseCollectionName.set(name.toString)
   }
 }
 

@@ -20,39 +20,22 @@
 package services.es
 
 import com.sksamuel.elastic4s.ElasticClient
-import config.ConfigHelper._
 import org.elasticsearch.common.settings.Settings
-import play.api.Play._
 
-object Services {
-
-  lazy val elasticSearchService = {
-    val clusterName = mustGetConfigString(current.mode, current.configuration, "elastic.clustername")
-    val connectionString = mustGetConfigString(current.mode, current.configuration, "elastic.uri")
-    val isCluster = getConfigBoolean(current.mode, current.configuration, "elastic.is-cluster").getOrElse(true)
-
-    ElasticsearchHelper(clusterName, connectionString, isCluster)
-  }
-}
+import scala.concurrent.ExecutionContext
 
 
 object ElasticsearchHelper {
   // allows construction without loading Play
-  def apply(clusterName: String, connectionString: String, isCluster: Boolean): ElasticsearchHelper = {
+  def apply(clusterName: String, connectionString: String, isCluster: Boolean, ec: ExecutionContext): IndexMetadata = {
     val esSettings = Settings.settingsBuilder().put("cluster.name", clusterName).build()
 
     val clients = connectionString.split("\\+").map { uri =>
       ElasticClient.transport(esSettings, uri)
     }.toList
 
-    new ElasticsearchHelper(clients, isCluster)
+    implicit val iec = ec
+    new IndexMetadata(clients, isCluster)
   }
 }
 
-
-class ElasticsearchHelper(val clients: List[ElasticClient], val isCluster: Boolean) {
-  val replicaCount = "1"
-  val ariAliasName = "address-reputation-data"
-  val indexAlias = "addressbase-index"
-  val address = "address"
-}

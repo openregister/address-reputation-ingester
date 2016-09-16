@@ -29,8 +29,8 @@ import org.scalatest.SequentialNestedSuiteExecution
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
-import services.db.{CollectionMetadata, CollectionName}
-import services.es.{ElasticsearchHelper, IndexMetadata}
+import services.es.ElasticsearchHelper
+import services.mongo.{CollectionMetadata, CollectionName, MongoSystemMetadataStoreFactory}
 import uk.co.hmrc.address.admin.MetadataStore
 import uk.co.hmrc.logging.Stdout
 
@@ -142,10 +142,11 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     """
        * return the sorted list of ES collections
        * along with the completion dates (if present)
-    """ ignore { // ignored until we work out how to ensure that ES is always available when this test is run
-      implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
-      val esHelper = ElasticsearchHelper("elasticsearch", "elasticsearch://localhost:9300", false)
-      new IndexMetadata(esHelper).writeCompletionDateTo("abp_39_ts5")
+    """ ignore {
+      // ignored until we work out how to ensure that ES is always available when this test is run
+      val ec = scala.concurrent.ExecutionContext.Implicits.global
+      val indexMetadata = ElasticsearchHelper("elasticsearch", "elasticsearch://localhost:9300", false, ec)
+      indexMetadata.writeCompletionDateTo("abp_39_ts5")
 
       val request = newRequest("GET", "/es/collections/list")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
@@ -264,8 +265,10 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
       verifyOK("/admin/status", "idle")
 
-      val db = casbahMongoConnection().getConfiguredDb
-      val collectionMetadata = new CollectionMetadata(db)
+      val mongoConnection = casbahMongoConnection()
+      val db = mongoConnection.getConfiguredDb
+      val metadataStore = new MongoSystemMetadataStoreFactory().newStore(mongoConnection)
+      val collectionMetadata = new CollectionMetadata(db, metadataStore)
       val exeter1 = collectionMetadata.existingCollectionNamesLike(CollectionName("exeter", Some(1))).head
       val collection = db(exeter1.toString)
       collection.size mustBe 48738 // 48737 records plus 1 metadata
@@ -310,7 +313,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       val admin = new MetadataStore(mongo, Stdout)
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
 
-      val request = newRequest("GET", "/switch/to/db/abp/39/2001-02-03-04-05")
+      val request = newRequest("GET", "/db/switch/abp/39/2001-02-03-04-05")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -330,7 +333,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
       CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_2001-02-03-04-05"))
 
-      val request = newRequest("GET", "/switch/to/db/abp/39/2001-02-03-04-05")
+      val request = newRequest("GET", "/db/switch/abp/39/2001-02-03-04-05")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -345,7 +348,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
        * when a wrong password is supplied
        * the response should be 401
     """ in {
-      val request = newRequest("GET", "/switch/to/db/abp/39/2001-02-03-04-05")
+      val request = newRequest("GET", "/db/switch/abp/39/2001-02-03-04-05")
       val response = await(request.withAuth("admin", "wrong", BASIC).execute())
       assert(response.status === UNAUTHORIZED)
     }
@@ -354,7 +357,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
        * passing bad parameters
        * should give 400
     """ in {
-      assert(get("/switch/to/db/abp/not-a-number/1").status === BAD_REQUEST)
+      assert(get("/db/switch/abp/not-a-number/1").status === BAD_REQUEST)
     }
   }
 
@@ -370,7 +373,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_2001-02-03-04-05"))
       CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_2001-02-03-04-05"))
 
-      val request = newRequest("GET", "/switch/to/db/abp/39/2001-02-03-04-05")
+      val request = newRequest("GET", "/db/switch/abp/39/2001-02-03-04-05")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)

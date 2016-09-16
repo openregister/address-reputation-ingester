@@ -19,7 +19,7 @@
 
 package services
 
-import services.db.{CollectionMetadataItem, CollectionName}
+import services.mongo.{CollectionMetadataItem, CollectionName}
 
 trait DbFacade {
 
@@ -44,4 +44,8 @@ trait DbFacade {
     val stringNames = existingCollectionNames.filter(_.startsWith(collectionNamePrefix)).toList.sorted
     stringNames.flatMap(s => CollectionName.apply(s))
   }
+
+  def getCollectionInUseFor(product: String): Option[CollectionName]
+
+  def setCollectionInUseFor(name: CollectionName)
 }

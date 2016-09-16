@@ -30,11 +30,9 @@ import org.scalatest.FreeSpec
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar.mock
 import services.model.{StateModel, StatusLogger}
+import services.mongo.{CollectionMetadata, CollectionMetadataItem, CollectionName, MongoSystemMetadataStore}
 import uk.co.hmrc.address.osgb.DbAddress
-import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger
-
-import scala.collection.mutable
 
 @RunWith(classOf[JUnitRunner])
 class OutputDBWriterTest extends FreeSpec {
@@ -42,17 +40,22 @@ class OutputDBWriterTest extends FreeSpec {
   val now = new Date()
   val yesterday = new Date(now.getTime - 86400000L)
 
+  val x_1_ts1 = CollectionName("x_1_ts1").get
+  val x_4_ts1 = CollectionName("x_4_ts1").get
+  val x_4_ts2 = CollectionName("x_4_ts2").get
+
   class Context(timestamp: String, collectionNames: Set[String]) {
-    val casbahMongoConnection = mock[CasbahMongoConnection]
     val mongoDB = mock[MongoDB]
+    val store = mock[MongoSystemMetadataStore]
+    val collectionMetadata = mock[CollectionMetadata]
     val bulk = mock[BulkWriteOperation]
     val logger = new StubLogger()
     val model = new StateModel(productName = "x", epoch = 4, timestamp = Some(timestamp))
     val status = new StatusLogger(logger)
 
-    when(casbahMongoConnection.getConfiguredDb) thenReturn mongoDB
-
-    when(mongoDB.collectionNames()) thenReturn (mutable.Set() ++ collectionNames)
+    when(collectionMetadata.db) thenReturn mongoDB
+    when(collectionMetadata.systemMetadata) thenReturn store
+    when(collectionMetadata.existingCollectionNames) thenReturn collectionNames.toList.sorted
 
     val all = collectionNames + ("x_4_" + timestamp)
     val collections = all.map(n => n -> mock[MongoCollection]).toMap
@@ -70,7 +73,7 @@ class OutputDBWriterTest extends FreeSpec {
     "when the model has no corresponding collection yet" - {
       "then targetExistsAndIsNewerThan will return None" in {
         new Context("ts1", Set("admin", "x_1_ts1", "x_2_ts1", "x_3_ts1")) {
-          val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
+          val outputDBWriter = new OutputDBWriter(false, model, status, collectionMetadata, WriterSettings(10, 0))
 
           val result = outputDBWriter.existingTargetThatIsNewerThan(new Date())
 
@@ -83,10 +86,10 @@ class OutputDBWriterTest extends FreeSpec {
     "when the model has corresponding collections without any completion dates" - {
       "then targetExistsAndIsNewerThan will return None" in {
         new Context("ts3", Set("admin", "x_4_ts1", "x_4_ts2")) {
-          when(collections("x_4_ts1").findOneByID("metadata")) thenReturn None
-          when(collections("x_4_ts2").findOneByID("metadata")) thenReturn None
-
-          val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
+          when(collectionMetadata.existingCollectionNames) thenReturn List("admin", "x_4_ts1", "x_4_ts2")
+          when(collectionMetadata.findMetadata(x_4_ts1)) thenReturn None
+          when(collectionMetadata.findMetadata(x_4_ts2)) thenReturn None
+          val outputDBWriter = new OutputDBWriter(false, model, status, collectionMetadata, WriterSettings(10, 0))
 
           val result = outputDBWriter.existingTargetThatIsNewerThan(yesterday)
 
@@ -99,11 +102,11 @@ class OutputDBWriterTest extends FreeSpec {
     "when the model has corresponding collections with old completion dates" - {
       "then targetExistsAndIsNewerThan will return None" in {
         new Context("ts3", Set("admin", "x_4_ts1", "x_4_ts2")) {
-          val metadata = MongoDBObject("completedAt" -> yesterday.getTime)
-          when(collections("x_4_ts1").findOneByID("metadata")) thenReturn Some(metadata)
-          when(collections("x_4_ts2").findOneByID("metadata")) thenReturn Some(metadata)
+          when(collectionMetadata.existingCollectionNames) thenReturn List("admin", "x_4_ts1", "x_4_ts2")
+          when(collectionMetadata.findMetadata(x_4_ts1)) thenReturn None
+          when(collectionMetadata.findMetadata(x_4_ts2)) thenReturn None
 
-          val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
+          val outputDBWriter = new OutputDBWriter(false, model, status, collectionMetadata, WriterSettings(10, 0))
 
           val result = outputDBWriter.existingTargetThatIsNewerThan(now)
 
@@ -112,18 +115,17 @@ class OutputDBWriterTest extends FreeSpec {
       }
     }
 
-
     "when the model has corresponding collections with newish completion dates" - {
       "then targetExistsAndIsNewerThan will return the last collection name" in {
         new Context("ts3", Set("admin", "x_4_ts1", "x_4_ts2")) {
           val now = new Date()
           val yesterday = new Date(now.getTime - 86400000L)
 
-          val metadata = MongoDBObject("completedAt" -> now.getTime)
-          when(collections("x_4_ts1").findOneByID("metadata")) thenReturn Some(metadata)
-          when(collections("x_4_ts2").findOneByID("metadata")) thenReturn Some(metadata)
+          when(collectionMetadata.existingCollectionNames) thenReturn List("admin", "x_4_ts1", "x_4_ts2")
+          when(collectionMetadata.findMetadata(x_4_ts1)) thenReturn Some(CollectionMetadataItem(x_4_ts1, 10, None, Some(dateAgo(864000000))))
+          when(collectionMetadata.findMetadata(x_4_ts2)) thenReturn Some(CollectionMetadataItem(x_4_ts2, 10, None, Some(dateAgo(1000))))
 
-          val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
+          val outputDBWriter = new OutputDBWriter(false, model, status, collectionMetadata, WriterSettings(10, 0))
 
           val result = outputDBWriter.existingTargetThatIsNewerThan(yesterday)
 
@@ -141,7 +143,7 @@ class OutputDBWriterTest extends FreeSpec {
           new Context("ts5", Set("admin", "x_4_ts0", "x_4_ts1", "x_4_ts4")) {
             val someDBAddress = DbAddress("id1", List("1 Foo Rue"), Some("Puddletown"), "FX1 1XF", Some("GB-ENG"))
 
-            val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
+            val outputDBWriter = new OutputDBWriter(false, model, status, collectionMetadata, WriterSettings(10, 0))
 
             outputDBWriter.output(someDBAddress)
 
@@ -160,7 +162,7 @@ class OutputDBWriterTest extends FreeSpec {
          and then close is called on the mongoDB instance
         """ in {
           new Context("ts5", Set("admin", "x_4_ts0", "x_4_ts1", "x_4_ts4")) {
-            val outputDBWriter = new OutputDBWriter(false, model, status, casbahMongoConnection, WriterSettings(10, 0))
+            val outputDBWriter = new OutputDBWriter(false, model, status, collectionMetadata, WriterSettings(10, 0))
 
             outputDBWriter.end(true)
 
@@ -170,5 +172,10 @@ class OutputDBWriterTest extends FreeSpec {
         }
       }
     }
+  }
+
+  private def dateAgo(ms: Long) = {
+    val now = System.currentTimeMillis
+    new Date(now - ms)
   }
 }

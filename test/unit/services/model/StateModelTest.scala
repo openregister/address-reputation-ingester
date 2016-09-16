@@ -27,7 +27,7 @@ import fetch.{OSGBProduct, WebDavFile}
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuite, Matchers}
-import services.db.CollectionName
+import services.mongo.CollectionName
 
 @RunWith(classOf[JUnitRunner])
 class StateModelTest extends FunSuite with Matchers {

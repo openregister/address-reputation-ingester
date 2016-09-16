@@ -36,7 +36,7 @@ import org.scalatestplus.play.PlaySpec
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.db.{CollectionMetadata, CollectionName}
+import services.mongo.{CollectionMetadata, CollectionName}
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.logging.StubLogger

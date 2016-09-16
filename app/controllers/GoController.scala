@@ -38,9 +38,10 @@ object GoController extends GoController(
   ControllerConfig.sardine,
   FetchController,
   IngestController,
-  SwitchoverController,
-  db.CollectionController,
-  es.CollectionController
+  MongoSwitchoverController,
+  MongoCollectionController,
+  ElasticSwitchoverController,
+  ElasticCollectionController
 )
 
 
@@ -50,9 +51,10 @@ class GoController(action: ActionBuilder[Request],
                    sardine: SardineWrapper,
                    fetchController: FetchController,
                    ingestController: IngestController,
-                   switchoverController: SwitchoverController,
-                   dbCollectionController: db.CollectionController,
-                   esCollectionController: es.CollectionController) extends BaseController {
+                   dbSwitchoverController: SwitchoverController,
+                   dbCollectionController: CollectionController,
+                   esSwitchoverController: SwitchoverController,
+                   esCollectionController: CollectionController) extends BaseController {
 
   def doGoAuto(target: String,
                bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = action {
@@ -106,7 +108,8 @@ class GoController(action: ActionBuilder[Request],
       val model2 = fetchController.fetch(model1, continuer)
       val model3 = ingestController.ingestIfOK(model2, logger, settings, Algorithm(), target, continuer)
       target match {
-        case "es" | "db" => switchoverController.switchIfOK(model3)
+        case "db" => dbSwitchoverController.switchIfOK(model3)
+        case "es" => esSwitchoverController.switchIfOK(model3)
         case _ => // no further action
       }
     }

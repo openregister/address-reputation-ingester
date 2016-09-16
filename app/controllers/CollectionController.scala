@@ -17,32 +17,38 @@
  *
  */
 
-package controllers.db
+package controllers
 
 import config.ApplicationGlobal
-import controllers._
 import play.api.libs.json.Json
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
+import services.DbFacade
 import services.exec.WorkerFactory
 import services.model.StatusLogger
+import services.mongo.{CollectionMetadataItem, CollectionName}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
-object CollectionController extends CollectionController(
+object MongoCollectionController extends CollectionController(
   ControllerConfig.authAction,
   ControllerConfig.logger,
   ControllerConfig.workerFactory,
-  ApplicationGlobal.collectionMetadata,
-  ApplicationGlobal.metadataStore
+  ApplicationGlobal.mongoCollectionMetadata
+)
+
+
+object ElasticCollectionController extends CollectionController(
+  ControllerConfig.authAction,
+  ControllerConfig.logger,
+  ControllerConfig.workerFactory,
+  ApplicationGlobal.elasticSearchService
 )
 
 
 class CollectionController(action: ActionBuilder[Request],
                            status: StatusLogger,
                            workerFactory: WorkerFactory,
-                           collectionMetadata: CollectionMetadata,
-                           systemMetadata: MongoSystemMetadataStore) extends BaseController {
+                           collectionMetadata: DbFacade) extends BaseController {
 
   import CollectionInfo._
 
@@ -110,8 +116,8 @@ class CollectionController(action: ActionBuilder[Request],
       for (product <- KnownProducts.OSGB) yield {
         // already sorted (still)
         val completeCollectionsForProduct: List[CollectionMetadataItem] = completeCollections.filter(_.name.productName == product)
-        val inUse = CollectionName(collectionInUseFor(product)).get
-        val i = completeCollectionsForProduct.indexWhere(_.name == inUse) - 1
+        val inUse = collectionMetadata.getCollectionInUseFor(product)
+        val i = completeCollectionsForProduct.indexWhere(c => inUse.contains(c.name)) - 1
         if (i < 0) {
           Nil
         } else {
@@ -131,8 +137,7 @@ class CollectionController(action: ActionBuilder[Request],
 
   private val systemCollections = Set("system.indexes", "admin")
 
-  private def collectionInUseFor(product: String): String = systemMetadata.addressBaseCollectionItem(product).get
-
-  private def collectionsInUse: Set[String] = KnownProducts.OSGB.map(n => collectionInUseFor(n)).toSet
+  private def collectionsInUse: Set[String] =
+    KnownProducts.OSGB.map(n => collectionMetadata.getCollectionInUseFor(n)).map(_.toString).toSet
 }
 

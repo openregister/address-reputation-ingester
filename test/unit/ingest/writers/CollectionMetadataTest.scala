@@ -30,7 +30,7 @@ import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
-import services.db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
+import services.mongo.{CollectionMetadata, CollectionMetadataItem, CollectionName, MongoSystemMetadataStore}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 
 import scala.collection.mutable
@@ -48,10 +48,11 @@ class CollectionMetadataTest extends FunSuite with MockitoSugar {
 
   class Context {
     val casbahMongoConnection = mock[CasbahMongoConnection]
+    val store = mock[MongoSystemMetadataStore]
     val mongoDB = mock[MongoDB]
     when(casbahMongoConnection.getConfiguredDb) thenReturn mongoDB
 
-    val collectionMetadata = new CollectionMetadata(mongoDB)
+    val collectionMetadata = new CollectionMetadata(mongoDB, store)
   }
 
   test("collectionExists facades the db.collectionExists() method") {

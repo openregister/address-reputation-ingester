@@ -171,7 +171,7 @@ function switchCol() {
         alert("Enter the collection name");
     else {
         colname = colname.replace(/_/g, '/');
-        get('/switch/to/' + target + '/' + colname, true);
+        get('/' + target + '/switch/' + colname, true);
     }
 }
 

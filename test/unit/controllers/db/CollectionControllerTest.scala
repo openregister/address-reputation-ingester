@@ -23,17 +23,17 @@ import java.util.Date
 
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoCollection, MongoDB}
-import controllers.{MongoSystemMetadataStore, PassThroughAction, StoredMetadataStub}
+import controllers.{CollectionController, PassThroughAction, StoredMetadataStub}
 import ingest.StubWorkerFactory
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
-import services.db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
-import services.es.ElasticsearchHelper
+import services.es.IndexMetadata
 import services.exec.WorkQueue
 import services.model.StatusLogger
+import services.mongo.{CollectionMetadata, CollectionMetadataItem, CollectionName, MongoSystemMetadataStore}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.StubLogger
 
@@ -49,7 +49,7 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
     val workerFactory = new StubWorkerFactory(worker)
     val casbahMongoConnection = mock[CasbahMongoConnection]
     val mongoDB = mock[MongoDB]
-    val helper = mock[ElasticsearchHelper]
+    val indexMetadata = mock[IndexMetadata]
 
     val adminCollections = Set(fakeIrrelevantCollection("admin"), fakeIrrelevantCollection("system.indexes"))
     val collectionsInUse = Set(fakeCompletedCollection("abi_39_ts3"), fakeCompletedCollection("abp_40_ts5"))
@@ -76,8 +76,8 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
       when(collection.findOneByID("metadata")) thenReturn convert(cmi)
     }
 
-    val collectionMetadata = new CollectionMetadata(mongoDB)
-    val collectionController = new CollectionController(new PassThroughAction, status, workerFactory, collectionMetadata, store)
+    val collectionMetadata = new CollectionMetadata(mongoDB, store)
+    val collectionController = new CollectionController(new PassThroughAction, status, workerFactory, collectionMetadata)
 
     def teardown() {
       worker.terminate()

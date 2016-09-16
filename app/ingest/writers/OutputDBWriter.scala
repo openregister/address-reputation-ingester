@@ -26,34 +26,19 @@ import com.mongodb.casbah.commons.MongoDBObject
 import config.ApplicationGlobal
 import config.ConfigHelper._
 import play.api.Play._
-import services.db.CollectionMetadata
 import services.model.{StateModel, StatusLogger}
+import services.mongo.CollectionMetadata
 import uk.co.hmrc.address.osgb.DbAddress
-import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
-
-
-class OutputDBWriterFactory extends OutputWriterFactory {
-
-  private def cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
-
-  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter =
-    new OutputDBWriter(cleardownOnError, model, statusLogger,
-      ApplicationGlobal.mongoConnection,
-      settings)
-}
 
 
 class OutputDBWriter(cleardownOnError: Boolean,
                      var model: StateModel,
                      statusLogger: StatusLogger,
-                     mongoDbConnection: CasbahMongoConnection,
+                     collectionMetadata: CollectionMetadata,
                      settings: WriterSettings) extends OutputWriter {
 
-  private val db = mongoDbConnection.getConfiguredDb
-
-  private val collectionMetadata = new CollectionMetadata(db)
   val collectionName = model.collectionName
-  private val collection = db(collectionName.toString)
+  private val collection = collectionMetadata.db(collectionName.toString)
   private val bulk = new BatchedBulkOperation(settings, collection)
 
   private var count = 0
@@ -146,3 +131,11 @@ class BatchedBulkOperation(settings: WriterSettings, collection: MongoCollection
   }
 }
 
+
+class OutputDBWriterFactory extends OutputWriterFactory {
+
+  private def cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
+
+  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter =
+    new OutputDBWriter(cleardownOnError, model, statusLogger, ApplicationGlobal.mongoCollectionMetadata, settings)
+}

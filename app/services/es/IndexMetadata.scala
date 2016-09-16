@@ -19,34 +19,40 @@
 
 package services.es
 
+import java.util
 import java.util.Date
 
+import com.sksamuel.elastic4s.ElasticClient
 import com.sksamuel.elastic4s.ElasticDsl._
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.common.unit.TimeValue
 import services.DbFacade
-import services.db.{CollectionMetadataItem, CollectionName}
+import services.mongo.{CollectionMetadataItem, CollectionName}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
 
-class IndexMetadata(esHelper: ElasticsearchHelper)(implicit val ec: ExecutionContext) extends DbFacade {
+class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean)(implicit val ec: ExecutionContext) extends DbFacade {
 
-    private val address = esHelper.address
-    private val metadata = "metadata"
-    private val completedAt = "completedAt"
-    private val mid = "mid"
+  val replicaCount = "1"
+  val ariAliasName = "address-reputation-data"
+  val indexAlias = "addressbase-index"
+  val address = "address"
+  val metadata = "metadata"
+
+  private val completedAt = "completedAt"
+  private val mid = "mid"
 
   def collectionExists(name: String): Boolean = existingCollectionNames.contains(name)
 
   def dropCollection(name: String) {
-    esHelper.clients foreach { client =>
+    clients foreach { client =>
       client.admin.indices.delete(new DeleteIndexRequest(name)).actionGet
     }
   }
 
   def existingCollectionNames: List[String] = {
-    val client0 = esHelper.clients.head.java
+    val client0 = clients.head.java
     val healths = greenHealth()
     healths.getIndices.keySet.asScala.toList.sorted
   }
@@ -55,11 +61,11 @@ class IndexMetadata(esHelper: ElasticsearchHelper)(implicit val ec: ExecutionCon
     val index = name.toString
     greenHealth(index)
 
-    val rMetadata = esHelper.clients.head.execute {
+    val rMetadata = clients.head.execute {
       get id mid from index / metadata
     }
 
-    val rCount = esHelper.clients.head.execute {
+    val rCount = clients.head.execute {
       search in index / address size 0
     }
 
@@ -75,7 +81,7 @@ class IndexMetadata(esHelper: ElasticsearchHelper)(implicit val ec: ExecutionCon
   }
 
   def writeCompletionDateTo(indexName: String, date: Date = new Date()) {
-    esHelper.clients foreach { client =>
+    clients foreach { client =>
       client execute {
         index into indexName -> metadata fields (
           completedAt -> date.getTime
@@ -84,9 +90,28 @@ class IndexMetadata(esHelper: ElasticsearchHelper)(implicit val ec: ExecutionCon
     }
   }
 
+  def getCollectionInUseFor(product: String): Option[CollectionName] = {
+    val gar = clients.head.execute {
+      getAlias(indexAlias)
+    } await
+
+    val olc = gar.getAliases.keys
+    val names = util.Arrays.asList(olc.toArray).asScala.map(_.asInstanceOf[String])
+    assert(names.length < 2, names)
+    names.headOption.flatMap(n => CollectionName(n))
+  }
+
+  def setCollectionInUseFor(name: CollectionName) {
+    clients foreach { client =>
+      client execute {
+        aliases(add alias indexAlias on name.toString)
+      } await
+    }
+  }
+
   private def greenHealth(index: String*) = {
-    val client0 = esHelper.clients.head.java
-    client0.admin().cluster().prepareHealth(index:_*).setWaitForGreenStatus().setTimeout(twoSeconds).get
+    val client0 = clients.head.java
+    client0.admin().cluster().prepareHealth(index: _*).setWaitForGreenStatus().setTimeout(twoSeconds).get
   }
 
   private val twoSeconds = TimeValue.timeValueSeconds(2)

@@ -19,10 +19,10 @@
 package config
 
 import config.ConfigHelper._
-import controllers.MongoSystemMetadataStoreFactory
 import play.api.Play._
 import play.api._
-import services.db.CollectionMetadata
+import services.es.{ElasticsearchHelper, IndexMetadata}
+import services.mongo.{CollectionMetadata, MongoSystemMetadataStoreFactory}
 import services.exec.WorkQueue
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.gov.hmrc.play.config.RunMode
@@ -39,7 +39,16 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
 
   lazy val metadataStore = new MongoSystemMetadataStoreFactory().newStore(mongoConnection)
 
-  lazy val collectionMetadata = new CollectionMetadata(mongoConnection.getConfiguredDb)
+  lazy val mongoCollectionMetadata = new CollectionMetadata(mongoConnection.getConfiguredDb, metadataStore)
+
+  lazy val elasticSearchService: IndexMetadata = {
+    val clusterName = mustGetConfigString(current.mode, current.configuration, "elastic.clustername")
+    val connectionString = mustGetConfigString(current.mode, current.configuration, "elastic.uri")
+    val isCluster = getConfigBoolean(current.mode, current.configuration, "elastic.is-cluster").getOrElse(true)
+
+    ElasticsearchHelper(clusterName, connectionString, isCluster,
+      scala.concurrent.ExecutionContext.Implicits.global)
+  }
 
   override def onStart(app: Application) {
     val config = app.configuration

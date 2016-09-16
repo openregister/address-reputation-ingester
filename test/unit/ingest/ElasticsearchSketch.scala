@@ -20,7 +20,7 @@
 package ingest
 
 import ingest.writers.{OutputESWriter, WriterSettings}
-import services.es.{ElasticsearchHelper, IndexMetadata}
+import services.es.ElasticsearchHelper
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.Stdout
@@ -32,15 +32,14 @@ object ElasticsearchSketch {
   def main(args: Array[String]) {
     val model = StateModel("essay", 1, None, Some("ts1"), None, "es") //.withNewTimestamp
     val status = new StatusLogger(Stdout)
-    val esHelper = ElasticsearchHelper("elasticsearch", "elasticsearch://localhost:9300", false)
-    val w = new OutputESWriter(model, status, esHelper, WriterSettings.default)
-    val im = new IndexMetadata(esHelper)
-    println(im.existingCollectionNames)
+    val indexMetadata = ElasticsearchHelper("elasticsearch", "elasticsearch://localhost:9300", false, ec)
+    val w = new OutputESWriter(model, status, indexMetadata, WriterSettings.default)
+    println(indexMetadata.existingCollectionNames)
     w.begin()
     w.output(DbAddress("a1", List("1 High St"), Some("Town"), "NE1 1AA", Some("GB-ENG")))
     w.end(true)
 
-    println(im.existingCollectionNames)
-    println(im.findMetadata(model.collectionName))
+    println(indexMetadata.existingCollectionNames)
+    println(indexMetadata.findMetadata(model.collectionName))
   }
 }

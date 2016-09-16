@@ -19,7 +19,7 @@ package services.model
 import fetch.OSGBProduct
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import services.db.CollectionName
+import services.mongo.CollectionName
 
 case class StateModel(
                        productName: String = "",

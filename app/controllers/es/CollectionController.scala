@@ -19,16 +19,14 @@
 
 package controllers.es
 
-import com.carrotsearch.hppc.ObjectLookupContainer
-import com.sksamuel.elastic4s.ElasticDsl._
 import config.ApplicationGlobal
 import controllers._
 import play.api.libs.json.Json
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.db.{CollectionMetadata, CollectionMetadataItem, CollectionName}
-import services.es.{ElasticsearchHelper, Services}
+import services.DbFacade
 import services.exec.WorkerFactory
 import services.model.StatusLogger
+import services.mongo.{CollectionMetadata, CollectionMetadataItem, CollectionName, MongoSystemMetadataStore}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
@@ -36,9 +34,9 @@ object CollectionController extends CollectionController(
   ControllerConfig.authAction,
   ControllerConfig.logger,
   ControllerConfig.workerFactory,
-  ApplicationGlobal.collectionMetadata,
+  ApplicationGlobal.mongoCollectionMetadata,
   ApplicationGlobal.metadataStore,
-  Services.elasticSearchService
+  ApplicationGlobal.elasticSearchService
 )
 
 
@@ -47,7 +45,7 @@ class CollectionController(action: ActionBuilder[Request],
                            workerFactory: WorkerFactory,
                            collectionMetadata: CollectionMetadata,
                            systemMetadata: MongoSystemMetadataStore,
-                           esHelper: ElasticsearchHelper) extends BaseController {
+                           esHelper: DbFacade) extends BaseController {
 
   import CollectionInfo._
 
@@ -62,39 +60,40 @@ class CollectionController(action: ActionBuilder[Request],
   }
 
   private def listCollections(): List[CollectionInfo] = {
-    esHelper.clients flatMap { client =>
-
-      val inUse = client execute {
-        getAlias("address-reputation-data")
-      } await
-
-      val test: ObjectLookupContainer[String] = inUse.getAliases.keys
-
-      val inUseIndices: List[String] = test.toArray.map(a => {
-        a.asInstanceOf[String]
-      }).toList
-
-      val gar = client execute {
-        getAlias(esHelper.indexAlias)
-      } await
-
-      val olc = gar.getAliases.keys
-
-      olc.toArray().map(a => {
-        val aliasIndex = a.asInstanceOf[String]
-        val docs = client.execute {
-          countFrom(aliasIndex)
-        }.await
-        val docCount = docs.getCount.toInt
-        status.info(s"Got alias index: $aliasIndex")
-        CollectionInfo(aliasIndex,
-          docCount,
-          false,
-          inUseIndices.contains(aliasIndex),
-          None,
-          None)
-      }).toList
-    }
+    //    esHelper.clients flatMap { client =>
+    //
+    //      val inUse = client execute {
+    //        getAlias("address-reputation-data")
+    //      } await
+    //
+    //      val test: ObjectLookupContainer[String] = inUse.getAliases.keys
+    //
+    //      val inUseIndices: List[String] = test.toArray.map(a => {
+    //        a.asInstanceOf[String]
+    //      }).toList
+    //
+    //      val gar = client execute {
+    //        getAlias(esHelper.indexAlias)
+    //      } await
+    //
+    //      val olc = gar.getAliases.keys
+    //
+    //      olc.toArray().map(a => {
+    //        val aliasIndex = a.asInstanceOf[String]
+    //        val docs = client.execute {
+    //          countFrom(aliasIndex)
+    //        }.await
+    //        val docCount = docs.getCount.toInt
+    //        status.info(s"Got alias index: $aliasIndex")
+    //        CollectionInfo(aliasIndex,
+    //          docCount,
+    //          false,
+    //          inUseIndices.contains(aliasIndex),
+    //          None,
+    //          None)
+    //      }).toList
+    //    }
+    Nil
   }
 
   def doDropCollection(name: String): Action[AnyContent] = action {

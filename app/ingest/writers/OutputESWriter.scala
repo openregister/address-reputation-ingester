@@ -20,7 +20,8 @@ import java.util.Date
 
 import com.sksamuel.elastic4s._
 import com.sksamuel.elastic4s.mappings.FieldType.{DateType, StringType}
-import services.es.{ElasticsearchHelper, IndexMetadata, Services}
+import config.ApplicationGlobal
+import services.es.IndexMetadata
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
@@ -28,13 +29,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper: ElasticsearchHelper,
+class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMetadata: IndexMetadata,
                      settings: WriterSettings) extends OutputWriter with ElasticDsl {
 
-  private val address = esHelper.address
-  private val metadataName = "metadata"
-  private val indexMetadata = new IndexMetadata(esHelper)
-  private val indexName: String = model.collectionName.toString
+  private val address = indexMetadata.address
+  private val metadata = indexMetadata.metadata
+  private val indexName = model.collectionName.toString
 
   override def existingTargetThatIsNewerThan(date: Date): Option[String] = {
     None
@@ -44,7 +44,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
     if (indexMetadata.collectionExists(indexName))
       indexMetadata.dropCollection(indexName)
 
-    esHelper.clients foreach { client =>
+    indexMetadata.clients foreach { client =>
       client execute {
         create index indexName shards 4 replicas 0 refreshInterval "60s" mappings {
           mapping(address) fields(
@@ -72,7 +72,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
               field("raw") typed StringType index NotAnalyzed
               )
             )
-          mapping(metadataName) fields (
+          mapping(metadata) fields (
             //            field("id") typed StringType,
             //            field("createdAt") typed DateType,
             field("completedAt") typed DateType
@@ -80,12 +80,10 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
         }
       } await
 
-      //      new IndexMetadata(esHelper).writeCreationDateTo(ariIndexName)
-
       //TODO move switchover to the switchover controller
       //TODO remove the existing alias, if any
       //      client execute {
-      //        aliases(add alias esHelper.indexAlias on ariIndexName)
+      //        aliases(add alias indexMetadata.indexAlias on ariIndexName)
       //      } await
     }
   }
@@ -105,7 +103,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
   }
 
   override def end(completed: Boolean): StateModel = {
-    esHelper.clients foreach { client =>
+    indexMetadata.clients foreach { client =>
       if (bulkCount != 0) {
         val fr = client execute {
           bulk(
@@ -123,12 +121,12 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
       }
 
 
-    if (completed) {
-      // we have finished! let's celebrate
-      indexMetadata.writeCompletionDateTo(indexName)
-    }
+      if (completed) {
+        // we have finished! let's celebrate
+        indexMetadata.writeCompletionDateTo(indexName)
+      }
 
-    client execute {
+      client execute {
         update settings indexName set Map(
           "index.refresh_interval" -> "1s"
         )
@@ -146,7 +144,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
     bulkCount += 1
 
     if (bulkCount >= settings.bulkSize) {
-      val fr = esHelper.clients map { client =>
+      val fr = indexMetadata.clients map { client =>
         client execute {
           bulk(
             bulkStatements
@@ -172,6 +170,6 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
 
 class OutputESWriterFactory extends OutputWriterFactory {
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputESWriter = {
-    new OutputESWriter(model, statusLogger, Services.elasticSearchService, settings)
+    new OutputESWriter(model, statusLogger, ApplicationGlobal.elasticSearchService, settings)
   }
 }

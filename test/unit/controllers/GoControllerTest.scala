@@ -67,13 +67,15 @@ class GoControllerTest extends FunSuite with MockitoSugar {
 
     val fetchController = mock[FetchController]
     val ingestController = mock[IngestController]
-    val switchoverController = mock[SwitchoverController]
-    val dbCollectionController = mock[db.CollectionController]
-    val esCollectionController = mock[es.CollectionController]
+    val dbSwitchoverController = mock[SwitchoverController]
+    val esSwitchoverController = mock[SwitchoverController]
+    val dbCollectionController = mock[CollectionController]
+    val esCollectionController = mock[CollectionController]
 
     val goController = new GoController(new PassThroughAction, status, workerFactory, sardineWrapper,
-      fetchController, ingestController, switchoverController,
-      dbCollectionController, esCollectionController)
+      fetchController, ingestController,
+      dbSwitchoverController, dbCollectionController,
+      esSwitchoverController, esCollectionController)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]
@@ -135,7 +137,8 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel], any[Continuer])
       verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
-      verify(switchoverController, never).switchIfOK(any[StateModel])
+      verify(dbSwitchoverController, never).switchIfOK(any[StateModel])
+      verify(esSwitchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }
   }
@@ -155,7 +158,8 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel], any[Continuer])
       verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
-      verify(switchoverController, never).switchIfOK(any[StateModel])
+      verify(dbSwitchoverController, never).switchIfOK(any[StateModel])
+      verify(esSwitchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }
   }
@@ -175,7 +179,8 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel], any[Continuer])
       verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
-      verify(switchoverController).switchIfOK(any[StateModel])
+      verify(dbSwitchoverController).switchIfOK(any[StateModel])
+      verify(esSwitchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }
   }
@@ -224,8 +229,9 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === ACCEPTED)
       verify(fetchController, times(2)).fetch(any[StateModel], any[Continuer])
       verify(ingestController, times(2)).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
-      verify(switchoverController, times(2)).switchIfOK(any[StateModel])
+      verify(dbSwitchoverController, times(2)).switchIfOK(any[StateModel])
       verify(dbCollectionController).cleanup()
+      verify(esCollectionController, never).cleanup()
       teardown()
     }
   }
@@ -251,7 +257,8 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === ACCEPTED)
       verify(fetchController, never).fetch(any[StateModel], any[Continuer])
       verify(ingestController, never).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
-      verify(switchoverController, never).switchIfOK(any[StateModel])
+      verify(dbSwitchoverController, never).switchIfOK(any[StateModel])
+      verify(esSwitchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }
   }

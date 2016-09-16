@@ -25,7 +25,7 @@ import config.ApplicationGlobal
 import controllers.SimpleValidator._
 import controllers.{ControllerConfig, KnownProducts}
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.db.{CollectionMetadata, CollectionName}
+import services.mongo.{CollectionMetadata, CollectionName}
 import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -38,7 +38,7 @@ object FetchController extends FetchController(
   ControllerConfig.fetcher,
   ControllerConfig.sardine,
   ControllerConfig.remoteServer,
-  ApplicationGlobal.collectionMetadata)
+  ApplicationGlobal.mongoCollectionMetadata)
 
 
 class FetchController(action: ActionBuilder[Request],
