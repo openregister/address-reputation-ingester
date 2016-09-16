@@ -30,6 +30,7 @@ import org.scalatestplus.play.PlaySpec
 import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
 import services.db.{CollectionMetadata, CollectionName}
+import services.es.{ElasticsearchHelper, IndexMetadata}
 import uk.co.hmrc.address.admin.MetadataStore
 import uk.co.hmrc.logging.Stdout
 
@@ -141,17 +142,16 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     """
        * return the sorted list of ES collections
        * along with the completion dates (if present)
-    """ ignore {
-//      val mongo = casbahMongoConnection()
-//      val admin = new MetadataStore(mongo, Stdout)
-//      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_ts5"))
-//
-//      val request = newRequest("GET", "/es/collections/list")
-//      val response = await(request.withAuth("admin", "password", BASIC).execute())
-//      assert(response.status === OK)
-//
-//      assert(waitUntil("/admin/status", "idle", 100000) === true)
-//      mongo.close()
+    """ ignore { // ignored until we work out how to ensure that ES is always available when this test is run
+      implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+      val esHelper = ElasticsearchHelper("elasticsearch", "elasticsearch://localhost:9300", false)
+      new IndexMetadata(esHelper).writeCompletionDateTo("abp_39_ts5")
+
+      val request = newRequest("GET", "/es/collections/list")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      assert(response.status === OK)
+
+      assert(waitUntil("/admin/status", "idle", 100000) === true)
     }
   }
 

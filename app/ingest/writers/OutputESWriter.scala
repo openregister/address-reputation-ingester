@@ -19,8 +19,8 @@ package ingest.writers
 import java.util.Date
 
 import com.sksamuel.elastic4s._
-import com.sksamuel.elastic4s.mappings.FieldType.StringType
-import services.es.{ElasticsearchHelper, Services}
+import com.sksamuel.elastic4s.mappings.FieldType.{DateType, StringType}
+import services.es.{ElasticsearchHelper, IndexMetadata, Services}
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
@@ -31,19 +31,23 @@ import scala.concurrent.{Await, Future}
 class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper: ElasticsearchHelper,
                      settings: WriterSettings) extends OutputWriter with ElasticDsl {
 
-  val ariIndexName: String = model.collectionName.toString
+  private val address = esHelper.address
+  private val metadataName = "metadata"
+  private val indexMetadata = new IndexMetadata(esHelper)
+  private val indexName: String = model.collectionName.toString
 
   override def existingTargetThatIsNewerThan(date: Date): Option[String] = {
     None
   }
 
   override def begin() {
-    //TODO write creation timestamp metadata to the index
-    //connect to ES and prepare index
+    if (indexMetadata.collectionExists(indexName))
+      indexMetadata.dropCollection(indexName)
+
     esHelper.clients foreach { client =>
       client execute {
-        create index ariIndexName shards 4 replicas 0 refreshInterval "60s" mappings {
-          mapping(esHelper.ariDocumentName) fields(
+        create index indexName shards 4 replicas 0 refreshInterval "60s" mappings {
+          mapping(address) fields(
             field("id") typed StringType,
             //TODO lines should be an array - perhaps?
             field("line1") typed StringType fields(
@@ -68,20 +72,26 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
               field("raw") typed StringType index NotAnalyzed
               )
             )
+          mapping(metadataName) fields (
+            //            field("id") typed StringType,
+            //            field("createdAt") typed DateType,
+            field("completedAt") typed DateType
+            )
         }
       } await
 
+      //      new IndexMetadata(esHelper).writeCreationDateTo(ariIndexName)
+
       //TODO move switchover to the switchover controller
       //TODO remove the existing alias, if any
-      client execute {
-        aliases(add alias esHelper.indexAlias on ariIndexName)
-      } await
+      //      client execute {
+      //        aliases(add alias esHelper.indexAlias on ariIndexName)
+      //      } await
     }
   }
 
   override def output(a: DbAddress) {
-    //Add document to batch
-    addBulk(index into ariIndexName -> esHelper.ariDocumentName fields(
+    addBulk(index into indexName -> address fields(
       //TODO should just use a.tupled
       "id" -> a.id,
       "line1" -> a.line1,
@@ -95,7 +105,6 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
   }
 
   override def end(completed: Boolean): StateModel = {
-    //close index update refresh settings etc
     esHelper.clients foreach { client =>
       if (bulkCount != 0) {
         val fr = client execute {
@@ -106,21 +115,26 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, esHelper
 
         Await.ready(fr, Duration.Inf) foreach { br =>
           if (br.hasFailures) {
-            statusLogger.warn(s"Elasticserch failure processing bulk insertion - ${br.failureMessage}")
+            statusLogger.warn(s"Elasticsearch failure processing bulk insertion - ${br.failureMessage}")
             model = model.copy(hasFailed = true)
-            throw new Exception(s"Elasticserch failure processing bulk insertion - ${br.failureMessage}")
+            throw new Exception(s"Elasticsearch failure processing bulk insertion - ${br.failureMessage}")
           }
         }
       }
 
-      client execute {
-        update settings ariIndexName set Map(
+
+    if (completed) {
+      // we have finished! let's celebrate
+      indexMetadata.writeCompletionDateTo(indexName)
+    }
+
+    client execute {
+        update settings indexName set Map(
           "index.refresh_interval" -> "1s"
         )
       }
     }
-    //TODO write completion metadata to the index
-    statusLogger.info(s"Finished ingesting to index $ariIndexName")
+    statusLogger.info(s"Finished ingesting to index $indexName")
     model
   }
 

@@ -22,7 +22,7 @@ import services.model.StatusLogger
 import uk.co.hmrc.logging.Stdout
 
 // for manual test/development
-object WebdavFinderEssay {
+object WebdavFinderSketch {
 
   def main(args: Array[String]) {
     val status = new StatusLogger(Stdout)

@@ -26,28 +26,33 @@ import play.api.Play._
 
 object Services {
 
-  private val esSettings = {
+  lazy val elasticSearchService = {
     val clusterName = mustGetConfigString(current.mode, current.configuration, "elastic.clustername")
-    Settings.settingsBuilder().put("cluster.name", clusterName).build()
-  }
-
-  lazy val getClients: List[ElasticClient] = {
     val connectionString = mustGetConfigString(current.mode, current.configuration, "elastic.uri")
-    connectionString.split("\\+").map { uri =>
+    val isCluster = getConfigBoolean(current.mode, current.configuration, "elastic.is-cluster").getOrElse(true)
+
+    ElasticsearchHelper(clusterName, connectionString, isCluster)
+  }
+}
+
+
+object ElasticsearchHelper {
+  // allows construction without loading Play
+  def apply(clusterName: String, connectionString: String, isCluster: Boolean): ElasticsearchHelper = {
+    val esSettings = Settings.settingsBuilder().put("cluster.name", clusterName).build()
+
+    val clients = connectionString.split("\\+").map { uri =>
       ElasticClient.transport(esSettings, uri)
     }.toList
-  }
 
-  lazy val elasticSearchService = new ElasticsearchHelper(
-    getClients,
-    getConfigBoolean(current.mode, current.configuration, "elastic.is-cluster").getOrElse(true)
-  )
+    new ElasticsearchHelper(clients, isCluster)
+  }
 }
 
 
 class ElasticsearchHelper(val clients: List[ElasticClient], val isCluster: Boolean) {
   val replicaCount = "1"
   val ariAliasName = "address-reputation-data"
-  val ariDocumentName = "address"
   val indexAlias = "addressbase-index"
+  val address = "address"
 }

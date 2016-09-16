@@ -22,9 +22,10 @@ package services.db
 import java.util.Date
 
 import com.mongodb.casbah.Imports._
+import services.DbFacade
 
 
-class CollectionMetadata(db: MongoDB) {
+class CollectionMetadata(db: MongoDB) extends DbFacade {
 
   import CollectionMetadata._
 
@@ -34,19 +35,7 @@ class CollectionMetadata(db: MongoDB) {
     db(name).drop()
   }
 
-  def existingCollectionNamesLike(name: CollectionName): List[CollectionName] = {
-    val collectionNamePrefix = name.toPrefix + "_"
-    val stringNames = db.collectionNames.filter(_.startsWith(collectionNamePrefix)).toList.sorted
-    stringNames.flatMap(s => CollectionName.apply(s))
-  }
-
-  def existingCollections: List[CollectionName] = {
-    db.collectionNames.toList.sorted.flatMap(name => CollectionName(name))
-  }
-
-  def existingCollectionMetadata: List[CollectionMetadataItem] = {
-    existingCollections.flatMap(name => findMetadata(name))
-  }
+  def existingCollectionNames: List[String] = db.collectionNames.toList.sorted
 
   def findMetadata(name: CollectionName): Option[CollectionMetadataItem] = {
     val collection = db(name.toString)

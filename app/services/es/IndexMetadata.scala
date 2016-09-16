@@ -21,55 +21,75 @@ package services.es
 
 import java.util.Date
 
+import com.sksamuel.elastic4s.ElasticDsl._
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
+import org.elasticsearch.common.unit.TimeValue
+import services.DbFacade
 import services.db.{CollectionMetadataItem, CollectionName}
 
-class IndexMetadata(esHelper: ElasticsearchHelper) {
+import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext
 
-  //  private val metadata = "metadata"
-  //  private val createdAt = "createdAt"
-  //  private val completedAt = "completedAt"
+class IndexMetadata(esHelper: ElasticsearchHelper)(implicit val ec: ExecutionContext) extends DbFacade {
 
-  def collectionExists(name: String): Boolean = false // TODO
+    private val address = esHelper.address
+    private val metadata = "metadata"
+    private val completedAt = "completedAt"
+    private val mid = "mid"
+
+  def collectionExists(name: String): Boolean = existingCollectionNames.contains(name)
 
   def dropCollection(name: String) {
-    //TODO
+    esHelper.clients foreach { client =>
+      client.admin.indices.delete(new DeleteIndexRequest(name)).actionGet
+    }
   }
 
-  def existingCollectionNamesLike(name: CollectionName): List[String] = Nil // TODO
-
-  def existingCollections: List[CollectionName] = {
-    Nil // TODO
-  }
-
-  def existingCollectionMetadata: List[CollectionMetadataItem] = {
-    existingCollections.flatMap(name => findMetadata(name))
+  def existingCollectionNames: List[String] = {
+    val client0 = esHelper.clients.head.java
+    val healths = greenHealth()
+    healths.getIndices.keySet.asScala.toList.sorted
   }
 
   def findMetadata(name: CollectionName): Option[CollectionMetadataItem] = {
-    //TODO
-    None
-//    val collection = db(name.toString)
-//    val size = collection.size
-//    val m = collection.findOneByID(metadata)
-//    if (m.isEmpty)
-//      Some(CollectionMetadataItem(name, size))
-//    else {
-//      val created = Option(m.get.get(createdAt)).map(n => new Date(n.asInstanceOf[Long]))
-//      val completed = Option(m.get.get(completedAt)).map(n => new Date(n.asInstanceOf[Long]))
-//      Some(CollectionMetadataItem(name, size, created, completed))
-//    }
+    val index = name.toString
+    greenHealth(index)
+
+    val rMetadata = esHelper.clients.head.execute {
+      get id mid from index / metadata
+    }
+
+    val rCount = esHelper.clients.head.execute {
+      search in index / address size 0
+    }
+
+    val source = Option(rMetadata.await.source)
+    val completedDate = source.map(s => new Date(s.asScala(completedAt).asInstanceOf[Long]))
+    val count = rCount.await.totalHits
+
+    Some(CollectionMetadataItem(name, count.toInt, None, completedDate))
   }
 
   def writeCreationDateTo(indexName: String, date: Date = new Date()) {
-    //    val filter = MongoDBObject("_id" -> metadata)
-    //    collection.update(filter, $inc(createdAt -> date.getTime), upsert = true)
+    // not needed
   }
 
   def writeCompletionDateTo(indexName: String, date: Date = new Date()) {
-    //    val filter = MongoDBObject("_id" -> metadata)
-    //    collection.update(filter, $inc(completedAt -> date.getTime), upsert = true)
+    esHelper.clients foreach { client =>
+      client execute {
+        index into indexName -> metadata fields (
+          completedAt -> date.getTime
+          ) id mid
+      }
+    }
   }
 
+  private def greenHealth(index: String*) = {
+    val client0 = esHelper.clients.head.java
+    client0.admin().cluster().prepareHealth(index:_*).setWaitForGreenStatus().setTimeout(twoSeconds).get
+  }
+
+  private val twoSeconds = TimeValue.timeValueSeconds(2)
 }
 
 object IndexMetadata {
