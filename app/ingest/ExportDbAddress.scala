@@ -39,7 +39,8 @@ private[ingest] object ExportDbAddress {
     DbAddress(id, line1, line2, line3,
       Some(normaliseAddressLine(dpa.postTown)),
       normalisePostcode(dpa.postcode),
-      ukHomeCountryName(subdivision))
+      ukHomeCountryName(subdivision),
+      None) //TODO LCC
   }
 
 
@@ -60,7 +61,8 @@ private[ingest] object ExportDbAddress {
       normaliseAddressLine(removeUninterestingStreets(line3, settings)),
       Some(normaliseAddressLine(street.townName)),
       normalisePostcode(postcode),
-      ukHomeCountryName(subdivision))
+      ukHomeCountryName(subdivision),
+      None) // TODO LCC
   }
 
   private def ukHomeCountryName(subdivision: Char) = subdivision match {

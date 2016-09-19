@@ -61,7 +61,7 @@
             <fieldset id="autoActions" class="visible">
                 <legend>Download and Ingest</legend>
                 <div class="upper">
-                    <a id="goAuto" class="start button" href="#">Auto Fetch, Ingest, Switch</a>
+                    <a id="goAuto" class="start button" title="this will join the queue" href="#">Auto Fetch, Ingest, Switch</a>
                     <span class="spacer1"></span>
 
                     <a id="cancelTask" class="stop button" href="#">Cancel current task</a>
@@ -106,15 +106,15 @@
                     <label for="variant">Variant</label>
                     <input id="variant" value="full" size="7"/> +
                     <label for="force">Force</label> <input id="force" type="checkbox"/>
-                    <a id="go" class="start button" href="#">Go Fetch, Ingest, Switch</a> or
-                    <a id="fetch" class="start button" href="#">Fetch only</a> or
-                    <a id="ingest" class="start button" href="#">Ingest only</a>
+                    <a id="go" class="start button" title="this will join the queue" href="#">Go Fetch, Ingest, Switch</a> or
+                    <a id="fetch" class="start button" title="this will join the queue" href="#">Fetch only</a> or
+                    <a id="ingest" class="start button" title="this will join the queue" href="#">Ingest only</a>
                 </div>
             </fieldset>
             <fieldset id="fileActions" class="visible">
                 <legend class="toggler">File System</legend>
                 <div>
-                    <a id="cleanFs" class="start button" href="#">Auto clean</a>
+                    <a id="cleanFs" class="start button" title="this will join the queue" href="#">Auto clean</a>
                     <span class="spacer1"></span>
                     <label for="dirRoot">Root</label>
                     <input id="dirRoot" value="." size="15"/> +
@@ -126,13 +126,13 @@
             <fieldset id="collectionActions" class="visible">
                 <legend class="toggler">db collections</legend>
                 <div>
-                    <a id="cleanCol" class="start button" href="#">Auto clean</a>
+                    <a id="cleanCol" class="start button" title="this will join the queue" href="#">Auto clean</a>
                     <span class="spacer1"></span>
                     <a id="listCol" class="button" href="#">List collections</a>
                     <span class="spacer1"></span>
                     <label for="colname">Collection</label>
                     <input id="colname" placeholder="abi_42_2016-12-31-23-59" size="25"/>
-                    <a id="switchCol" class="start button" href="#">Switch to</a> or
+                    <a id="switchCol" class="start button" title="this will join the queue" href="#">Switch to</a> or
                     <a id="dropCol" class="stop button" href="#">Drop</a>
                     <label for="target2">for</label>
                     <select id="target2">
