@@ -16,7 +16,12 @@
 
 package helper
 
+import java.io.File
+
 import com.github.simplyscala.MongoEmbedDatabase
+import com.sksamuel.elastic4s.ElasticClient
+import org.apache.commons.io.FileUtils
+import org.elasticsearch.common.settings.Settings
 import org.scalatest._
 import org.scalatestplus.play.ServerProvider
 import play.api.test.{FakeApplication, Helpers, TestServer}
@@ -25,7 +30,15 @@ import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedDatabase with AppServerTestApi {
   this: Suite =>
 
+  val esDataPath = System.getProperty("java.io.tmpdir") + "/es"
+
   val mongoTestConnection = new MongoTestConnection(mongoStart())
+
+  val esSettings = Settings.settingsBuilder()
+    .put("http.enabled", false)
+    .put("path.home", esDataPath)
+
+  val esClient = ElasticClient.local(esSettings.build)
 
   def appConfiguration: Map[String, String]
 
@@ -33,10 +46,12 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedD
 
   def beforeAppServerStarts() {}
 
-  def afterAppServerStops() {}
+  def afterAppServerStops() {
+    FileUtils.deleteDirectory(new File(esDataPath))
+  }
 
   implicit override final lazy val app: FakeApplication = new FakeApplication(
-    additionalConfiguration = appConfiguration ++ Map(mongoTestConnection.configItem))
+    additionalConfiguration = appConfiguration ++ Map(mongoTestConnection.configItem, "elastic.localmode" -> true))
 
   /**
     * The port used by the `TestServer`.  By default this will be set to the result returned from
@@ -62,6 +77,7 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedD
       testServer.stop()
       afterAppServerStops()
       mongoTestConnection.stop()
+      esClient.close()
     }
   }
 }

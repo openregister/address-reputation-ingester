@@ -25,14 +25,18 @@ import java.nio.file.StandardCopyOption._
 
 import fetch.Utils._
 import helper.AppServerUnderTest
+import org.elasticsearch.common.unit.TimeValue
 import org.scalatest.SequentialNestedSuiteExecution
 import org.scalatestplus.play.PlaySpec
+import play.api.libs.json.JsObject
 import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
-import services.es.ElasticsearchHelper
+import services.es.{ElasticsearchHelper, IndexMetadata}
 import services.mongo.{CollectionMetadata, CollectionName, MongoSystemMetadataStoreFactory}
 import uk.co.hmrc.address.admin.MetadataStore
 import uk.co.hmrc.logging.Stdout
+
+import scala.collection.mutable.ListBuffer
 
 //-------------------------------------------------------------------------------------------------
 // This is a long test file to ensure that everything runs in sequence, not overlapping.
@@ -51,6 +55,10 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     "app.files.downloadFolder" -> s"$tmpDir/download",
     "app.files.outputFolder" -> s"$tmpDir/output"
   )
+
+  def waitForIndex(idx: String) {
+    esClient.java.admin().cluster().prepareHealth(idx).setWaitForGreenStatus().setTimeout(TimeValue.timeValueSeconds(2)).get
+  }
 
   //-----------------------------------------------------------------------------------------------
 
@@ -142,15 +150,23 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     """
        * return the sorted list of ES collections
        * along with the completion dates (if present)
-    """ ignore {
-      // ignored until we work out how to ensure that ES is always available when this test is run
-      val ec = scala.concurrent.ExecutionContext.Implicits.global
-      val indexMetadata = ElasticsearchHelper("elasticsearch", "elasticsearch://localhost:9300", false, ec)
-      indexMetadata.writeCompletionDateTo("abp_39_ts5")
+    """ in {
+      implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+
+      val idx = "abp_39_ts5"
+
+      val indexMetadata =  new IndexMetadata(List(esClient), false)
+      indexMetadata.writeCompletionDateTo(idx)
+
+      waitForIndex(idx)
 
       val request = newRequest("GET", "/es/collections/list")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
+
       assert(response.status === OK)
+      assert((response.json \ "collections").as[ListBuffer[JsObject]].length === 1)
+      assert(((response.json \ "collections")(0) \ "name").as[String] === idx )
+      assert(((response.json \ "collections")(0) \ "size").as[Int] === 0 )
 
       assert(waitUntil("/admin/status", "idle", 100000) === true)
     }
@@ -397,6 +413,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
   }
 
   override def afterAppServerStops() {
+    super.afterAppServerStops()
     deleteDir(tmpDir)
   }
 

@@ -22,6 +22,7 @@ package services.es
 import java.util
 import java.util.Date
 
+import com.carrotsearch.hppc.ObjectLookupContainer
 import com.sksamuel.elastic4s.ElasticClient
 import com.sksamuel.elastic4s.ElasticDsl._
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
@@ -95,10 +96,16 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean)(im
       getAlias(indexAlias)
     } await
 
-    val olc = gar.getAliases.keys
-    val names = util.Arrays.asList(olc.toArray).asScala.map(_.asInstanceOf[String])
-    assert(names.length < 2, names)
-    names.headOption.flatMap(n => CollectionName(n))
+    val olc: ObjectLookupContainer[String] = gar.getAliases.keys
+
+    if (olc.isEmpty)
+      None
+    else
+    {
+      val names = util.Arrays.asList(olc.toArray).asScala
+      assert(names.length < 2, names)
+      names.map(_.asInstanceOf[String]).headOption.flatMap(n => CollectionName(n))
+    }
   }
 
   def setCollectionInUseFor(name: CollectionName) {

@@ -42,12 +42,21 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
   lazy val mongoCollectionMetadata = new CollectionMetadata(mongoConnection.getConfiguredDb, metadataStore)
 
   lazy val elasticSearchService: IndexMetadata = {
-    val clusterName = mustGetConfigString(current.mode, current.configuration, "elastic.clustername")
-    val connectionString = mustGetConfigString(current.mode, current.configuration, "elastic.uri")
-    val isCluster = getConfigBoolean(current.mode, current.configuration, "elastic.is-cluster").getOrElse(true)
+    if (elasticSearchLocalMode) {
+      ElasticsearchHelper(scala.concurrent.ExecutionContext.Implicits.global)
+    }
+    else {
+      val clusterName = mustGetConfigString(current.mode, current.configuration, "elastic.clustername")
+      val connectionString = mustGetConfigString(current.mode, current.configuration, "elastic.uri")
+      val isCluster = getConfigBoolean(current.mode, current.configuration, "elastic.is-cluster").getOrElse(true)
 
-    ElasticsearchHelper(clusterName, connectionString, isCluster,
+      ElasticsearchHelper(clusterName, connectionString, isCluster,
       scala.concurrent.ExecutionContext.Implicits.global)
+    }
+  }
+
+  lazy val elasticSearchLocalMode: Boolean = {
+    getConfigBoolean(current.mode, current.configuration, "elastic.localmode").getOrElse(false)
   }
 
   override def onStart(app: Application) {

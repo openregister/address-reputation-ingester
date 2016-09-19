@@ -20,7 +20,9 @@
 package services.es
 
 import com.sksamuel.elastic4s.ElasticClient
+import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings.Settings
+import org.elasticsearch.common.transport.LocalTransportAddress
 
 import scala.concurrent.ExecutionContext
 
@@ -37,5 +39,22 @@ object ElasticsearchHelper {
     implicit val iec = ec
     new IndexMetadata(clients, isCluster)
   }
-}
 
+  def apply(ec: ExecutionContext): IndexMetadata = {
+    implicit val iec = ec
+
+    val esSettings = Settings.settingsBuilder()
+      .put("http.enabled", false)
+      .put("node.local", true)
+
+    val esClient = TransportClient.builder()
+    esClient.settings(esSettings.build)
+
+    val tc=esClient.build()
+    tc.addTransportAddress(new LocalTransportAddress("1"))
+
+    val clients = List(ElasticClient.fromClient(tc))
+
+    new IndexMetadata(clients, false)
+  }
+}
