@@ -138,6 +138,6 @@ class CollectionController(action: ActionBuilder[Request],
   private val systemCollections = Set("system.indexes", "admin")
 
   private def collectionsInUse: Set[String] =
-    KnownProducts.OSGB.map(n => collectionMetadata.getCollectionInUseFor(n)).map(_.toString).toSet
+    KnownProducts.OSGB.flatMap(n => collectionMetadata.getCollectionInUseFor(n)).map(_.toString).toSet
 }
 

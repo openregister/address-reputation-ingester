@@ -44,7 +44,7 @@ import scala.concurrent.Future
 @RunWith(classOf[JUnitRunner])
 class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
-  val abp_40_ts12345 = CollectionName("abp_40_2001-02-03-04-05").get
+  val abp_40_ts12345 = CollectionName("abp_40_200102030405").get
 
   // password="password"
   val authConfig = BasicAuthenticationFilterConfiguration("address-reputation-ingester", true, "admin",
@@ -57,7 +57,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
        when an invalid product is passed to ingest
        then an exception is thrown
     """) {
-    parameterTest("db", "$%", 40, "2001-02-03-04-05")
+    parameterTest("db", "$%", 40, "200102030405")
   }
 
   def parameterTest(target: String, product: String, epoch: Int, timestamp: String): Unit = {
@@ -102,19 +102,19 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       and an audit message is logged that describes the change
     """) {
     new Context {
-      when(dbFacade.collectionExists("abp_40_2001-02-03-04-05")) thenReturn true
+      when(dbFacade.collectionExists("abp_40_200102030405")) thenReturn true
       when(dbFacade.findMetadata(abp_40_ts12345)) thenReturn Some(CollectionMetadataItem(abp_40_ts12345, 10, None, Some(dateAgo(3600000))))
 
       val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
         "db", scala.concurrent.ExecutionContext.Implicits.global)
-      val response = await(call(sc.doSwitchTo("abp", 40, "2001-02-03-04-05"), request))
+      val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
       assert(response.header.status / 100 === 2)
       worker.awaitCompletion()
       worker.terminate()
 
       verify(dbFacade).setCollectionInUseFor(abp_40_ts12345)
-      verify(auditClient).succeeded(Map("product" -> "abp", "epoch" -> "40", "newCollection" -> "abp_40_2001-02-03-04-05"))
+      verify(auditClient).succeeded(Map("product" -> "abp", "epoch" -> "40", "newCollection" -> "abp_40_200102030405"))
     }
   }
 
@@ -130,14 +130,14 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
       val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
         "db", scala.concurrent.ExecutionContext.Implicits.global)
-      val response = await(call(sc.doSwitchTo("abp", 40, "2001-02-03-04-05"), request))
+      val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
       worker.awaitCompletion()
       worker.terminate()
 
       verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
       assert(logger.warns.size === 2, logger.all)
-      assert(logger.warns.head.message === "Warn:abp_40_2001-02-03-04-05: collection was not found")
+      assert(logger.warns.head.message === "Warn:abp_40_200102030405: collection was not found")
     }
   }
 
@@ -149,12 +149,12 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       and the stored metadata item for the product in question is left unchanged
     """) {
     new Context {
-      when(dbFacade.collectionExists("abp_40_2001-02-03-04-05")) thenReturn true
+      when(dbFacade.collectionExists("abp_40_200102030405")) thenReturn true
       when(dbFacade.findMetadata(abp_40_ts12345)) thenReturn Some(CollectionMetadataItem(abp_40_ts12345, 10, None, None))
 
       val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
         "db", scala.concurrent.ExecutionContext.Implicits.global)
-      val response = await(call(sc.doSwitchTo("abp", 40, "2001-02-03-04-05"), request))
+      val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
       worker.awaitCompletion()
       worker.terminate()
@@ -162,7 +162,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === 202)
       verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
       assert(logger.warns.size === 2, logger.all)
-      assert(logger.warns.head.message === "Warn:abp_40_2001-02-03-04-05: collection is still being written")
+      assert(logger.warns.head.message === "Warn:abp_40_200102030405: collection is still being written")
     }
   }
 
@@ -175,7 +175,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     new Context {
       val sc = new SwitchoverController(new FailAuthAction, status, workerFactory, dbFacade, auditClient,
         "db", scala.concurrent.ExecutionContext.Implicits.global)
-      val response = await(call(sc.doSwitchTo("abp", 40, "2001-02-03-04-05"), request))
+      val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
       worker.awaitCompletion()
       worker.terminate()
@@ -195,7 +195,7 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     new Context {
       val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
         "db", scala.concurrent.ExecutionContext.Implicits.global)
-      val model1 = new StateModel("abp", 40, Some("full"), Some("2001-02-03-04-05"), hasFailed = true)
+      val model1 = new StateModel("abp", 40, Some("full"), Some("200102030405"), hasFailed = true)
 
       val model2 = sc.switchIfOK(model1)
 

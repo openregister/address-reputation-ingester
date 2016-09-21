@@ -32,7 +32,7 @@ object SimpleValidator {
     param.length <= maxLength && alphaNumUscorePattern.matcher(param).matches()
 
   def isTimestamp(param: String): Boolean =
-    param.length == 16 && timestampPattern.matcher(param).matches()
+    param.length == 12 && timestampPattern.matcher(param).matches()
 
   private val alphaNumPattern = "[a-z0-9]+".r.pattern
 
@@ -43,5 +43,5 @@ object SimpleValidator {
 
   private val numPattern = "[0-9]+".r.pattern
 
-  private val timestampPattern = "20[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2}".r.pattern
+  private val timestampPattern = "20[0-9]{10}".r.pattern
 }

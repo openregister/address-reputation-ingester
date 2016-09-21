@@ -329,7 +329,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       val admin = new MetadataStore(mongo, Stdout)
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
 
-      val request = newRequest("GET", "/db/switch/abp/39/2001-02-03-04-05")
+      val request = newRequest("GET", "/db/switch/abp/39/200102030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -347,9 +347,9 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
-      CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_2001-02-03-04-05"))
+      CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_200102030405"))
 
-      val request = newRequest("GET", "/db/switch/abp/39/2001-02-03-04-05")
+      val request = newRequest("GET", "/db/switch/abp/39/200102030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -364,7 +364,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
        * when a wrong password is supplied
        * the response should be 401
     """ in {
-      val request = newRequest("GET", "/db/switch/abp/39/2001-02-03-04-05")
+      val request = newRequest("GET", "/db/switch/abp/39/200102030405")
       val response = await(request.withAuth("admin", "wrong", BASIC).execute())
       assert(response.status === UNAUTHORIZED)
     }
@@ -386,16 +386,16 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     """ in {
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
-      CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_2001-02-03-04-05"))
-      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_2001-02-03-04-05"))
+      CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_200102030405"))
+      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_200102030405"))
 
-      val request = newRequest("GET", "/db/switch/abp/39/2001-02-03-04-05")
+      val request = newRequest("GET", "/db/switch/abp/39/200102030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
       val collectionName = admin.gbAddressBaseCollectionName.get
-      assert(collectionName === "abp_39_2001-02-03-04-05")
+      assert(collectionName === "abp_39_200102030405")
 
       mongo.close()
     }
