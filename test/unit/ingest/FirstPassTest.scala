@@ -202,7 +202,8 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     new context(
       """
         |10,"NAG Hub - GeoPlace",9999,2016-02-19,0,2016-02-19,23:47:05,"2.0","F"
-        |21,"I",3373,100040219314,1,2,2011-07-12,,294661.00,093744.00,50.7337174,-3.4940473,1,1110,"E",2007-10-24,,2016-02-10,2001-04-04,"D","EX4 8BW",0
+        |21,"I",246843,100091275899,1,2,2012-08-06,100091660014,624285.00,221683.00,51.8486717,1.2550278,2,1560,"E",2007-12-21,,2016-02-10,2002-08-21,"D","CO14 8RX",0
+        |21,"I",277974,35008288,8,4,2016-05-23,,288316.00,696943.00,56.1520438,-3.7994337,2,9056,"S",2012-04-27,2016-05-31,2016-06-17,2000-07-01,"L","FK12 5AG",0
         | """.stripMargin
     ) {
       when(continuer.isBusy) thenReturn true
@@ -216,9 +217,10 @@ class FirstPassTest extends FunSuite with MockitoSugar {
 
       lock.take()
       worker.awaitCompletion()
-      assert(firstPass.forwardData.blpu.size === 1)
-      assert(firstPass.forwardData.blpu.get(100040219314L) === "|EX4 8BW|1|E|1110")
-      assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPAs, 0 streets.")
+      assert(firstPass.forwardData.blpu.size === 2)
+      assert(firstPass.forwardData.blpu.get(100091275899L) === "100091660014|CO14 8RX|1|E|1560")
+      assert(firstPass.forwardData.blpu.get(35008288L) === "|FK12 5AG|8|S|9056")
+      assert(firstPass.sizeInfo === "First pass obtained 2 BLPUs, 0 DPAs, 0 streets.")
     }
   }
 
