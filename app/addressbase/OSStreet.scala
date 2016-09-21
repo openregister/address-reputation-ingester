@@ -25,7 +25,7 @@ import uk.co.hmrc.address.services.Capitalisation
 object OSStreet {
   val RecordId = "11"
 
-  val idx = OSStreetIdx(usrn = OSCleanup.Uprn_Idx, recordType = 4)
+  val idx = OSStreetIdx(usrn = 3, recordType = 4)
 
   def apply(csv: Array[String]): OSStreet = OSStreet(csv(idx.usrn).toLong, csv(idx.recordType).head)
 }
@@ -47,7 +47,7 @@ object OSStreetDescriptor {
   val RecordId = "15"
 
   val idx = OSStreetDescriptorIdx(
-    usrn = OSCleanup.Uprn_Idx,
+    usrn = 3,
     description = 4,
     locality = 5,
     town = 6,

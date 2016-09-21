@@ -25,11 +25,9 @@ import uk.co.hmrc.address.services.Capitalisation
 object OSDpa {
   val RecordId = "28"
 
-  import OSCleanup._
-
   // scalastyle:off
   val v1 = OSDpaIdx(
-    uprn = Uprn_Idx,
+    uprn = 3,
     subBuildingName = 8,
     buildingName = 9,
     buildingNumber = 10,
@@ -41,7 +39,7 @@ object OSDpa {
     postcode = 16)
 
   val v2 = OSDpaIdx(
-    uprn = Uprn_Idx,
+    uprn = 3,
     subBuildingName = 7,
     buildingName = 8,
     buildingNumber = 9,

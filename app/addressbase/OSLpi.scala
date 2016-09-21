@@ -26,7 +26,7 @@ object OSLpi {
   val RecordId = "24"
 
   val idx = OSLpiIdx(
-    uprn = OSCleanup.Uprn_Idx,
+    uprn = 3,
     logicalStatus = 6,
     saoStartNumber = 11,
     saoStartSuffix = 12,

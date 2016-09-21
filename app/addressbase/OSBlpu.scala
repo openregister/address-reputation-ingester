@@ -24,11 +24,10 @@ import uk.co.hmrc.address.osgb.{Document, Postcode}
 object OSBlpu {
   val RecordId = "21"
 
-  import OSCleanup._
-
   // scalastyle:off
   val v1 = OSBlpuIdx(
-    uprn = Uprn_Idx,
+    uprn = 3,
+    parentUprn = 7,
     logicalStatus = 4,
     subdivision = -1,
     localCustodian = 11,
@@ -36,7 +35,8 @@ object OSBlpu {
     postcode = 17)
 
   val v2 = OSBlpuIdx(
-    uprn = Uprn_Idx,
+    uprn = 3,
+    parentUprn = 7,
     logicalStatus = 4,
     subdivision = 14,
     localCustodian = 13,
@@ -51,13 +51,18 @@ object OSBlpu {
 
   def apply(csv: Array[String]): OSBlpu ={
     val subdivision = if (idx == v1) 'J' else csv(idx.subdivision).head
-    OSBlpu(csv(idx.uprn).toLong, csv(idx.logicalStatus).head, subdivision, csv(idx.postcode), csv(idx.localCustodian).toInt)
+    OSBlpu(
+      csv(idx.uprn).toLong,
+      blankToOptLong(csv(idx.parentUprn)),
+      csv(idx.logicalStatus).head,
+      subdivision, csv(idx.postcode),
+      csv(idx.localCustodian).toInt)
   }
 }
 
-case class OSBlpuIdx(uprn: Int, logicalStatus: Int, subdivision: Int, localCustodian: Int, postalCode: Int, postcode: Int)
+case class OSBlpuIdx(uprn: Int, parentUprn: Int, logicalStatus: Int, subdivision: Int, localCustodian: Int, postalCode: Int, postcode: Int)
 
-case class OSBlpu(uprn: Long, logicalStatus: Char, subdivision: Char, postcode: String, localCustodianCode: Int) extends Document {
+case class OSBlpu(uprn: Long, parentUprn: Option[Long], logicalStatus: Char, subdivision: Char, postcode: String, localCustodianCode: Int) extends Document {
 
   // For use as input to MongoDbObject (hence it's not a Map)
   def tupled: List[(String, Any)] = List(
@@ -65,7 +70,7 @@ case class OSBlpu(uprn: Long, logicalStatus: Char, subdivision: Char, postcode: 
     "logicalStatus" -> logicalStatus,
     "subdivision" -> subdivision,
     "localCustodianCode" -> localCustodianCode,
-    "postcode" -> postcode)
+    "postcode" -> postcode) ++ parentUprn.map("parentUprn" -> _)
 
-  def normalise: OSBlpu = new OSBlpu(uprn, logicalStatus, subdivision, Postcode.normalisePostcode(postcode), localCustodianCode)
+  def normalise: OSBlpu = new OSBlpu(uprn, parentUprn, logicalStatus, subdivision, Postcode.normalisePostcode(postcode), localCustodianCode)
 }

@@ -23,12 +23,6 @@ package addressbase
 // (https://www.ordnancesurvey.co.uk/business-and-government/products/addressbase-products.html)
 // that we use. Consult the technical reference docs for more info.
 
-object OSCleanup {
-
-  val Uprn_Idx = 3
-}
-
-
 object OSHeader {
   val RecordId = "10"
 

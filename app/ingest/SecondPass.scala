@@ -66,7 +66,7 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
         if (blpu.logicalStatus == lpi.logicalStatus && blpu.subdivision != UnknownSubdivision) {
           out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets, blpu.subdivision, blpu.localCustodianCode, settings))
           lpiCount += 1
-          fd.blpu.remove(lpi.uprn) // need to decide which lpi to use in the firstPass using logic - not first in gets in
+          fd.blpu.remove(lpi.uprn) // need to decide which lpi to use in the firstPass using logic - first in gets in
         }
       }
     }

@@ -29,21 +29,26 @@ import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import scala.collection.mutable
 
 object Ingester {
+  import addressbase._
+
   val StreetTypeOfficialDesignatedName = '1'
   val StreetTypeNotYetKnown = 'A'
 
-  case class Blpu(postcode: String, logicalStatus: Char, subdivision: Char, localCustodianCode: Option[Int]) {
-    val lcc = if (localCustodianCode.isDefined) localCustodianCode.get.toString else ""
-    def pack: String = s"$postcode|$logicalStatus|$subdivision|$lcc"
+  case class Blpu(parentUprn: Option[Long], postcode: String, logicalStatus: Char, subdivision: Char, localCustodianCode: Option[Int]) {
+    def pu = optLongToString(parentUprn)
+    def lcc = optIntToString(localCustodianCode)
+    def pack: String = s"$pu|$postcode|$logicalStatus|$subdivision|$lcc"
   }
 
   object Blpu {
     def unpack(pack: String): Blpu = {
       val fields = Divider.qsplit(pack, '|')
-      val logicalStatus = if (fields(1).length > 0) fields(1).charAt(0) else '\u0000'
-      val subdivision = if (fields(2).length > 0) fields(2).charAt(0) else '\u0000'
-      val localCustodianCode = if (fields(3).length > 0) Some(fields(3).toInt) else None
-      Blpu(fields.head, logicalStatus, subdivision, localCustodianCode)
+      val parentUprn = blankToOptLong(fields.head)
+      val postcode = fields(1)
+      val logicalStatus = blankToChar(fields(2))
+      val subdivision = blankToChar(fields(3))
+      val localCustodianCode = blankToOptInt(fields(4))
+      Blpu(parentUprn, postcode, logicalStatus, subdivision, localCustodianCode)
     }
   }
 
@@ -56,7 +61,7 @@ object Ingester {
   object Street {
     def unpack(pack: String): Street = {
       val fields = Divider.qsplit(pack, '|')
-      val recordType = if (fields.head.length > 0) fields.head.charAt(0) else '\u0000'
+      val recordType = blankToChar(fields.head)
       Street(recordType, fields(1), fields(2), fields(3))
     }
   }
