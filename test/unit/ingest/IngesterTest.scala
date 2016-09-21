@@ -210,7 +210,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       // 23,"I",284674,10091471884,"1110X113362049","E05003497",,"7666OW",2016-02-07,,2016-02-07,2016-02-07
       // 23,"I",284675,10091471884,"1110X709212837","osgb1000012341771",6,"7666MT",2016-02-07,,2016-02-07,2015-11-24
       // 23,"I",284676,10091471884,"1110X609829441","osgb4000000025306059",4,"7666MI",2016-02-07,,2016-02-07,2005-09-16
-      assert(addressesProduced(10) === DbAddress("GB10091471884", List("Room 4 Baring House", "6 Baring Crescent"), Some("Exeter"), "EX1 1TL", Some("GB-ENG"), Some(1110)))
+      assert(addressesProduced(10) === DbAddress("GB10091471884", List("Room 4, Baring House", "6 Baring Crescent"), Some("Exeter"), "EX1 1TL", Some("GB-ENG"), Some(1110)))
 
       // 21,"I",30653,10091471886,1,2,2015-11-02,100041044079,293224.00,092506.00,50.7223255,-3.5140436,1,1110,"E",2015-11-04,,2016-02-10,2015-11-02,"L","EX1 1TL",0
       // 24,"I",55942,10091471886,"1110L000174411","ENG",1,2015-11-04,,2016-02-10,2015-11-02,,"",,"","OFFICE 7",6,"",,"","BARING HOUSE",14200047,"1","","",""
@@ -221,7 +221,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       // 23,"I",284682,10091471886,"1110X113362051","E05003497",,"7666OW",2016-02-07,,2016-02-07,2016-02-07
       // 23,"I",284683,10091471886,"1110X709148608","osgb1000012341771",6,"7666MT",2016-02-07,,2016-02-07,2015-11-24
       // 23,"I",284684,10091471886,"1110X607047972","osgb4000000025306059",4,"7666MI",2016-02-07,,2016-02-07,2005-09-16
-      assert(addressesProduced(16) === DbAddress("GB10091471886", List("Office 7 Baring House", "6 Baring Crescent"), Some("Exeter"), "EX1 1TL", Some("GB-ENG"), Some(1110)))
+      assert(addressesProduced(16) === DbAddress("GB10091471886", List("Office 7, Baring House", "6 Baring Crescent"), Some("Exeter"), "EX1 1TL", Some("GB-ENG"), Some(1110)))
 
       // 21,"I",51397,10023117655,1,2,2008-11-24,100041124570,293907.43,092597.69,50.7232751,-3.5043915,1,1110,"E",2008-11-28,,2016-02-10,2008-11-24,"C","EX1 2SN",0
       // 24,"I",56013,10023117655,"1110L000164082","ENG",1,2008-11-28,,2016-02-10,2008-11-24,,"",,"","SCHOOL KITCHEN",,"",,"","ST MICHAELS CE PRIMARY SCHOOL",14200767,"1","","","N"
@@ -229,7 +229,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       // 23,"I",259372,10023117655,"1110X708316566","osgb1000002070792087",5,"7666MT",2016-02-07,,2016-02-07,2009-07-01
       // 23,"I",259373,10023117655,"1110X111454302","E05003495",,"7666OW",2016-02-07,,2016-02-07,2016-02-07
       // 23,"I",259374,10023117655,"1110X608734357","osgb4000000025306097",5,"7666MI",2016-02-07,,2016-02-07,2008-11-09
-      assert(addressesProduced(20) === DbAddress("GB10023117655", List("School Kitchen St Michaels Ce Primary School", "South Lawn Terrace"), Some("Exeter"), "EX1 2SN", Some("GB-ENG"), Some(1110)))
+      assert(addressesProduced(20) === DbAddress("GB10023117655", List("School Kitchen, St Michaels Ce Primary School", "South Lawn Terrace"), Some("Exeter"), "EX1 2SN", Some("GB-ENG"), Some(1110)))
 
       // 21,"I",52259,10023119039,1,2,2010-09-15,100040234793,292804.00,092311.00,50.7204951,-3.5199347,1,1110,"E",2010-09-16,,2016-02-10,2010-09-15,"C","EX2 4LA",0
       // 24,"I",56016,10023119039,"1110L000165474","ENG",1,2010-09-16,,2016-02-10,2010-09-15,,"",,"","ANNEXE",12,"",,"","",14200790,"1","","",""

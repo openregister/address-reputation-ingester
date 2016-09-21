@@ -78,7 +78,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       lock.take()
       worker.awaitCompletion()
       assert(firstPass.forwardData.streets.size === 1)
-      assert(firstPass.forwardData.streets.get(48504236L) === "A|A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE||NEW CUMNOCK")
+      assert(firstPass.forwardData.streets.get(48504236L) === "A|A76 T From Co-Operative Offices to Castle Place||New Cumnock")
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets.")
     }
   }
@@ -107,7 +107,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       lock.take()
       worker.awaitCompletion()
       assert(firstPass.forwardData.streets.size === 1)
-      assert(firstPass.forwardData.streets.get(47208194L) === "2|CWMDUAD TO CYNWYL ELFED|CWMDUAD|CARMARTHEN")
+      assert(firstPass.forwardData.streets.get(47208194L) === "2|Cwmduad to Cynwyl Elfed|Cwmduad|Carmarthen")
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets.")
     }
   }
@@ -134,7 +134,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       lock.take()
       worker.awaitCompletion()
       assert(firstPass.forwardData.streets.size === 1)
-      assert(firstPass.forwardData.streets.get(48504236L) === "2|A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE||NEW CUMNOCK")
+      assert(firstPass.forwardData.streets.get(48504236L) === "2|A76 T From Co-Operative Offices to Castle Place||New Cumnock")
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets.")
     }
   }
@@ -161,7 +161,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       lock.take()
       worker.awaitCompletion()
       assert(firstPass.forwardData.streets.size === 1)
-      assert(firstPass.forwardData.streets.get(48504236L) === "2|A76 T FROM CO-OPERATIVE OFFICES TO CASTLE PLACE||NEW CUMNOCK")
+      assert(firstPass.forwardData.streets.get(48504236L) === "2|A76 T From Co-Operative Offices to Castle Place||New Cumnock")
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets.")
     }
   }

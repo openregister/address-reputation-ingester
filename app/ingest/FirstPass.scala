@@ -88,7 +88,8 @@ class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, va
   }
 
   private def processBlpu(osBlpu: OSBlpu) {
-    val blpu = Blpu(osBlpu.postcode, osBlpu.logicalStatus, osBlpu.subdivision, Some(osBlpu.localCustodianCode))
+    val n = osBlpu.normalise
+    val blpu = Blpu(n.postcode, n.logicalStatus, n.subdivision, Some(n.localCustodianCode))
     forwardData.blpu.put(osBlpu.uprn, blpu.pack)
   }
 
@@ -115,7 +116,8 @@ class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, va
     }
   }
 
-  private def processStreetDescriptor(sd: OSStreetDescriptor) {
+  private def processStreetDescriptor(xsd: OSStreetDescriptor) {
+    val sd = xsd.normalise
     val existingStreetStr = Option(forwardData.streets.get(sd.usrn))
     if (existingStreetStr.isDefined) {
       val existingStreet = Street.unpack(existingStreetStr.get)

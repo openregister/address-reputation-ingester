@@ -51,8 +51,18 @@ class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger) extend
 
   def output(a: DbAddress) {
     // scalastyle:off
-    outCSV.println(a.toString)
+    outCSV.println(string(a))
     count += 1
+  }
+
+  private def string(a: DbAddress) = {
+    val id = a.id
+    val lns = a.lines.mkString(":")
+    val town = a.town.getOrElse("")
+    val pc = a.postcode
+    val sub = a.subdivision.getOrElse("")
+    val lcc = a.localCustodianCode.map(_.toString).getOrElse("")
+    s"$id|$lns|$town|$pc|$sub|$lcc"
   }
 
   def end(completed: Boolean): StateModel = {

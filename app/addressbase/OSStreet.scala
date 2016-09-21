@@ -37,7 +37,7 @@ case class OSStreet(usrn: Long, recordType: Char) extends Document {
     "usrn" -> usrn,
     "recordType" -> recordType)
 
-  def normalise: OSStreet = new OSStreet(usrn, recordType)
+  def normalise: OSStreet = this
 }
 
 

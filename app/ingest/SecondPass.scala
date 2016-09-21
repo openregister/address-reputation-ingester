@@ -56,7 +56,7 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
   }
 
   private def processLPI(csvLine: Array[String], out: OutputWriter): Unit = {
-    val lpi = OSLpi(csvLine)
+    val lpi = OSLpi(csvLine).normalise
 
     if (settings.prefer == "LPI" || !fd.uprns.contains(lpi.uprn)) {
       val packedBlpu = Option(fd.blpu.get(lpi.uprn))
@@ -73,16 +73,16 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
   }
 
   private def processDPA(csvLine: Array[String], out: OutputWriter): Unit = {
-    val dpa = OSDpa(csvLine)
+    val dpa = OSDpa(csvLine).normalise
 
     if (settings.prefer == "DPA" || !fd.uprns.contains(dpa.uprn)) {
       val packedBlpu = Option(fd.blpu.get(dpa.uprn))
 
       if (packedBlpu.isDefined) {
-        val b = Blpu.unpack(packedBlpu.get)
+        val blpu = Blpu.unpack(packedBlpu.get)
 
-        if (b.subdivision != UnknownSubdivision) {
-          out.output(ExportDbAddress.exportDPA(dpa, b.subdivision, b.localCustodianCode))
+        if (blpu.subdivision != UnknownSubdivision) {
+          out.output(ExportDbAddress.exportDPA(dpa, blpu.subdivision, blpu.localCustodianCode))
           dpaCount += 1
         }
       }

@@ -31,7 +31,7 @@ import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.JsObject
 import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
-import services.es.{ElasticsearchHelper, IndexMetadata}
+import services.es.IndexMetadata
 import services.mongo.{CollectionMetadata, CollectionName, MongoSystemMetadataStoreFactory}
 import uk.co.hmrc.address.admin.MetadataStore
 import uk.co.hmrc.logging.Stdout
@@ -47,9 +47,9 @@ import scala.collection.mutable.ListBuffer
 
 class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNestedSuiteExecution {
 
-  private val tmp = System.getProperty("java.io.tmpdir")
+  //  private val tmp = System.getProperty("java.io.tmpdir")
   // this will get deleted so BE CAREFUL to include the subdirectory!
-  private val tmpDir = new File(tmp, "ars")
+  private val tmpDir = new File("target", "ars")
 
   def appConfiguration: Map[String, String] = Map(
     "app.files.downloadFolder" -> s"$tmpDir/download",
@@ -155,7 +155,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
       val idx = "abp_39_ts5"
 
-      val indexMetadata =  new IndexMetadata(List(esClient), false)
+      val indexMetadata = new IndexMetadata(List(esClient), false)
       indexMetadata.writeCompletionDateTo(idx)
 
       waitForIndex(idx)
@@ -165,8 +165,8 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
       assert(response.status === OK)
       assert((response.json \ "collections").as[ListBuffer[JsObject]].length === 1)
-      assert(((response.json \ "collections")(0) \ "name").as[String] === idx )
-      assert(((response.json \ "collections")(0) \ "size").as[Int] === 0 )
+      assert(((response.json \ "collections") (0) \ "name").as[String] === idx)
+      assert(((response.json \ "collections") (0) \ "size").as[Int] === 0)
 
       assert(waitUntil("/admin/status", "idle", 100000) === true)
     }
@@ -252,7 +252,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
       val outFile = new File(s"$tmpDir/output/exeter_1.txt.gz")
       outFile.exists() mustBe true
-      outFile.length() mustBe 730449L
+      outFile.length() mustBe 644041L
     }
   }
 
@@ -412,10 +412,10 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     sample.close()
   }
 
-  override def afterAppServerStops() {
-    super.afterAppServerStops()
-    deleteDir(tmpDir)
-  }
+  //  override def afterAppServerStops() {
+  //    super.afterAppServerStops()
+  //    deleteDir(tmpDir)
+  //  }
 
 }
 

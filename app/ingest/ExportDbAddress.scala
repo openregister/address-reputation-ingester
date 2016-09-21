@@ -25,7 +25,6 @@ import addressbase.{OSDpa, OSLpi}
 import ingest.Ingester.Street
 import ingest.algorithm.Algorithm
 import uk.co.hmrc.address.osgb.DbAddress
-import uk.co.hmrc.address.osgb.Postcode._
 import uk.co.hmrc.address.services.Capitalisation._
 
 private[ingest] object ExportDbAddress {
@@ -41,7 +40,7 @@ private[ingest] object ExportDbAddress {
 
     DbAddress(id, lines,
       Some(normaliseAddressLine(dpa.postTown)),
-      normalisePostcode(dpa.postcode),
+      dpa.postcode,
       ukHomeCountryName(subdivision),
       localCustodianCode)
   }
@@ -56,18 +55,27 @@ private[ingest] object ExportDbAddress {
     val streetString = Option(streets.get(lpi.usrn)).getOrElse("X|<SUnknown>|<SUnknown>|<TUnknown>")
     val street = Street.unpack(streetString)
 
-    val line1 = (lpi.saoText + " " + lpi.secondaryNumberRange + " " + lpi.paoText).trim
+    val line1 = (lpi.saoText, lpi.secondaryNumberRange, lpi.paoText) match {
+      case ("", "", "") => ""
+      case ("", "", pt) => pt
+      case ("", sn, "") => sn
+      case (st, "", "") => st
+      case (st, sn, "") => s"$st, $sn"
+      case ("", sn, pt) => s"$sn $pt"
+      case (st, "", pt) => s"$st, $pt"
+      case (st, sn, pt) => s"$st, $sn $pt"
+    }
     val line2 = (lpi.primaryNumberRange + " " + street.filteredDescription).trim
     val line3 = street.localityName
 
-    val n1 = normaliseAddressLine(removeUninterestingStreets(line1, settings))
-    val n2 = normaliseAddressLine(removeUninterestingStreets(line2, settings))
-    val n3 = normaliseAddressLine(removeUninterestingStreets(line3, settings))
+    val n1 = removeUninterestingStreets(line1, settings)
+    val n2 = removeUninterestingStreets(line2, settings)
+    val n3 = removeUninterestingStreets(line3, settings)
     val lines = List(n1, n2, n3).filterNot(_.isEmpty)
 
     DbAddress(id, lines,
-      Some(normaliseAddressLine(street.townName)),
-      normalisePostcode(postcode),
+      Some(street.townName),
+      postcode,
       ukHomeCountryName(subdivision),
       localCustodianCode)
   }
