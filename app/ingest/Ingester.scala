@@ -30,8 +30,9 @@ import scala.collection.mutable
 
 object Ingester {
 
-  case class Blpu(postcode: String, logicalStatus: Char, subdivision: Char) {
-    def pack: String = s"$postcode|$logicalStatus|$subdivision"
+  case class Blpu(postcode: String, logicalStatus: Char, subdivision: Char, localCustodianCode: Option[Int]) {
+    val lcc = if (localCustodianCode.isDefined) localCustodianCode.get.toString else ""
+    def pack: String = s"$postcode|$logicalStatus|$subdivision|$lcc"
   }
 
   object Blpu {
@@ -39,7 +40,8 @@ object Ingester {
       val fields = Divider.qsplit(pack, '|')
       val logicalStatus = if (fields(1).length > 0) fields(1).charAt(0) else '\u0000'
       val subdivision = if (fields(2).length > 0) fields(2).charAt(0) else '\u0000'
-      Blpu(fields.head, logicalStatus, subdivision)
+      val localCustodianCode = if (fields(3).length > 0) Some(fields(3).toInt) else None
+      Blpu(fields.head, logicalStatus, subdivision, localCustodianCode)
     }
   }
 

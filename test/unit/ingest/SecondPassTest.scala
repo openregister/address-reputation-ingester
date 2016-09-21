@@ -71,7 +71,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(131041604L, Blpu("AB12 3CD", '1', 'E').pack)
+      forwardData.blpu.put(131041604L, Blpu("AB12 3CD", '1', 'E', Some(9999)).pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -83,6 +83,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
         def output(out: DbAddress) {
           assert(out.id === "GB131041604")
           assert(out.postcode === "AB12 3CD")
+          assert(out.localCustodianCode === Some(9999))
           count += 1
         }
 
@@ -118,7 +119,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(131041604L, Blpu("AB12 3CD", '1', 'E').pack)
+      forwardData.blpu.put(131041604L, Blpu("AB12 3CD", '1', 'E', Some(9999)).pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -163,7 +164,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(0L, Blpu("AB12 3CD", '1', 'E').pack)
+      forwardData.blpu.put(0L, Blpu("AB12 3CD", '1', 'E', Some(9999)).pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -212,18 +213,19 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, Some(osblpu.localCustodianCode))
 
     val streetsMap = new java.util.HashMap[java.lang.Long, String]()
     streetsMap.put(48804683L, Street('A', "streetDescription", "locality-name", "town-name").pack)
 
     val lpi = OSLpi(csvLpiLine)
-    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subdivision, Algorithm())
+    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subdivision, blpu.localCustodianCode, Algorithm())
     assert(out.id === "GB131041604")
     assert(out.lines === List("Maidenhill Stables", "Locality-Name"))
     assert(out.town === Some("Town-Name"))
     assert(out.postcode === "G77 6RT")
     assert(out.subdivision === Some("GB-SCT"))
+    assert(out.localCustodianCode === Some(9063))
   }
 
 
@@ -245,17 +247,18 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, Some(osblpu.localCustodianCode))
 
     val streetsMap = new java.util.HashMap[java.lang.Long, String]()
     streetsMap.put(48804683L, Street('A', "streetDescription", "locality name", "town-name").pack)
 
     val lpi = OSLpi(csvLpiLine)
-    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subdivision, Algorithm())
+    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subdivision, blpu.localCustodianCode, Algorithm())
     assert(out.id === "GB131041604")
     assert(out.lines === List("1a-2b Maidenhill Stables", "Locality Name"))
     assert(out.town === Some("Town-Name"))
     assert(out.postcode === "G77 6RT")
+    assert(out.localCustodianCode === Some(9063))
   }
 
 
@@ -278,18 +281,19 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, Some(osblpu.localCustodianCode))
 
     val streetsMap = new java.util.HashMap[java.lang.Long, String]()
     streetsMap.put(48804683L, Street('A', "street From Description", "locality name", "town-name").pack)
 
     val lpi = OSLpi(csvLpiLine)
-    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subdivision, Algorithm())
+    val out = ExportDbAddress.exportLPI(lpi, blpu.postcode, streetsMap, blpu.subdivision, blpu.localCustodianCode, Algorithm())
     assert(out.id === "GB131041604")
     assert(out.lines === List("Locality Name"))
     assert(out.town === Some("Town-Name"))
     assert(out.postcode === "G77 6RT")
     assert(out.subdivision === Some("GB-SCT"))
+    assert(out.localCustodianCode === Some(9063))
   }
 
   test(
@@ -318,13 +322,13 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvDpaLine: Array[String] = CsvParser.split(dpaData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, Some(osblpu.localCustodianCode))
 
     val boolTrue: Boolean = true
     val boolFalse: Boolean = false
 
     val fd = ForwardData.chronicleInMemoryForUnitTest("DPA")
-    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus, blpu.subdivision).pack)
+    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus, blpu.subdivision, blpu.localCustodianCode).pack)
     fd.uprns.add(131041604L)
 
     val continuer = mock[Continuer]
@@ -345,6 +349,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     assert(dbAdd.id === "GB131041604")
     assert(dbAdd.town === Some("Exeter"))
     assert(dbAdd.postcode === "EX1 2DN")
+    assert(dbAdd.localCustodianCode === Some(9063))
   }
 
   test(
@@ -375,13 +380,13 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision)
+    val blpu = Blpu(osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, Some(osblpu.localCustodianCode))
 
 
     val boolTrue: Boolean = true
 
     val fd = ForwardData.chronicleInMemoryForUnitTest("DPA")
-    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus, blpu.subdivision).pack)
+    fd.blpu.put(131041604L, Blpu(blpu.postcode, blpu.logicalStatus, blpu.subdivision, blpu.localCustodianCode).pack)
     fd.streets.put(48804683L, Street('A', "lpi-one", "lpi-locality-one", "lpi-town-one").pack)
     fd.streets.put(58804683L, Street('A', "lpi-two", "lpi-locality-two", "lpi-town-two").pack)
 
@@ -403,6 +408,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     assert(dbAdd.id === "GB131041604")
     assert(dbAdd.town === Some("Lpi-Town-One"))
     assert(dbAdd.postcode === "G77 6RT")
+    assert(dbAdd.localCustodianCode === Some(9063))
   }
 
 
@@ -448,7 +454,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(131041604L, Blpu("AB12 3CD", '1', countryCode).pack)
+      forwardData.blpu.put(131041604L, Blpu("AB12 3CD", '1', countryCode, Some(9999)).pack)
 
       val out = new OutputWriter {
         var count = 0

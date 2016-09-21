@@ -64,7 +64,7 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
         val blpu = Blpu.unpack(packedBlpu.get)
 
         if (blpu.logicalStatus == lpi.logicalStatus && blpu.subdivision != UnknownSubdivision) {
-          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets, blpu.subdivision, settings))
+          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets, blpu.subdivision, blpu.localCustodianCode, settings))
           lpiCount += 1
           fd.blpu.remove(lpi.uprn) // need to decide which lpi to use in the firstPass using logic - not first in gets in
         }
@@ -77,19 +77,17 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
 
     if (settings.prefer == "DPA" || !fd.uprns.contains(dpa.uprn)) {
       val packedBlpu = Option(fd.blpu.get(dpa.uprn))
-      val subdivision =
-        if (packedBlpu.isDefined)
-          Blpu.unpack(packedBlpu.get).subdivision
-        else
-          UnknownSubdivision
 
-      if (subdivision != UnknownSubdivision) {
-        out.output(ExportDbAddress.exportDPA(dpa, subdivision))
-        dpaCount += 1
+      if (packedBlpu.isDefined) {
+        val b = Blpu.unpack(packedBlpu.get)
+
+        if (b.subdivision != UnknownSubdivision) {
+          out.output(ExportDbAddress.exportDPA(dpa, b.subdivision, b.localCustodianCode))
+          dpaCount += 1
+        }
       }
     }
   }
 
   def sizeInfo: String = s"Second pass processed $dpaCount DPAs, $lpiCount LPIs."
 }
-

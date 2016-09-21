@@ -36,7 +36,7 @@ object MicroServiceBuild extends Build with MicroService {
     "uk.gov.hmrc" %% "play-health" % "1.1.0",
     "uk.gov.hmrc" %% "play-config" % "2.1.0",
     "uk.gov.hmrc" %% "play-json-logger" % "2.1.1",
-    "uk.gov.hmrc" %% "address-reputation-store" % "1.2.0" withSources()
+    "uk.gov.hmrc" %% "address-reputation-store" % "1.3.0" withSources()
       excludeAll ExclusionRule(organization = "org.reactivemongo"),
     "org.mongodb" %% "casbah" % "3.1.1",
     "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.1" excludeAll ExclusionRule(organization = "io.netty"),

@@ -30,39 +30,46 @@ import uk.co.hmrc.address.services.Capitalisation._
 
 private[ingest] object ExportDbAddress {
 
-  def exportDPA(dpa: OSDpa, subdivision: Char): DbAddress = {
+  def exportDPA(dpa: OSDpa,
+                subdivision: Char,
+                localCustodianCode: Option[Int]): DbAddress = {
     val id = "GB" + dpa.uprn.toString
     val line1 = normaliseAddressLine(dpa.subBuildingName + " " + dpa.buildingName)
     val line2 = normaliseAddressLine(dpa.buildingNumber + " " + dpa.dependentThoroughfareName + " " + dpa.thoroughfareName)
     val line3 = normaliseAddressLine(dpa.doubleDependentLocality + " " + dpa.dependentLocality)
+    val lines = List(line1, line2, line3).filterNot(_.isEmpty)
 
-    DbAddress(id, line1, line2, line3,
+    DbAddress(id, lines,
       Some(normaliseAddressLine(dpa.postTown)),
       normalisePostcode(dpa.postcode),
       ukHomeCountryName(subdivision),
-      None) //TODO LCC
+      localCustodianCode)
   }
 
 
-  def exportLPI(lpi: OSLpi, postcode: String, streets: java.util.Map[java.lang.Long, String], subdivision: Char, settings: Algorithm): DbAddress = {
+  def exportLPI(lpi: OSLpi, postcode: String,
+                streets: java.util.Map[java.lang.Long, String],
+                subdivision: Char,
+                localCustodianCode: Option[Int],
+                settings: Algorithm): DbAddress = {
+    val id = "GB" + lpi.uprn.toString
     val streetString = if (streets.containsKey(lpi.usrn)) streets.get(lpi.usrn) else "X|<SUnknown>|<SUnknown>|<TUnknown>"
     val street = Street.unpack(streetString)
 
     val line1 = (lpi.saoText + " " + lpi.secondaryNumberRange + " " + lpi.paoText).trim
-
     val line2 = (lpi.primaryNumberRange + " " + street.filteredDescription).trim
-
     val line3 = street.localityName
 
-    DbAddress(
-      "GB" + lpi.uprn.toString,
-      normaliseAddressLine(removeUninterestingStreets(line1, settings)),
-      normaliseAddressLine(removeUninterestingStreets(line2, settings)),
-      normaliseAddressLine(removeUninterestingStreets(line3, settings)),
+    val n1 = normaliseAddressLine(removeUninterestingStreets(line1, settings))
+    val n2 = normaliseAddressLine(removeUninterestingStreets(line2, settings))
+    val n3 = normaliseAddressLine(removeUninterestingStreets(line3, settings))
+    val lines = List(n1, n2, n3).filterNot(_.isEmpty)
+
+    DbAddress(id, lines,
       Some(normaliseAddressLine(street.townName)),
       normalisePostcode(postcode),
       ukHomeCountryName(subdivision),
-      None) // TODO LCC
+      localCustodianCode)
   }
 
   private def ukHomeCountryName(subdivision: Char) = subdivision match {

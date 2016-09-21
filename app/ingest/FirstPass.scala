@@ -88,8 +88,9 @@ class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, va
   }
 
   private def processBlpu(csvLine: Array[String]): Unit = {
-    val blpu = OSBlpu(csvLine)
-    forwardData.blpu.put(blpu.uprn, Blpu(blpu.postcode, blpu.logicalStatus, blpu.subdivision).pack)
+    val osBlpu = OSBlpu(csvLine)
+    val blpu = Blpu(osBlpu.postcode, osBlpu.logicalStatus, osBlpu.subdivision, Some(osBlpu.localCustodianCode))
+    forwardData.blpu.put(osBlpu.uprn, blpu.pack)
   }
 
   private def processLpi(csvLine: Array[String]): Unit = {
