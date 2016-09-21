@@ -221,7 +221,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       response.status mustBe NOT_FOUND
     }
 
-    "drop unknown ES collection should give NOT_FOUND" ignore {
+    "drop unknown ES collection should give NOT_FOUND" in {
       val request = newRequest("DELETE", "/es/collections/2001-12-31-01-02")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe NOT_FOUND

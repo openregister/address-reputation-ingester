@@ -37,7 +37,13 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
   private val indexName = model.collectionName.toString
 
   override def existingTargetThatIsNewerThan(date: Date): Option[String] = {
-    None
+    val similar = indexMetadata.existingCollectionNamesLike(model.collectionName)
+    val found = similar.reverse.find {
+      name =>
+        val info = indexMetadata.findMetadata(name)
+        info.exists(_.completedAfter(date))
+    }
+    found.map(_.toString)
   }
 
   override def begin() {
