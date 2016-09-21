@@ -53,7 +53,7 @@ private[ingest] object ExportDbAddress {
                 localCustodianCode: Option[Int],
                 settings: Algorithm): DbAddress = {
     val id = "GB" + lpi.uprn.toString
-    val streetString = if (streets.containsKey(lpi.usrn)) streets.get(lpi.usrn) else "X|<SUnknown>|<SUnknown>|<TUnknown>"
+    val streetString = Option(streets.get(lpi.usrn)).getOrElse("X|<SUnknown>|<SUnknown>|<TUnknown>")
     val street = Street.unpack(streetString)
 
     val line1 = (lpi.saoText + " " + lpi.secondaryNumberRange + " " + lpi.paoText).trim
@@ -79,7 +79,7 @@ private[ingest] object ExportDbAddress {
     case 'N' => Some("GB-NIR")
     case 'L' => Some("GB-CHA")
     case 'M' => Some("GB-IOM")
-    //    case 'J' => "" // unknown
+    //    case 'J' => "" // unknown subdivision
     case _ => None
   }
 

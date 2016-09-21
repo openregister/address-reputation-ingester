@@ -38,7 +38,8 @@ case class StateModel(
   }
 
   def withNewTimestamp: StateModel = {
-    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd-HH-mm")
+    // note: no underscores (would break our logic) and no dashes (they are problematic in Mongo)
+    val formatter = DateTimeFormat.forPattern("yyyyMMddHHmm")
     val timestamp = formatter.print(new DateTime())
     copy(timestamp = Some(timestamp))
   }

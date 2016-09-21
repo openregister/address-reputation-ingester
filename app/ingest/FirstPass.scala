@@ -22,7 +22,7 @@
 package ingest
 
 import addressbase._
-import ingest.Ingester.{Blpu, Street}
+import ingest.Ingester._
 import ingest.algorithm.Algorithm
 import ingest.writers.OutputWriter
 import services.exec.Continuer
@@ -62,16 +62,16 @@ class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, va
           OSCsv.setCsvFormatFor(csvLine(OSHeader.Version_Idx))
 
         case OSBlpu.RecordId if OSBlpu.isUsefulPostcode(csvLine) =>
-          processBlpu(csvLine)
+          processBlpu(OSBlpu(csvLine))
 
         case OSLpi.RecordId if settings.includeLpi =>
           if (settings.prefer == "LPI")
-            processLpi(csvLine)
+            processLpi(OSLpi(csvLine))
           needSecondPass = true
 
         case OSDpa.RecordId if settings.includeDpa =>
           if (settings.prefer == "DPA")
-            processDpa(csvLine)
+            processDpa(OSDpa(csvLine))
           needSecondPass = true
 
         case OSStreet.RecordId =>
@@ -87,29 +87,31 @@ class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, va
     needSecondPass
   }
 
-  private def processBlpu(csvLine: Array[String]): Unit = {
-    val osBlpu = OSBlpu(csvLine)
+  private def processBlpu(osBlpu: OSBlpu) {
     val blpu = Blpu(osBlpu.postcode, osBlpu.logicalStatus, osBlpu.subdivision, Some(osBlpu.localCustodianCode))
     forwardData.blpu.put(osBlpu.uprn, blpu.pack)
   }
 
-  private def processLpi(csvLine: Array[String]): Unit = {
-    val osLpi = OSLpi(csvLine)
+  private def processLpi(osLpi: OSLpi) {
     forwardData.uprns.add(osLpi.uprn)
   }
 
-  private def processDpa(csvLine: Array[String]): Unit = {
-    val osDpa = OSDpa(csvLine)
+  private def processDpa(osDpa: OSDpa) {
     forwardData.uprns.add(osDpa.uprn)
   }
 
-  private def processStreet(street: OSStreet): Unit = {
-    val existingStreetStr = Option(forwardData.streets.get(street.usrn))
+  // TODO this code could be simplified by storing street and descriptor separately, then joining them
+  // in the second pass instead.
+
+  private def processStreet(osStreet: OSStreet) {
+    val existingStreetStr = Option(forwardData.streets.get(osStreet.usrn))
     if (existingStreetStr.isDefined) {
       val existingStreet = Street.unpack(existingStreetStr.get)
-      forwardData.streets.put(street.usrn, Street(street.recordType, existingStreet.streetDescription, existingStreet.localityName, existingStreet.townName).pack)
+      val street = Street(osStreet.recordType, existingStreet.streetDescription, existingStreet.localityName, existingStreet.townName)
+      forwardData.streets.put(osStreet.usrn, street.pack)
     } else {
-      forwardData.streets.put(street.usrn, Street(street.recordType, "", "", "").pack)
+      val street = Street(osStreet.recordType, "", "", "")
+      forwardData.streets.put(osStreet.usrn, street.pack)
     }
   }
 
@@ -117,9 +119,11 @@ class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, va
     val existingStreetStr = Option(forwardData.streets.get(sd.usrn))
     if (existingStreetStr.isDefined) {
       val existingStreet = Street.unpack(existingStreetStr.get)
-      forwardData.streets.put(sd.usrn, Street(existingStreet.recordType, sd.description, sd.locality, sd.town).pack)
+      val street = Street(existingStreet.recordType, sd.description, sd.locality, sd.town)
+      forwardData.streets.put(sd.usrn, street.pack)
     } else {
-      forwardData.streets.put(sd.usrn, Street('A', sd.description, sd.locality, sd.town).pack)
+      val street = Street(StreetTypeNotYetKnown, sd.description, sd.locality, sd.town)
+      forwardData.streets.put(sd.usrn, street.pack)
     }
   }
 

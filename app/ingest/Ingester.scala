@@ -29,6 +29,8 @@ import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 import scala.collection.mutable
 
 object Ingester {
+  val StreetTypeOfficialDesignatedName = '1'
+  val StreetTypeNotYetKnown = 'A'
 
   case class Blpu(postcode: String, logicalStatus: Char, subdivision: Char, localCustodianCode: Option[Int]) {
     val lcc = if (localCustodianCode.isDefined) localCustodianCode.get.toString else ""
@@ -46,7 +48,7 @@ object Ingester {
   }
 
   case class Street(recordType: Char, streetDescription: String, localityName: String, townName: String) {
-    def filteredDescription: String = if (recordType == '1') streetDescription else ""
+    def filteredDescription: String = if (recordType == StreetTypeOfficialDesignatedName) streetDescription else ""
 
     def pack: String = s"$recordType|$streetDescription|$localityName|$townName"
   }
