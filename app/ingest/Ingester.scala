@@ -159,6 +159,8 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
   }
 
   private[ingest] def reduceDefaultedLCCs(fd: ForwardData): ForwardData = {
+    val dt = new DiagnosticTimer
+    var count = 0
     val it = fd.blpu.entrySet.iterator
     while (it.hasNext) {
       val entry = it.next
@@ -169,9 +171,11 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
       if (reduced.localCustodianCode != defaultLCC) {
         val replacement = blpu.copy(localCustodianCode = reduced.localCustodianCode)
         entry.setValue(replacement.pack)
+        count += 1
       }
     }
 
+    statusLogger.info(s"Default LCC reduction altered $count BLPUs and took {}.", dt)
     fd
   }
 
