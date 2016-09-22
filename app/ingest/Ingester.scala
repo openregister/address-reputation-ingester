@@ -37,6 +37,8 @@ object Ingester {
   val StreetTypeOfficialDesignatedName = '1'
   val StreetTypeNotYetKnown = 'A'
 
+  val DefaultLCC = 7655
+
   case class Blpu(parentUprn: Option[Long], postcode: String, logicalStatus: Char, subdivision: Char, localCustodianCode: Int) {
     private def pu = optLongToString(parentUprn)
 
@@ -70,6 +72,19 @@ object Ingester {
       val recordType = blankToChar(fields.head)
       Street(recordType, fields(1), fields(2), fields(3))
     }
+  }
+
+  case class PostcodeLCC(value: Option[Int]) {
+    def pack: String = if (value.isDefined) value.get.toString else ""
+  }
+
+  object PostcodeLCC {
+    def unpack(s: String): PostcodeLCC = {
+      val v = if (s.isEmpty) None else Some(s.toInt)
+      PostcodeLCC(v)
+    }
+
+    val Plural = PostcodeLCC(None).pack
   }
 
   private[ingest] def listFiles(file: File, extn: String): List[File] =
@@ -168,7 +183,7 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
       val blpu = Blpu.unpack(entry.getValue)
       val reduced = reduce(uprn, blpu, fd)
 
-      if (reduced.localCustodianCode != defaultLCC) {
+      if (reduced.localCustodianCode != Ingester.DefaultLCC) {
         val replacement = blpu.copy(localCustodianCode = reduced.localCustodianCode)
         entry.setValue(replacement.pack)
         count += 1
@@ -181,7 +196,7 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
 
   @tailrec
   private def reduce(uprn: Long, blpu: Blpu, fd: ForwardData): Blpu = {
-    if (blpu.localCustodianCode == defaultLCC && blpu.parentUprn.isDefined) {
+    if (blpu.localCustodianCode == Ingester.DefaultLCC && blpu.parentUprn.isDefined) {
       val parentUprn = blpu.parentUprn.get
       // n.b. using ChronicleMap, the containsKey test is vital because 'get' can return odd results (possible bug)
       if (parentUprn != uprn && fd.blpu.containsKey(parentUprn)) {
@@ -195,7 +210,6 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
     }
   }
 
-  val defaultLCC = 7655
   val emptyBlpu = Blpu(None, "", ' ', ' ', 0)
 }
 

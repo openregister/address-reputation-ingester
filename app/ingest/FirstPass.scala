@@ -80,6 +80,18 @@ class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, va
     val n = osBlpu.normalise
     val blpu = Blpu(n.parentUprn, n.postcode, n.logicalStatus, n.subdivision, n.localCustodianCode)
     forwardData.blpu.put(osBlpu.uprn, blpu.pack)
+
+    if (n.localCustodianCode != Ingester.DefaultLCC) {
+      val p = PostcodeLCC(Some(n.localCustodianCode)).pack
+      if (forwardData.postcodeLCCs.containsKey(n.postcode)) {
+        val existing = forwardData.postcodeLCCs.get(n.postcode)
+        if (existing != p) {
+          forwardData.postcodeLCCs.put(n.postcode, PostcodeLCC.Plural)
+        }
+      } else {
+        forwardData.postcodeLCCs.put(n.postcode, p)
+      }
+    }
   }
 
   private def processLpi(osLpi: OSLpi) {
