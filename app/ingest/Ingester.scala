@@ -20,7 +20,7 @@ import java.io.File
 import java.util.Date
 
 import config.Divider
-import ingest.Ingester.Blpu
+import ingest.Ingester.{Blpu, PostcodeLCC}
 import ingest.algorithm.Algorithm
 import ingest.writers.OutputWriter
 import services.exec.Continuer
@@ -76,6 +76,10 @@ object Ingester {
 
   case class PostcodeLCC(value: Option[Int]) {
     def pack: String = if (value.isDefined) value.get.toString else ""
+
+    def isSingular: Boolean = value.isDefined
+
+    def lcc: Int = value.get
   }
 
   object PostcodeLCC {
@@ -181,10 +185,12 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
       val entry = it.next
       val uprn = entry.getKey
       val blpu = Blpu.unpack(entry.getValue)
-      val reduced = reduce(uprn, blpu, fd)
 
-      if (reduced.localCustodianCode != Ingester.DefaultLCC) {
-        val replacement = blpu.copy(localCustodianCode = reduced.localCustodianCode)
+      val reduced1 = reduceByParentRelationship(uprn, blpu, fd)
+      val reduced2 = reduceByPostcodeRelationship(uprn, reduced1, fd)
+
+      if (reduced2.localCustodianCode != Ingester.DefaultLCC) {
+        val replacement = blpu.copy(localCustodianCode = reduced2.localCustodianCode)
         entry.setValue(replacement.pack)
         count += 1
       }
@@ -195,18 +201,31 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
   }
 
   @tailrec
-  private def reduce(uprn: Long, blpu: Blpu, fd: ForwardData): Blpu = {
+  private def reduceByParentRelationship(uprn: Long, blpu: Blpu, fd: ForwardData): Blpu = {
     if (blpu.localCustodianCode == Ingester.DefaultLCC && blpu.parentUprn.isDefined) {
       val parentUprn = blpu.parentUprn.get
       // n.b. using ChronicleMap, the containsKey test is vital because 'get' can return odd results (possible bug)
       if (parentUprn != uprn && fd.blpu.containsKey(parentUprn)) {
         val parent = Blpu.unpack(fd.blpu.get(parentUprn))
-        reduce(blpu.parentUprn.get, parent, fd)
+        reduceByParentRelationship(blpu.parentUprn.get, parent, fd)
       } else {
         blpu
       }
     } else {
       blpu
+    }
+  }
+
+  private def reduceByPostcodeRelationship(uprn: Long, blpu: Blpu, fd: ForwardData): Blpu = {
+    if (blpu.localCustodianCode != Ingester.DefaultLCC || !fd.postcodeLCCs.containsKey(blpu.postcode)) {
+      blpu
+    } else {
+      val p = PostcodeLCC.unpack(fd.postcodeLCCs.get(blpu.postcode))
+      if (p.isSingular) {
+        blpu.copy(localCustodianCode = p.lcc)
+      } else {
+        blpu
+      }
     }
   }
 

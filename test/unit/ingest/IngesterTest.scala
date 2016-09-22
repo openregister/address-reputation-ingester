@@ -25,7 +25,7 @@ import java.io.File
 import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
-import ingest.Ingester.Blpu
+import ingest.Ingester.{Blpu, PostcodeLCC}
 import ingest.algorithm.Algorithm
 import ingest.writers.OutputWriter
 import org.junit.runner.RunWith
@@ -168,7 +168,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
         "Info:Reading from 1 CSV files in {} took {}.",
         "Info:First pass obtained 48737 BLPUs, 42874 DPAs, 1686 streets.",
         "Info:First pass complete after {}.",
-        "Info:Default LCC reduction altered 48697 BLPUs and took {}.",
+        "Info:Default LCC reduction altered 48737 BLPUs and took {}.",
         "Info:Starting second pass through 1 files.",
         "Info:Reading zip entry sx9090.csv...",
         "Info:Reading from 1 CSV files in {} took {}.",
@@ -249,6 +249,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
          reduceDefaultedLCCs should
             * replace 7655 with the value obtained from parent UPRN records
             * leave 'normal' LCCs unchanged
+         with empty postcode map in the forward data
     """) {
     new context {
       val continuer = mock[Continuer]
@@ -266,6 +267,41 @@ class IngesterTest extends FunSuite with MockitoSugar {
       assert(rfd.blpu.get(1L) === blpu1.pack)
       assert(rfd.blpu.get(2L) === blpu2.pack)
       assert(rfd.blpu.get(3L) === Blpu(Some(2L), "FX1 1CC", ' ', 'E', blpu2.localCustodianCode).pack)
+    }
+  }
+
+  test(
+    """
+         reduceDefaultedLCCs should
+            * replace 7655 with the value obtained from adjacent records in the same postcode (with singular LCC)
+            * leave 'normal' LCCs unchanged
+         with no parent UPRN values
+    """) {
+    new context {
+      val continuer = mock[Continuer]
+      val fd = ForwardData.chronicleInMemoryForUnitTest("DPA")
+
+      val blpu1a = Blpu(None, "FX1 1AA", ' ', 'E', 1234)
+      val blpu1b = Blpu(None, "FX1 1AA", ' ', 'E', 7655)
+      val blpu2a = Blpu(None, "FX1 1BB", ' ', 'E', 1111)
+      val blpu2b = Blpu(None, "FX1 1BB", ' ', 'E', 2222)
+      val blpu2c = Blpu(None, "FX1 1BB", ' ', 'E', 7655)
+
+      fd.blpu.put(1L, blpu1a.pack)
+      fd.blpu.put(2L, blpu1b.pack)
+      fd.blpu.put(3L, blpu2a.pack)
+      fd.blpu.put(4L, blpu2b.pack)
+      fd.blpu.put(5L, blpu2c.pack)
+
+      fd.postcodeLCCs.put("FX1 1AA", PostcodeLCC(Some(1234)).pack)
+      fd.postcodeLCCs.put("FX1 1BB", PostcodeLCC(None).pack)
+
+      val rfd = new Ingester(continuer, Algorithm(), model, status, mock[ForwardData]).reduceDefaultedLCCs(fd)
+      assert(rfd.blpu.get(1L) === blpu1a.pack)
+      assert(rfd.blpu.get(2L) === blpu1a.pack) // n.b. LCC was changed
+      assert(rfd.blpu.get(3L) === blpu2a.pack)
+      assert(rfd.blpu.get(4L) === blpu2b.pack)
+      assert(rfd.blpu.get(5L) === blpu2c.pack)
     }
   }
 }
