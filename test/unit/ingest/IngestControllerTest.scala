@@ -116,7 +116,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       // then
       worker.awaitCompletion()
-      verify(ingester, times(1)).ingest(new File(folder, "abp/40/full"), outputDBWriter)
+      verify(ingester, times(1)).ingestFromDir(new File(folder, "abp/40/full"), outputDBWriter)
       assert(response.header.status / 100 === 2)
       worker.terminate()
     }
@@ -133,7 +133,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       // then
       worker.awaitCompletion()
-      verify(ingester, times(1)).ingest(new File(folder, "abp/40/full"), outputFileWriter)
+      verify(ingester, times(1)).ingestFromDir(new File(folder, "abp/40/full"), outputFileWriter)
       assert(response.header.status / 100 === 2)
       worker.terminate()
     }
@@ -156,7 +156,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       // then
       assert(model3 === model2)
-      verify(ingester).ingest(any[File], anyObject())
+      verify(ingester).ingestFromDir(any[File], anyObject())
       assert(logger.size === 1, logger.all.mkString("\n"))
       assert(logger.infos.map(_.message) === List("Info:Cleaning up the ingester."))
 
@@ -179,7 +179,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
       // then
       assert(model2 === model1)
-      verify(ingester, never).ingest(any[File], anyObject())
+      verify(ingester, never).ingestFromDir(any[File], anyObject())
       assert(logger.size === 1, logger.all.mkString("\n"))
       assert(logger.infos.map(_.message) === List("Info:Ingest was skipped."))
 

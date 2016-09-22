@@ -49,7 +49,7 @@ private[ingest] object ExportDbAddress {
   def exportLPI(lpi: OSLpi, postcode: String,
                 streets: java.util.Map[java.lang.Long, String],
                 subdivision: Char,
-                localCustodianCode: Option[Int],
+                localCustodianCode: Int,
                 settings: Algorithm): DbAddress = {
     val id = "GB" + lpi.uprn.toString
     val streetString = Option(streets.get(lpi.usrn)).getOrElse("X|<SUnknown>|<SUnknown>|<TUnknown>")
@@ -77,7 +77,7 @@ private[ingest] object ExportDbAddress {
       Some(street.townName),
       postcode,
       ukHomeCountryName(subdivision),
-      localCustodianCode)
+      Some(localCustodianCode))
   }
 
   private def ukHomeCountryName(subdivision: Char) = subdivision match {

@@ -71,7 +71,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(131041604L, Blpu(None, "AB12 3CD", '1', 'E', Some(9999)).pack)
+      forwardData.blpu.put(131041604L, Blpu(None, "AB12 3CD", '1', 'E', 9999).pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -119,7 +119,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(131041604L, Blpu(None, "AB12 3CD", '1', 'E', Some(9999)).pack)
+      forwardData.blpu.put(131041604L, Blpu(None, "AB12 3CD", '1', 'E', 9999).pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -164,7 +164,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(0L, Blpu(None, "AB12 3CD", '1', 'E', Some(9999)).pack)
+      forwardData.blpu.put(0L, Blpu(None, "AB12 3CD", '1', 'E', 9999).pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -213,7 +213,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine).normalise
-    val blpu = Blpu(None, osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, Some(osblpu.localCustodianCode))
+    val blpu = Blpu(None, osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, osblpu.localCustodianCode)
 
     val streetsMap = new java.util.HashMap[java.lang.Long, String]()
     streetsMap.put(48804683L, Street('A', "streetDescription", "Locality-Name", "Town-Name").pack)
@@ -247,7 +247,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine).normalise
-    val blpu = Blpu(None, osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, Some(osblpu.localCustodianCode))
+    val blpu = Blpu(None, osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, osblpu.localCustodianCode)
 
     val streetsMap = new java.util.HashMap[java.lang.Long, String]()
     streetsMap.put(48804683L, Street('A', "streetDescription", "Locality Name", "Town-Name").pack)
@@ -281,7 +281,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine).normalise
-    val blpu = Blpu(None, osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, Some(osblpu.localCustodianCode))
+    val blpu = Blpu(None, osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, osblpu.localCustodianCode)
 
     val streetsMap = new java.util.HashMap[java.lang.Long, String]()
     streetsMap.put(48804683L, Street('A', "street From Description", "Locality Name", "Town-Name").pack)
@@ -322,7 +322,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvDpaLine: Array[String] = CsvParser.split(dpaData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
-    val blpu = Blpu(None, osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, Some(osblpu.localCustodianCode))
+    val blpu = Blpu(None, osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, osblpu.localCustodianCode)
 
     val boolTrue: Boolean = true
     val boolFalse: Boolean = false
@@ -380,7 +380,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine).normalise
-    val blpu = Blpu(None, osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, Some(osblpu.localCustodianCode))
+    val blpu = Blpu(None, osblpu.postcode, osblpu.logicalStatus, osblpu.subdivision, osblpu.localCustodianCode)
 
     val boolTrue: Boolean = true
 
@@ -455,7 +455,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(131041604L, Blpu(None, "AB12 3CD", '1', countryCode, Some(9999)).pack)
+      forwardData.blpu.put(131041604L, Blpu(None, "AB12 3CD", '1', countryCode, 9999).pack)
 
       val out = new OutputWriter {
         var count = 0

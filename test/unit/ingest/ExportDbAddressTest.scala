@@ -82,7 +82,7 @@ class ExportDbAddressTest extends FunSuite {
       val streetsMap = new java.util.HashMap[java.lang.Long, String]()
       streetsMap.put(98765L, Street('1', "The Street", "Locality Name", "Town Name").pack)
 
-      val a = ExportDbAddress.exportLPI(c._1, "SE1 9PY", streetsMap, 'E', Some(7655), Algorithm())
+      val a = ExportDbAddress.exportLPI(c._1, "SE1 9PY", streetsMap, 'E', 7655, Algorithm())
       assert(a === c._2)
     }
   }

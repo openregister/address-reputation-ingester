@@ -20,34 +20,40 @@ import java.io.File
 import java.util.Date
 
 import config.Divider
+import ingest.Ingester.Blpu
 import ingest.algorithm.Algorithm
 import ingest.writers.OutputWriter
 import services.exec.Continuer
 import services.model.{StateModel, StatusLogger}
 import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 object Ingester {
+
   import addressbase._
 
   val StreetTypeOfficialDesignatedName = '1'
   val StreetTypeNotYetKnown = 'A'
 
-  case class Blpu(parentUprn: Option[Long], postcode: String, logicalStatus: Char, subdivision: Char, localCustodianCode: Option[Int]) {
-    def pu = optLongToString(parentUprn)
-    def lcc = optIntToString(localCustodianCode)
+  case class Blpu(parentUprn: Option[Long], postcode: String, logicalStatus: Char, subdivision: Char, localCustodianCode: Int) {
+    private def pu = optLongToString(parentUprn)
+
+    private def lcc = localCustodianCode.toString
+
     def pack: String = s"$pu|$postcode|$logicalStatus|$subdivision|$lcc"
   }
 
   object Blpu {
     def unpack(pack: String): Blpu = {
+      require(pack != null)
       val fields = Divider.qsplit(pack, '|')
       val parentUprn = blankToOptLong(fields.head)
       val postcode = fields(1)
       val logicalStatus = blankToChar(fields(2))
       val subdivision = blankToChar(fields(3))
-      val localCustodianCode = blankToOptInt(fields(4))
+      val localCustodianCode = fields(4).toInt
       Blpu(parentUprn, postcode, logicalStatus, subdivision, localCustodianCode)
     }
   }
@@ -81,16 +87,16 @@ object Ingester {
 
 class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, statusLogger: StatusLogger, forwardData: ForwardData) {
 
-  def ingest(rootDir: File, out: OutputWriter): Boolean = {
+  def ingestFromDir(rootDir: File, out: OutputWriter): Boolean = {
     val files = Ingester.listFiles(rootDir, ".zip").sorted
     val youngest = if (files.isEmpty) Ingester.theEpoch else new Date(files.map(_.lastModified).max)
     val target = out.existingTargetThatIsNewerThan(youngest)
     if (target.isEmpty) {
       statusLogger.info(s"Ingesting from $rootDir.")
-      ingest(files, out)
+      ingestFiles(files, out)
     } else if (model.forceChange) {
       statusLogger.info(s"Ingesting from $rootDir (forced update).")
-      ingest(files, out)
+      ingestFiles(files, out)
     } else {
       statusLogger.info(s"Ingest skipped; ${target.get} is up to date.")
       // Not strictly a failure, this inhibits an immediate automatic switch-over.
@@ -98,18 +104,19 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
     }
   }
 
-  private[ingest] def ingest(files: Seq[File], out: OutputWriter): Boolean = {
+  private[ingest] def ingestFiles(files: Seq[File], out: OutputWriter): Boolean = {
     val dt = new DiagnosticTimer
     val fp = new FirstPass(out, continuer, settings, forwardData)
     out.begin()
 
     statusLogger.info(s"Starting first pass through ${files.size} files.")
     val fewerFiles = pass(files, out, fp)
-    val fd = fp.firstPass
     statusLogger.info(s"First pass complete after {}.", dt)
 
+    val rfd = reduceDefaultedLCCs(forwardData)
+
     statusLogger.info(s"Starting second pass through ${fewerFiles.size} files.")
-    val sp = new SecondPass(fd, continuer, settings)
+    val sp = new SecondPass(rfd, continuer, settings)
     pass(fewerFiles, out, sp)
     statusLogger.info(s"Ingester finished after {}.", dt)
 
@@ -150,6 +157,42 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
     }
     passOn.toList
   }
+
+  private[ingest] def reduceDefaultedLCCs(fd: ForwardData): ForwardData = {
+    val it = fd.blpu.entrySet.iterator
+    while (it.hasNext) {
+      val entry = it.next
+      val uprn = entry.getKey
+      val blpu = Blpu.unpack(entry.getValue)
+      val reduced = reduce(uprn, blpu, fd)
+
+      if (reduced.localCustodianCode != defaultLCC) {
+        val replacement = blpu.copy(localCustodianCode = reduced.localCustodianCode)
+        entry.setValue(replacement.pack)
+      }
+    }
+
+    fd
+  }
+
+  @tailrec
+  private def reduce(uprn: Long, blpu: Blpu, fd: ForwardData): Blpu = {
+    if (blpu.localCustodianCode == defaultLCC && blpu.parentUprn.isDefined) {
+      val parentUprn = blpu.parentUprn.get
+      // n.b. using ChronicleMap, the containsKey test is vital because 'get' can return odd results (possible bug)
+      if (parentUprn != uprn && fd.blpu.containsKey(parentUprn)) {
+        val parent = Blpu.unpack(fd.blpu.get(parentUprn))
+        reduce(blpu.parentUprn.get, parent, fd)
+      } else {
+        blpu
+      }
+    } else {
+      blpu
+    }
+  }
+
+  val defaultLCC = 7655
+  val emptyBlpu = Blpu(None, "", ' ', ' ', 0)
 }
 
 class IngesterFactory {

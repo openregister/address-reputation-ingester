@@ -116,7 +116,7 @@ class IngestController(action: ActionBuilder[Request],
     var result = model
     var failed = true
     try {
-      failed = ingesterFactory.ingester(continuer, algorithmSettings, model, status).ingest(qualifiedDir, writer)
+      failed = ingesterFactory.ingester(continuer, algorithmSettings, model, status).ingestFromDir(qualifiedDir, writer)
     } catch {
       case e: Exception =>
         status.warn(e.getMessage)

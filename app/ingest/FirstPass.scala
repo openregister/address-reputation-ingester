@@ -39,17 +39,6 @@ trait Pass {
 
 class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, val forwardData: ForwardData) extends Pass {
 
-  // The simple 'normal' collections
-  //  val forwardData = ForwardData.simpleInstance()
-
-  // The enhanced Chronicle collections
-  //  val forwardData = ForwardData.chronicleInMemory()
-
-  //For development only (runs slower and leaves temp files behind)
-  //  val forwardData = ForwardData.chronicleWithFile()
-
-  def firstPass: ForwardData = forwardData
-
   // scalastyle:off
   def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter): Boolean = {
     var needSecondPass = false
@@ -89,7 +78,7 @@ class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, va
 
   private def processBlpu(osBlpu: OSBlpu) {
     val n = osBlpu.normalise
-    val blpu = Blpu(n.parentUprn, n.postcode, n.logicalStatus, n.subdivision, Some(n.localCustodianCode))
+    val blpu = Blpu(n.parentUprn, n.postcode, n.logicalStatus, n.subdivision, n.localCustodianCode)
     forwardData.blpu.put(osBlpu.uprn, blpu.pack)
   }
 

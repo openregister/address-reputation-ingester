@@ -25,6 +25,7 @@ import java.io.File
 import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
+import ingest.Ingester.Blpu
 import ingest.algorithm.Algorithm
 import ingest.writers.OutputWriter
 import org.junit.runner.RunWith
@@ -33,7 +34,7 @@ import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
-import services.exec.WorkQueue
+import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.logging.StubLogger
@@ -72,7 +73,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, Algorithm(), model, status, fd).ingest(mockFile, dummyOut)
+          new Ingester(continuer, Algorithm(), model, status, fd).ingestFromDir(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -94,7 +95,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, Algorithm(), model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingest(mockFile, dummyOut)
+          new Ingester(continuer, Algorithm(), model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingestFromDir(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -116,7 +117,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          result = new Ingester(continuer, Algorithm(), model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingest(mockFile, dummyOut)
+          result = new Ingester(continuer, Algorithm(), model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingestFromDir(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -153,7 +154,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, Algorithm(), model, status, ForwardData.simpleHeapInstance("DPA")).ingest(List(sample), out)
+          new Ingester(continuer, Algorithm(), model, status, ForwardData.simpleHeapInstance("DPA")).ingestFiles(List(sample), out)
           lock.put(true)
       })
 
@@ -191,7 +192,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       // 23,"I",284656,10091471879,"1110X609031489","osgb4000000025306108",3,"7666MI",2016-02-07,,2016-02-07,2005-09-16
       // 23,"I",284657,10091471879,"1110X709260134","osgb1000012323862",5,"7666MT",2016-02-07,,2016-02-07,2015-11-22
       // 23,"I",284658,10091471879,"1110X113362044","E05003503",,"7666OW",2016-02-07,,2016-02-07,2016-02-07
-      assert(addressesProduced(3) === DbAddress("GB10091471879", List("Flat 1","2 Queens Crescent"), Some("Exeter"), "EX4 6AY", Some("GB-ENG"), Some(1110))) //TODO This is not really correct
+      assert(addressesProduced(3) === DbAddress("GB10091471879", List("Flat 1", "2 Queens Crescent"), Some("Exeter"), "EX4 6AY", Some("GB-ENG"), Some(1110))) //TODO This is not really correct
 
       // 21,"I",30665,10091472481,1,2,2016-01-06,10091472482,291052.00,092182.00,50.7190093,-3.5447065,1,1110,"E",2016-01-07,,2016-02-06,2016-01-06,"L","EX4 1BU",0
       // 24,"I",55896,10091472481,"1110L000175006","ENG",1,2016-01-07,,2016-02-07,2016-01-06,,"",,"","UNIT 1",25,"",,"","",14200521,"1","","","Y"
@@ -237,8 +238,33 @@ class IngesterTest extends FunSuite with MockitoSugar {
       // 23,"I",263324,10023119039,"1110X111457564","E05003504",,"7666OW",2016-02-07,,2016-02-07,2016-02-07
       // 23,"I",263325,10023119039,"1110X608411579","osgb4000000025306065",3,"7666MI",2016-02-07,,2016-02-07,2005-09-16
       // 23,"I",263326,10023119039,"1110X708350160","osgb5000005167742577",1,"7666MT",2016-02-07,,2016-02-07,2015-11-24
-      assert(addressesProduced(21) === DbAddress("GB10023119039", List("Annexe" , "12 St Leonards Road"), Some("Exeter"), "EX2 4LA", Some("GB-ENG"), Some(1110)))
+      assert(addressesProduced(21) === DbAddress("GB10023119039", List("Annexe", "12 St Leonards Road"), Some("Exeter"), "EX2 4LA", Some("GB-ENG"), Some(1110)))
     }
   }
 
+
+  test(
+    """
+         reduceDefaultedLCCs should
+            * replace 7655 with the value obtained from parent UPRN records
+            * leave 'normal' LCCs unchanged
+    """) {
+    new context {
+      val continuer = mock[Continuer]
+      val fd = ForwardData.chronicleInMemoryForUnitTest("DPA")
+
+      val blpu1 = Blpu(None, "FX1 1AA", ' ', 'E', 1234)
+      val blpu2 = Blpu(None, "FX1 1BB", ' ', 'E', 1111)
+      val blpu3 = Blpu(Some(2L), "FX1 1CC", ' ', 'E', 7655)
+
+      fd.blpu.put(1L, blpu1.pack)
+      fd.blpu.put(2L, blpu2.pack)
+      fd.blpu.put(3L, blpu3.pack)
+
+      val rfd = new Ingester(continuer, Algorithm(), model, status, mock[ForwardData]).reduceDefaultedLCCs(fd)
+      assert(rfd.blpu.get(1L) === blpu1.pack)
+      assert(rfd.blpu.get(2L) === blpu2.pack)
+      assert(rfd.blpu.get(3L) === Blpu(Some(2L), "FX1 1CC", ' ', 'E', blpu2.localCustodianCode).pack)
+    }
+  }
 }

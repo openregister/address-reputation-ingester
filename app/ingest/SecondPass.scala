@@ -82,7 +82,7 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
         val blpu = Blpu.unpack(packedBlpu.get)
 
         if (blpu.subdivision != UnknownSubdivision) {
-          out.output(ExportDbAddress.exportDPA(dpa, blpu.subdivision, blpu.localCustodianCode))
+          out.output(ExportDbAddress.exportDPA(dpa, blpu.subdivision, Some(blpu.localCustodianCode)))
           dpaCount += 1
         }
       }
