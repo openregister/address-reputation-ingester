@@ -186,13 +186,15 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
       val uprn = entry.getKey
       val blpu = Blpu.unpack(entry.getValue)
 
-      val reduced1 = reduceByParentRelationship(uprn, blpu, fd)
-      val reduced2 = reduceByPostcodeRelationship(uprn, reduced1, fd)
+      if (blpu.localCustodianCode == Ingester.DefaultLCC) {
+        val reduced1 = reduceByParentRelationship(uprn, blpu, fd)
+        val reduced2 = reduceByPostcodeRelationship(uprn, reduced1, fd)
 
-      if (reduced2.localCustodianCode != Ingester.DefaultLCC) {
-        val replacement = blpu.copy(localCustodianCode = reduced2.localCustodianCode)
-        entry.setValue(replacement.pack)
-        count += 1
+        if (reduced2.localCustodianCode != Ingester.DefaultLCC) {
+          val replacement = blpu.copy(localCustodianCode = reduced2.localCustodianCode)
+          entry.setValue(replacement.pack)
+          count += 1
+        }
       }
     }
 
