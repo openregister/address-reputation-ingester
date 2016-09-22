@@ -41,7 +41,8 @@ private[ingest] object ExportDbAddress {
     DbAddress(id, lines,
       Some(normaliseAddressLine(dpa.postTown)),
       dpa.postcode,
-      ukHomeCountryName(subdivision),
+      subdivisionCode(subdivision),
+      countryCode(subdivision, dpa.postcode),
       localCustodianCode)
   }
 
@@ -76,17 +77,30 @@ private[ingest] object ExportDbAddress {
     DbAddress(id, lines,
       Some(street.townName),
       postcode,
-      ukHomeCountryName(subdivision),
+      subdivisionCode(subdivision),
+      countryCode(subdivision, postcode),
       Some(localCustodianCode))
   }
 
-  private def ukHomeCountryName(subdivision: Char) = subdivision match {
+  private def subdivisionCode(subdivision: Char) = subdivision match {
     case 'S' => Some("GB-SCT")
     case 'E' => Some("GB-ENG")
     case 'W' => Some("GB-WLS")
     case 'N' => Some("GB-NIR")
-    case 'L' => Some("GB-CHA")
-    case 'M' => Some("GB-IOM")
+    //    case 'L' -- not in UK
+    //    case 'M' -- not in UK
+    //    case 'J' => "" // unknown subdivision
+    case _ => None
+  }
+
+  private def countryCode(subdivision: Char, postcode: String) = subdivision match {
+    case 'S' => Some("UK")
+    case 'E' => Some("UK")
+    case 'W' => Some("UK")
+    case 'N' => Some("UK")
+    case 'L' if postcode.startsWith("G") => Some("GG")
+    case 'L' if postcode.startsWith("J") => Some("JE")
+    case 'M' => Some("IM")
     //    case 'J' => "" // unknown subdivision
     case _ => None
   }

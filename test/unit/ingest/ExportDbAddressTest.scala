@@ -33,49 +33,49 @@ class ExportDbAddressTest extends FunSuite {
         saoStartNumber = "", saoStartSuffix = "", saoEndNumber = "", saoEndSuffix = "", saoText = "",
         paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "",
         usrn = 98765L).normalise ->
-        DbAddress("GB1", List("The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some(7655)),
+        DbAddress("GB1", List("The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655)),
 
       OSLpi(uprn = 2L, logicalStatus = ' ',
         saoStartNumber = "", saoStartSuffix = "", saoEndNumber = "", saoEndSuffix = "", saoText = "",
         paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "Poo",
         usrn = 98765L).normalise ->
-        DbAddress("GB2", List("Poo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some(7655)),
+        DbAddress("GB2", List("Poo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655)),
 
       OSLpi(uprn = 3L, logicalStatus = ' ',
         saoStartNumber = "1", saoStartSuffix = "A", saoEndNumber = "2", saoEndSuffix = "B", saoText = "",
         paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "",
         usrn = 98765L).normalise ->
-        DbAddress("GB3", List("1A-2B", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some(7655)),
+        DbAddress("GB3", List("1A-2B", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655)),
 
       OSLpi(uprn = 4L, logicalStatus = ' ',
         saoStartNumber = "", saoStartSuffix = "", saoEndNumber = "", saoEndSuffix = "", saoText = "Soo",
         paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "",
         usrn = 98765L).normalise ->
-        DbAddress("GB4", List("Soo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some(7655)),
+        DbAddress("GB4", List("Soo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655)),
 
       OSLpi(uprn = 5L, logicalStatus = ' ',
         saoStartNumber = "1", saoStartSuffix = "A", saoEndNumber = "2", saoEndSuffix = "B", saoText = "Soo",
         paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "",
         usrn = 98765L).normalise ->
-        DbAddress("GB5", List("Soo, 1A-2B", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some(7655)),
+        DbAddress("GB5", List("Soo, 1A-2B", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655)),
 
       OSLpi(uprn = 6L, logicalStatus = ' ',
         saoStartNumber = "1", saoStartSuffix = "A", saoEndNumber = "2", saoEndSuffix = "B", saoText = "",
         paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "Poo",
         usrn = 98765L).normalise ->
-        DbAddress("GB6", List("1A-2B Poo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some(7655)),
+        DbAddress("GB6", List("1A-2B Poo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655)),
 
       OSLpi(uprn = 7L, logicalStatus = ' ',
         saoStartNumber = "", saoStartSuffix = "", saoEndNumber = "", saoEndSuffix = "", saoText = "Soo",
         paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "Poo",
         usrn = 98765L).normalise ->
-        DbAddress("GB7", List("Soo, Poo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some(7655)),
+        DbAddress("GB7", List("Soo, Poo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655)),
 
       OSLpi(uprn = 8L, logicalStatus = ' ',
         saoStartNumber = "1", saoStartSuffix = "A", saoEndNumber = "2", saoEndSuffix = "B", saoText = "Soo",
         paoStartNumber = "10", paoStartSuffix = "C", paoEndNumber = "12", paoEndSuffix = "D", paoText = "Poo",
         usrn = 98765L).normalise ->
-        DbAddress("GB8", List("Soo, 1A-2B Poo", "10C-12D The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some(7655))
+        DbAddress("GB8", List("Soo, 1A-2B Poo", "10C-12D The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655))
     )
 
     for (c <- cases) {

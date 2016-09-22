@@ -414,40 +414,54 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
 
   test("Given a BLPU with a country code 'eg.E', a matching subdivision should be returned 'eg.GB-ENG'.") {
-    aTest('E', (count:Int, addr:DbAddress) => {
+    aTest('E', "SE1 9PY 3CD", (count: Int, addr: DbAddress) => {
       assert(count === 1)
-      assert(addr.subdivision === Some("GB-ENG"), "Invalid country should be 'England'")
+      assert(addr.subdivision === Some("GB-ENG"))
+      assert(addr.country === Some("UK"))
     })
-    aTest('S', (count:Int, addr:DbAddress) => {
+    aTest('S', "AB12 3CD", (count: Int, addr: DbAddress) => {
       assert(count === 1)
-      assert(addr.subdivision === Some("GB-SCT"), "Invalid country should be 'Scotland'")
+      assert(addr.subdivision === Some("GB-SCT"))
+      assert(addr.country === Some("UK"))
     })
-    aTest('W', (count:Int, addr:DbAddress) => {
+    aTest('W', "LL49 9DY", (count: Int, addr: DbAddress) => {
       assert(count === 1)
-      assert(addr.subdivision === Some("GB-WLS"), "Invalid country should be 'Wales'")
+      assert(addr.subdivision === Some("GB-WLS"))
+      assert(addr.country === Some("UK"))
     })
-    aTest('N', (count:Int, addr:DbAddress) => {
+    aTest('N', "BT1 2AJ", (count: Int, addr: DbAddress) => {
       assert(count === 1)
-      assert(addr.subdivision === Some("GB-NIR"), "Invalid country should be 'Northern Ireland'")
+      assert(addr.subdivision === Some("GB-NIR"))
+      assert(addr.country === Some("UK"))
     })
-    aTest('L', (count:Int, addr:DbAddress) => {
-      assert(count === 1)
-      assert(addr.subdivision === Some("GB-CHA"), "Invalid country should be 'Channel Islands'")
-    })
-    aTest('M', (count:Int, addr:DbAddress) => {
-      assert(count === 1)
-      assert(addr.subdivision === Some("GB-IOM"), "Invalid country should be 'Isle of Man'")
-    })
+  }
 
+
+  test("Given a BLPU with a country code for Channel Islands or Isle of Man, the subdivision is not set.") {
+    aTest('L', "JE1 3AS", (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subdivision === None)
+      assert(addr.country === Some("JE"))
+    })
+    aTest('L', "GY2 7AB", (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subdivision === None)
+      assert(addr.country === Some("GG"))
+    })
+    aTest('M', "IM4 2AA", (count:Int, addr:DbAddress) => {
+      assert(count === 1)
+      assert(addr.subdivision === None)
+      assert(addr.country === Some("IM"))
+    })
   }
 
   test("Given a BLPU with a country code of unknown(J), nothing is returned.") {
-      aTest('J', (count:Int, addr:DbAddress) => {
-        assert(count === 0)
-      })
+    aTest('J', "AB12 3CD", (count: Int, addr: DbAddress) => {
+      assert(count === 0)
+    })
   }
 
-  def aTest( countryCode:Char, f: (Int, DbAddress) => Unit) {
+  def aTest(countryCode: Char, postcode: String, f: (Int, DbAddress) => Unit) {
     new context {
 
       val lpiData ="""24,"I",913236,131041604,"9063L000011164","ENG",1,2007-04-27,,2008-07-22,2007-04-27,,"",,"","",,"",,"","MAIDENHILL STABLES",48804683,"1","","","Y"
@@ -455,7 +469,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(131041604L, Blpu(None, "AB12 3CD", '1', countryCode, 9999).pack)
+      forwardData.blpu.put(131041604L, Blpu(None, postcode, '1', countryCode, 9999).pack)
 
       val out = new OutputWriter {
         var count = 0
