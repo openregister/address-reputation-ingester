@@ -76,6 +76,9 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
               ),
             field("subdivision") typed StringType fields (
               field("raw") typed StringType index NotAnalyzed
+              ),
+            field("country") typed StringType fields (
+              field("raw") typed StringType index NotAnalyzed
               )
             )
           mapping(metadata) fields (
@@ -103,7 +106,8 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
       "line3" -> a.line3,
       "town" -> a.town.get,
       "postcode" -> a.postcode,
-      "subdivision" -> a.subdivision.get
+      "subdivision" -> a.subdivision.get,
+      "country" -> a.country.get
       ) id a.id
     )
   }
