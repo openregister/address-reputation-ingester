@@ -36,6 +36,8 @@ import services.exec.{Continuer, WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.logging.StubLogger
 
+import scala.concurrent.ExecutionContext
+
 @RunWith(classOf[JUnitRunner])
 class IngestControllerTest extends FunSuite with MockitoSugar {
 
@@ -62,7 +64,9 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val workerFactory = new StubWorkerFactory(worker)
 
     private val pta = new PassThroughAction
-    val ingestController = new IngestController(pta, folder, dbFactory, esFactory, fwFactory, nullFactory, ingesterFactory, workerFactory)
+    val ec = scala.concurrent.ExecutionContext.Implicits.global
+
+    val ingestController = new IngestController(pta, folder, dbFactory, esFactory, fwFactory, nullFactory, ingesterFactory, workerFactory, ec)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val folder = new File(".")
@@ -202,7 +206,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 }
 
 class StubOutputWriterFactory(w: OutputWriter) extends OutputWriterFactory {
-  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter = w
+  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext): OutputWriter = w
 }
 
 class StubIngesterFactory(i: Ingester) extends IngesterFactory {

@@ -25,10 +25,10 @@ import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatestplus.play.PlaySpec
 import org.specs2.mock.Mockito
-import Utils._
 import ingest.StubContinuer
 import services.model.StatusLogger
 import uk.co.hmrc.logging.StubLogger
+import uk.co.hmrc.util.FileUtils
 
 import scala.collection.JavaConversions._
 
@@ -51,11 +51,11 @@ class WebdavFetcherTest extends PlaySpec with Mockito {
     val files = new File(getClass.getResource(resourceFolder).toURI).listFiles().toList.sorted
     val resources = files.map(toDavResource(_, url))
 
-    deleteDir(outputDirectory)
+    FileUtils.deleteDir(outputDirectory)
     stuff.mkdirs()
 
     def teardown() {
-      deleteDir(outputDirectory)
+      FileUtils.deleteDir(outputDirectory)
     }
   }
 

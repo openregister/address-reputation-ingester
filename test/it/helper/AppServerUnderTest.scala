@@ -20,12 +20,12 @@ import java.io.File
 
 import com.github.simplyscala.MongoEmbedDatabase
 import com.sksamuel.elastic4s.ElasticClient
-import org.apache.commons.io.FileUtils
 import org.elasticsearch.common.settings.Settings
 import org.scalatest._
 import org.scalatestplus.play.ServerProvider
 import play.api.test.{FakeApplication, Helpers, TestServer}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
+import uk.co.hmrc.util.FileUtils
 
 trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedDatabase with AppServerTestApi {
   this: Suite =>
@@ -44,11 +44,11 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedD
 
   def casbahMongoConnection() = new CasbahMongoConnection(mongoTestConnection.uri)
 
-  def beforeAppServerStarts() {}
-
-  def afterAppServerStops() {
-    FileUtils.deleteDirectory(new File(esDataPath))
+  def beforeAppServerStarts() {
+    FileUtils.deleteDir(new File(esDataPath))
   }
+
+  def afterAppServerStops() {}
 
   implicit override final lazy val app: FakeApplication = new FakeApplication(
     additionalConfiguration = appConfiguration ++ Map(mongoTestConnection.configItem, "elastic.localmode" -> true))

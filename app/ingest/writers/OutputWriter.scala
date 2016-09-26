@@ -23,6 +23,8 @@ import java.util.Date
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
+import scala.concurrent.ExecutionContext
+
 trait OutputWriter {
   def existingTargetThatIsNewerThan(date: Date): Option[String]
 
@@ -34,7 +36,7 @@ trait OutputWriter {
 }
 
 trait OutputWriterFactory {
-  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter
+  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext): OutputWriter
 }
 
 

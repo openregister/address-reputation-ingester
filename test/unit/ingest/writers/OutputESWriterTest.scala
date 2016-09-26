@@ -35,6 +35,7 @@ import uk.co.hmrc.logging.StubLogger
 @RunWith(classOf[JUnitRunner])
 class OutputESWriterTest extends FreeSpec {
 
+  val ec = scala.concurrent.ExecutionContext.Implicits.global
   val now = new Date()
   val yesterday = new Date(now.getTime - 86400000L)
 
@@ -69,7 +70,7 @@ class OutputESWriterTest extends FreeSpec {
     "when the model has no corresponding collection yet" - {
       "then targetExistsAndIsNewerThan will return None" in {
         new Context("ts1", Set("admin", "x_1_ts1", "x_2_ts1", "x_3_ts1")) {
-          val outputESWriter = new OutputESWriter(model, status, indexMetadata, WriterSettings(10, 0))
+          val outputESWriter = new OutputESWriter(model, status, indexMetadata, WriterSettings(10, 0), ec)
 
           val result = outputESWriter.existingTargetThatIsNewerThan(new Date())
 

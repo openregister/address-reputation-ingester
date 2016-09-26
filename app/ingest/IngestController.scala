@@ -27,6 +27,8 @@ import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
+import scala.concurrent.ExecutionContext
+
 
 object IngestControllerHelper {
   val allowedTargets = Set("db", "es", "file", "null")
@@ -50,7 +52,9 @@ object IngestController extends IngestController(
   new OutputFileWriterFactory,
   new OutputNullWriterFactory,
   new IngesterFactory,
-  ControllerConfig.workerFactory)
+  ControllerConfig.workerFactory,
+  scala.concurrent.ExecutionContext.Implicits.global
+)
 
 class IngestController(action: ActionBuilder[Request],
                        unpackedFolder: File,
@@ -59,7 +63,8 @@ class IngestController(action: ActionBuilder[Request],
                        fileWriterFactory: OutputWriterFactory,
                        nullWriterFactory: OutputWriterFactory,
                        ingesterFactory: IngesterFactory,
-                       workerFactory: WorkerFactory
+                       workerFactory: WorkerFactory,
+                       ec: ExecutionContext
                       ) extends BaseController {
 
   def doIngestFileTo(
@@ -112,7 +117,7 @@ class IngestController(action: ActionBuilder[Request],
                      continuer: Continuer): StateModel = {
 
     val qualifiedDir = new File(unpackedFolder, model.pathSegment)
-    val writer = writerFactory.writer(model, status, writerSettings)
+    val writer = writerFactory.writer(model, status, writerSettings, ec)
     var result = model
     var failed = true
     try {

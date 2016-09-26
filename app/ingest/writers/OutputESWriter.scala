@@ -19,19 +19,18 @@ package ingest.writers
 import java.util.Date
 
 import com.sksamuel.elastic4s._
-import com.sksamuel.elastic4s.mappings.FieldType.{DateType, StringType}
 import config.ApplicationGlobal
 import services.es.IndexMetadata
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.address.osgb.DbAddress
+import uk.co.hmrc.address.osgb.{DbAddress, ESSchema}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMetadata: IndexMetadata,
-                     settings: WriterSettings) extends OutputWriter with ElasticDsl {
+                     settings: WriterSettings, ec: ExecutionContext) extends OutputWriter with ElasticDsl {
 
+  private implicit val x = ec
   private val address = indexMetadata.address
   private val metadata = indexMetadata.metadata
   private val indexName = model.collectionName.toString
@@ -52,41 +51,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
 
     indexMetadata.clients foreach { client =>
       client execute {
-        create index indexName shards 4 replicas 0 refreshInterval "60s" mappings {
-          mapping(address) fields(
-            field("id") typed StringType,
-            //TODO lines should be an array - perhaps?
-            field("line1") typed StringType fields(
-              field("raw") typed StringType index NotAnalyzed,
-              field("lines") typed StringType
-              ),
-            field("line2") typed StringType fields(
-              field("raw") typed StringType index NotAnalyzed,
-              field("lines") typed StringType
-              ),
-            field("line3") typed StringType fields(
-              field("raw") typed StringType index NotAnalyzed,
-              field("lines") typed StringType
-              ),
-            field("town") typed StringType fields (
-              field("raw") typed StringType index NotAnalyzed
-              ),
-            field("postcode") typed StringType fields (
-              field("raw") typed StringType index NotAnalyzed
-              ),
-            field("subdivision") typed StringType fields (
-              field("raw") typed StringType index NotAnalyzed
-              ),
-            field("country") typed StringType fields (
-              field("raw") typed StringType index NotAnalyzed
-              )
-            )
-          mapping(metadata) fields (
-            //            field("id") typed StringType,
-            //            field("createdAt") typed DateType,
-            field("completedAt") typed DateType
-            )
-        }
+        ESSchema.createIndexDefinition(indexName, address, metadata, ESSchema.Settings(4, 0, "60s"))
       } await
 
       //TODO move switchover to the switchover controller
@@ -98,17 +63,9 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
   }
 
   override def output(a: DbAddress) {
-    addBulk(index into indexName -> address fields(
-      //TODO should just use a.tupled
-      "id" -> a.id,
-      "line1" -> a.line1,
-      "line2" -> a.line2,
-      "line3" -> a.line3,
-      "town" -> a.town.get,
-      "postcode" -> a.postcode,
-      "subdivision" -> a.subdivision.get,
-      "country" -> a.country.get
-      ) id a.id
+    val at = a.tupledFlat.toMap + ("id" -> a.id)
+    addBulk(
+      index into indexName -> address fields at id a.id
     )
   }
 
@@ -129,7 +86,6 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
           }
         }
       }
-
 
       if (completed) {
         // we have finished! let's celebrate
@@ -179,7 +135,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
 }
 
 class OutputESWriterFactory extends OutputWriterFactory {
-  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputESWriter = {
-    new OutputESWriter(model, statusLogger, ApplicationGlobal.elasticSearchService, settings)
+  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext): OutputESWriter = {
+    new OutputESWriter(model, statusLogger, ApplicationGlobal.elasticSearchService, settings, ec)
   }
 }

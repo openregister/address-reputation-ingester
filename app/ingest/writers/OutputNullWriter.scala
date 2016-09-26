@@ -23,6 +23,8 @@ import java.util.Date
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
+import scala.concurrent.ExecutionContext
+
 class OutputNullWriter(model: StateModel, statusLogger: StatusLogger) extends OutputWriter {
 
   private var count = 0
@@ -44,6 +46,6 @@ class OutputNullWriter(model: StateModel, statusLogger: StatusLogger) extends Ou
 
 
 class OutputNullWriterFactory extends OutputWriterFactory {
-  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter =
+  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext): OutputWriter =
     new OutputNullWriter(model, statusLogger)
 }

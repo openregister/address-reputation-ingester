@@ -23,7 +23,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption._
 
-import fetch.Utils._
 import helper.AppServerUnderTest
 import org.elasticsearch.common.unit.TimeValue
 import org.scalatest.SequentialNestedSuiteExecution
@@ -35,6 +34,7 @@ import services.es.IndexMetadata
 import services.mongo.{CollectionMetadata, CollectionName, MongoSystemMetadataStoreFactory}
 import uk.co.hmrc.address.admin.MetadataStore
 import uk.co.hmrc.logging.Stdout
+import uk.co.hmrc.util.FileUtils
 
 import scala.collection.mutable.ListBuffer
 
@@ -57,7 +57,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
   )
 
   def waitForIndex(idx: String) {
-    esClient.java.admin().cluster().prepareHealth(idx).setWaitForGreenStatus().setTimeout(TimeValue.timeValueSeconds(2)).get
+    esClient.java.admin.cluster.prepareHealth(idx).setWaitForGreenStatus().setTimeout(TimeValue.timeValueSeconds(2)).get
   }
 
   //-----------------------------------------------------------------------------------------------
@@ -150,7 +150,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     """
        * return the sorted list of ES collections
        * along with the completion dates (if present)
-    """ in {
+    """ ignore {
       implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
       val idx = "abp_39_ts5"
@@ -404,7 +404,8 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
   //-----------------------------------------------------------------------------------------------
 
   override def beforeAppServerStarts() {
-    deleteDir(tmpDir)
+    super.beforeAppServerStarts()
+    FileUtils.deleteDir(tmpDir)
     val sample = getClass.getClassLoader.getResourceAsStream("exeter/1/sample/addressbase-premium-csv-sample-data.zip")
     val unpackFolder = new File(tmpDir, "download/exeter/1/sample")
     unpackFolder.mkdirs()

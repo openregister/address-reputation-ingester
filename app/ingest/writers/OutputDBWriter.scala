@@ -30,6 +30,8 @@ import services.model.{StateModel, StatusLogger}
 import services.mongo.CollectionMetadata
 import uk.co.hmrc.address.osgb.DbAddress
 
+import scala.concurrent.ExecutionContext
+
 
 class OutputDBWriter(cleardownOnError: Boolean,
                      var model: StateModel,
@@ -61,7 +63,8 @@ class OutputDBWriter(cleardownOnError: Boolean,
 
   def output(address: DbAddress) {
     try {
-      bulk.insert(address.id, MongoDBObject(address.tupled))
+      val at = address.tupled ++ List("_id" -> address.id)
+      bulk.insert(address.id, MongoDBObject(at))
       count += 1
     } catch {
       case me: MongoException =>
@@ -136,6 +139,6 @@ class OutputDBWriterFactory extends OutputWriterFactory {
 
   private def cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
 
-  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings): OutputWriter =
+  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext): OutputWriter =
     new OutputDBWriter(cleardownOnError, model, statusLogger, ApplicationGlobal.mongoCollectionMetadata, settings)
 }

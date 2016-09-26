@@ -25,9 +25,10 @@ import config.ApplicationGlobal
 import controllers.SimpleValidator._
 import controllers.{ControllerConfig, KnownProducts}
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.mongo.{CollectionMetadata, CollectionName}
 import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
+import services.mongo.{CollectionMetadata, CollectionName}
+import uk.co.hmrc.util.FileUtils
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
@@ -92,7 +93,7 @@ class FetchController(action: ActionBuilder[Request],
     val unwanted = determineObsoleteFiles(KnownProducts.OSGB)
     for (dir <- unwanted) {
       logger.info(s"Deleting ${dir.getPath}/...")
-      Utils.deleteDir(dir)
+      FileUtils.deleteDir(dir)
     }
   }
 

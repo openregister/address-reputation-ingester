@@ -36,10 +36,11 @@ import org.scalatestplus.play.PlaySpec
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.mongo.{CollectionMetadata, CollectionName}
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
+import services.mongo.{CollectionMetadata, CollectionName}
 import uk.co.hmrc.logging.StubLogger
+import uk.co.hmrc.util.FileUtils
 
 import scala.concurrent.Future
 
@@ -99,7 +100,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
 
     def teardown() {
       worker.terminate()
-      Utils.deleteDir(outputDirectory)
+      FileUtils.deleteDir(outputDirectory)
     }
   }
 

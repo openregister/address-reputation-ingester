@@ -92,27 +92,43 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean)(im
   }
 
   def getCollectionInUseFor(product: String): Option[CollectionName] = {
+    aliasOf(product).flatMap(n => CollectionName(n))
+  }
+
+  def setCollectionInUseFor(name: CollectionName) {
+    val inUse = aliasOf(name.productName)
+    if (inUse.isDefined) {
+      clients foreach { client =>
+        client execute {
+          aliases(
+            remove alias name.productName on inUse.get,
+            add alias name.productName on name.toString
+          )
+        } await
+      }
+    } else {
+      clients foreach { client =>
+        client execute {
+          aliases(add alias name.productName on name.toString)
+        } await
+      }
+    }
+  }
+
+  private def aliasOf(name: String): Option[String] = {
     val gar = clients.head.execute {
-      getAlias(indexAlias)
+      getAlias(name)
     } await
 
     val olc: ObjectLookupContainer[String] = gar.getAliases.keys
 
     if (olc.isEmpty)
       None
-    else
-    {
-      val names = util.Arrays.asList(olc.toArray).asScala
-      assert(names.length < 2, names)
-      names.map(_.asInstanceOf[String]).headOption.flatMap(n => CollectionName(n))
-    }
-  }
-
-  def setCollectionInUseFor(name: CollectionName) {
-    clients foreach { client =>
-      client execute {
-        aliases(add alias indexAlias on name.toString)
-      } await
+    else {
+      val names = olc.toArray
+//      assert(names.length == 1, names)
+      val n = names(0).toString
+      Some(n)
     }
   }
 

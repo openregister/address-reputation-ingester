@@ -26,6 +26,8 @@ import controllers.ControllerConfig
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
+import scala.concurrent.ExecutionContext
+
 
 class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger) extends OutputWriter {
 
@@ -78,6 +80,6 @@ class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger) extend
 
 
 class OutputFileWriterFactory extends OutputWriterFactory {
-  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings) =
+  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext) =
     new OutputFileWriter(model, statusLogger)
 }
