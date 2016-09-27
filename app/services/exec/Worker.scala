@@ -18,7 +18,7 @@
 
 package services.exec
 
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import java.util.concurrent.{BlockingQueue, LinkedTransferQueue}
 
 import play.api.Logger
@@ -42,8 +42,19 @@ trait Continuer {
 }
 
 
-case class Task(description: String,
-                action: (Continuer) => Unit)
+case class TaskInfo(id: Option[Int], description: String)
+
+
+case class Task(info: TaskInfo, action: (Continuer) => Unit)
+
+
+object Task {
+  private val idGenerator = new AtomicInteger()
+
+  def apply(description: String, action: (Continuer) => Unit): Task = {
+    new Task(TaskInfo(Some(idGenerator.incrementAndGet), description), action)
+  }
+}
 
 
 // WorkQueue provids a process-oriented implementation that guarantees the correct interleaving of
@@ -52,6 +63,8 @@ case class Task(description: String,
 
 object WorkQueue {
   val singleton = new WorkQueue(new StatusLogger(new LoggerFacade(Logger.logger)))
+
+  val idle = TaskInfo(None, "idle")
 }
 
 
@@ -68,6 +81,34 @@ class WorkQueue(val statusLogger: StatusLogger) {
   private def push(task: Task): Boolean = {
     queue.put(task)
     true
+  }
+
+  import scala.collection.mutable
+
+  def viewQueue: List[TaskInfo] = {
+    val b = new mutable.ListBuffer[TaskInfo]
+    b.append(worker.statusInfo)
+    val it = queue.iterator
+    while (it.hasNext) {
+      val item = it.next
+      b.append(item.info)
+    }
+    b.toList
+  }
+
+  def dropQueueItem(id: Int): List[TaskInfo] = {
+    val b = new mutable.ListBuffer[TaskInfo]
+    b.append(worker.statusInfo)
+    val it = queue.iterator
+    while (it.hasNext) {
+      val item = it.next
+      if (item.info.id.contains(id)) {
+        it.remove()
+      } else {
+        b.append(item.info)
+      }
+    }
+    b.toList
   }
 
   def status: String = worker.status
@@ -94,7 +135,7 @@ class WorkQueue(val statusLogger: StatusLogger) {
     worker.running = false
     abort()
     // push a 'poison' task that may never get execcuted
-    push(Task("shutting down", { c => }))
+    push(Task("shutting down", { c: Continuer => }))
   }
 }
 
@@ -105,34 +146,39 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
 
   private[exec] var running = true
 
-  private val executionState = new AtomicInteger(IDLE)
-  private var doing = ""
+  private val _currentInfo = new AtomicReference(WorkQueue.idle)
+  private val _executionState = new AtomicInteger(IDLE)
 
-  def isBusy: Boolean = executionState.get == BUSY
+  def isBusy: Boolean = _executionState.get == BUSY
 
-  def notIdle: Boolean = executionState.get != IDLE
+  def notIdle: Boolean = _executionState.get != IDLE
 
-  def hasTerminated: Boolean = executionState.get == TERMINATED
+  def hasTerminated: Boolean = _executionState.get == TERMINATED
 
   def abort(): Boolean = {
-    val b = executionState.compareAndSet(BUSY, STOPPING)
+    val b = _executionState.compareAndSet(BUSY, STOPPING)
     statusLogger.warn(s"Abort. Now $status.")
     b
   }
 
-  def status: String =
-    executionState.get match {
-      case BUSY => s"busy$doing"
-      case STOPPING => s"aborting$doing"
-      case _ => "idle"
+  private def stateName =
+    _executionState.get match {
+      case BUSY => "busy"
+      case STOPPING => "aborting"
+      case _ => ""
     }
 
-  def fullStatus: String =
-    executionState.get match {
-      case BUSY => s"${statusLogger.status}\n\nbusy$doing"
-      case STOPPING => s"${statusLogger.status}\n\naborting$doing"
-      case _ => s"${statusLogger.status}\n\nidle"
-    }
+  // n.b. there appears to be a startup racce condition in which the _currentInfo.get might be null
+  // (otherwise it is never null).
+  def currentInfo: TaskInfo = Option(_currentInfo.get).getOrElse(WorkQueue.idle)
+
+  private def doing = currentInfo.description
+
+  def status: String = (stateName + " " + doing).trim
+
+  def statusInfo: TaskInfo = TaskInfo(None, status)
+
+  def fullStatus: String = s"${statusLogger.status}\n\n$status"
 
   override def run() {
     try {
@@ -141,13 +187,15 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
       }
     } finally {
       statusLogger.info("Worker thread has terminated.")
-      executionState.set(TERMINATED)
+      _executionState.set(TERMINATED)
     }
   }
 
   private def doNextTask() {
     val task = queue.take() // blocks until there is something to do
-    executionState.compareAndSet(IDLE, BUSY)
+    _executionState.compareAndSet(IDLE, BUSY)
+    assert(task.info!=null)
+    _currentInfo.set(task.info)
     statusLogger.startAfresh()
     try {
       runTask(task)
@@ -155,15 +203,15 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
       case NonFatal(e) =>
         statusLogger.warn(status, e)
     } finally {
+      _currentInfo.set(WorkQueue.idle)
       if (queue.isEmpty) {
-        executionState.set(IDLE)
+        _executionState.set(IDLE)
       }
     }
   }
 
   private def runTask(task: Task) {
-    val info = task.description.trim
-    doing = " " + info
+    val info = doing
     statusLogger.info(s"Starting $info.")
     try {
       val timer = new DiagnosticTimer
@@ -172,13 +220,11 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
     } catch {
       case re: RuntimeException =>
         statusLogger.warn(re.getClass.getName + " " + re.getMessage)
-        statusLogger.tee.warn(doing, re)
+        statusLogger.tee.warn(info, re)
         throw re
       case e: Exception =>
         statusLogger.warn(e.getClass.getName + " " + e.getMessage)
         throw e
-    } finally {
-      doing = ""
     }
   }
 }

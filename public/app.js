@@ -27,12 +27,36 @@ function setupContextPath() {
     console.log('contextPath='+contextPath);
 }
 
+function showStatus(url, cb) {
+    $.get(contextPath + url, function (data) {
+        $("#status").text(data[0].description);
+        var queue = $("#queue");
+        if (data.length > 1) {
+            console.log(data);
+            var s = "<ul>";
+            for (var i = 1; i < data.length; i++) {
+                s += '<li><a href="#" onclick="cancelQueue(' + data[i].id + ')">X</a> ' + data[i].description + '</li>';
+            }
+            queue.html(s + '</ul>');
+            queue.removeClass('empty');
+        } else {
+            queue.text("empty").addClass('empty');
+        }
+        if (cb) {
+            cb();
+        }
+    });
+
+}
+
 function refreshStatusContinually() {
-    $.get(contextPath + '/admin/status', function (data) {
-        // console.log(data);
-        $("#status").text(data);
+    showStatus('/admin/viewQueue', function() {
         setTimeout(refreshStatusContinually, 1000);
     });
+}
+
+function cancelQueue(id) {
+    showStatus('/admin/cancel/' + id);
 }
 
 function consoleText(text) {
@@ -139,7 +163,7 @@ function goAuto() {
 }
 
 function cancelTask() {
-    get('/admin/cancelTask', true);
+    get('/admin/cancelCurrent', true);
 }
 
 function remoteTree() {

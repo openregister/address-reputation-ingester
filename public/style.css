@@ -43,26 +43,21 @@ body {
     font-size: 0.9em;
 }
 
-#wrapper {
+#header {
     width: 100%;
-    z-index:10;
+    z-index: 10;
     margin: 0;
-    padding: 0;
+    padding: 0 1em;
     position: fixed;
     top: 0;
     left: 0;
     background: #fff;
-}
-
-#header {
     text-align: left;
     color: #007;
-    background: #fff;
-    padding-left: 1em;
 }
 
 h1 {
-    font-size: 1.4em;
+    font-size: 1.2em;
 }
 
 h2 {
@@ -146,24 +141,57 @@ a.button.grey {
 
 /*-----------------------------------------------------------------------------------------------*/
 
-#statusBox {
+#mainBox {
     position: absolute;
     width: 100%;
     top: 3em;
     left: 0;
+    z-index: 5;
+}
+
+.status {
+    padding: 0.2em;
+    text-align: center;
+    border: 2px inset #ccc;
+    width: 40%;
 }
 
 #status {
     position: fixed;
-    top: 0.5em;
-    right: 0.5em;
-    min-width: 40%;
-    padding: 0.5em;
+    top: 0.6em;
+    right: 1em;
     color: #337f33;
     background: #efe;
-    text-align: center;
-    border: 2px inset #ccc;
+    z-index: 11;
+}
+
+#queue {
+    position: fixed;
+    top: 3.05em;
+    right: 1em;
+    color: #6b7f6a;
+    background: #fffcd3;
     z-index: 20;
+}
+
+#queue ul {
+    margin: 0;
+    padding: 0;
+}
+
+#queue li {
+    list-style-type: none;
+    list-type: none;
+}
+
+#queue a {
+    text-decoration: none;
+    font-weight: bold;
+}
+
+#queue.empty {
+    font-style: italic;
+    color: #adb69e;
 }
 
 #console {

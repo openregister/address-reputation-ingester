@@ -31,9 +31,11 @@ DELETE /es/collections/:name                                    controllers.Elas
 POST   /es/collections/clean                                    controllers.ElasticCollectionController.doCleanup
 
 GET    /admin/realm                                             controllers.AdminController.realm
-GET    /admin/cancelTask                                        controllers.AdminController.cancelTask
+GET    /admin/cancelCurrent                                     controllers.AdminController.cancelTask
+GET    /admin/cancel/:id                                        controllers.AdminController.cancelQueue(id: Int)
 GET    /admin/status                                            controllers.AdminController.status
 GET    /admin/fullStatus                                        controllers.AdminController.fullStatus
+GET    /admin/viewQueue                                         controllers.AdminController.viewQueue
 GET    /admin/dirTree                                           controllers.AdminController.dirTree(root: Option[String], max: Option[Int])
 GET    /admin/showLog                                           controllers.AdminController.showLog(dir: Option[String])
 

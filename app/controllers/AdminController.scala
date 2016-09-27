@@ -22,9 +22,11 @@ import java.io.{File, IOException}
 import java.net.URL
 import java.nio.file.Files
 
+import config.JacksonMapper
 import fetch.WebDavFile
+import play.api.http.MimeTypes
 import play.api.mvc._
-import services.exec.WorkQueue
+import services.exec.{TaskInfo, WorkQueue}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.io.Source
@@ -40,6 +42,9 @@ class AdminController(action: ActionBuilder[Request],
                       worker: WorkQueue,
                       realmString: String) extends BaseController {
 
+  private val PlainText = CONTENT_TYPE -> MimeTypes.TEXT
+  private val ApplJson = CONTENT_TYPE -> MimeTypes.JSON
+
   def index: Action[AnyContent] = action {
     Redirect("ui/index.html")
   }
@@ -48,35 +53,41 @@ class AdminController(action: ActionBuilder[Request],
     if (worker.abort()) {
       Accepted
     } else {
-      ok("Nothing to cancel")
+      Ok("Nothing to cancel").withHeaders(PlainText)
     }
+  }
+
+  def cancelQueue(id: Int): Action[AnyContent] = action {
+    Ok(JacksonMapper.writeValueAsString(worker.dropQueueItem(id))).withHeaders(ApplJson)
   }
 
   // widely used in tests - so this is *not* basic-auth protected
   def status(): Action[AnyContent] = Action {
-    ok(worker.status)
+    Ok(worker.status).withHeaders(PlainText)
   }
 
   def fullStatus(): Action[AnyContent] = action {
-    ok(worker.fullStatus)
+    Ok(worker.fullStatus).withHeaders(PlainText)
+  }
+
+  def viewQueue(): Action[AnyContent] = action {
+    Ok(JacksonMapper.writeValueAsString(worker.viewQueue)).withHeaders(ApplJson)
   }
 
   def showLog(dir: Option[String]): Action[AnyContent] = action {
     val d = if (dir.isEmpty) "." else dir.get
-    ok(LogFileHelper.readLogFile(new File(d).getCanonicalFile))
+    Ok(LogFileHelper.readLogFile(new File(d).getCanonicalFile)).withHeaders(PlainText)
   }
 
   def dirTree(root: Option[String], max: Option[Int]): Action[AnyContent] = action {
     val dir = if (root.isDefined) new File(root.get) else ControllerConfig.downloadFolder
     val treeInfo = DirTreeHelper.dirTreeInfo(dir, max getOrElse 2)
-    ok(treeInfo)
+    Ok(treeInfo).withHeaders(PlainText)
   }
 
   def realm: Action[AnyContent] = action {
-    ok(realmString)
+    Ok(realmString).withHeaders(PlainText)
   }
-
-  private def ok(message: String) = Ok(message).withHeaders(CONTENT_TYPE -> "text/plain")
 }
 
 

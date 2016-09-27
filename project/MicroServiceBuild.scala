@@ -26,6 +26,8 @@ object MicroServiceBuild extends Build with MicroService {
 
   override lazy val appDependencies: Seq[ModuleID] = compile ++ testDependencies ++ itDependencies
 
+  val jacksonVersion = "2.7.4"
+
   val compile = Seq(
     ws excludeAll(ExclusionRule(organization = "commons-logging"), ExclusionRule(organization = "io.netty")),
     // netty 3.10 has a breaking API change
@@ -43,7 +45,11 @@ object MicroServiceBuild extends Build with MicroService {
     // hence the exclusion
     "com.github.lookfirst" % "sardine" % "5.7" excludeAll ExclusionRule(organization = "org.apache.httpcomponents"),
     "org.apache.httpcomponents" % "httpclient" % "4.5.1",
-    "net.openhft" % "chronicle-map" % "3.8.0"
+    "net.openhft" % "chronicle-map" % "3.8.0",
+    "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
+    "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+    "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion
   )
 
   private def baseTestDependencies(scope: String) = Seq(

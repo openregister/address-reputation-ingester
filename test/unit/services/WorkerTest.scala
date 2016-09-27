@@ -77,6 +77,106 @@ class WorkerTest extends FunSuite {
 
   test(
     """
+      when the worker is busy
+      and several additional requests are enqueued
+      then viewQueue method returns the expected list of enqueued tasks.
+    """) {
+    val logger = new StubLogger()
+    val status = new StatusLogger(logger, 1)
+    val worker = new WorkQueue(status)
+    val lock1 = new SynchronousQueue[Boolean]()
+
+    assert(worker.status === "idle")
+
+    worker.push("thinking", {
+      continuer =>
+        lock1.take() // blocks until signalled
+        lock1.take()
+    })
+
+    worker.push("cogitating1", {
+      continuer =>
+        logger.info("bar")
+    })
+
+    worker.push("cogitating2", {
+      continuer =>
+        logger.info("bar")
+    })
+
+    worker.push("cogitating3", {
+      continuer =>
+        logger.info("bar")
+    })
+
+    lock1.put(true)
+
+    assert(worker.viewQueue.map(_.description) === List("busy thinking", "cogitating1", "cogitating2", "cogitating3"))
+
+    // clean up
+    lock1.put(true)
+    worker.awaitCompletion()
+
+    assert(worker.viewQueue === List(WorkQueue.idle))
+
+    assert(!worker.isBusy)
+    assert(worker.status === "idle")
+  }
+
+  test(
+    """
+      when the worker is busy
+      and several additional requests are enqueued
+      then dropQueueItem method removes an item from the list
+      and returns the list of remaining enqueued tasks.
+    """) {
+    val logger = new StubLogger()
+    val status = new StatusLogger(logger, 1)
+    val worker = new WorkQueue(status)
+    val lock1 = new SynchronousQueue[Boolean]()
+
+    assert(worker.status === "idle")
+
+    worker.push("thinking", {
+      continuer =>
+        lock1.take() // blocks until signalled
+        lock1.take()
+    })
+
+    worker.push("cogitating1", {
+      continuer =>
+        logger.info("bar")
+    })
+
+    worker.push("cogitating2", {
+      continuer =>
+        logger.info("bar")
+    })
+
+    worker.push("cogitating3", {
+      continuer =>
+        logger.info("bar")
+    })
+
+    val toBeDeleted = worker.viewQueue.find(_.description == "cogitating2").get
+
+    lock1.put(true)
+
+    val remaining = worker.dropQueueItem(toBeDeleted.id.get)
+    assert(remaining.map(_.description) === List("busy thinking", "cogitating1", "cogitating3"))
+
+    // clean up
+    lock1.put(true)
+    worker.awaitCompletion()
+
+    assert(worker.viewQueue === List(WorkQueue.idle))
+
+    assert(!worker.isBusy)
+    assert(worker.status === "idle")
+  }
+
+  test(
+    """
       when a request to execute something is issued to the worker
       then two log statements are issued
     """) {
