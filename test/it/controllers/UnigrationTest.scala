@@ -88,7 +88,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     }
 
     "cancelTask" in {
-      val request = newRequest("GET", "/admin/cancelTask")
+      val request = newRequest("GET", "/admin/cancelCurrent")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === OK) // when not busy
     }
@@ -115,7 +115,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     }
 
     "cancelTask" in {
-      val request = newRequest("GET", "/admin/cancelTask")
+      val request = newRequest("GET", "/admin/cancelCurrent")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED) // when not busy
     }

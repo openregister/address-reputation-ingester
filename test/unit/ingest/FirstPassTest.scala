@@ -195,7 +195,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       lock.take()
       worker.awaitCompletion()
       assert(firstPass.forwardData.blpu.size === 1)
-      assert(firstPass.forwardData.blpu.get(320077134L) === "|KY10 2PY|1|J|9066")
+      assert(firstPass.forwardData.blpu.get(320077134L) === "|KY10 2PY|1|2|J|9066")
       assert(firstPass.forwardData.postcodeLCCs.size === 1)
       assert(firstPass.forwardData.postcodeLCCs.get("KY10 2PY") === "9066")
       assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPAs, 0 streets, 0/0 street descriptors.")
@@ -227,9 +227,9 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       lock.take()
       worker.awaitCompletion()
       assert(firstPass.forwardData.blpu.size === 3)
-      assert(firstPass.forwardData.blpu.get(100091275899L) === "100091660014|CO14 8RX|1|E|1560")
-      assert(firstPass.forwardData.blpu.get(35008288L) === "|FK12 5AG|8|S|9056")
-      assert(firstPass.forwardData.blpu.get(35008270L) === "|FK12 5AG|1|S|9056")
+      assert(firstPass.forwardData.blpu.get(100091275899L) === "100091660014|CO14 8RX|1|2|E|1560")
+      assert(firstPass.forwardData.blpu.get(35008288L) === "|FK12 5AG|8|4|S|9056")
+      assert(firstPass.forwardData.blpu.get(35008270L) === "|FK12 5AG|1| |S|9056")
       assert(firstPass.sizeInfo === "First pass obtained 3 BLPUs, 0 DPAs, 0 streets, 0/0 street descriptors.")
     }
   }

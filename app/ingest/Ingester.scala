@@ -37,15 +37,16 @@ object Ingester {
 
   val StreetTypeOfficialDesignatedName = '1'
   val StreetTypeNotYetKnown = 'A'
+  val UnknownSubdivision = 'J'
 
   val DefaultLCC = 7655
 
-  case class Blpu(parentUprn: Option[Long], postcode: String, logicalStatus: Char, subdivision: Char, localCustodianCode: Int) {
+  case class Blpu(parentUprn: Option[Long], postcode: String, logicalState: Char, blpuState: Char, subdivision: Char, localCustodianCode: Int) {
     private def pu = optLongToString(parentUprn)
 
     private def lcc = localCustodianCode.toString
 
-    def pack: String = s"$pu|$postcode|$logicalStatus|$subdivision|$lcc"
+    def pack: String = s"$pu|$postcode|$logicalState|$blpuState|$subdivision|$lcc"
   }
 
   object Blpu {
@@ -54,10 +55,11 @@ object Ingester {
       val fields = Divider.qsplit(pack, '|')
       val parentUprn = blankToOptLong(fields.head)
       val postcode = fields(1)
-      val logicalStatus = blankToChar(fields(2))
-      val subdivision = blankToChar(fields(3))
-      val localCustodianCode = fields(4).toInt
-      Blpu(parentUprn, postcode, logicalStatus, subdivision, localCustodianCode)
+      val logicalState = blankToChar(fields(2))
+      val blpuState = blankToChar(fields(3))
+      val subdivision = blankToChar(fields(4))
+      val localCustodianCode = fields(5).toInt
+      Blpu(parentUprn, postcode, logicalState, blpuState, subdivision, localCustodianCode)
     }
   }
 
@@ -240,7 +242,7 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
     }
   }
 
-  val emptyBlpu = Blpu(None, "", ' ', ' ', 0)
+  val emptyBlpu = Blpu(None, "", ' ', ' ', ' ', 0)
 }
 
 class IngesterFactory {

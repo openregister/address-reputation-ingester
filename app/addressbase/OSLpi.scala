@@ -27,7 +27,8 @@ object OSLpi {
 
   val idx = OSLpiIdx(
     uprn = 3,
-    logicalStatus = 6,
+    language = 5,
+    logicalState = 6,
     saoStartNumber = 11,
     saoStartSuffix = 12,
     saoEndNumber = 13,
@@ -42,7 +43,8 @@ object OSLpi {
 
   def apply(csv: Array[String]): OSLpi = OSLpi(
     csv(idx.uprn).toLong,
-    csv(idx.logicalStatus).head,
+    csv(idx.language),
+    csv(idx.logicalState).head,
     csv(idx.saoStartNumber).trim,
     csv(idx.saoStartSuffix).trim,
     csv(idx.saoEndNumber).trim,
@@ -57,7 +59,8 @@ object OSLpi {
 }
 
 case class OSLpiIdx(uprn: Int,
-                    logicalStatus: Int,
+                    language: Int,
+                    logicalState: Int,
                     saoStartNumber: Int,
                     saoStartSuffix: Int,
                     saoEndNumber: Int,
@@ -71,7 +74,8 @@ case class OSLpiIdx(uprn: Int,
                     usrn: Int)
 
 case class OSLpi(uprn: Long,
-                 logicalStatus: Char,
+                 language: String,
+                 logicalState: Char,
                  saoStartNumber: String,
                  saoStartSuffix: String,
                  saoEndNumber: String,
@@ -102,7 +106,8 @@ case class OSLpi(uprn: Long,
   // For use as input to MongoDbObject (hence it's not a Map)
   def tupled: List[(String, Any)] = List(
     "uprn" -> uprn,
-    "logicalStatus" -> logicalStatus,
+    "language" -> language,
+    "logicalState" -> logicalState,
     "saoStartNumber" -> saoStartNumber,
     "saoStartSuffix" -> saoStartSuffix,
     "saoEndNumber" -> saoEndNumber,
@@ -116,7 +121,8 @@ case class OSLpi(uprn: Long,
     "usrn" -> usrn)
 
   def normalise: OSLpi = new OSLpi(uprn,
-    logicalStatus,
+    language,
+    logicalState,
     saoStartNumber,
     saoStartSuffix,
     saoEndNumber,
