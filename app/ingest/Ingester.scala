@@ -18,6 +18,7 @@ package ingest
 
 import java.io.File
 import java.util.Date
+import java.lang.{Character => JChar}
 
 import config.Divider
 import ingest.Ingester.{Blpu, PostcodeLCC}
@@ -60,17 +61,25 @@ object Ingester {
     }
   }
 
-  case class Street(recordType: Char, streetDescription: String, localityName: String, townName: String) {
-    def filteredDescription: String = if (recordType == StreetTypeOfficialDesignatedName) streetDescription else ""
-
-    def pack: String = s"$recordType|$streetDescription|$localityName|$townName"
+  case class Street(recordType: Char) {
+    def pack: JChar = recordType.asInstanceOf[JChar]
   }
 
   object Street {
-    def unpack(pack: String): Street = {
+    def unpack(pack: JChar): Street = {
+      Street(pack.asInstanceOf[Char])
+    }
+  }
+
+  case class StreetDescriptor(streetDescription: String, localityName: String, townName: String) {
+    def pack: String = s"$streetDescription|$localityName|$townName"
+  }
+
+  object StreetDescriptor {
+    def unpack(pack: String): StreetDescriptor = {
       val fields = Divider.qsplit(pack, '|')
       val recordType = blankToChar(fields.head)
-      Street(recordType, fields(1), fields(2), fields(3))
+      StreetDescriptor(fields.head, fields(1), fields(2))
     }
   }
 

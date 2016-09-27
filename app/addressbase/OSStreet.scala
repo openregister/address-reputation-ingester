@@ -53,8 +53,6 @@ object OSStreetDescriptor {
     town = 6,
     language = 8)
 
-  def isEnglish(csv: Array[String]): Boolean = csv(idx.language) == "ENG"
-
   def apply(csv: Array[String]): OSStreetDescriptor = OSStreetDescriptor(
     csv(idx.usrn).toLong,
     csv(idx.description).trim,

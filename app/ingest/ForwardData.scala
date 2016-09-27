@@ -22,7 +22,7 @@
 package ingest
 
 import java.io.Closeable
-import java.lang.{Integer => JInt, Long => JLong}
+import java.lang.{Long => JLong, Character => JChar}
 import java.util
 
 import config.ConfigHelper._
@@ -33,11 +33,13 @@ import play.api.Play._
 class ForwardData(
                    val blpu: util.Map[JLong, String],
                    val uprns: util.Set[JLong],
-                   val streets: util.Map[JLong, String],
+                   val streets: util.Map[JLong, JChar],
+                   val streetDescriptorsEn: util.Map[JLong, String],
+                   val streetDescriptorsCy: util.Map[JLong, String],
                    val postcodeLCCs: util.Map[String, String],
                    preferred: String) extends Closeable {
   def sizeInfo: String =
-    s"${blpu.size} BLPUs, ${uprns.size} ${preferred}s, ${streets.size} streets"
+    s"${blpu.size} BLPUs, ${uprns.size} ${preferred}s, ${streets.size} streets, ${streetDescriptorsEn.size}/${streetDescriptorsCy.size} street descriptors"
 
   def close() {
     closeCollection(blpu)
@@ -62,7 +64,9 @@ object ForwardData {
   private lazy val dpaSetSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.dpa.setSize")
 
   private lazy val streetMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.street.mapSize")
-  private lazy val streetValueSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.street.valueSize")
+
+  private lazy val streetDescMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.streetDescriptor.mapSize")
+  private lazy val streetDescValueSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.streetDescriptor.valueSize")
 
   private lazy val postcodeMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.postcode.mapSize")
   private lazy val postcodeValueSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.postcode.valueSize")
@@ -70,6 +74,8 @@ object ForwardData {
   def simpleHeapInstance(preferred: String): ForwardData = new ForwardData(
     new util.HashMap[JLong, String](),
     new util.HashSet[JLong](),
+    new util.HashMap[JLong, JChar](),
+    new util.HashMap[JLong, String](),
     new util.HashMap[JLong, String](),
     new util.HashMap[String, String],
     preferred
@@ -78,6 +84,8 @@ object ForwardData {
   def concurrentHeapInstance(preferred: String): ForwardData = new ForwardData(
     new util.concurrent.ConcurrentHashMap[JLong, String](),
     new util.HashSet[JLong](),
+    new util.concurrent.ConcurrentHashMap[JLong, JChar](),
+    new util.concurrent.ConcurrentHashMap[JLong, String](),
     new util.concurrent.ConcurrentHashMap[JLong, String](),
     new util.concurrent.ConcurrentHashMap[String, String](),
     preferred: String
@@ -86,7 +94,9 @@ object ForwardData {
   def chronicleInMemory(preferred: String): ForwardData = new ForwardData(
     ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(blpuMapSize).averageValueSize(blpuValueSize).create(),
     ChronicleSetBuilder.of(classOf[JLong]).entries(dpaSetSize).create(),
-    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(streetMapSize).averageValueSize(streetValueSize).create(),
+    ChronicleMapBuilder.of(classOf[JLong], classOf[JChar]).entries(streetMapSize).constantValueSizeBySample(' ').create(),
+    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(streetDescMapSize).averageValueSize(streetDescValueSize).create(),
+    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(streetDescMapSize/2).averageValueSize(streetDescValueSize).create(),
     ChronicleMapBuilder.of(classOf[String], classOf[String]).entries(postcodeMapSize).averageKeySize(8).averageValueSize(postcodeValueSize).create(),
     preferred: String
   )
@@ -94,7 +104,9 @@ object ForwardData {
   def chronicleInMemoryForUnitTest(preferred: String): ForwardData = new ForwardData(
     ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(1000).averageValueSize(10).create(),
     ChronicleSetBuilder.of(classOf[JLong]).entries(1000).create(),
-    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(100).averageValueSize(20).create(),
+    ChronicleMapBuilder.of(classOf[JLong], classOf[JChar]).entries(100).constantValueSizeBySample(' ').create(),
+    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(100).averageValueSize(60).create(),
+    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(100).averageValueSize(60).create(),
     ChronicleMapBuilder.of(classOf[String], classOf[String]).entries(100).averageKeySize(8).averageValueSize(20).create(),
     preferred: String
   )

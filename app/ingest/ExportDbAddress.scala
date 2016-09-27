@@ -22,10 +22,11 @@
 package ingest
 
 import addressbase.{OSDpa, OSLpi}
-import ingest.Ingester.Street
+import ingest.Ingester.{Street, StreetDescriptor}
 import ingest.algorithm.Algorithm
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.Capitalisation._
+import java.lang.{Character => JChar}
 
 private[ingest] object ExportDbAddress {
 
@@ -46,15 +47,20 @@ private[ingest] object ExportDbAddress {
       localCustodianCode)
   }
 
+  private val unknownRecordType: JChar = 'X'.asInstanceOf[JChar]
 
-  def exportLPI(lpi: OSLpi, postcode: String,
-                streets: java.util.Map[java.lang.Long, String],
+  def exportLPI(lpi: OSLpi,
+                streets: java.util.Map[java.lang.Long, JChar],
+                streetDescriptors: java.util.Map[java.lang.Long, String],
+                postcode: String,
                 subdivision: Char,
                 localCustodianCode: Int,
                 settings: Algorithm): DbAddress = {
     val id = "GB" + lpi.uprn.toString
-    val streetString = Option(streets.get(lpi.usrn)).getOrElse("X|<SUnknown>|<SUnknown>|<TUnknown>")
+    val streetString = Option(streets.get(lpi.usrn)).getOrElse(unknownRecordType)
+    val streetDescString = Option(streetDescriptors.get(lpi.usrn)).getOrElse("<SUnknown>|<SUnknown>|<TUnknown>")
     val street = Street.unpack(streetString)
+    val streetDescriptor = StreetDescriptor.unpack(streetDescString)
 
     val line1 = (lpi.saoText, lpi.secondaryNumberRange, lpi.paoText) match {
       case ("", "", "") => ""
@@ -66,8 +72,13 @@ private[ingest] object ExportDbAddress {
       case (st, "", pt) => s"$st, $pt"
       case (st, sn, pt) => s"$st, $sn $pt"
     }
-    val line2 = (lpi.primaryNumberRange + " " + street.filteredDescription).trim
-    val line3 = street.localityName
+
+    val filteredDescription =
+      if (street.recordType == Ingester.StreetTypeOfficialDesignatedName) streetDescriptor.streetDescription
+      else ""
+
+    val line2 = (lpi.primaryNumberRange + " " + filteredDescription).trim
+    val line3 = streetDescriptor.localityName
 
     val n1 = removeUninterestingStreets(line1, settings)
     val n2 = removeUninterestingStreets(line2, settings)
@@ -75,7 +86,7 @@ private[ingest] object ExportDbAddress {
     val lines = List(n1, n2, n3).filterNot(_.isEmpty)
 
     DbAddress(id, lines,
-      Some(street.townName),
+      Some(streetDescriptor.townName),
       postcode,
       subdivisionCode(subdivision),
       countryCode(subdivision, postcode),

@@ -20,10 +20,11 @@
 package ingest
 
 import addressbase.OSLpi
-import ingest.Ingester.Street
+import ingest.Ingester.{Street, StreetDescriptor}
 import ingest.algorithm.Algorithm
 import org.scalatest.FunSuite
 import uk.co.hmrc.address.osgb.DbAddress
+import java.lang.{Character => JChar}
 
 class ExportDbAddressTest extends FunSuite {
 
@@ -79,10 +80,12 @@ class ExportDbAddressTest extends FunSuite {
     )
 
     for (c <- cases) {
-      val streetsMap = new java.util.HashMap[java.lang.Long, String]()
-      streetsMap.put(98765L, Street('1', "The Street", "Locality Name", "Town Name").pack)
+      val streetsMap = new java.util.HashMap[java.lang.Long, JChar]()
+      val streetDescsMap = new java.util.HashMap[java.lang.Long, String]()
+      streetsMap.put(98765L, Street('1').pack)
+      streetDescsMap.put(98765L, StreetDescriptor("The Street", "Locality Name", "Town Name").pack)
 
-      val a = ExportDbAddress.exportLPI(c._1, "SE1 9PY", streetsMap, 'E', 7655, Algorithm())
+      val a = ExportDbAddress.exportLPI(c._1, streetsMap, streetDescsMap, "SE1 9PY", 'E', 7655, Algorithm())
       assert(a === c._2)
     }
   }

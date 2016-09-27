@@ -66,7 +66,7 @@ class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, va
         case OSStreet.RecordId =>
           processStreet(OSStreet(csvLine))
 
-        case OSStreetDescriptor.RecordId if OSStreetDescriptor.isEnglish(csvLine) =>
+        case OSStreetDescriptor.RecordId =>
           processStreetDescriptor(OSStreetDescriptor(csvLine))
 
         case _ =>
@@ -102,31 +102,18 @@ class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, va
     forwardData.uprns.add(osDpa.uprn)
   }
 
-  // TODO this code could be simplified by storing street and descriptor separately, then joining them
-  // in the second pass instead.
-
   private def processStreet(osStreet: OSStreet) {
-    val existingStreetStr = Option(forwardData.streets.get(osStreet.usrn))
-    if (existingStreetStr.isDefined) {
-      val existingStreet = Street.unpack(existingStreetStr.get)
-      val street = Street(osStreet.recordType, existingStreet.streetDescription, existingStreet.localityName, existingStreet.townName)
-      forwardData.streets.put(osStreet.usrn, street.pack)
-    } else {
-      val street = Street(osStreet.recordType, "", "", "")
-      forwardData.streets.put(osStreet.usrn, street.pack)
-    }
+    val street = Street(osStreet.recordType)
+    forwardData.streets.put(osStreet.usrn, street.pack)
   }
 
   private def processStreetDescriptor(xsd: OSStreetDescriptor) {
     val sd = xsd.normalise
-    val existingStreetStr = Option(forwardData.streets.get(sd.usrn))
-    if (existingStreetStr.isDefined) {
-      val existingStreet = Street.unpack(existingStreetStr.get)
-      val street = Street(existingStreet.recordType, sd.description, sd.locality, sd.town)
-      forwardData.streets.put(sd.usrn, street.pack)
-    } else {
-      val street = Street(StreetTypeNotYetKnown, sd.description, sd.locality, sd.town)
-      forwardData.streets.put(sd.usrn, street.pack)
+    val street = StreetDescriptor(sd.description, sd.locality, sd.town)
+    sd.language match {
+      case "ENG" => forwardData.streetDescriptorsEn.put(sd.usrn, street.pack)
+      case "CYM" => forwardData.streetDescriptorsCy.put(sd.usrn, street.pack)
+      case _ => // ignored
     }
   }
 

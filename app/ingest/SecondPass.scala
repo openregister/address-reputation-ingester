@@ -64,7 +64,8 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
         val blpu = Blpu.unpack(packedBlpu.get)
 
         if (blpu.logicalStatus == lpi.logicalStatus && blpu.subdivision != UnknownSubdivision) {
-          out.output(ExportDbAddress.exportLPI(lpi, blpu.postcode, fd.streets, blpu.subdivision, blpu.localCustodianCode, settings))
+          out.output(ExportDbAddress.exportLPI(lpi, fd.streets, fd.streetDescriptorsEn,
+            blpu.postcode, blpu.subdivision, blpu.localCustodianCode, settings))
           lpiCount += 1
           fd.blpu.remove(lpi.uprn) // need to decide which lpi to use in the firstPass using logic - first in gets in
         }

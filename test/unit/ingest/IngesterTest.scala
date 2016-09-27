@@ -166,7 +166,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
         "Info:Starting first pass through 1 files.",
         "Info:Reading zip entry sx9090.csv...",
         "Info:Reading from 1 CSV files in {} took {}.",
-        "Info:First pass obtained 48737 BLPUs, 42874 DPAs, 1686 streets.",
+        "Info:First pass obtained 48737 BLPUs, 42874 DPAs, 1686 streets, 1686/0 street descriptors.",
         "Info:First pass complete after {}.",
         "Info:Default LCC reduction altered 282 BLPUs and took {}.",
         "Info:Starting second pass through 1 files.",
