@@ -103,7 +103,7 @@ class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, va
   }
 
   private def processStreet(osStreet: OSStreet) {
-    val street = Street(osStreet.recordType)
+    val street = Street(osStreet.recordType, osStreet.classification)
     forwardData.streets.put(osStreet.usrn, street.pack)
   }
 

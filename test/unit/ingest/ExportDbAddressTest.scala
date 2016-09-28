@@ -19,8 +19,6 @@
 
 package ingest
 
-import java.lang.{Character => JChar}
-
 import addressbase.{OSDpa, OSLpi}
 import ingest.Ingester.{Blpu, Street, StreetDescriptor}
 import ingest.algorithm.Algorithm
@@ -99,12 +97,10 @@ class ExportDbAddressTest extends FunSuite {
     )
 
     for (c <- cases) {
-      val streetsMap = new java.util.HashMap[java.lang.Long, JChar]()
-      val streetDescsMap = new java.util.HashMap[java.lang.Long, String]()
-      streetsMap.put(98765L, Street('1').pack)
-      streetDescsMap.put(98765L, StreetDescriptor("The Street", "Locality Name", "Town Name").pack)
+      val street = Street('1', "8")
+      val streetDesc = StreetDescriptor("The Street", "Locality Name", "Town Name")
 
-      val a = ExportDbAddress.exportLPI(c.lpi, c.blpu, streetsMap, streetDescsMap, Algorithm())
+      val a = ExportDbAddress.exportLPI(c.lpi, c.blpu, street, streetDesc, Algorithm())
       assert(a === c.expected)
     }
   }

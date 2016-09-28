@@ -18,7 +18,6 @@ package ingest
 
 import java.io.File
 import java.util.Date
-import java.lang.{Character => JChar}
 
 import config.Divider
 import ingest.Ingester.{Blpu, PostcodeLCC}
@@ -63,13 +62,17 @@ object Ingester {
     }
   }
 
-  case class Street(recordType: Char) {
-    def pack: JChar = recordType.asInstanceOf[JChar]
+  case class Street(recordType: Char, classification: String) {
+    def pack: String = s"$recordType|$classification"
   }
 
   object Street {
-    def unpack(pack: JChar): Street = {
-      Street(pack.asInstanceOf[Char])
+    def unpack(pack: String): Street = {
+      require(pack != null)
+      val fields = Divider.qsplit(pack, '|')
+      val recordType = fields.head.head
+      val classification = fields(1)
+      Street(recordType, classification)
     }
   }
 

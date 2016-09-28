@@ -109,7 +109,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       assert(firstPass.forwardData.streets.size === 1)
       assert(firstPass.forwardData.streetDescriptorsEn.size === 1)
       assert(firstPass.forwardData.streetDescriptorsCy.size === 1)
-      assert(firstPass.forwardData.streets.get(47208194L) === '2')
+      assert(firstPass.forwardData.streets.get(47208194L) === "2|")
       assert(firstPass.forwardData.streetDescriptorsEn.get(47208194L) === "Cwmduad to Cynwyl Elfed|Cwmduad|Carmarthen")
       assert(firstPass.forwardData.streetDescriptorsCy.get(47208194L) === "Cwmduad to Cynwyl Elfed|Cwmduad|Caerfyrddin")
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets, 1/1 street descriptors.")
@@ -138,7 +138,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       lock.take()
       worker.awaitCompletion()
       assert(firstPass.forwardData.streets.size === 1)
-      assert(firstPass.forwardData.streets.get(48504236L) === '2')
+      assert(firstPass.forwardData.streets.get(48504236L) === "2|")
       assert(firstPass.forwardData.streetDescriptorsEn.get(48504236L) === "A76 T From Co-Operative Offices to Castle Place||New Cumnock")
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets, 1/0 street descriptors.")
     }
@@ -166,7 +166,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       lock.take()
       worker.awaitCompletion()
       assert(firstPass.forwardData.streets.size === 1)
-      assert(firstPass.forwardData.streets.get(48504236L) === '2')
+      assert(firstPass.forwardData.streets.get(48504236L) === "2|")
       assert(firstPass.forwardData.streetDescriptorsEn.get(48504236L) === "A76 T From Co-Operative Offices to Castle Place||New Cumnock")
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets, 1/0 street descriptors.")
     }

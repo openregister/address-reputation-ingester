@@ -53,19 +53,12 @@ private[ingest] object ExportDbAddress {
       None)
   }
 
-  private val unknownRecordType: JChar = 'X'.asInstanceOf[JChar]
-
-  // TODO this unbalanced API should instead accept instances of Street and StreetDescriptor
   def exportLPI(lpi: OSLpi,
                 blpu: Blpu,
-                streets: java.util.Map[java.lang.Long, JChar],
-                streetDescriptors: java.util.Map[java.lang.Long, String],
+                street: Street,
+                streetDescriptor: StreetDescriptor,
                 settings: Algorithm): DbAddress = {
     val id = GBPrefix + lpi.uprn.toString
-    val streetString = Option(streets.get(lpi.usrn)).getOrElse(unknownRecordType)
-    val streetDescString = Option(streetDescriptors.get(lpi.usrn)).getOrElse("<SUnknown>|<SUnknown>|<TUnknown>")
-    val street = Street.unpack(streetString)
-    val streetDescriptor = StreetDescriptor.unpack(streetDescString)
 
     val line1 = (lpi.saoText, lpi.secondaryNumberRange, lpi.paoText) match {
       case ("", "", "") => ""

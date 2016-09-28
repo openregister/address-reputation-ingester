@@ -25,14 +25,19 @@ import uk.co.hmrc.address.services.Capitalisation
 object OSStreet {
   val RecordId = "11"
 
-  val idx = OSStreetIdx(usrn = 3, recordType = 4)
+  val idx = OSStreetIdx(usrn = 3, recordType = 4, classification = 9)
 
-  def apply(csv: Array[String]): OSStreet = OSStreet(csv(idx.usrn).toLong, csv(idx.recordType).head)
+  def apply(csv: Array[String]): OSStreet =
+    OSStreet(
+      csv(idx.usrn).toLong,
+      csv(idx.recordType).head,
+      csv(idx.classification)
+    )
 }
 
-case class OSStreetIdx(usrn: Int, recordType: Int)
+case class OSStreetIdx(usrn: Int, recordType: Int, classification: Int)
 
-case class OSStreet(usrn: Long, recordType: Char) extends Document {
+case class OSStreet(usrn: Long, recordType: Char, classification: String) extends Document {
   def tupled: List[(String, AnyVal)] = List(
     "usrn" -> usrn,
     "recordType" -> recordType)

@@ -22,7 +22,7 @@
 package ingest
 
 import java.io.Closeable
-import java.lang.{Long => JLong, Character => JChar}
+import java.lang.{Long => JLong}
 import java.util
 
 import config.ConfigHelper._
@@ -33,7 +33,7 @@ import play.api.Play._
 class ForwardData(
                    val blpu: util.Map[JLong, String],
                    val uprns: util.Set[JLong],
-                   val streets: util.Map[JLong, JChar],
+                   val streets: util.Map[JLong, String],
                    val streetDescriptorsEn: util.Map[JLong, String],
                    val streetDescriptorsCy: util.Map[JLong, String],
                    val postcodeLCCs: util.Map[String, String],
@@ -58,23 +58,23 @@ class ForwardData(
 
 object ForwardData {
 
+  // all sizes are measured in bytes
   private lazy val blpuMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.blpu.mapSize")
-  private lazy val blpuValueSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.blpu.valueSize")
-
   private lazy val dpaSetSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.dpa.setSize")
-
   private lazy val streetMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.street.mapSize")
-
   private lazy val streetDescMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.streetDescriptor.mapSize")
-  private lazy val streetDescValueSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.streetDescriptor.valueSize")
-
   private lazy val postcodeMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.postcode.mapSize")
-  private lazy val postcodeValueSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.postcode.valueSize")
+
+  private val blpuValueSize = 12
+  private val streetValueSize = 8
+  private val streetDescValueSize = 60
+  private val postcodeKeySize = 8
+  private val postcodeValueSize = 10
 
   def simpleHeapInstance(preferred: String): ForwardData = new ForwardData(
     new util.HashMap[JLong, String](),
     new util.HashSet[JLong](),
-    new util.HashMap[JLong, JChar](),
+    new util.HashMap[JLong, String](),
     new util.HashMap[JLong, String](),
     new util.HashMap[JLong, String](),
     new util.HashMap[String, String],
@@ -84,7 +84,7 @@ object ForwardData {
   def concurrentHeapInstance(preferred: String): ForwardData = new ForwardData(
     new util.concurrent.ConcurrentHashMap[JLong, String](),
     new util.HashSet[JLong](),
-    new util.concurrent.ConcurrentHashMap[JLong, JChar](),
+    new util.concurrent.ConcurrentHashMap[JLong, String](),
     new util.concurrent.ConcurrentHashMap[JLong, String](),
     new util.concurrent.ConcurrentHashMap[JLong, String](),
     new util.concurrent.ConcurrentHashMap[String, String](),
@@ -92,22 +92,28 @@ object ForwardData {
   )
 
   def chronicleInMemory(preferred: String): ForwardData = new ForwardData(
-    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(blpuMapSize).averageValueSize(blpuValueSize).create(),
+    mapLongString(blpuMapSize, blpuValueSize),
     ChronicleSetBuilder.of(classOf[JLong]).entries(dpaSetSize).create(),
-    ChronicleMapBuilder.of(classOf[JLong], classOf[JChar]).entries(streetMapSize).constantValueSizeBySample(' ').create(),
-    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(streetDescMapSize).averageValueSize(streetDescValueSize).create(),
-    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(streetDescMapSize/2).averageValueSize(streetDescValueSize).create(),
-    ChronicleMapBuilder.of(classOf[String], classOf[String]).entries(postcodeMapSize).averageKeySize(8).averageValueSize(postcodeValueSize).create(),
+    mapLongString(streetMapSize, streetValueSize),
+    mapLongString(streetDescMapSize, streetDescValueSize),
+    mapLongString(streetDescMapSize / 10, streetDescValueSize), // Welsh is much smaller at present
+    mapStringString(postcodeMapSize, postcodeKeySize, postcodeValueSize),
     preferred: String
   )
 
   def chronicleInMemoryForUnitTest(preferred: String): ForwardData = new ForwardData(
-    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(1000).averageValueSize(10).create(),
+    mapLongString(1000, blpuValueSize),
     ChronicleSetBuilder.of(classOf[JLong]).entries(1000).create(),
-    ChronicleMapBuilder.of(classOf[JLong], classOf[JChar]).entries(100).constantValueSizeBySample(' ').create(),
-    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(100).averageValueSize(60).create(),
-    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(100).averageValueSize(60).create(),
-    ChronicleMapBuilder.of(classOf[String], classOf[String]).entries(100).averageKeySize(8).averageValueSize(20).create(),
+    mapLongString(100, streetValueSize),
+    mapLongString(100, streetDescValueSize),
+    mapLongString(10, streetDescValueSize), // Welsh is much smaller at present
+    mapStringString(100, postcodeKeySize, postcodeValueSize),
     preferred: String
   )
+
+  private def mapLongString(n: Int, avSize: Int) =
+    ChronicleMapBuilder.of(classOf[JLong], classOf[String]).entries(n).averageValueSize(avSize).create()
+
+  private def mapStringString(n: Int, keySize: Int, avSize: Int) =
+    ChronicleMapBuilder.of(classOf[String], classOf[String]).entries(n).averageKeySize(keySize).averageValueSize(avSize).create()
 }

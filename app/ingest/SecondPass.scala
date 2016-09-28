@@ -22,7 +22,7 @@
 package ingest
 
 import addressbase.{OSCsv, OSDpa, OSHeader, OSLpi}
-import ingest.Ingester.Blpu
+import ingest.Ingester.{Blpu, Street, StreetDescriptor}
 import ingest.algorithm.Algorithm
 import ingest.writers.OutputWriter
 import services.exec.Continuer
@@ -62,7 +62,13 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
         val blpu = Blpu.unpack(packedBlpu.get)
 
         if (blpu.logicalState == lpi.logicalState && blpu.subdivision != Ingester.UnknownSubdivision) {
-          val a = ExportDbAddress.exportLPI(lpi, blpu, fd.streets, fd.streetDescriptorsEn, settings)
+          val optStreet = Option(fd.streets.get(lpi.usrn)).map(s => Street.unpack(s))
+          val street = optStreet.getOrElse(defaultStreet)
+          val optStreetDescEn = Option(fd.streetDescriptorsEn.get(lpi.usrn)).map(s => StreetDescriptor.unpack(s))
+          val streetDescriptorEn = optStreetDescEn.getOrElse(defaultStreetDescriptor)
+          // TODO Welsh not yet implemented
+
+          val a = ExportDbAddress.exportLPI(lpi, blpu, street, streetDescriptorEn, settings)
           out.output(a)
           lpiCount += 1
           fd.blpu.remove(lpi.uprn) // need to decide which lpi to use in the firstPass using logic - first in gets in
@@ -70,6 +76,9 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
       }
     }
   }
+
+  val defaultStreet = Street('X', "")
+  val defaultStreetDescriptor = StreetDescriptor("<SUnknown>", "<SUnknown>", "<TUnknown>")
 
   private def processDPA(csvLine: Array[String], out: OutputWriter): Unit = {
     //TODO this only ingests English, ignoring any Welsh that is provided
@@ -83,6 +92,7 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
 
         if (blpu.subdivision != Ingester.UnknownSubdivision) {
           val a = ExportDbAddress.exportDPA(dpa, blpu, "en")
+          // TODO Welsh not yet implemented
           out.output(a)
           dpaCount += 1
         }
