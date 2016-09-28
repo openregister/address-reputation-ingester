@@ -21,8 +21,6 @@
 
 package ingest
 
-import java.lang.{Character => JChar}
-
 import addressbase.{OSDpa, OSLpi}
 import ingest.Ingester.{Blpu, Street, StreetDescriptor}
 import ingest.algorithm.Algorithm
@@ -36,7 +34,7 @@ private[ingest] object ExportDbAddress {
                 blpu: Blpu,
                 language: String): DbAddress = {
     val id = GBPrefix + dpa.uprn.toString
-    val line1 = normaliseAddressLine(dpa.subBuildingName + " " + dpa.buildingName)
+    val line1 = List(normaliseAddressLine(dpa.subBuildingName), normaliseAddressLine(dpa.buildingName)).filterNot(_.isEmpty).mkString(", ")
     val line2 = normaliseAddressLine(dpa.buildingNumber + " " + dpa.dependentThoroughfareName + " " + dpa.thoroughfareName)
     val line3 = normaliseAddressLine(dpa.doubleDependentLocality + " " + dpa.dependentLocality)
     val lines = List(line1, line2, line3).filterNot(_.isEmpty)
@@ -47,7 +45,7 @@ private[ingest] object ExportDbAddress {
       subdivisionCode(blpu.subdivision),
       countryCode(blpu.subdivision, dpa.postcode),
       Some(blpu.localCustodianCode),
-      isoLanguage(language),
+      Some(language),
       toInt(blpu.blpuState),
       toInt(blpu.logicalState),
       None)
@@ -92,7 +90,7 @@ private[ingest] object ExportDbAddress {
       isoLanguage(lpi.language),
       toInt(blpu.blpuState),
       toInt(blpu.logicalState),
-      None)
+      toInt(street.classification))
   }
 
   private def subdivisionCode(subdivision: Char) = subdivision match {
@@ -134,4 +132,7 @@ private[ingest] object ExportDbAddress {
   private def toInt(c: Char) =
     if ('0' <= c && c <= '9') Some(c - '0')
     else None
+
+  private def toInt(s: String) =
+    if (s.isEmpty) None else Some(s.toInt)
 }

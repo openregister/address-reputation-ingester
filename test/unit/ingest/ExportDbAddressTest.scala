@@ -37,7 +37,7 @@ class ExportDbAddressTest extends FunSuite {
           paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "",
           usrn = 98765L).normalise,
         Blpu(None, "SE1 9PY", '1', '2', 'E', 7655),
-        DbAddress("GB1", List("The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), None)),
+        DbAddress("GB1", List("The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), Some(8))),
 
       Case1(
         OSLpi(uprn = 2L, language = "ENG", logicalState = '1',
@@ -45,7 +45,7 @@ class ExportDbAddressTest extends FunSuite {
           paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "Poo",
           usrn = 98765L).normalise,
         Blpu(None, "SE1 9PY", '1', '2', 'E', 7655),
-        DbAddress("GB2", List("Poo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), None)),
+        DbAddress("GB2", List("Poo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), Some(8))),
 
       Case1(
         OSLpi(uprn = 3L, language = "ENG", logicalState = '1',
@@ -53,7 +53,7 @@ class ExportDbAddressTest extends FunSuite {
           paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "",
           usrn = 98765L).normalise,
         Blpu(None, "SE1 9PY", '1', '2', 'E', 7655),
-        DbAddress("GB3", List("1A-2B", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), None)),
+        DbAddress("GB3", List("1A-2B", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), Some(8))),
 
       Case1(
         OSLpi(uprn = 4L, language = "ENG", logicalState = '1',
@@ -61,7 +61,7 @@ class ExportDbAddressTest extends FunSuite {
           paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "",
           usrn = 98765L).normalise,
         Blpu(None, "SE1 9PY", '1', '2', 'E', 7655),
-        DbAddress("GB4", List("Soo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), None)),
+        DbAddress("GB4", List("Soo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), Some(8))),
 
       Case1(
         OSLpi(uprn = 5L, language = "ENG", logicalState = '1',
@@ -69,7 +69,7 @@ class ExportDbAddressTest extends FunSuite {
           paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "",
           usrn = 98765L).normalise,
         Blpu(None, "SE1 9PY", '1', '2', 'E', 7655),
-        DbAddress("GB5", List("Soo, 1A-2B", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), None)),
+        DbAddress("GB5", List("Soo, 1A-2B", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), Some(8))),
 
       Case1(
         OSLpi(uprn = 6L, language = "ENG", logicalState = '1',
@@ -77,7 +77,7 @@ class ExportDbAddressTest extends FunSuite {
           paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "Poo",
           usrn = 98765L).normalise,
         Blpu(None, "SE1 9PY", '1', '2', 'E', 7655),
-        DbAddress("GB6", List("1A-2B Poo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), None)),
+        DbAddress("GB6", List("1A-2B Poo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), Some(8))),
 
       Case1(
         OSLpi(uprn = 7L, language = "ENG", logicalState = '1',
@@ -85,7 +85,7 @@ class ExportDbAddressTest extends FunSuite {
           paoStartNumber = "", paoStartSuffix = "", paoEndNumber = "", paoEndSuffix = "", paoText = "Poo",
           usrn = 98765L).normalise,
         Blpu(None, "SE1 9PY", '1', '2', 'E', 7655),
-        DbAddress("GB7", List("Soo, Poo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), None)),
+        DbAddress("GB7", List("Soo, Poo", "The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), Some(8))),
 
       Case1(
         OSLpi(uprn = 8L, language = "ENG", logicalState = '1',
@@ -93,7 +93,7 @@ class ExportDbAddressTest extends FunSuite {
           paoStartNumber = "10", paoStartSuffix = "C", paoEndNumber = "12", paoEndSuffix = "D", paoText = "Poo",
           usrn = 98765L).normalise,
         Blpu(None, "SE1 9PY", '1', '2', 'E', 7655),
-        DbAddress("GB8", List("Soo, 1A-2B Poo", "10C-12D The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), None))
+        DbAddress("GB8", List("Soo, 1A-2B Poo", "10C-12D The Street", "Locality Name"), Some("Town Name"), "SE1 9PY", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), Some(8)))
     )
 
     for (c <- cases) {
@@ -120,12 +120,29 @@ class ExportDbAddressTest extends FunSuite {
           postTown = "postTown",
           postcode = "postcode").normalise,
         Blpu(None, "SE1 9PY", '1', '2', 'E', 7655),
-        DbAddress("GB1", List("Subbuildingname Buildingname", "Buildingnumber Dependentthoroughfarename Thoroughfarename", "Doubledependentlocality Dependentlocality"),
-          Some("Posttown"), "POSTCODE", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), None))
+        DbAddress("GB1", List("Subbuildingname, Buildingname", "Buildingnumber Dependentthoroughfarename Thoroughfarename", "Doubledependentlocality Dependentlocality"),
+          Some("Posttown"), "POSTCODE", Some("GB-ENG"), Some("UK"), Some(7655), Some("en"), Some(2), Some(1), None)),
+
+      Case2(
+        // 21,"I",52302,10023119082,1,2,2010-09-17,10023119042,291232.36,094165.57,50.7368747,-3.5427382,2,1110,"E",2010-09-18,,2016-02-10,2010-09-17,"D","EX4 4FT",0
+        // 24,"I",108495,10023119082,"1110L000165517","ENG",1,2010-09-18,,2016-02-10,2010-09-17,,"",,"","FLAT G.01 BLOCK G",,"",,"","BIRKS HALLS",14200580,"1","","",""
+        // 28,"I",109427,10023119082,52172489,"","","FLAT G.01 BLOCK G","BIRKS HALL",,"","NEW NORTH ROAD","","","EXETER","EX4 4FT","S","1A","","","","","","",2016-01-18,2012-04-23,,2016-02-10,2012-03-19
+        OSDpa(uprn = 10023119082L,
+          subBuildingName = "FLAT G.01 BLOCK G", buildingName = "BIRKS HALL", buildingNumber = "",
+          dependentThoroughfareName = "",
+          thoroughfareName = "NEW NORTH ROAD",
+          doubleDependentLocality = "",
+          dependentLocality = "",
+          postTown = "EXETER",
+          postcode = "EX4 4FT").normalise,
+        Blpu(None, "EX4 4FT", '1', '2', 'E', 1110),
+        DbAddress("GB10023119082", List("Flat G.01 Block G, Birks Hall", "New North Road"), Some("Exeter"),
+          "EX4 4FT", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None))
+
     )
 
     for (c <- cases) {
-      val a = ExportDbAddress.exportDPA(c.dpa, c.blpu, "ENG")
+      val a = ExportDbAddress.exportDPA(c.dpa, c.blpu, "en")
       assert(a === c.expected)
     }
   }

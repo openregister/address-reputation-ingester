@@ -130,11 +130,11 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
   test(
     """given a zip archive containing one file,
-       Ingester should iterate over the CSV lines it contains
+       Ingester should iterate over the CSV lines it contains, using 'prefer-DPA'
     """) {
     new context {
       val sample = new File(getClass.getClassLoader.getResource("exeter/1/sample/addressbase-premium-csv-sample-data.zip").getFile)
-      val addressesProduced = new mutable.ListBuffer[DbAddress]()
+      val addressesProduced = new mutable.HashMap[String, DbAddress]()
       var closed = false
 
       val out = new OutputWriter {
@@ -143,7 +143,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
         def begin() {}
 
         def output(a: DbAddress) {
-          addressesProduced += a
+          addressesProduced(a.id) = a
         }
 
         def end(completed: Boolean) = {
@@ -154,7 +154,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, Algorithm(), model, status, ForwardData.simpleHeapInstance("DPA")).ingestFiles(List(sample), out)
+          new Ingester(continuer, Algorithm(prefer = "DPA"), model, status, ForwardData.simpleHeapInstance("DPA")).ingestFiles(List(sample), out)
           lock.put(true)
       })
 
@@ -179,67 +179,181 @@ class IngesterTest extends FunSuite with MockitoSugar {
       assert(addressesProduced.size === 48737)
       assert(!closed) // the writer is closed at a higher scope level
 
+      // 21,"I",11018,100040230002,1,3,2011-07-12,,293103.00,093405.00,50.730385,-3.5160181,1,1110,"E",2007-10-24,,2016-02-10,2001-04-04,"D","EX4 6TA",0
+      // 24,"I",55848,100040230002,"1110L000137506","ENG",1,2007-10-24,,2016-02-10,2005-06-26,,"",,"","",6,"",,"","",14200678,"1","","","N"
+      // 28,"I",139197,100040230002,8788293,"","","","",6,"","PROSPECT GARDENS","","","EXETER","EX4 6TA","S","1G","","","","","","",2016-01-18,2012-04-23,,2016-02-10,2012-03-19
+      assert(addressesProduced("GB100040230002") === DbAddress("GB100040230002", List("6 Prospect Gardens"), Some("Exeter"), "EX4 6TA", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(3), Some(1), None))
+
+      // 21,"I",51722,10023118140,1,2,2009-11-04,10023118154,292063.62,091898.66,50.7166511,-3.5302985,1,1110,"E",2009-11-10,,2016-02-10,2009-11-04,"D","EX2 8DP",0
+      // 24,"I",55849,10023118140,"1110L000164577","ENG",1,2009-11-10,,2016-02-10,2009-11-04,3,"",,"","",,"",,"","TERRACINA COURT",14200371,"1","","","Y"
+      // 28,"I",127142,10023118140,51606770,"","","","3 TERRACINA COURT",,"","HAVEN ROAD","","","EXETER","EX2 8DP","S","1W","","","","","","",2016-01-18,2012-04-23,,2016-02-10,2012-03-19
+      assert(addressesProduced("GB10023118140") === DbAddress("GB10023118140", List("3 Terracina Court", "Haven Road"), Some("Exeter"), "EX2 8DP", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None))
+
       // 21,"I",28224,10013050866,8,,,,292260.00,092751.94,50.7243583,-3.5277673,1,1110,"E",2007-10-24,2014-04-03,2016-02-10,2007-06-27,"L","EX1 1GE",0
       // 24,"I",55850,10013050866,"1110L000160762","ENG",8,2007-10-24,2014-04-03,2016-02-10,2007-06-27,,"",,"","",9,"",,"","",14201579,"1","","","Y"
-      // 32,"I",173442,10013050866,"1110C000040672","CR08","AddressBase Premium Classification Scheme",1.0,2007-10-24,2014-04-03,2016-02-10,2007-06-27
-      // 23,"I",252628,10013050866,"1110X709841935","osgb1000002070809050",3,"7666MT",2014-04-03,2014-04-03,2016-02-07,2008-03-02
-      // 23,"I",252629,10013050866,"1110X609601862","osgb4000000025295481",8,"7666MI",2014-04-03,2014-04-03,2016-02-07,2009-10-14
-      // 23,"I",252630,10013050866,"1110X111845090","E05003502",,"7666OW",2014-04-03,2014-04-03,2016-02-07,2016-02-07
-      assert(addressesProduced(0) === DbAddress("GB10013050866", List("9 Princesshay"), Some("Exeter"), "EX1 1GE", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), None, Some(8), None))
+      assert(addressesProduced("GB10013050866") === DbAddress("GB10013050866", List("9 Princesshay"), Some("Exeter"), "EX1 1GE", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), None, Some(8), Some(8)))
 
       // 21,"I",30646,10091471879,1,2,2015-10-28,10013039199,292468.71,093210.65,50.7285207,-3.5249454,1,1110,"E",2015-10-28,,2016-02-10,2015-10-28,"C","EX4 6AY",0
       // 24,"I",55869,10091471879,"1110L000174404","ENG",1,2015-10-28,,2016-02-07,2015-10-28,,"",,"","FLAT 1",2,"",,"","",14200685,"1","","",""
-      // 32,"I",161142,10091471879,"1110C000067748","RD06","AddressBase Premium Classification Scheme",1.0,2015-10-28,,2016-02-06,2015-10-28
-      // 23,"I",284656,10091471879,"1110X609031489","osgb4000000025306108",3,"7666MI",2016-02-07,,2016-02-07,2005-09-16
-      // 23,"I",284657,10091471879,"1110X709260134","osgb1000012323862",5,"7666MT",2016-02-07,,2016-02-07,2015-11-22
-      // 23,"I",284658,10091471879,"1110X113362044","E05003503",,"7666OW",2016-02-07,,2016-02-07,2016-02-07
-      assert(addressesProduced(3) === DbAddress("GB10091471879", List("Flat 1", "2 Queens Crescent"), Some("Exeter"), "EX4 6AY", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None)) //TODO This is not really correct
+      assert(addressesProduced("GB10091471879") === DbAddress("GB10091471879", List("Flat 1", "2 Queens Crescent"), Some("Exeter"), "EX4 6AY", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8))) //TODO This is not really correct
 
       // 21,"I",30665,10091472481,1,2,2016-01-06,10091472482,291052.00,092182.00,50.7190093,-3.5447065,1,1110,"E",2016-01-07,,2016-02-06,2016-01-06,"L","EX4 1BU",0
       // 24,"I",55896,10091472481,"1110L000175006","ENG",1,2016-01-07,,2016-02-07,2016-01-06,,"",,"","UNIT 1",25,"",,"","",14200521,"1","","","Y"
-      // 32,"I",202963,10091472481,"1110C000067922","CI","AddressBase Premium Classification Scheme",1.0,2016-01-07,,2016-02-06,2016-01-06
-      // 23,"I",284721,10091472481,"1110X113362085","E05003506",,"7666OW",2016-02-07,,2016-02-07,2016-02-07
-      // 23,"I",284722,10091472481,"1110X709141134","osgb1000012293093",6,"7666MT",2016-02-07,,2016-02-07,2012-04-04
-      // 23,"I",284723,10091472481,"1110X607370707","osgb4000000025320927",3,"7666MI",2016-02-07,,2016-02-07,2005-09-16
-      assert(addressesProduced(9) === DbAddress("GB10091472481", List("Unit 1", "25 Manor Road"), Some("Exeter"), "EX4 1BU", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None))
+      assert(addressesProduced("GB10091472481") === DbAddress("GB10091472481", List("Unit 1", "25 Manor Road"), Some("Exeter"), "EX4 1BU", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
 
       // 21,"I",30651,10091471884,1,2,2015-11-02,100041044079,293224.00,092506.00,50.7223255,-3.5140436,1,1110,"E",2015-11-04,,2016-02-10,2015-11-02,"L","EX1 1TL",0
       // 24,"I",55909,10091471884,"1110L000174409","ENG",1,2015-11-04,,2016-02-10,2015-11-02,,"",,"","ROOM 4",6,"",,"","BARING HOUSE",14200047,"1","","",""
-      // 32,"I",161160,10091471884,"1110C000067762","CO01","AddressBase Premium Classification Scheme",1.0,2015-11-04,,2016-02-10,2015-11-02
-      // 32,"I",210439,10091471884,"1110C800644124","203","VOA Special Category",1.0,2015-12-01,,2016-02-06,2015-08-10
-      // 32,"I",211723,10091471884,"1110C801859368","CO","VOA Primary Description",1.0,2015-12-01,,2016-02-06,2015-08-10
-      // 23,"I",284673,10091471884,"1110X042576970","9901789000",,"7666VN",2015-12-01,,2016-02-10,2015-08-10
-      // 23,"I",284674,10091471884,"1110X113362049","E05003497",,"7666OW",2016-02-07,,2016-02-07,2016-02-07
-      // 23,"I",284675,10091471884,"1110X709212837","osgb1000012341771",6,"7666MT",2016-02-07,,2016-02-07,2015-11-24
-      // 23,"I",284676,10091471884,"1110X609829441","osgb4000000025306059",4,"7666MI",2016-02-07,,2016-02-07,2005-09-16
-      assert(addressesProduced(10) === DbAddress("GB10091471884", List("Room 4, Baring House", "6 Baring Crescent"), Some("Exeter"), "EX1 1TL", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None))
+      assert(addressesProduced("GB10091471884") === DbAddress("GB10091471884", List("Room 4, Baring House", "6 Baring Crescent"), Some("Exeter"), "EX1 1TL", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
 
       // 21,"I",30653,10091471886,1,2,2015-11-02,100041044079,293224.00,092506.00,50.7223255,-3.5140436,1,1110,"E",2015-11-04,,2016-02-10,2015-11-02,"L","EX1 1TL",0
       // 24,"I",55942,10091471886,"1110L000174411","ENG",1,2015-11-04,,2016-02-10,2015-11-02,,"",,"","OFFICE 7",6,"",,"","BARING HOUSE",14200047,"1","","",""
-      // 32,"I",161150,10091471886,"1110C000067764","CO01","AddressBase Premium Classification Scheme",1.0,2015-11-04,,2016-02-10,2015-11-02
-      // 32,"I",192285,10091471886,"1110C802631340","CO","VOA Primary Description",1.0,2015-12-01,,2016-02-06,2015-08-10
-      // 32,"I",210426,10091471886,"1110C800643874","203","VOA Special Category",1.0,2015-12-01,,2016-02-06,2015-08-10
-      // 23,"I",284681,10091471886,"1110X042574954","9247586000",,"7666VN",2015-12-01,,2016-02-10,2015-08-10
-      // 23,"I",284682,10091471886,"1110X113362051","E05003497",,"7666OW",2016-02-07,,2016-02-07,2016-02-07
-      // 23,"I",284683,10091471886,"1110X709148608","osgb1000012341771",6,"7666MT",2016-02-07,,2016-02-07,2015-11-24
-      // 23,"I",284684,10091471886,"1110X607047972","osgb4000000025306059",4,"7666MI",2016-02-07,,2016-02-07,2005-09-16
-      assert(addressesProduced(16) === DbAddress("GB10091471886", List("Office 7, Baring House", "6 Baring Crescent"), Some("Exeter"), "EX1 1TL", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None))
+      assert(addressesProduced("GB10091471886") === DbAddress("GB10091471886", List("Office 7, Baring House", "6 Baring Crescent"), Some("Exeter"), "EX1 1TL", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
 
       // 21,"I",51397,10023117655,1,2,2008-11-24,100041124570,293907.43,092597.69,50.7232751,-3.5043915,1,1110,"E",2008-11-28,,2016-02-10,2008-11-24,"C","EX1 2SN",0
       // 24,"I",56013,10023117655,"1110L000164082","ENG",1,2008-11-28,,2016-02-10,2008-11-24,,"",,"","SCHOOL KITCHEN",,"",,"","ST MICHAELS CE PRIMARY SCHOOL",14200767,"1","","","N"
-      // 32,"I",203835,10023117655,"1110C000000097","CE03","AddressBase Premium Classification Scheme",1.0,2008-11-28,,2016-02-10,2008-11-24
-      // 23,"I",259372,10023117655,"1110X708316566","osgb1000002070792087",5,"7666MT",2016-02-07,,2016-02-07,2009-07-01
-      // 23,"I",259373,10023117655,"1110X111454302","E05003495",,"7666OW",2016-02-07,,2016-02-07,2016-02-07
-      // 23,"I",259374,10023117655,"1110X608734357","osgb4000000025306097",5,"7666MI",2016-02-07,,2016-02-07,2008-11-09
-      assert(addressesProduced(20) === DbAddress("GB10023117655", List("School Kitchen, St Michaels Ce Primary School", "South Lawn Terrace"), Some("Exeter"), "EX1 2SN", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None))
+      assert(addressesProduced("GB10023117655") === DbAddress("GB10023117655", List("School Kitchen, St Michaels Ce Primary School", "South Lawn Terrace"), Some("Exeter"), "EX1 2SN", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
 
       // 21,"I",52259,10023119039,1,2,2010-09-15,100040234793,292804.00,092311.00,50.7204951,-3.5199347,1,1110,"E",2010-09-16,,2016-02-10,2010-09-15,"C","EX2 4LA",0
       // 24,"I",56016,10023119039,"1110L000165474","ENG",1,2010-09-16,,2016-02-10,2010-09-15,,"",,"","ANNEXE",12,"",,"","",14200790,"1","","",""
-      // 32,"I",200223,10023119039,"1110C000000030","R","AddressBase Premium Classification Scheme",1.0,2010-09-16,,2016-02-10,2010-09-15
-      // 23,"I",263324,10023119039,"1110X111457564","E05003504",,"7666OW",2016-02-07,,2016-02-07,2016-02-07
-      // 23,"I",263325,10023119039,"1110X608411579","osgb4000000025306065",3,"7666MI",2016-02-07,,2016-02-07,2005-09-16
-      // 23,"I",263326,10023119039,"1110X708350160","osgb5000005167742577",1,"7666MT",2016-02-07,,2016-02-07,2015-11-24
-      assert(addressesProduced(21) === DbAddress("GB10023119039", List("Annexe", "12 St Leonards Road"), Some("Exeter"), "EX2 4LA", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None))
+      assert(addressesProduced("GB10023119039") === DbAddress("GB10023119039", List("Annexe", "12 St Leonards Road"), Some("Exeter"), "EX2 4LA", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
+
+      // 21,"I",19848,10013036716,8,,,100040210161,292532.00,094529.00,50.740384,-3.5244338,1,1110,"E",2007-10-24,2014-04-16,2016-02-10,2005-07-07,"C","EX4 4SW",0
+      // 21,"I",26673,10013048054,1,2,2011-07-12,100040210161,292532.00,094529.00,50.740384,-3.5244338,1,1110,"E",2007-10-24,,2016-02-10,2006-04-05,"C","EX4 4SW",0
+      // 21,"I",38672,100040210161,1,2,2014-04-14,,292532.00,094529.00,50.740384,-3.5244338,1,1110,"E",2007-10-24,,2016-02-10,2001-04-04,"D","EX4 4SW",1
+      // 24,"I",69329,100040210161,"1110L000132209","ENG",1,2007-10-24,,2016-02-10,2005-06-26,,"",,"","",1,"",,"","",14200227,"1","","","Y"
+      // 28,"I",109425,100040210161,8783681,"","","","",1,"","CURLEW WAY","","","EXETER","EX4 4SW","S","1A","","","","","","",2016-01-18,2012-04-23,,2016-02-10,2012-03-19
+      assert(addressesProduced("GB100040210161") === DbAddress("GB100040210161", List("1 Curlew Way"), Some("Exeter"), "EX4 4SW", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None))
+
+      // 21,"I",54271,10023122465,1,2,2013-01-31,,293505.38,090643.08,50.7056301,-3.5095205,1,1110,"E",2014-02-21,,2016-02-10,2014-02-20,"D","EX2 6GA",0
+      // 24,"I",105754,10023122465,"1110L000168898","ENG",1,2014-02-21,,2016-02-10,2014-02-20,,"",,"","",15,"",,"","",14203041,"1","","","Y"
+      // 28,"I",109426,10023122465,52995200,"","","","",15,"","GATE REACH","","","EXETER","EX2 6GA","S","1T","","","","","","",2016-01-18,2014-04-01,,2016-02-10,2013-12-16
+      assert(addressesProduced("GB10023122465") === DbAddress("GB10023122465", List("15 Gate Reach"), Some("Exeter"), "EX2 6GA", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None))
+
+      // 21,"I",52302,10023119082,1,2,2010-09-17,10023119042,291232.36,094165.57,50.7368747,-3.5427382,2,1110,"E",2010-09-18,,2016-02-10,2010-09-17,"D","EX4 4FT",0
+      // 24,"I",108495,10023119082,"1110L000165517","ENG",1,2010-09-18,,2016-02-10,2010-09-17,,"",,"","FLAT G.01 BLOCK G",,"",,"","BIRKS HALLS",14200580,"1","","",""
+      // 28,"I",109427,10023119082,52172489,"","","FLAT G.01 BLOCK G","BIRKS HALL",,"","NEW NORTH ROAD","","","EXETER","EX4 4FT","S","1A","","","","","","",2016-01-18,2012-04-23,,2016-02-10,2012-03-19
+      assert(addressesProduced("GB10023119082") === DbAddress("GB10023119082", List("Flat G.01 Block G, Birks Hall", "New North Road"), Some("Exeter"), "EX4 4FT", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None))
+
+      // 21,"I",30823,10092760043,1,,,10013045079,292653.00,092961.00,50.7263105,-3.5222624,1,7655,"E",2014-09-12,,2016-02-10,2012-12-27,"D","EX1 9UL",0
+      // 24,"I",102319,10092760043,"7655L200047949","ENG",1,2014-09-12,,2016-02-10,2012-12-27,,"",,"","PO BOX 795",,"",,"","SUMMERLAND GATE",14200068,"2","","","N"
+      // 28,"I",144222,10092760043,52960003,"FLY BE","","","",,"","","","","EXETER","EX1 9UL","L","1A","","","","","","795",2016-01-18,2014-09-12,,2016-02-10,2012-12-27
+      //TODO this is rubbish!
+      assert(addressesProduced("GB10092760043") === DbAddress("GB10092760043", List(), Some("Exeter"), "EX1 9UL", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), None, Some(1), None))
+    }
+  }
+
+
+  test(
+    """given a zip archive containing one file,
+       Ingester should iterate over the CSV lines it contains, using 'prefer-LPI'
+    """) {
+    new context {
+      val sample = new File(getClass.getClassLoader.getResource("exeter/1/sample/addressbase-premium-csv-sample-data.zip").getFile)
+      val addressesProduced = new mutable.HashMap[String, DbAddress]()
+      var closed = false
+
+      val out = new OutputWriter {
+        def existingTargetThatIsNewerThan(date: Date) = None
+
+        def begin() {}
+
+        def output(a: DbAddress) {
+          addressesProduced(a.id) = a
+        }
+
+        def end(completed: Boolean) = {
+          closed = true
+          model
+        }
+      }
+
+      worker.push("testing", {
+        continuer =>
+          new Ingester(continuer, Algorithm(prefer = "LPI"), model, status, ForwardData.simpleHeapInstance("LPI")).ingestFiles(List(sample), out)
+          lock.put(true)
+      })
+
+      lock.take()
+      worker.awaitCompletion()
+
+      assert(logger.infos.map(_.message) === List(
+        "Info:Starting testing.",
+        "Info:Starting first pass through 1 files.",
+        "Info:Reading zip entry sx9090.csv...",
+        "Info:Reading from 1 CSV files in {} took {}.",
+        "Info:First pass obtained 48737 BLPUs, 52475 LPIs, 1686 streets, 1686/0 street descriptors.",
+        "Info:First pass complete after {}.",
+        "Info:Default LCC reduction altered 282 BLPUs and took {}.",
+        "Info:Starting second pass through 1 files.",
+        "Info:Reading zip entry sx9090.csv...",
+        "Info:Reading from 1 CSV files in {} took {}.",
+        "Info:Second pass processed 0 DPAs, 48737 LPIs.", // n.b. there are 53577 LPIs in the sample file
+        "Info:Ingester finished after {}.",
+        "Info:Finished testing after {}."
+      ))
+      assert(addressesProduced.size === 48737)
+      assert(!closed) // the writer is closed at a higher scope level
+
+      // 21,"I",11018,100040230002,1,3,2011-07-12,,293103.00,093405.00,50.730385,-3.5160181,1,1110,"E",2007-10-24,,2016-02-10,2001-04-04,"D","EX4 6TA",0
+      // 24,"I",55848,100040230002,"1110L000137506","ENG",1,2007-10-24,,2016-02-10,2005-06-26,,"",,"","",6,"",,"","",14200678,"1","","","N"
+      // 28,"I",139197,100040230002,8788293,"","","","",6,"","PROSPECT GARDENS","","","EXETER","EX4 6TA","S","1G","","","","","","",2016-01-18,2012-04-23,,2016-02-10,2012-03-19
+      assert(addressesProduced("GB100040230002") === DbAddress("GB100040230002", List("6 Prospect Gardens"), Some("Exeter"), "EX4 6TA", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(3), Some(1), Some(8)))
+
+      // 21,"I",51722,10023118140,1,2,2009-11-04,10023118154,292063.62,091898.66,50.7166511,-3.5302985,1,1110,"E",2009-11-10,,2016-02-10,2009-11-04,"D","EX2 8DP",0
+      // 24,"I",55849,10023118140,"1110L000164577","ENG",1,2009-11-10,,2016-02-10,2009-11-04,3,"",,"","",,"",,"","TERRACINA COURT",14200371,"1","","","Y"
+      // 28,"I",127142,10023118140,51606770,"","","","3 TERRACINA COURT",,"","HAVEN ROAD","","","EXETER","EX2 8DP","S","1W","","","","","","",2016-01-18,2012-04-23,,2016-02-10,2012-03-19
+      assert(addressesProduced("GB10023118140") === DbAddress("GB10023118140", List("3 Terracina Court", "Haven Road"), Some("Exeter"), "EX2 8DP", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
+
+      // 21,"I",28224,10013050866,8,,,,292260.00,092751.94,50.7243583,-3.5277673,1,1110,"E",2007-10-24,2014-04-03,2016-02-10,2007-06-27,"L","EX1 1GE",0
+      // 24,"I",55850,10013050866,"1110L000160762","ENG",8,2007-10-24,2014-04-03,2016-02-10,2007-06-27,,"",,"","",9,"",,"","",14201579,"1","","","Y"
+      assert(addressesProduced("GB10013050866") === DbAddress("GB10013050866", List("9 Princesshay"), Some("Exeter"), "EX1 1GE", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), None, Some(8), Some(8)))
+
+      // 21,"I",30646,10091471879,1,2,2015-10-28,10013039199,292468.71,093210.65,50.7285207,-3.5249454,1,1110,"E",2015-10-28,,2016-02-10,2015-10-28,"C","EX4 6AY",0
+      // 24,"I",55869,10091471879,"1110L000174404","ENG",1,2015-10-28,,2016-02-07,2015-10-28,,"",,"","FLAT 1",2,"",,"","",14200685,"1","","",""
+      assert(addressesProduced("GB10091471879") === DbAddress("GB10091471879", List("Flat 1", "2 Queens Crescent"), Some("Exeter"), "EX4 6AY", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
+
+      // 21,"I",30665,10091472481,1,2,2016-01-06,10091472482,291052.00,092182.00,50.7190093,-3.5447065,1,1110,"E",2016-01-07,,2016-02-06,2016-01-06,"L","EX4 1BU",0
+      // 24,"I",55896,10091472481,"1110L000175006","ENG",1,2016-01-07,,2016-02-07,2016-01-06,,"",,"","UNIT 1",25,"",,"","",14200521,"1","","","Y"
+      assert(addressesProduced("GB10091472481") === DbAddress("GB10091472481", List("Unit 1", "25 Manor Road"), Some("Exeter"), "EX4 1BU", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
+
+      // 21,"I",30651,10091471884,1,2,2015-11-02,100041044079,293224.00,092506.00,50.7223255,-3.5140436,1,1110,"E",2015-11-04,,2016-02-10,2015-11-02,"L","EX1 1TL",0
+      // 24,"I",55909,10091471884,"1110L000174409","ENG",1,2015-11-04,,2016-02-10,2015-11-02,,"",,"","ROOM 4",6,"",,"","BARING HOUSE",14200047,"1","","",""
+      assert(addressesProduced("GB10091471884") === DbAddress("GB10091471884", List("Room 4, Baring House", "6 Baring Crescent"), Some("Exeter"), "EX1 1TL", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
+
+      // 21,"I",30653,10091471886,1,2,2015-11-02,100041044079,293224.00,092506.00,50.7223255,-3.5140436,1,1110,"E",2015-11-04,,2016-02-10,2015-11-02,"L","EX1 1TL",0
+      // 24,"I",55942,10091471886,"1110L000174411","ENG",1,2015-11-04,,2016-02-10,2015-11-02,,"",,"","OFFICE 7",6,"",,"","BARING HOUSE",14200047,"1","","",""
+      assert(addressesProduced("GB10091471886") === DbAddress("GB10091471886", List("Office 7, Baring House", "6 Baring Crescent"), Some("Exeter"), "EX1 1TL", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
+
+      // 21,"I",51397,10023117655,1,2,2008-11-24,100041124570,293907.43,092597.69,50.7232751,-3.5043915,1,1110,"E",2008-11-28,,2016-02-10,2008-11-24,"C","EX1 2SN",0
+      // 24,"I",56013,10023117655,"1110L000164082","ENG",1,2008-11-28,,2016-02-10,2008-11-24,,"",,"","SCHOOL KITCHEN",,"",,"","ST MICHAELS CE PRIMARY SCHOOL",14200767,"1","","","N"
+      assert(addressesProduced("GB10023117655") === DbAddress("GB10023117655", List("School Kitchen, St Michaels Ce Primary School", "South Lawn Terrace"), Some("Exeter"), "EX1 2SN", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
+
+      // 21,"I",52259,10023119039,1,2,2010-09-15,100040234793,292804.00,092311.00,50.7204951,-3.5199347,1,1110,"E",2010-09-16,,2016-02-10,2010-09-15,"C","EX2 4LA",0
+      // 24,"I",56016,10023119039,"1110L000165474","ENG",1,2010-09-16,,2016-02-10,2010-09-15,,"",,"","ANNEXE",12,"",,"","",14200790,"1","","",""
+      assert(addressesProduced("GB10023119039") === DbAddress("GB10023119039", List("Annexe", "12 St Leonards Road"), Some("Exeter"), "EX2 4LA", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
+
+      // 21,"I",19848,10013036716,8,,,100040210161,292532.00,094529.00,50.740384,-3.5244338,1,1110,"E",2007-10-24,2014-04-16,2016-02-10,2005-07-07,"C","EX4 4SW",0
+      // 21,"I",26673,10013048054,1,2,2011-07-12,100040210161,292532.00,094529.00,50.740384,-3.5244338,1,1110,"E",2007-10-24,,2016-02-10,2006-04-05,"C","EX4 4SW",0
+      // 21,"I",38672,100040210161,1,2,2014-04-14,,292532.00,094529.00,50.740384,-3.5244338,1,1110,"E",2007-10-24,,2016-02-10,2001-04-04,"D","EX4 4SW",1
+      // 24,"I",69329,100040210161,"1110L000132209","ENG",1,2007-10-24,,2016-02-10,2005-06-26,,"",,"","",1,"",,"","",14200227,"1","","","Y"
+      // 28,"I",109425,100040210161,8783681,"","","","",1,"","CURLEW WAY","","","EXETER","EX4 4SW","S","1A","","","","","","",2016-01-18,2012-04-23,,2016-02-10,2012-03-19
+      assert(addressesProduced("GB100040210161") === DbAddress("GB100040210161", List("1 Curlew Way"), Some("Exeter"), "EX4 4SW", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
+
+      // 21,"I",54271,10023122465,1,2,2013-01-31,,293505.38,090643.08,50.7056301,-3.5095205,1,1110,"E",2014-02-21,,2016-02-10,2014-02-20,"D","EX2 6GA",0
+      // 24,"I",105754,10023122465,"1110L000168898","ENG",1,2014-02-21,,2016-02-10,2014-02-20,,"",,"","",15,"",,"","",14203041,"1","","","Y"
+      // 28,"I",109426,10023122465,52995200,"","","","",15,"","GATE REACH","","","EXETER","EX2 6GA","S","1T","","","","","","",2016-01-18,2014-04-01,,2016-02-10,2013-12-16
+      assert(addressesProduced("GB10023122465") === DbAddress("GB10023122465", List("15 Gate Reach"), Some("Exeter"), "EX2 6GA", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
+
+      // 21,"I",52302,10023119082,1,2,2010-09-17,10023119042,291232.36,094165.57,50.7368747,-3.5427382,2,1110,"E",2010-09-18,,2016-02-10,2010-09-17,"D","EX4 4FT",0
+      // 24,"I",108495,10023119082,"1110L000165517","ENG",1,2010-09-18,,2016-02-10,2010-09-17,,"",,"","FLAT G.01 BLOCK G",,"",,"","BIRKS HALLS",14200580,"1","","",""
+      // 28,"I",109427,10023119082,52172489,"","","FLAT G.01 BLOCK G","BIRKS HALL",,"","NEW NORTH ROAD","","","EXETER","EX4 4FT","S","1A","","","","","","",2016-01-18,2012-04-23,,2016-02-10,2012-03-19
+      assert(addressesProduced("GB10023119082") === DbAddress("GB10023119082", List("Flat G.01 Block G, Birks Halls", "New North Road"), Some("Exeter"), "EX4 4FT", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), Some(8)))
+
+      // 21,"I",30823,10092760043,1,,,10013045079,292653.00,092961.00,50.7263105,-3.5222624,1,7655,"E",2014-09-12,,2016-02-10,2012-12-27,"D","EX1 9UL",0
+      // 24,"I",102319,10092760043,"7655L200047949","ENG",1,2014-09-12,,2016-02-10,2012-12-27,,"",,"","PO BOX 795",,"",,"","SUMMERLAND GATE",14200068,"2","","","N"
+      // 28,"I",144222,10092760043,52960003,"FLY BE","","","",,"","","","","EXETER","EX1 9UL","L","1A","","","","","","795",2016-01-18,2014-09-12,,2016-02-10,2012-12-27
+      assert(addressesProduced("GB10092760043") === DbAddress("GB10092760043", List("Po Box 795, Summerland Gate", "Belgrave Road"), Some("Exeter"), "EX1 9UL", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), None, Some(1), Some(8)))
+
     }
   }
 

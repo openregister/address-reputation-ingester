@@ -37,7 +37,6 @@ object Ingester {
   val StreetTypeOfficialDesignatedName = '1'
   val StreetTypeNotYetKnown = 'A'
   val UnknownSubdivision = 'J'
-
   val DefaultLCC = 7655
 
   case class Blpu(parentUprn: Option[Long], postcode: String, logicalState: Char, blpuState: Char, subdivision: Char, localCustodianCode: Int) {
