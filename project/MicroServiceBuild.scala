@@ -32,13 +32,13 @@ object MicroServiceBuild extends Build with MicroService {
     ws excludeAll(ExclusionRule(organization = "commons-logging"), ExclusionRule(organization = "io.netty")),
     // netty 3.10 has a breaking API change
     "io.netty" % "netty" % "3.9.9.Final" force(),
+    "uk.gov.hmrc" %% "address-reputation-store" % "1.10.0" withSources()
+      excludeAll (ExclusionRule(organization = "org.reactivemongo"), ExclusionRule(organization = "io.netty")),
     "uk.gov.hmrc" %% "microservice-bootstrap" % "4.2.1",
 //    "uk.gov.hmrc" %% "play-authorisation" % "3.1.0",
     "uk.gov.hmrc" %% "play-health" % "1.1.0",
     "uk.gov.hmrc" %% "play-config" % "2.1.0",
     "uk.gov.hmrc" %% "play-json-logger" % "2.1.1",
-    "uk.gov.hmrc" %% "address-reputation-store" % "1.9.0" withSources()
-      excludeAll (ExclusionRule(organization = "org.reactivemongo"), ExclusionRule(organization = "io.netty")),
     "org.mongodb" %% "casbah" % "3.1.1",
     "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.1" excludeAll ExclusionRule(organization = "io.netty"),
     // for some reason this dependency is skipping the local cache and forcing resolution from the internet

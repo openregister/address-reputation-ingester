@@ -21,19 +21,21 @@
 
 package ingest
 
+import java.lang.{Character => JChar}
+
 import addressbase.{OSDpa, OSLpi}
-import ingest.Ingester.{Street, StreetDescriptor}
+import ingest.Ingester.{Blpu, Street, StreetDescriptor}
 import ingest.algorithm.Algorithm
 import uk.co.hmrc.address.osgb.DbAddress
 import uk.co.hmrc.address.services.Capitalisation._
-import java.lang.{Character => JChar}
 
 private[ingest] object ExportDbAddress {
+  val GBPrefix = "GB"
 
   def exportDPA(dpa: OSDpa,
-                subdivision: Char,
-                localCustodianCode: Option[Int]): DbAddress = {
-    val id = "GB" + dpa.uprn.toString
+                blpu: Blpu,
+                language: String): DbAddress = {
+    val id = GBPrefix + dpa.uprn.toString
     val line1 = normaliseAddressLine(dpa.subBuildingName + " " + dpa.buildingName)
     val line2 = normaliseAddressLine(dpa.buildingNumber + " " + dpa.dependentThoroughfareName + " " + dpa.thoroughfareName)
     val line3 = normaliseAddressLine(dpa.doubleDependentLocality + " " + dpa.dependentLocality)
@@ -42,21 +44,24 @@ private[ingest] object ExportDbAddress {
     DbAddress(id, lines,
       Some(normaliseAddressLine(dpa.postTown)),
       dpa.postcode,
-      subdivisionCode(subdivision),
-      countryCode(subdivision, dpa.postcode),
-      localCustodianCode)
+      subdivisionCode(blpu.subdivision),
+      countryCode(blpu.subdivision, dpa.postcode),
+      Some(blpu.localCustodianCode),
+      isoLanguage(language),
+      toInt(blpu.blpuState),
+      toInt(blpu.logicalState),
+      None)
   }
 
   private val unknownRecordType: JChar = 'X'.asInstanceOf[JChar]
 
+  // TODO this unbalanced API should instead accept instances of Street and StreetDescriptor
   def exportLPI(lpi: OSLpi,
+                blpu: Blpu,
                 streets: java.util.Map[java.lang.Long, JChar],
                 streetDescriptors: java.util.Map[java.lang.Long, String],
-                postcode: String,
-                subdivision: Char,
-                localCustodianCode: Int,
                 settings: Algorithm): DbAddress = {
-    val id = "GB" + lpi.uprn.toString
+    val id = GBPrefix + lpi.uprn.toString
     val streetString = Option(streets.get(lpi.usrn)).getOrElse(unknownRecordType)
     val streetDescString = Option(streetDescriptors.get(lpi.usrn)).getOrElse("<SUnknown>|<SUnknown>|<TUnknown>")
     val street = Street.unpack(streetString)
@@ -87,10 +92,14 @@ private[ingest] object ExportDbAddress {
 
     DbAddress(id, lines,
       Some(streetDescriptor.townName),
-      postcode,
-      subdivisionCode(subdivision),
-      countryCode(subdivision, postcode),
-      Some(localCustodianCode))
+      blpu.postcode,
+      subdivisionCode(blpu.subdivision),
+      countryCode(blpu.subdivision, blpu.postcode),
+      Some(blpu.localCustodianCode),
+      isoLanguage(lpi.language),
+      toInt(blpu.blpuState),
+      toInt(blpu.logicalState),
+      None)
   }
 
   private def subdivisionCode(subdivision: Char) = subdivision match {
@@ -121,4 +130,15 @@ private[ingest] object ExportDbAddress {
     if (settings.startingPhrases.exists(w => sl.startsWith(w)) || settings.containedPhrases.exists(w => sl.contains(w))) ""
     else s
   }
+
+  private def isoLanguage(lang: String): Option[String] =
+    lang.toLowerCase match {
+      case "eng" => Some("en")
+      case "cym" => Some("cy")
+      case _ => None
+    }
+
+  private def toInt(c: Char) =
+    if ('0' <= c && c <= '9') Some(c - '0')
+    else None
 }

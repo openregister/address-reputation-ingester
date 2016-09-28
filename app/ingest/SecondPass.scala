@@ -29,8 +29,6 @@ import services.exec.Continuer
 
 class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) extends Pass {
 
-  val UnknownSubdivision = 'J'
-
   private var dpaCount = 0
   private var lpiCount = 0
 
@@ -63,9 +61,9 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
       if (packedBlpu.isDefined) {
         val blpu = Blpu.unpack(packedBlpu.get)
 
-        if (blpu.logicalStatus == lpi.logicalStatus && blpu.subdivision != UnknownSubdivision) {
-          out.output(ExportDbAddress.exportLPI(lpi, fd.streets, fd.streetDescriptorsEn,
-            blpu.postcode, blpu.subdivision, blpu.localCustodianCode, settings))
+        if (blpu.logicalState == lpi.logicalState && blpu.subdivision != Ingester.UnknownSubdivision) {
+          val a = ExportDbAddress.exportLPI(lpi, blpu, fd.streets, fd.streetDescriptorsEn, settings)
+          out.output(a)
           lpiCount += 1
           fd.blpu.remove(lpi.uprn) // need to decide which lpi to use in the firstPass using logic - first in gets in
         }
@@ -74,6 +72,7 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
   }
 
   private def processDPA(csvLine: Array[String], out: OutputWriter): Unit = {
+    //TODO this only ingests English, ignoring any Welsh that is provided
     val dpa = OSDpa(csvLine).normalise
 
     if (settings.prefer == "DPA" || !fd.uprns.contains(dpa.uprn)) {
@@ -82,8 +81,9 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
       if (packedBlpu.isDefined) {
         val blpu = Blpu.unpack(packedBlpu.get)
 
-        if (blpu.subdivision != UnknownSubdivision) {
-          out.output(ExportDbAddress.exportDPA(dpa, blpu.subdivision, Some(blpu.localCustodianCode)))
+        if (blpu.subdivision != Ingester.UnknownSubdivision) {
+          val a = ExportDbAddress.exportDPA(dpa, blpu, "en")
+          out.output(a)
           dpaCount += 1
         }
       }

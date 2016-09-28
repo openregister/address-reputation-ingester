@@ -36,7 +36,8 @@ object ElasticsearchSketch {
     val w = new OutputESWriter(model, status, indexMetadata, WriterSettings.default, ec)
     println(indexMetadata.existingCollectionNames)
     w.begin()
-    w.output(DbAddress("a1", List("1 High St"), Some("Town"), "NE1 1AA", Some("GB-ENG"), Some("UK"), Some(1234)))
+    w.output(DbAddress("a1", List("1 High St"), Some("Town"), "NE1 1AA", Some("GB-ENG"), Some("UK"), Some(1234),
+      Some("en"), Some(2), Some(1), Some(8)))
     w.end(true)
 
     println(indexMetadata.existingCollectionNames)

@@ -19,6 +19,7 @@
 
 package addressbase
 
+import ingest.Ingester
 import uk.co.hmrc.address.osgb.{Document, Postcode}
 
 object OSBlpu {
@@ -28,7 +29,8 @@ object OSBlpu {
   val v1 = OSBlpuIdx(
     uprn = 3,
     parentUprn = 7,
-    logicalStatus = 4,
+    logicalState = 4,
+    blpuState = 5,
     subdivision = -1,
     localCustodian = 11,
     postalCode = 16,
@@ -37,7 +39,8 @@ object OSBlpu {
   val v2 = OSBlpuIdx(
     uprn = 3,
     parentUprn = 7,
-    logicalStatus = 4,
+    logicalState = 4,
+    blpuState = 5,
     subdivision = 14,
     localCustodian = 13,
     postalCode = 19,
@@ -50,27 +53,32 @@ object OSBlpu {
   }
 
   def apply(csv: Array[String]): OSBlpu ={
-    val subdivision = if (idx == v1) 'J' else csv(idx.subdivision).head
+    val subdivision = if (idx == v1) Ingester.UnknownSubdivision else csv(idx.subdivision).head
     OSBlpu(
       csv(idx.uprn).toLong,
       blankToOptLong(csv(idx.parentUprn)),
-      csv(idx.logicalStatus).head,
-      subdivision, csv(idx.postcode),
+      toChar(csv(idx.logicalState)),
+      toChar(csv(idx.blpuState)),
+      subdivision,
+      csv(idx.postcode),
       csv(idx.localCustodian).toInt)
   }
+
+  private def toChar(s: String) = if (s.isEmpty) ' ' else s.head
 }
 
-case class OSBlpuIdx(uprn: Int, parentUprn: Int, logicalStatus: Int, subdivision: Int, localCustodian: Int, postalCode: Int, postcode: Int)
+case class OSBlpuIdx(uprn: Int, parentUprn: Int, logicalState: Int, blpuState: Int, subdivision: Int, localCustodian: Int, postalCode: Int, postcode: Int)
 
-case class OSBlpu(uprn: Long, parentUprn: Option[Long], logicalStatus: Char, subdivision: Char, postcode: String, localCustodianCode: Int) extends Document {
+case class OSBlpu(uprn: Long, parentUprn: Option[Long], logicalState: Char, blpuState: Char, subdivision: Char, postcode: String, localCustodianCode: Int) extends Document {
 
   // For use as input to MongoDbObject (hence it's not a Map)
   def tupled: List[(String, Any)] = List(
     "uprn" -> uprn,
-    "logicalStatus" -> logicalStatus,
+    "logicalState" -> logicalState,
+    "blpuState" -> blpuState,
     "subdivision" -> subdivision,
     "localCustodianCode" -> localCustodianCode,
     "postcode" -> postcode) ++ parentUprn.map("parentUprn" -> _)
 
-  def normalise: OSBlpu = new OSBlpu(uprn, parentUprn, logicalStatus, subdivision, Postcode.normalisePostcode(postcode), localCustodianCode)
+  def normalise: OSBlpu = new OSBlpu(uprn, parentUprn, logicalState, blpuState, subdivision, Postcode.normalisePostcode(postcode), localCustodianCode)
 }
