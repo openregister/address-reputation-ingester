@@ -243,8 +243,20 @@ function showTheRealm() {
     });
 }
 
-function updateTogglerLabel() {
-    $('#collectionActions legend').text(getTarget2() + " collections");
+function syncTargetSelects(s1, s2) {
+    var t1v = $(s1).val();
+    if (t1v == "es" || t1v == "db") {
+        $('#collectionActions legend').text(t1v + " collections");
+        $(s2).val(t1v);
+    }
+}
+
+function target1Changed() {
+    syncTargetSelects('#target1', '#target2');
+}
+
+function target2Changed() {
+    syncTargetSelects('#target2', '#target1');
 }
 
 $(document).ready(
@@ -267,7 +279,8 @@ $(document).ready(
         $('#ping').click(ping);
         $('#dirTree').click(dirTree);
         $('#showLog').click(showLog);
-        $('#target2').change(updateTogglerLabel);
+        $('#target1').change(target1Changed);
+        $('#target2').change(target2Changed);
         // view toggles
         $('#fileActions legend').click(function() { toggleFieldset('#fileActions')} );
         $('#collectionActions legend').click(function() { toggleFieldset('#collectionActions')});
