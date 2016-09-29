@@ -262,9 +262,12 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
       verifyOK("/admin/status", "idle")
 
-      val outFile = new File(s"$tmpDir/output/exeter_1.txt.gz")
+      val outputDir = new File(tmpDir, "output")
+      val files = outputDir.listFiles()
+      files.length mustBe 1
+      val outFile = files.head
       outFile.exists() mustBe true
-      outFile.length() mustBe 645193L
+      outFile.length() mustBe 682014L
     }
   }
 

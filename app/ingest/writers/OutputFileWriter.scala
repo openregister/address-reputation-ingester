@@ -29,10 +29,11 @@ import uk.co.hmrc.address.osgb.DbAddress
 import scala.concurrent.ExecutionContext
 
 
-class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger) extends OutputWriter {
+class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger, fieldSeparator: String = "\t") extends OutputWriter {
 
-  val fileRoot = model.collectionName.toPrefix
-  val outputFile = new File(ControllerConfig.outputFolder, s"$fileRoot.txt.gz")
+  val fileRoot = model.collectionName.toString
+  val kind = if (fieldSeparator == "\t") "tsv" else "txt"
+  val outputFile = new File(ControllerConfig.outputFolder, s"$fileRoot.$kind.gz")
 
   private val bufSize = 32 * 1024
   private var outCSV: PrintWriter = _
@@ -58,13 +59,15 @@ class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger) extend
   }
 
   private def string(a: DbAddress) = {
-    val id = a.id
-    val lns = a.lines.mkString(":")
-    val town = a.town.getOrElse("")
-    val pc = a.postcode
-    val sub = a.subdivision.getOrElse("")
-    val lcc = a.localCustodianCode.map(_.toString).getOrElse("")
-    s"$id|$lns|$town|$pc|$sub|$lcc"
+    // allow the fields to be changed without needing to rewrite this often
+    val fields = a.productIterator.toList
+    val asStrings: List[String] = fields.map {
+      case list: List[_] => list.mkString(":")
+      case Some(v) => v.toString
+      case None => ""
+      case x => x.toString
+    }
+    asStrings.mkString(fieldSeparator)
   }
 
   def end(completed: Boolean): StateModel = {
