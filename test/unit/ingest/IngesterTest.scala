@@ -165,13 +165,13 @@ class IngesterTest extends FunSuite with MockitoSugar {
         "Info:Starting testing.",
         "Info:Starting first pass through 1 files.",
         "Info:Reading zip entry sx9090.csv...",
-        "Info:Reading from 1 CSV files in {} took {}.",
+        "Info:Reading from 1 CSV files in {} (1 of 1) took {}.",
         "Info:First pass obtained 48737 BLPUs, 42874 DPAs, 1686 streets, 1686/0 street descriptors.",
         "Info:First pass complete after {}.",
         "Info:Default LCC reduction altered 282 BLPUs and took {}.",
         "Info:Starting second pass through 1 files.",
         "Info:Reading zip entry sx9090.csv...",
-        "Info:Reading from 1 CSV files in {} took {}.",
+        "Info:Reading from 1 CSV files in {} (1 of 1) took {}.",
         "Info:Second pass processed 42874 DPAs, 5863 LPIs.", // n.b. there are 53577 LPIs in the sample file
         "Info:Ingester finished after {}.",
         "Info:Finished testing after {}."
@@ -297,13 +297,13 @@ class IngesterTest extends FunSuite with MockitoSugar {
         "Info:Starting testing.",
         "Info:Starting first pass through 1 files.",
         "Info:Reading zip entry sx9090.csv...",
-        "Info:Reading from 1 CSV files in {} took {}.",
+        "Info:Reading from 1 CSV files in {} (1 of 1) took {}.",
         "Info:First pass obtained 48737 BLPUs, 52475 LPIs, 1686 streets, 1686/0 street descriptors.",
         "Info:First pass complete after {}.",
         "Info:Default LCC reduction altered 282 BLPUs and took {}.",
         "Info:Starting second pass through 1 files.",
         "Info:Reading zip entry sx9090.csv...",
-        "Info:Reading from 1 CSV files in {} took {}.",
+        "Info:Reading from 1 CSV files in {} (1 of 1) took {}.",
         "Info:Second pass processed 0 DPAs, 48737 LPIs.", // n.b. there are 53577 LPIs in the sample file
         "Info:Ingester finished after {}.",
         "Info:Finished testing after {}."
