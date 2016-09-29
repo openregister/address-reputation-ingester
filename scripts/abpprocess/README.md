@@ -6,6 +6,15 @@ A local postgres installation with trust authentication enabled and the default 
 
 ## Installation
 
+Install the pre-requisites:
+
+```
+$ gem install bundler
+$ bundle install
+```
+
+Note that on linux you may need to install *libpg-dev* using the appropriate package manager, **prior** to running bundler.
+
 Build the gem:
 
 
@@ -20,9 +29,9 @@ $ gem install abpprocess-0.1.0.gem
 
 And then execute:
 
+```
     $ abpprocess
-
-    $ gem install abpprocess
+```
 
 ## Usage
 ```
