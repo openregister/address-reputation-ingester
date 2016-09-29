@@ -32,6 +32,8 @@ case class StateModel(
                        hasFailed: Boolean = false
                      ) {
 
+  def forceChangeString: String = StateModel.forceChangeString(forceChange)
+
   def pathSegment: String = {
     val v = variant getOrElse "full"
     s"$productName/$epoch/$v"
@@ -56,4 +58,6 @@ object StateModel {
   def apply(collectionName: CollectionName): StateModel = {
     new StateModel(collectionName.productName, collectionName.epoch.get, None, collectionName.timestamp, None)
   }
+
+  def forceChangeString(forceChange: Boolean): String = if (forceChange) " (forced)" else ""
 }

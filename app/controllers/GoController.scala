@@ -96,7 +96,7 @@ class GoController(action: ActionBuilder[Request],
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
       val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
       val worker = workerFactory.worker
-      worker.push(s"automatically loading to $target ${model.pathSegment}", {
+      worker.push(s"automatically loading to $target ${model.pathSegment}${model.forceChangeString}", {
         continuer =>
           pipeline(target, model, settings, continuer)
       })

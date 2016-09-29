@@ -86,11 +86,11 @@ class IngestController(action: ActionBuilder[Request],
 
       val worker = workerFactory.worker
       worker.push(
-        s"ingesting to $target ${model.pathSegment}",
+        s"ingesting to $target ${model.pathSegment}${model.forceChangeString}",
         continuer => ingestIfOK(model, worker.statusLogger, settings, algorithmSettings, target, continuer)
       )
 
-      Accepted(s"Ingestion has started for ${model.pathSegment}")
+      Accepted(s"Ingestion has started for ${model.pathSegment}${model.forceChangeString}")
   }
 
   def ingestIfOK(model: StateModel,

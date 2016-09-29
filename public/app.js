@@ -248,6 +248,8 @@ function syncTargetSelects(s1, s2) {
     if (t1v == "es" || t1v == "db") {
         $('#collectionActions legend').text(t1v + " collections");
         $(s2).val(t1v);
+        // wipe the collection name
+        $('#colname').val('');
     }
 }
 

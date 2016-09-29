@@ -56,8 +56,8 @@ class FetchController(action: ActionBuilder[Request],
       require(isAlphaNumeric(variant))
 
       val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
-      workerFactory.worker.push(s"fetching ${model.pathSegment}", continuer => fetch(model, continuer))
-      Accepted("ok")
+      workerFactory.worker.push(s"fetching ${model.pathSegment}${model.forceChangeString}", continuer => fetch(model, continuer))
+      Accepted(s"Fetch has started for ${model.pathSegment}${model.forceChangeString}")
   }
 
   def fetch(model1: StateModel, continuer: Continuer): StateModel = {

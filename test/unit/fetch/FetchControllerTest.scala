@@ -158,8 +158,8 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         verify(sardineWrapper).exploreRemoteTree
         verify(webdavFetcher).fetchList(any[OSGBProduct], anyString, any[Continuer], any[Boolean])
         assert(logger.infos.map(_.message) === List(
-          "Info:Starting fetching product/123/variant.",
-          "Info:Finished fetching product/123/variant after {}."
+          "Info:Starting fetching product/123/variant (forced).",
+          "Info:Finished fetching product/123/variant (forced) after {}."
         ))
         assert(logger.size === 2)
         teardown()
