@@ -20,8 +20,7 @@ import java.util.Date
 
 import com.sksamuel.elastic4s._
 import config.ApplicationGlobal
-import ingest.ESSchema
-import services.es.IndexMetadata
+import services.es.{ESSchema, IndexMetadata}
 import services.model.{StateModel, StatusLogger}
 import uk.co.hmrc.address.osgb.DbAddress
 
