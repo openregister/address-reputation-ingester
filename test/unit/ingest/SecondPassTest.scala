@@ -458,12 +458,6 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     })
   }
 
-  test("Given a BLPU with a country code of unknown(J), nothing is returned.") {
-    aTest('J', "AB12 3CD", (count: Int, addr: DbAddress) => {
-      assert(count === 0)
-    })
-  }
-
   def aTest(countryCode: Char, postcode: String, f: (Int, DbAddress) => Unit) {
     new context {
 

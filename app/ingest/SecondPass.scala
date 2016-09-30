@@ -61,7 +61,7 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
       if (packedBlpu.isDefined) {
         val blpu = Blpu.unpack(packedBlpu.get)
 
-        if (blpu.logicalState == lpi.logicalState && blpu.subdivision != Ingester.UnknownSubdivision) {
+        if (blpu.logicalState == lpi.logicalState) {
           val optStreet = Option(fd.streets.get(lpi.usrn)).map(s => Street.unpack(s))
           val street = optStreet.getOrElse(defaultStreet)
           val optStreetDescEn = Option(fd.streetDescriptorsEn.get(lpi.usrn)).map(s => StreetDescriptor.unpack(s))
@@ -87,16 +87,12 @@ class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) ext
     if (settings.prefer == "DPA" || !fd.uprns.contains(dpa.uprn)) {
       val packedBlpu = Option(fd.blpu.get(dpa.uprn))
 
-      if (packedBlpu.isDefined) {
-        val blpu = Blpu.unpack(packedBlpu.get)
+      val blpu = Blpu.unpack(packedBlpu.get)
 
-        if (blpu.subdivision != Ingester.UnknownSubdivision) {
-          val a = ExportDbAddress.exportDPA(dpa, blpu, "en")
-          // TODO Welsh not yet implemented
-          out.output(a)
-          dpaCount += 1
-        }
-      }
+      val a = ExportDbAddress.exportDPA(dpa, blpu, "en")
+      // TODO Welsh not yet implemented
+      out.output(a)
+      dpaCount += 1
     }
   }
 

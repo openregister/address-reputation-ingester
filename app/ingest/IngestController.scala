@@ -116,7 +116,10 @@ class IngestController(action: ActionBuilder[Request],
                      writerFactory: OutputWriterFactory,
                      continuer: Continuer): StateModel = {
 
-    val qualifiedDir = new File(unpackedFolder, model.pathSegment)
+    val qualifiedDir = model.productName match {
+      case "test" => new File("conf/data/")
+      case _ =>new File(unpackedFolder, model.pathSegment)
+    }
     val writer = writerFactory.writer(model, status, writerSettings, ec)
     var result = model
     var failed = true

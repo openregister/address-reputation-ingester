@@ -25,6 +25,7 @@ import services.es.{ElasticsearchHelper, IndexMetadata}
 import services.mongo.{CollectionMetadata, MongoSystemMetadataStoreFactory}
 import services.exec.WorkQueue
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
+import uk.co.hmrc.logging.LoggerFacade
 import uk.gov.hmrc.play.config.RunMode
 import uk.gov.hmrc.play.graphite.GraphiteConfig
 import uk.gov.hmrc.play.microservice.bootstrap.JsonErrorHandling
@@ -51,7 +52,7 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
       val isCluster = getConfigBoolean(current.mode, current.configuration, "elastic.is-cluster").getOrElse(true)
 
       ElasticsearchHelper(clusterName, connectionString, isCluster,
-      scala.concurrent.ExecutionContext.Implicits.global)
+      scala.concurrent.ExecutionContext.Implicits.global, new LoggerFacade(Logger.logger))
     }
   }
 
