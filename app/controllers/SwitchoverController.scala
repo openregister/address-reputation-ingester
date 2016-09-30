@@ -16,17 +16,21 @@
 
 package controllers
 
+import com.sksamuel.elastic4s.{ElasticDsl, MutateAliasDefinition}
 import config.ApplicationGlobal
 import controllers.SimpleValidator._
+import org.elasticsearch.cluster.health.ClusterHealthStatus
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.DbFacade
 import services.audit.AuditClient
+import services.es.IndexMetadata
 import services.exec.WorkerFactory
 import services.model.{StateModel, StatusLogger}
 import services.mongo.CollectionName
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 
 object MongoSwitchoverController extends SwitchoverController(
@@ -35,6 +39,7 @@ object MongoSwitchoverController extends SwitchoverController(
   ControllerConfig.workerFactory,
   ApplicationGlobal.mongoCollectionMetadata,
   services.audit.Services.auditClient,
+
   "db",
   scala.concurrent.ExecutionContext.Implicits.global
 )
@@ -57,7 +62,7 @@ class SwitchoverController(action: ActionBuilder[Request],
                            collectionMetadata: DbFacade,
                            auditClient: AuditClient,
                            target: String,
-                           ec: ExecutionContext) extends BaseController {
+                           ec: ExecutionContext) extends BaseController with ElasticDsl {
 
   // TODO should these args just be the collection name?
   def doSwitchTo(product: String, epoch: Int, timestamp: String): Action[AnyContent] = action {
@@ -80,7 +85,10 @@ class SwitchoverController(action: ActionBuilder[Request],
       model.copy(hasFailed = true)
 
     } else {
-      switchDb(model)
+      model.target match {
+        case "es" => switchEs(model)
+        case _ => switchDb(model)
+      }
     }
   }
 
@@ -103,75 +111,76 @@ class SwitchoverController(action: ActionBuilder[Request],
     }
   }
 
-//  private def switchEs(model: StateModel): StateModel = {
-  //
-  //    implicit val ecx = ec
-  //    val ariIndexName = model.collectionName.toString
-  //    val ariAliasName = indexMetadata.ariAliasName
-  //
-  //    val fr = indexMetadata.clients map {
-  //      client => Future {
-  //        if (indexMetadata.isCluster) {
-  //          status.info(s"Setting replica count to ${
-  //            indexMetadata.replicaCount
-  //          } for $ariAliasName")
-  //          client execute {
-  //            update settings ariIndexName set Map(
-  //              "index.number_of_replicas" -> indexMetadata.replicaCount
-  //            )
-  //          } await
-  //
-  //          status.info(s"Waiting for $ariAliasName to go green after increasing replica count")
-  //
-  //          blockUntil("Expected cluster to have green status", 1200) {
-  //            () =>
-  //              client.execute {
-  //                get cluster health
-  //              }.await.getStatus == ClusterHealthStatus.GREEN
-  //          }
-  //        }
-  //
-  //        val gar = client execute {
-  //          getAlias(model.productName).on("*")
-  //        } await
-  //
-  //        val olc = gar.getAliases.keys
-  //        val aliasStatements: Array[MutateAliasDefinition] = olc.toArray().flatMap(a => {
-  //          val aliasIndex = a.asInstanceOf[String]
-  //          status.info(s"Removing index $aliasIndex from $ariAliasName and ${
-  //            model.productName
-  //          } aliases")
-  //          Array(remove alias ariAliasName on aliasIndex, remove alias model.productName on aliasIndex)
-  //        })
-  //
-  //        val resp = client execute {
-  //          aliases(
-  //            aliasStatements ++
-  //              Seq(
-  //                add alias ariAliasName on ariIndexName,
-  //                add alias model.productName on ariIndexName
-  //              )
-  //          )
-  //        }
-  //        status.info(s"Adding index $ariIndexName to $ariAliasName and ${
-  //          model.productName
-  //        }")
-  //
-  //        olc.toArray().foreach(a => {
-  //          val aliasIndex = a.asInstanceOf[String]
-  //          status.info(s"Reducing replica count for $aliasIndex to 0")
-  //          val replicaResp = client execute {
-  //            update settings aliasIndex set Map(
-  //              "index.number_of_replicas" -> "0"
-  //            )
-  //          } await
-  //        })
-  //      }
-  //    }
-  //
-  //    Await.result(Future.sequence(fr), Duration.Inf)
-  //    model
-  //  }
+  private def switchEs(model: StateModel): StateModel = {
+
+    implicit val ecx = ec
+    val ariIndexName = model.collectionName.toString
+    val indexMetadata = collectionMetadata.asInstanceOf[IndexMetadata] //bit dirty this, will be cleaned up on mongo removal
+    val ariAliasName = indexMetadata.ariAliasName
+
+    val fr = indexMetadata.clients map {
+      client => Future {
+        if (indexMetadata.isCluster) {
+          status.info(s"Setting replica count to ${
+            indexMetadata.replicaCount
+          } for $ariAliasName")
+          client execute {
+            update settings ariIndexName set Map(
+              "index.number_of_replicas" -> indexMetadata.replicaCount
+            )
+          } await
+
+          status.info(s"Waiting for $ariAliasName to go green after increasing replica count")
+
+          blockUntil("Expected cluster to have green status", 1200) {
+            () =>
+              client.execute {
+                get cluster health
+              }.await.getStatus == ClusterHealthStatus.GREEN
+          }
+        }
+
+        val gar = client execute {
+          getAlias(model.productName).on("*")
+        } await
+
+        val olc = gar.getAliases.keys
+        val aliasStatements: Array[MutateAliasDefinition] = olc.toArray().flatMap(a => {
+          val aliasIndex = a.asInstanceOf[String]
+          status.info(s"Removing index $aliasIndex from $ariAliasName and ${
+            model.productName
+          } aliases")
+          Array(remove alias ariAliasName on aliasIndex, remove alias model.productName on aliasIndex)
+        })
+
+        val resp = client execute {
+          aliases(
+            aliasStatements ++
+              Seq(
+                add alias ariAliasName on ariIndexName,
+                add alias model.productName on ariIndexName
+              )
+          )
+        }
+        status.info(s"Adding index $ariIndexName to $ariAliasName and ${
+          model.productName
+        }")
+
+        olc.toArray().foreach(a => {
+          val aliasIndex = a.asInstanceOf[String]
+          status.info(s"Reducing replica count for $aliasIndex to 0")
+          val replicaResp = client execute {
+            update settings aliasIndex set Map(
+              "index.number_of_replicas" -> "0"
+            )
+          } await
+        })
+      }
+    }
+
+    Await.result(Future.sequence(fr), Duration.Inf)
+    model
+  }
 
   private def blockUntil(explain: String, waitFor: Int = 10)(predicate: () => Boolean): Unit = {
 
