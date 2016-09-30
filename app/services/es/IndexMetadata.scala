@@ -33,7 +33,7 @@ import services.mongo.{CollectionMetadataItem, CollectionName}
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
 
-class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean)(implicit val ec: ExecutionContext) extends DbFacade {
+class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, val numShards: Int)(implicit val ec: ExecutionContext) extends DbFacade {
 
   val replicaCount = "1"
   val ariAliasName = "address-reputation-data"

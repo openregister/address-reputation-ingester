@@ -35,7 +35,7 @@ import scala.concurrent.duration.Duration
 
 object ElasticsearchHelper {
   // allows construction without loading Play
-  def apply(clusterName: String, connectionString: String, isCluster: Boolean,
+  def apply(clusterName: String, connectionString: String, isCluster: Boolean, numShards: Int,
             ec: ExecutionContext, logger: SimpleLogger): IndexMetadata = {
     val esSettings = Settings.settingsBuilder().put("cluster.name", clusterName).build()
 
@@ -44,7 +44,7 @@ object ElasticsearchHelper {
     }.toList
 
     implicit val iec = ec
-    new IndexMetadata(clients, isCluster)
+    new IndexMetadata(clients, isCluster, numShards)
   }
 
   def apply(ec: ExecutionContext): IndexMetadata = {
@@ -62,7 +62,7 @@ object ElasticsearchHelper {
 
     val clients = List(ElasticClient.fromClient(tc))
 
-    new IndexMetadata(clients, false)
+    new IndexMetadata(clients, false, 4)
   }
 
   def checkStatus(client: ElasticClient, logger: SimpleLogger): ElasticClient = {

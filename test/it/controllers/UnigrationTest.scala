@@ -167,7 +167,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
       val idx = "abp_39_ts5"
 
-      val indexMetadata = new IndexMetadata(List(esClient), false)
+      val indexMetadata = new IndexMetadata(List(esClient), false, 4)
       indexMetadata.writeCompletionDateTo(idx)
 
       waitForIndex(idx)

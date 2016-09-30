@@ -50,8 +50,9 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
       val clusterName = mustGetConfigString(current.mode, current.configuration, "elastic.clustername")
       val connectionString = mustGetConfigString(current.mode, current.configuration, "elastic.uri")
       val isCluster = getConfigBoolean(current.mode, current.configuration, "elastic.is-cluster").getOrElse(true)
+      val numShards = getConfigInt(current.mode, current.configuration, "elastic.num-shards").getOrElse(12)
 
-      ElasticsearchHelper(clusterName, connectionString, isCluster,
+      ElasticsearchHelper(clusterName, connectionString, isCluster, numShards,
       scala.concurrent.ExecutionContext.Implicits.global, new LoggerFacade(Logger.logger))
     }
   }

@@ -32,7 +32,7 @@ object ElasticsearchSketch {
   def main(args: Array[String]) {
     val model = StateModel("essay", 1, None, Some("ts1"), None, "es") //.withNewTimestamp
     val status = new StatusLogger(Stdout)
-    val indexMetadata = ElasticsearchHelper("elasticsearch", "elasticsearch://localhost:9300", false, ec, Stdout)
+    val indexMetadata = ElasticsearchHelper("elasticsearch", "elasticsearch://localhost:9300", false, 4, ec, Stdout)
     val w = new OutputESWriter(model, status, indexMetadata, WriterSettings.default, ec)
     println(indexMetadata.existingCollectionNames)
     w.begin()
