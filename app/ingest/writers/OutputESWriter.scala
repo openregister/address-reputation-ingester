@@ -20,9 +20,10 @@ import java.util.Date
 
 import com.sksamuel.elastic4s._
 import config.ApplicationGlobal
+import ingest.ESSchema
 import services.es.IndexMetadata
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.address.osgb.{DbAddress, ESSchema}
+import uk.co.hmrc.address.osgb.DbAddress
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -51,21 +52,15 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
 
     indexMetadata.clients foreach { client =>
       client execute {
-        ESSchema.createIndexDefinition(indexName, address, metadata, ESSchema.Settings(4, 0, "60s"))
+        ESSchema.createIndexDefinition(indexName, address, metadata, ESSchema.Settings(20, 0, "60s"))
       } await
-
-      //TODO move switchover to the switchover controller
-      //TODO remove the existing alias, if any
-      //      client execute {
-      //        aliases(add alias indexMetadata.indexAlias on ariIndexName)
-      //      } await
     }
   }
 
   override def output(a: DbAddress) {
     val at = a.tupledFlat.toMap + ("id" -> a.id)
     addBulk(
-      index into indexName -> address fields at id a.id
+      index into indexName -> address fields at id a.id routing a.postcode
     )
   }
 
@@ -88,6 +83,18 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
       }
 
       if (completed) {
+        client execute {
+          closeIndex(indexName)
+        } await
+
+        client execute {
+          update settings indexName set Map("index.completedAt" -> new Date().getTime().toString)
+        } await
+
+        client.execute {
+          openIndex(indexName)
+        } await
+
         // we have finished! let's celebrate
         indexMetadata.writeCompletionDateTo(indexName)
       }
