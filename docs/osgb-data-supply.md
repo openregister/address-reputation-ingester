@@ -67,6 +67,7 @@ It may be obvious from the above that incomplete uploads will be ignored by the 
 
 The structure might look like this, which illustrates one epoch of 'abi' and two of 'abp', all of them are ready to collect.
 
+```
 /
   abi/
     42/
@@ -93,5 +94,7 @@ The structure might look like this, which illustrates one epoch of 'abi' and two
         resources/
           ... metadata
         ready-to-collect.txt
+```
 
+In this example, the abi folder above does not have subdirectories, whereas the other two products do - this is quite acceptable. 
 

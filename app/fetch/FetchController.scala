@@ -99,7 +99,7 @@ class FetchController(action: ActionBuilder[Request],
 
   def doShowTree(): Action[AnyContent] = action {
     val tree = sardine.exploreRemoteTree
-    Ok(sardine.url + "\n" + tree.root.toString)
+    Ok(sardine.url + "\n" + tree.indentedString)
   }
 
   private[fetch] def determineObsoleteFiles(products: List[String]): List[File] = {

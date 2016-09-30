@@ -39,9 +39,7 @@ case class WebDavFile(url: URL, fullName: String, kb: Long = 0L,
     else fullName.substring(0, dot)
   }
 
-  override def toString: String = indentedString("")
-
-  private def indentedString(i: String): String = {
+  def indentedString(i: String = ""): String = {
     if (isDirectory) {
       s"$i$fullName/" +
         files.map(_.indentedString(i + "  ")).mkString("\n", "", "")
@@ -50,6 +48,16 @@ case class WebDavFile(url: URL, fullName: String, kb: Long = 0L,
       val mark = if (isDataFile) " (data)" else if (isPlainText) " (txt) " else "       "
       "%s%-50s%s %10d KiB".format(i, fullName, mark, kb) +
         files.map(_.indentedString(i + "  ")).mkString("\n", "", "")
+    }
+  }
+
+  def find(name: String): Option[WebDavFile] = {
+    if (fullName == name) Some(this)
+    else {
+      files.flatMap {
+        child =>
+          child.find(name)
+      }.headOption
     }
   }
 }
@@ -83,12 +91,12 @@ case class WebDavTree(root: WebDavFile) {
   }
 
   private def extractOne(product: String, epoch: WebDavFile): Option[OSGBProduct] = {
-    val fullFolder = epoch.files.filter(_.fullName == "full")
-    if (fullFolder.isEmpty) None
+    val optFullFolder = epoch.files.find(_.fullName == "full")
+    if (optFullFolder.isEmpty) None
     else {
-      val files = fullFolder.head.files
-      val readyToCollect = files.exists(_.fullName == readyToCollectFile)
-      if (readyToCollect) Some(OSGBProduct(product, epoch.fullName.toInt, filterZips(files)))
+      val fullFolder = optFullFolder.get
+      val readyToCollect = fullFolder.find(readyToCollectFile).isDefined
+      if (readyToCollect) Some(OSGBProduct(product, epoch.fullName.toInt, filterZips(fullFolder.files)))
       else None
     }
   }
@@ -99,6 +107,8 @@ case class WebDavTree(root: WebDavFile) {
     val chosen = files.filter(_.isDataFile)
     chosen ++ subs
   }
+
+  def indentedString: String = root.indentedString("")
 }
 
 
