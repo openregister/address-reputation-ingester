@@ -72,7 +72,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       worker.push("testing", {
         continuer =>
           lock.put(true)
-          firstPass.processFile(csv, dummyOut)
+          firstPass.processFile(csv)
       })
 
       lock.take()
@@ -101,7 +101,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       worker.push("testing", {
         continuer =>
           lock.put(true)
-          firstPass.processFile(csv, dummyOut)
+          firstPass.processFile(csv)
       })
 
       lock.take()
@@ -132,7 +132,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       worker.push("testing", {
         continuer =>
           lock.put(true)
-          firstPass.processFile(csv, dummyOut)
+          firstPass.processFile(csv)
       })
 
       lock.take()
@@ -160,7 +160,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       worker.push("testing", {
         continuer =>
           lock.put(true)
-          firstPass.processFile(csv, dummyOut)
+          firstPass.processFile(csv)
       })
 
       lock.take()
@@ -189,7 +189,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       worker.push("testing", {
         continuer =>
           lock.put(true)
-          firstPass.processFile(csv, dummyOut)
+          firstPass.processFile(csv)
       })
 
       lock.take()
@@ -221,7 +221,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       worker.push("testing", {
         continuer =>
           lock.put(true)
-          firstPass.processFile(csv, dummyOut)
+          firstPass.processFile(csv)
       })
 
       lock.take()
@@ -264,7 +264,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       worker.push("testing", {
         continuer =>
           lock.put(true)
-          firstPass.processFile(csv, dummyOut)
+          firstPass.processFile(csv)
       })
 
       lock.take()
@@ -304,11 +304,11 @@ class FirstPassTest extends FunSuite with MockitoSugar {
         def end(completed: Boolean) = model
       }
 
-      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
+      val firstPass = new FirstPass(out, continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
-          firstPass.processFile(csv, out)
+          firstPass.processFile(csv)
       })
 
       lock.take()
@@ -333,7 +333,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
         continuer =>
           lock.put(true)
           worker.abort()
-          firstPass.processFile(csv, dummyOut)
+          firstPass.processFile(csv)
       })
 
       lock.take()

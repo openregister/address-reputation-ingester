@@ -143,14 +143,14 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
     out.begin()
 
     statusLogger.info(s"Starting first pass through ${files.size} files.")
-    val fewerFiles = pass(files, out, fp)
+    val fewerFiles = pass(files, fp)
     statusLogger.info(s"First pass complete after {}.", dt)
 
     val rfd = reduceDefaultedLCCs(forwardData)
 
     statusLogger.info(s"Starting second pass through ${fewerFiles.size} files.")
-    val sp = new SecondPass(rfd, continuer, settings)
-    pass(fewerFiles, out, sp)
+    val sp = new SecondPass(out, continuer, settings, rfd)
+    pass(fewerFiles, sp)
     statusLogger.info(s"Ingester finished after {}.", dt)
 
     forwardData.close() // release shared memory etc
@@ -158,7 +158,7 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
   }
 
 
-  private def pass(files: Seq[File], out: OutputWriter, thisPass: Pass): Seq[File] = {
+  private def pass(files: Seq[File], thisPass: Pass): Seq[File] = {
     val n = files.size
     var i = 1
     val passOn = new mutable.ListBuffer[File]()
@@ -174,7 +174,7 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
           val next = zip.next
           val name = next.zipEntry.getName
           statusLogger.info(s"Reading zip entry $name...")
-          val r = thisPass.processFile(next, out)
+          val r = thisPass.processFile(next)
           neededLater ||= r
         }
         if (neededLater) {

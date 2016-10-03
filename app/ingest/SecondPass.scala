@@ -27,13 +27,13 @@ import ingest.algorithm.Algorithm
 import ingest.writers.OutputWriter
 import services.exec.Continuer
 
-class SecondPass(fd: ForwardData, continuer: Continuer, settings: Algorithm) extends Pass {
+class SecondPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, fd: ForwardData) extends Pass {
 
   private var dpaCount = 0
   private var lpiCount = 0
 
 
-  def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter): Boolean = {
+  def processFile(csvIterator: Iterator[Array[String]]): Boolean = {
     for (csvLine <- csvIterator
          if continuer.isBusy) {
 

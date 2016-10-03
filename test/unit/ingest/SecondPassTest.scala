@@ -56,7 +56,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val continuer = mock[Continuer]
     val lock = new SynchronousQueue[Boolean]()
     val model = new StateModel()
-    val forwardData = ForwardData.chronicleInMemoryForUnitTest("DPA")
+    val fd = ForwardData.chronicleInMemoryForUnitTest("DPA")
   }
 
   val allVehicles = "8"
@@ -73,7 +73,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(131041604L, Blpu(None, "AB12 3CD", '1', '2', 'E', 9999).pack)
+      fd.blpu.put(131041604L, Blpu(None, "AB12 3CD", '1', '2', 'E', 9999).pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -94,11 +94,11 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       when(continuer.isBusy) thenReturn true
 
-      val sp = new SecondPass(forwardData, continuer, Algorithm())
+      val sp = new SecondPass(out, continuer, Algorithm(), fd)
       worker.push("testing", {
         continuer =>
           lock.put(true)
-          sp.processFile(csv, out)
+          sp.processFile(csv)
       })
 
       lock.take()
@@ -121,7 +121,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(131041604L, Blpu(None, "AB12 3CD", '1', '2', 'E', 9999).pack)
+      fd.blpu.put(131041604L, Blpu(None, "AB12 3CD", '1', '2', 'E', 9999).pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -139,11 +139,11 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       when(continuer.isBusy) thenReturn false
 
-      val sp = new SecondPass(forwardData, continuer, Algorithm())
+      val sp = new SecondPass(out, continuer, Algorithm(), fd)
       worker.push("testing", {
         continuer =>
           lock.put(true)
-          sp.processFile(csv, out)
+          sp.processFile(csv)
       })
 
       lock.take()
@@ -166,7 +166,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(0L, Blpu(None, "AB12 3CD", '1', '2', 'E', 9999).pack)
+      fd.blpu.put(0L, Blpu(None, "AB12 3CD", '1', '2', 'E', 9999).pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -184,11 +184,11 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       when(continuer.isBusy) thenReturn true
 
-      val sp = new SecondPass(forwardData, continuer, Algorithm())
+      val sp = new SecondPass(out, continuer, Algorithm(), fd)
       worker.push("testing", {
         continuer =>
           lock.put(true)
-          sp.processFile(csv, out)
+          sp.processFile(csv)
       })
 
       lock.take()
@@ -336,15 +336,15 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
     when(continuer.isBusy) thenReturn boolTrue
 
-    val secondPass = new SecondPass(fd, continuer, Algorithm())
+    val out = mock[OutputWriter]
+
+    val secondPass = new SecondPass(out, continuer, Algorithm(), fd)
     val iterator = Iterator(csvOSHeaderLine, csvLpiLine, csvBlpuLine, csvDpaLine)
 
-    val outputWriter = mock[OutputWriter]
+    secondPass.processFile(iterator)
 
-    secondPass.processFile(iterator, outputWriter)
-
-    val argCap = ArgumentCaptor.forClass(classOf[DbAddress]);
-    verify(outputWriter).output(argCap.capture())
+    val argCap = ArgumentCaptor.forClass(classOf[DbAddress])
+    verify(out).output(argCap.capture())
 
     val dbAdd = argCap.getValue
     assert(dbAdd.id === "GB131041604")
@@ -396,15 +396,15 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
     when(continuer.isBusy) thenReturn boolTrue
 
-    val secondPass = new SecondPass(fd, continuer, Algorithm())
+    val out = mock[OutputWriter]
+
+    val secondPass = new SecondPass(out, continuer, Algorithm(), fd)
     val iterator = Iterator(csvOSHeaderLine, csvFirstLpiLine, csvSecondLpiLine, csvBlpuLine)
 
-    val outputWriter = mock[OutputWriter]
-
-    secondPass.processFile(iterator, outputWriter)
+    secondPass.processFile(iterator)
 
     val argCap = ArgumentCaptor.forClass(classOf[DbAddress])
-    verify(outputWriter).output(argCap.capture())
+    verify(out).output(argCap.capture())
 
     val dbAdd = argCap.getValue
     assert(dbAdd.id === "GB131041604")
@@ -467,7 +467,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       val csv = CsvParser.split(lpiData)
 
-      forwardData.blpu.put(131041604L, Blpu(None, postcode, '1', '2', countryCode, 9999).pack)
+      fd.blpu.put(131041604L, Blpu(None, postcode, '1', '2', countryCode, 9999).pack)
 
       val out = new OutputWriter {
         var count = 0
@@ -487,11 +487,11 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
       when(continuer.isBusy) thenReturn true
 
-      val sp = new SecondPass(forwardData, continuer, Algorithm())
+      val sp = new SecondPass(out, continuer, Algorithm(), fd)
       worker.push("testing", {
         continuer =>
           lock.put(true)
-          sp.processFile(csv, out)
+          sp.processFile(csv)
       })
 
       lock.take()

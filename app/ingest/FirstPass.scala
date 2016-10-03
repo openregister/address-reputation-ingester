@@ -31,7 +31,7 @@ import scala.collection._
 
 
 trait Pass {
-  def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter): Boolean
+  def processFile(csvIterator: Iterator[Array[String]]): Boolean
 
   def sizeInfo: String
 }
@@ -40,7 +40,7 @@ trait Pass {
 class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, val forwardData: ForwardData) extends Pass {
 
   // scalastyle:off
-  def processFile(csvIterator: Iterator[Array[String]], out: OutputWriter): Boolean = {
+  def processFile(csvIterator: Iterator[Array[String]]): Boolean = {
     var needSecondPass = false
 
     for (csvLine <- csvIterator

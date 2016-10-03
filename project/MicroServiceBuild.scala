@@ -49,7 +49,8 @@ object MicroServiceBuild extends Build with MicroService {
     "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
     "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
     "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+    "info.debatty" % "java-string-similarity" % "0.18"
   )
 
   private def baseTestDependencies(scope: String) = Seq(
