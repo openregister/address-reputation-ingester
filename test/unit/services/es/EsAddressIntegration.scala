@@ -59,11 +59,11 @@ class EsAddressIntegration extends FunSuite {
     val a2t = a2.tupledFlat.toMap + ("id" -> a2.id)
 
     esClient execute {
-      index into indexName / "address" fields a1t id a1.id
+      index into indexName / "address" fields a1t id a1.id routing a1.postcode
     } await
 
     esClient execute {
-      index into indexName / "address" fields a2t id a2.id
+      index into indexName / "address" fields a2t id a2.id routing a1.postcode
     } await
 
     esClient execute {

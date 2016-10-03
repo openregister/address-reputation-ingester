@@ -82,18 +82,6 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
       }
 
       if (completed) {
-        client execute {
-          closeIndex(indexName)
-        } await
-
-        client execute {
-          update settings indexName set Map("index.completedAt" -> new Date().getTime().toString)
-        } await
-
-        client.execute {
-          openIndex(indexName)
-        } await
-
         // we have finished! let's celebrate
         indexMetadata.writeCompletionDateTo(indexName)
       }

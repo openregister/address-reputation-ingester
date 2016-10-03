@@ -73,9 +73,6 @@ object ESSchema {
           field("raw") typed StringType index NotAnalyzed
           )
         )
-      mapping(metadataDocType) fields (
-        field("completedAt") typed DateType
-        )
     }
   }
 }

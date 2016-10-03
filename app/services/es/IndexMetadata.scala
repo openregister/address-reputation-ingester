@@ -41,7 +41,7 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, va
   val address = "address"
   val metadata = "metadata"
 
-  private val completedAt = "completedAt"
+  private val completedAt = "index.completedAt"
   private val mid = "mid"
 
   def collectionExists(name: String): Boolean = existingCollectionNames.contains(name)
@@ -62,16 +62,15 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, va
     val index = name.toString
     greenHealth(index)
 
-    val rMetadata = clients.head.execute {
-      get id mid from index / metadata
-    }
-
     val rCount = clients.head.execute {
       search in index / address size 0
     }
 
-    val source = Option(rMetadata.await.source)
-    val completedDate = source.map(s => new Date(s.asScala(completedAt).asInstanceOf[Long]))
+    val indexSettings = clients.head.execute {
+      get settings index
+    } await
+
+    val completedDate = Option(indexSettings.getSetting(index, completedAt)).map(s => new Date(s.toLong))
     val count = rCount.await.totalHits
 
     Some(CollectionMetadataItem(name, count.toInt, None, completedDate))
@@ -84,10 +83,16 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, va
   def writeCompletionDateTo(indexName: String, date: Date = new Date()) {
     clients foreach { client =>
       client execute {
-        index into indexName -> metadata fields (
-          completedAt -> date.getTime
-          ) id mid
-      }
+        closeIndex(indexName)
+      } await
+
+      client execute {
+        update settings indexName set Map(completedAt -> date.getTime.toString)
+      } await
+
+      client.execute {
+        openIndex(indexName)
+      } await
     }
   }
 
