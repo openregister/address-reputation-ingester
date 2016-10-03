@@ -17,8 +17,5 @@ cache:
 
 notifications:
   email:
-    - andy.hicks@digital.hmrc.gov.uk
-    - richard.beton@digital.hmrc.gov.uk
     - christopher.townson@digital.hmrc.gov.uk
-    - franek.richardson@digital.hmrc.gov.uk
 
