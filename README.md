@@ -12,6 +12,18 @@ Timed behaviour is implemented using *cron* externally by poking the URL /goAuto
 
 A simple built-in console allows viewing of the current status and triggering or cancelling various processing steps, as required.
 
+## Elasticsearch Setup
+
+You need Elasticsearch for development. Ubuntu example:
+
+```
+SOURCE=/etc/apt/sources.list.d/elasticsearch-2.x.list
+echo "deb https://packages.elastic.co/elasticsearch/2.x/debian stable main" | sudo tee $SOURCE
+apt-get -q -q update
+apt-get -y install default-jdk elasticsearch
+echo "cluster.name: address-reputation" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+```
+
 ### Licence
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
