@@ -22,8 +22,8 @@ import config.ConfigHelper._
 import play.api.Play._
 import play.api._
 import services.es.{ElasticsearchHelper, IndexMetadata}
-import services.mongo.{CollectionMetadata, MongoSystemMetadataStoreFactory}
 import services.exec.WorkQueue
+import services.mongo.{CollectionMetadata, MongoSystemMetadataStoreFactory}
 import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.co.hmrc.logging.LoggerFacade
 import uk.gov.hmrc.play.config.RunMode
@@ -50,10 +50,12 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
       val clusterName = mustGetConfigString(current.mode, current.configuration, "elastic.clustername")
       val connectionString = mustGetConfigString(current.mode, current.configuration, "elastic.uri")
       val isCluster = getConfigBoolean(current.mode, current.configuration, "elastic.is-cluster").getOrElse(true)
-      val numShards = getConfigInt(current.mode, current.configuration, "elastic.num-shards").getOrElse(12)
+      val numShards = current.configuration.getConfig("elastic.shards").map(
+        _.entrySet.foldLeft(Map.empty[String, Int])((m, a) => m + (a._1 -> a._2.unwrapped().asInstanceOf[Int]))
+      ).getOrElse(Map.empty[String, Int])
 
       ElasticsearchHelper(clusterName, connectionString, isCluster, numShards,
-      scala.concurrent.ExecutionContext.Implicits.global, new LoggerFacade(Logger.logger))
+        scala.concurrent.ExecutionContext.Implicits.global, new LoggerFacade(Logger.logger))
     }
   }
 

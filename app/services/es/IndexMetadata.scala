@@ -19,7 +19,6 @@
 
 package services.es
 
-import java.util
 import java.util.Date
 
 import com.carrotsearch.hppc.ObjectLookupContainer
@@ -33,7 +32,8 @@ import services.mongo.{CollectionMetadataItem, CollectionName}
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
 
-class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, val numShards: Int)(implicit val ec: ExecutionContext) extends DbFacade {
+class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, numShards: Map[String, Int])
+                   (implicit val ec: ExecutionContext) extends DbFacade {
 
   val replicaCount = "1"
   val ariAliasName = "address-reputation-data"
@@ -42,7 +42,10 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, va
   val metadata = "metadata"
 
   private val completedAt = "index.completedAt"
-  private val mid = "mid"
+
+  def numShards(productName: String): Int = {
+    numShards.getOrElse(productName, 12)
+  }
 
   def collectionExists(name: String): Boolean = existingCollectionNames.contains(name)
 
@@ -131,7 +134,7 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, va
       None
     else {
       val names = olc.toArray
-//      assert(names.length == 1, names)
+      //      assert(names.length == 1, names)
       val n = names(0).toString
       Some(n)
     }
