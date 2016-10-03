@@ -184,12 +184,12 @@ function cleanFs() {
 
 function cleanCol() {
     var target = getTarget2();
-    post('/' + target + '/collections/clean', true);
+    post('/collections/' + target + '/clean', true);
 }
 
 function listCol() {
     var target = getTarget2();
-    getAndRefreshConsoleJson('/' + target + '/collections/list');
+    getAndRefreshConsoleJson('/collections/' + target + '/list');
 }
 
 function ping() {
@@ -203,7 +203,7 @@ function switchCol() {
         alert("Enter the collection name");
     else {
         colname = colname.replace(/_/g, '/');
-        get('/' + target + '/switch/' + colname, true);
+        get('/switch/' + target + '/' + colname, true);
     }
 }
 
@@ -213,7 +213,7 @@ function dropCol() {
     if (colname == '')
         alert("Enter the collection name");
     else {
-        ajax('DELETE', '/' + target + '/collections/' + colname, function (data) {
+        ajax('DELETE', '/collections/' + target + '/' + colname, function (data) {
             setTimeout(listCol, 250);
         });
     }

@@ -52,10 +52,6 @@ class CollectionController(action: ActionBuilder[Request],
 
   import CollectionInfo._
 
-  private def unsupportedTarget(target: String) = {
-    new IllegalArgumentException(s"'$target' is not a supported target.")
-  }
-
   def doListCollections(): Action[AnyContent] = action {
     request =>
       val result = listCollections()

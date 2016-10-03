@@ -150,7 +150,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       val admin = new MetadataStore(mongo, Stdout)
       CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_ts5"))
 
-      val request = newRequest("GET", "/db/collections/list")
+      val request = newRequest("GET", "/collections/db/list")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === OK)
       //      assert(response.body === "foo")
@@ -172,7 +172,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
       waitForIndex(idx)
 
-      val request = newRequest("GET", "/es/collections/list")
+      val request = newRequest("GET", "/collections/es/list")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
 
       assert(response.status === OK)
@@ -188,37 +188,37 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
   "collection endpoints should be protected by basic auth" must {
     "list Mongo collections" in {
-      val request = newRequest("GET", "/db/collections/list")
+      val request = newRequest("GET", "/collections/db/list")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
     "list ES collections" in {
-      val request = newRequest("GET", "/es/collections/list")
+      val request = newRequest("GET", "/collections/es/list")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
     "drop Mongo collection" in {
-      val request = newRequest("DELETE", "/db/collections/foo")
+      val request = newRequest("DELETE", "/collections/db/foo")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
     "drop ES collection" in {
-      val request = newRequest("DELETE", "/es/collections/foo")
+      val request = newRequest("DELETE", "/collections/es/foo")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
     "clean db" in {
-      val request = newRequest("POST", "/db/collections/clean")
+      val request = newRequest("POST", "/collections/db/clean")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
     "clean es" in {
-      val request = newRequest("POST", "/es/collections/clean")
+      val request = newRequest("POST", "/collections/es/clean")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
@@ -228,13 +228,13 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
   "collection endpoints" must {
     "drop unknown Mongo collection should give NOT_FOUND" in {
-      val request = newRequest("DELETE", "/db/collections/2001-12-31-01-02")
+      val request = newRequest("DELETE", "/collections/db/2001-12-31-01-02")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe NOT_FOUND
     }
 
     "drop unknown ES collection should give NOT_FOUND" in {
-      val request = newRequest("DELETE", "/es/collections/2001-12-31-01-02")
+      val request = newRequest("DELETE", "/collections/es/2001-12-31-01-02")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe NOT_FOUND
     }
@@ -344,7 +344,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       val admin = new MetadataStore(mongo, Stdout)
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
 
-      val request = newRequest("GET", "/db/switch/abp/39/200102030405")
+      val request = newRequest("GET", "/switch/db/abp/39/200102030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -364,7 +364,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       val initialCollectionName = admin.gbAddressBaseCollectionName.get
       CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_200102030405"))
 
-      val request = newRequest("GET", "/db/switch/abp/39/200102030405")
+      val request = newRequest("GET", "/switch/db/abp/39/200102030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -379,7 +379,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
        * when a wrong password is supplied
        * the response should be 401
     """ in {
-      val request = newRequest("GET", "/db/switch/abp/39/200102030405")
+      val request = newRequest("GET", "/switch/db/abp/39/200102030405")
       val response = await(request.withAuth("admin", "wrong", BASIC).execute())
       assert(response.status === UNAUTHORIZED)
     }
@@ -388,7 +388,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
        * passing bad parameters
        * should give 400
     """ in {
-      assert(get("/db/switch/abp/not-a-number/1").status === BAD_REQUEST)
+      assert(get("/switch/db/abp/not-a-number/1").status === BAD_REQUEST)
     }
   }
 
@@ -404,7 +404,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_200102030405"))
       CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_200102030405"))
 
-      val request = newRequest("GET", "/db/switch/abp/39/200102030405")
+      val request = newRequest("GET", "/switch/db/abp/39/200102030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)

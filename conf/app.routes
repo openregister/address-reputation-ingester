@@ -19,16 +19,16 @@ GET    /fetch/showRemoteTree                                    fetch.FetchContr
 
 GET    /ingest/from/file/to/:target/:product/:epoch/:variant    ingest.IngestController.doIngestFileTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean], include: Option[String], prefer: Option[String], streetFilter: Option[Int])
 
-GET    /db/switch/:product/:epoch/:version                      controllers.MongoSwitchoverController.doSwitchTo(product, epoch: Int, version)
-GET    /es/switch/:product/:epoch/:version                      controllers.ElasticSwitchoverController.doSwitchTo(product, epoch: Int, version)
+GET    /switch/db/:product/:epoch/:version                      controllers.MongoSwitchoverController.doSwitchTo(product, epoch: Int, version)
+GET    /switch/es/:product/:epoch/:version                      controllers.ElasticSwitchoverController.doSwitchTo(product, epoch: Int, version)
 
-GET    /db/collections/list                                     controllers.MongoCollectionController.doListCollections
-DELETE /db/collections/:name                                    controllers.MongoCollectionController.doDropCollection(name)
-POST   /db/collections/clean                                    controllers.MongoCollectionController.doCleanup
+GET    /collections/db/list                                     controllers.MongoCollectionController.doListCollections
+DELETE /collections/db/:name                                    controllers.MongoCollectionController.doDropCollection(name)
+POST   /collections/db/clean                                    controllers.MongoCollectionController.doCleanup
 
-GET    /es/collections/list                                     controllers.ElasticCollectionController.doListCollections
-DELETE /es/collections/:name                                    controllers.ElasticCollectionController.doDropCollection(name)
-POST   /es/collections/clean                                    controllers.ElasticCollectionController.doCleanup
+GET    /collections/es/list                                     controllers.ElasticCollectionController.doListCollections
+DELETE /collections/es/:name                                    controllers.ElasticCollectionController.doDropCollection(name)
+POST   /collections/es/clean                                    controllers.ElasticCollectionController.doCleanup
 
 GET    /admin/realm                                             controllers.AdminController.realm
 GET    /admin/cancelCurrent                                     controllers.AdminController.cancelTask

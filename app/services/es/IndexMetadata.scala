@@ -24,6 +24,7 @@ import java.util.Date
 import com.carrotsearch.hppc.ObjectLookupContainer
 import com.sksamuel.elastic4s.ElasticClient
 import com.sksamuel.elastic4s.ElasticDsl._
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.common.unit.TimeValue
 import services.DbFacade
@@ -56,15 +57,15 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
   }
 
   def existingCollectionNames: List[String] = {
-    val client0 = clients.head.java
-    val healths = greenHealth()
+    val healths = clients.head.execute {
+      get cluster health
+    } await
+
     healths.getIndices.keySet.asScala.toList.sorted
   }
 
   def findMetadata(name: CollectionName): Option[CollectionMetadataItem] = {
     val index = name.toString
-    greenHealth(index)
-
     val rCount = clients.head.execute {
       search in index / address size 0
     }
