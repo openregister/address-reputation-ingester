@@ -18,6 +18,7 @@
  */
 
 var contextPath = '';
+var pollerIsOk = true;
 
 function setupContextPath() {
     var path = window.location.pathname.split( '/' );
@@ -28,25 +29,31 @@ function setupContextPath() {
 }
 
 function showStatus(url, cb) {
-    $.get(contextPath + url, function (data) {
-        $("#status").text(data[0].description);
-        var queue = $("#queue");
-        if (data.length > 1) {
-            console.log(data);
-            var s = "<ul>";
-            for (var i = 1; i < data.length; i++) {
-                s += '<li><a href="#" onclick="cancelQueue(' + data[i].id + ')">X</a> ' + data[i].description + '</li>';
+    $.ajax({
+        url: contextPath + url,
+        success: function (data) {
+            pollerIsOk = true;
+            $("#status").text(data[0].description);
+            var queue = $("#queue");
+            if (data.length > 1) {
+                console.log(data);
+                var s = "<ul>";
+                for (var i = 1; i < data.length; i++) {
+                    s += '<li><a href="#" onclick="cancelQueue(' + data[i].id + ')">X</a> ' + data[i].description + '</li>';
+                }
+                queue.html(s + '</ul>');
+                queue.removeClass('empty');
+            } else {
+                queue.text("empty").addClass('empty');
             }
-            queue.html(s + '</ul>');
-            queue.removeClass('empty');
-        } else {
-            queue.text("empty").addClass('empty');
-        }
-        if (cb) {
-            cb();
+            if (cb) {
+                cb();
+            }
+        },
+        error: function(x, s, e) {
+            pollerIsOk = false;
         }
     });
-
 }
 
 function refreshStatusContinually() {
@@ -105,6 +112,7 @@ function getAndRefreshConsoleJson(path) {
 
 function fullStatus() {
     get('/admin/fullStatus');
+    if (!pollerIsOk) refreshStatusContinually();
 }
 
 //-------------------------------------------------------------------------------------------------
