@@ -105,7 +105,8 @@ object Ingester {
   }
 
   private[ingest] def listFiles(file: File, extn: String): List[File] =
-    if (!file.isDirectory) Nil
+    if (!file.isDirectory)
+      List(file)
     else {
       val (dirs, files) = file.listFiles().toList.partition(_.isDirectory)
       val zips = files.filter(f => f.getName.toLowerCase.endsWith(extn))
@@ -119,7 +120,7 @@ object Ingester {
 
 class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, statusLogger: StatusLogger, forwardData: ForwardData) {
 
-  def ingestFromDir(rootDir: File, out: OutputWriter): Boolean = {
+  def ingestFrom(rootDir: File, out: OutputWriter): Boolean = {
     val files = Ingester.listFiles(rootDir, ".zip").sorted
     val youngest = if (files.isEmpty) Ingester.theEpoch else new Date(files.map(_.lastModified).max)
     val target = out.existingTargetThatIsNewerThan(youngest)

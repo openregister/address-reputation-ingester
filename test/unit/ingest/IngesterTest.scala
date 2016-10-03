@@ -73,7 +73,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, Algorithm(), model, status, fd).ingestFromDir(mockFile, dummyOut)
+          new Ingester(continuer, Algorithm(), model, status, fd).ingestFrom(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -95,7 +95,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, Algorithm(), model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingestFromDir(mockFile, dummyOut)
+          new Ingester(continuer, Algorithm(), model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingestFrom(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -117,7 +117,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          result = new Ingester(continuer, Algorithm(), model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingestFromDir(mockFile, dummyOut)
+          result = new Ingester(continuer, Algorithm(), model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingestFrom(mockFile, dummyOut)
           lock.put(true)
       })
 

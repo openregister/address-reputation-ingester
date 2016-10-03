@@ -16,7 +16,8 @@
 
 package ingest
 
-import java.io.File
+import java.io.{File, FileOutputStream}
+import java.net.URL
 
 import controllers.ControllerConfig
 import controllers.SimpleValidator._
@@ -116,15 +117,15 @@ class IngestController(action: ActionBuilder[Request],
                      writerFactory: OutputWriterFactory,
                      continuer: Continuer): StateModel = {
 
-    val qualifiedDir = model.productName match {
-      case "test" => new File("conf/data/")
+    val dataLoc = model.productName match {
+      case "test" => new File(cannedDataLocation)
       case _ =>new File(unpackedFolder, model.pathSegment)
     }
     val writer = writerFactory.writer(model, status, writerSettings, ec)
     var result = model
     var failed = true
     try {
-      failed = ingesterFactory.ingester(continuer, algorithmSettings, model, status).ingestFromDir(qualifiedDir, writer)
+      failed = ingesterFactory.ingester(continuer, algorithmSettings, model, status).ingestFrom(dataLoc, writer)
     } catch {
       case e: Exception =>
         status.warn(e.getMessage)
@@ -136,6 +137,13 @@ class IngestController(action: ActionBuilder[Request],
       }
     }
     if (failed) result.copy(hasFailed = true) else result
+  }
+
+  private def cannedDataLocation() = {
+    Option(getClass.getClassLoader.getResource("data/canned.zip")) match {
+      case Some(url) => url.getFile
+      case None => "conf/data/canned.zip"
+    }
   }
 
   private def pickWriter(target: String) = {
