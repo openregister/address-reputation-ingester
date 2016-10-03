@@ -16,8 +16,8 @@
 
 package ingest
 
-import java.io.{File, FileOutputStream}
-import java.net.URL
+import java.io.{File, FileOutputStream, InputStream}
+import java.nio.file.{Files, StandardCopyOption}
 
 import controllers.ControllerConfig
 import controllers.SimpleValidator._
@@ -118,7 +118,7 @@ class IngestController(action: ActionBuilder[Request],
                      continuer: Continuer): StateModel = {
 
     val dataLoc = model.productName match {
-      case "test" => new File(cannedDataLocation)
+      case "test" => new File(cannedDataLoc)
       case _ =>new File(unpackedFolder, model.pathSegment)
     }
     val writer = writerFactory.writer(model, status, writerSettings, ec)
@@ -139,11 +139,25 @@ class IngestController(action: ActionBuilder[Request],
     if (failed) result.copy(hasFailed = true) else result
   }
 
-  private def cannedDataLocation() = {
-    Option(getClass.getClassLoader.getResource("data/canned.zip")) match {
-      case Some(url) => url.getFile
-      case None => "conf/data/canned.zip"
-    }
+  private def cannedDataLoc() = {
+    Option(getClass.getClassLoader.getResource("data/canned.zip")).map { url =>
+      url.getProtocol match {
+        case "file" => url.getFile
+        case "jar"  => {
+          val tempFile = Files.createTempFile("ari-canned", ".zip")
+          Files.copy(url.openStream, tempFile, StandardCopyOption.REPLACE_EXISTING)
+          tempFile.toString
+        }
+        case _      => "data/canned.zip"
+      }
+    }.getOrElse("data/canned.zip")
+  }
+
+  private def withCloseable[T, C <: AutoCloseable](closeable: C)(block: C => T) = {
+    try
+      block(closeable)
+    finally
+      closeable.close()
   }
 
   private def pickWriter(target: String) = {

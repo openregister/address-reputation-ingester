@@ -139,18 +139,23 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
 
   private[ingest] def ingestFiles(files: Seq[File], out: OutputWriter): Boolean = {
     val dt = new DiagnosticTimer
-    val fp = new FirstPass(out, continuer, settings, forwardData)
-    out.begin()
+    val fp = new FirstPass(continuer, settings, forwardData)
 
     statusLogger.info(s"Starting first pass through ${files.size} files.")
     val fewerFiles = pass(files, fp)
     statusLogger.info(s"First pass complete after {}.", dt)
 
-    val rfd = reduceDefaultedLCCs(forwardData)
+    if(fewerFiles.size > 0) {
+      val rfd = reduceDefaultedLCCs(forwardData)
 
-    statusLogger.info(s"Starting second pass through ${fewerFiles.size} files.")
-    val sp = new SecondPass(out, continuer, settings, rfd)
-    pass(fewerFiles, sp)
+      statusLogger.info(s"Starting second pass through ${fewerFiles.size} files.")
+      out.begin()
+      val sp = new SecondPass(out, continuer, settings, rfd)
+      pass(fewerFiles, sp)
+    } else {
+      statusLogger.info("No files to process, skipping second pass.")
+    }
+
     statusLogger.info(s"Ingester finished after {}.", dt)
 
     forwardData.close() // release shared memory etc

@@ -52,7 +52,6 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     val logger = new StubLogger
     val status = new StatusLogger(logger)
     val worker = new WorkQueue(status)
-    val dummyOut = mock[OutputWriter]
     val continuer = mock[Continuer]
     val lock = new SynchronousQueue[Boolean]()
     val model = new StateModel()
@@ -68,7 +67,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
+      val firstPass = new FirstPass(continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -97,7 +96,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
+      val firstPass = new FirstPass(continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -128,7 +127,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
+      val firstPass = new FirstPass(continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -156,7 +155,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
+      val firstPass = new FirstPass(continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -185,7 +184,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
+      val firstPass = new FirstPass(continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -217,7 +216,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
+      val firstPass = new FirstPass(continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -260,7 +259,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
+      val firstPass = new FirstPass(continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -289,22 +288,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn true
 
-      val out = new OutputWriter {
-        def existingTargetThatIsNewerThan(date: Date) = None
-
-        def begin() {}
-
-        def output(out: DbAddress) {
-          assert(out.id === "GB9051119283")
-          assert(out.lines === List("1 Upper Kennerty Mill Cottages"))
-          assert(out.town === "Peterculter")
-          assert(out.postcode === "AB14 0LQ")
-        }
-
-        def end(completed: Boolean) = model
-      }
-
-      val firstPass = new FirstPass(out, continuer, Algorithm(), forwardData)
+      val firstPass = new FirstPass(continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -328,7 +312,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     ) {
       when(continuer.isBusy) thenReturn false
 
-      val firstPass = new FirstPass(dummyOut, continuer, Algorithm(), forwardData)
+      val firstPass = new FirstPass(continuer, Algorithm(), forwardData)
       worker.push("testing", {
         continuer =>
           lock.put(true)

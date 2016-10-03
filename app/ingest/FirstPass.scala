@@ -24,7 +24,6 @@ package ingest
 import addressbase._
 import ingest.Ingester._
 import ingest.algorithm.Algorithm
-import ingest.writers.OutputWriter
 import services.exec.Continuer
 
 import scala.collection._
@@ -37,7 +36,7 @@ trait Pass {
 }
 
 
-class FirstPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, val forwardData: ForwardData) extends Pass {
+class FirstPass(continuer: Continuer, settings: Algorithm, val forwardData: ForwardData) extends Pass {
 
   // scalastyle:off
   def processFile(csvIterator: Iterator[Array[String]]): Boolean = {
