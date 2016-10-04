@@ -86,6 +86,9 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
 
   def writeCompletionDateTo(indexName: String, date: Date = new Date()) {
     clients foreach { client =>
+
+      greenHealth(indexName)
+
       client execute {
         closeIndex(indexName)
       } await
