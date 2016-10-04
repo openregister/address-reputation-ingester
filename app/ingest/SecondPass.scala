@@ -41,10 +41,10 @@ class SecondPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, f
         case OSHeader.RecordId =>
           OSCsv.setCsvFormatFor(csvLine(OSHeader.Version_Idx))
 
-        case OSLpi.RecordId if settings.includeLpi =>
+        case OSLpi.RecordId if settings.includeLPI =>
           processLPI(csvLine, out)
 
-        case OSDpa.RecordId if settings.includeDpa =>
+        case OSDpa.RecordId if settings.includeDPA =>
           processDPA(csvLine, out)
 
         case _ =>

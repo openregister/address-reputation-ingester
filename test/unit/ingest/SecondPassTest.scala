@@ -211,8 +211,8 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       """
 
 
-    val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
-    val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
+    val csvLpiLine = CsvParser.split(lpiData).next()
+    val csvBlpuLine = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine).normalise
     val blpu = Blpu(None, osblpu.postcode, osblpu.logicalState, osblpu.blpuState, osblpu.subdivision, osblpu.localCustodianCode)
@@ -245,8 +245,8 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       """
 
 
-    val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
-    val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
+    val csvLpiLine = CsvParser.split(lpiData).next()
+    val csvBlpuLine = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine).normalise
     val blpu = Blpu(None, osblpu.postcode, osblpu.logicalState, osblpu.blpuState, osblpu.subdivision, osblpu.localCustodianCode)
@@ -278,8 +278,8 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       """21,"I",801310,131041604,1,2,2008-07-28,,252508.00,654612.00,55.7623040,-4.3521941,1,9063,"S",2012-04-27,,2016-02-10,2007-04-27,"L","G77 6RT",0
       """
 
-    val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
-    val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
+    val csvLpiLine = CsvParser.split(lpiData).next()
+    val csvBlpuLine = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine).normalise
     val blpu = Blpu(None, osblpu.postcode, osblpu.logicalState, osblpu.blpuState, osblpu.subdivision, osblpu.localCustodianCode)
@@ -317,10 +317,10 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       """
 
 
-    val csvOSHeaderLine: Array[String] = CsvParser.split(osHeader).next()
-    val csvLpiLine: Array[String] = CsvParser.split(lpiData).next()
-    val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
-    val csvDpaLine: Array[String] = CsvParser.split(dpaData).next()
+    val csvOSHeaderLine = CsvParser.split(osHeader).next()
+    val csvLpiLine = CsvParser.split(lpiData).next()
+    val csvBlpuLine = CsvParser.split(blpuData).next()
+    val csvDpaLine = CsvParser.split(dpaData).next()
 
     val osblpu = OSBlpu(csvBlpuLine)
     val blpu = Blpu(None, osblpu.postcode, osblpu.logicalState, osblpu.blpuState, osblpu.subdivision, osblpu.localCustodianCode)
@@ -338,7 +338,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
     val out = mock[OutputWriter]
 
-    val secondPass = new SecondPass(out, continuer, Algorithm(), fd)
+    val secondPass = new SecondPass(out, continuer, Algorithm(prefer = "DPA"), fd)
     val iterator = Iterator(csvOSHeaderLine, csvLpiLine, csvBlpuLine, csvDpaLine)
 
     secondPass.processFile(iterator)
@@ -357,7 +357,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     """Given an OS-LPI and a prior BLPU to match
        And there is an LPI record for the same uprn
        And there is a second LPI record for the same uprn
-       And there is are pre-existing street records,
+       And there are pre-existing street records,
        And there is no DPA record for the same uprn
        Then the first LPI record will be output
     """) {
@@ -375,10 +375,10 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
       """
 
 
-    val csvOSHeaderLine: Array[String] = CsvParser.split(osHeader).next()
-    val csvFirstLpiLine: Array[String] = CsvParser.split(firstLpiData).next()
-    val csvSecondLpiLine: Array[String] = CsvParser.split(secondLpiData).next()
-    val csvBlpuLine: Array[String] = CsvParser.split(blpuData).next()
+    val csvOSHeaderLine = CsvParser.split(osHeader).next()
+    val csvFirstLpiLine = CsvParser.split(firstLpiData).next()
+    val csvSecondLpiLine = CsvParser.split(secondLpiData).next()
+    val csvBlpuLine = CsvParser.split(blpuData).next()
 
     val osblpu = OSBlpu(csvBlpuLine).normalise
     val blpu = Blpu(None, osblpu.postcode, osblpu.logicalState, osblpu.blpuState, osblpu.subdivision, osblpu.localCustodianCode)

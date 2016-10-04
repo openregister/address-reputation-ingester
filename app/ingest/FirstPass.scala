@@ -52,12 +52,12 @@ class FirstPass(continuer: Continuer, settings: Algorithm, val forwardData: Forw
         case OSBlpu.RecordId if OSBlpu.isUsefulPostcode(csvLine) =>
           processBlpu(OSBlpu(csvLine))
 
-        case OSLpi.RecordId if settings.includeLpi =>
+        case OSLpi.RecordId if settings.includeLPI =>
           if (settings.prefer == "LPI")
             processLpi(OSLpi(csvLine))
           needSecondPass = true
 
-        case OSDpa.RecordId if settings.includeDpa =>
+        case OSDpa.RecordId if settings.includeDPA =>
           if (settings.prefer == "DPA")
             processDpa(OSDpa(csvLine))
           needSecondPass = true

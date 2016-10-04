@@ -28,8 +28,9 @@ import scala.collection.mutable
 
 // This exists primarily as an aid for analysis. It is not intended for performance enhancement.
 
-class OutputWriterCache(peer: OutputWriter) extends OutputWriter {
-  private val cache = new mutable.HashMap[Long, DbAddress]
+class OutputWriterCache(peer: OutputWriter, max: Int) extends OutputWriter {
+  private val cache = new mutable.HashMap[String, DbAddress]
+  private val uprns = new mutable.Queue[String]()
 
   override def existingTargetThatIsNewerThan(date: Date): Option[String] =
     peer.existingTargetThatIsNewerThan(date)
@@ -40,18 +41,26 @@ class OutputWriterCache(peer: OutputWriter) extends OutputWriter {
 
   override def output(a: DbAddress) {
     peer.output(a)
-    cache.put(a.uprn, a)
+    cache.put(a.id, a)
+    uprns.enqueue(a.id)
+    if (uprns.size > max)    {
+      val lost = uprns.dequeue()
+      cache.remove(lost)
+    }
   }
 
   override def end(completed: Boolean): StateModel = peer.end(completed)
 
-  def get(uprn: Long): Option[DbAddress] = cache.get(uprn)
+  def get(id: String): Option[DbAddress] = cache.get(id)
 
-  def remove(uprn: Long) {
-    cache.remove(uprn)
+  def apply(id: String): DbAddress = cache(id)
+
+  def clear() {
+    cache.clear()
+    uprns.clear()
   }
 
-  def size = cache.size
+  def size: Int = cache.size
 
-  def isEmpty = cache.isEmpty
+  def isEmpty: Boolean = cache.isEmpty
 }

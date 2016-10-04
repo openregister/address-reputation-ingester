@@ -36,11 +36,14 @@ object Algorithm {
 
 
 case class Algorithm(
-                      includeDpa: Boolean = true,
-                      includeLpi: Boolean = true,
+                      includeDPA: Boolean = true,
+                      includeLPI: Boolean = true,
                       prefer: String = "DPA",
                       streetFilter: Int = 1
                     ) {
+
+  val preferLPI = prefer == "LPI"
+  val preferDPA = prefer == "DPA"
 
   val containedPhrases: List[String] =
     streetFilter match {
