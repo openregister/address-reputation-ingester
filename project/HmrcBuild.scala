@@ -18,7 +18,7 @@ import sbt.{ExclusionRule, _}
 import play.PlayImport._
 import play.core.PlayVersion
 
-object MicroServiceBuild extends Build with MicroService {
+object HmrcBuild extends Build with MicroService {
   import scala.util.Properties.envOrElse
 
   val appName = "address-reputation-ingester"
@@ -32,7 +32,7 @@ object MicroServiceBuild extends Build with MicroService {
     ws excludeAll(ExclusionRule(organization = "commons-logging"), ExclusionRule(organization = "io.netty")),
     // netty 3.10 has a breaking API change
     "io.netty" % "netty" % "3.9.9.Final" force(),
-    "uk.gov.hmrc" %% "address-reputation-store" % "1.12.0" withSources()
+    "uk.gov.hmrc" %% "address-reputation-store" % "1.16.0" withSources()
       excludeAll (ExclusionRule(organization = "org.reactivemongo"), ExclusionRule(organization = "io.netty")),
     "uk.gov.hmrc" %% "microservice-bootstrap" % "4.2.1",
 //    "uk.gov.hmrc" %% "play-authorisation" % "3.1.0",

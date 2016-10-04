@@ -17,19 +17,12 @@
  *
  */
 
-package ingest.writers
+package util
 
-import java.util.Date
-
-import org.junit.runner.RunWith
-import org.mockito.Mockito._
 import org.scalatest.FunSuite
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.mock.MockitoSugar
 import uk.co.hmrc.address.osgb.DbAddress
 
-@RunWith(classOf[JUnitRunner])
-class OutputWriterCacheTest extends FunSuite with MockitoSugar {
+class FifoCacheTest extends FunSuite {
 
   val a01 = DbAddress("GB100040230002", List("6 Prospect Gardens"), Some("Exeter"), "EX4 6TA", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(3), Some(1), None)
   val a02 = DbAddress("GB10023118140", List("3 Terracina Court", "Haven Road"), Some("Exeter"), "EX2 8DP", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None)
@@ -46,65 +39,28 @@ class OutputWriterCacheTest extends FunSuite with MockitoSugar {
   val a13 = DbAddress("GB10092760043", List(), Some("Exeter"), "EX1 9UL", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), None, Some(1), None)
   val a14 = DbAddress("GB10013038314", List("Unit 25, Exeter Business Centre", "39 Marsh Green Road West", "Marsh Barton Trading Estate"), Some("Exeter"), "EX2 8PN", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None)
 
-  test("existingTargetThatIsNewerThan must call the peer with the same parameter") {
-    val now = new Date()
-    val peer = mock[OutputWriter]
-    val cache = new OutputWriterCache(peer, 0)
-    cache.existingTargetThatIsNewerThan(now)
-    verify(peer).existingTargetThatIsNewerThan(now)
-  }
-
-  test("begin must call the peer") {
-    val peer = mock[OutputWriter]
-    val cache = new OutputWriterCache(peer, 0)
-    cache.begin()
-    verify(peer).begin()
-  }
-
-  test("end true must call the peer with the same parameter") {
-    val peer = mock[OutputWriter]
-    val cache = new OutputWriterCache(peer, 0)
-    cache.end(true)
-    verify(peer).end(true)
-  }
-
-  test("end false must call the peer with the same parameter") {
-    val peer = mock[OutputWriter]
-    val cache = new OutputWriterCache(peer, 0)
-    cache.end(false)
-    verify(peer).end(false)
-  }
-
-  test("output must call the peer with the same parameter") {
-    val peer = mock[OutputWriter]
-    val cache = new OutputWriterCache(peer, 0)
-    cache.output(a01)
-    verify(peer).output(a01)
-  }
-
   test("size, get and maximum limit") {
-    val peer = mock[OutputWriter]
-    val cache = new OutputWriterCache(peer, 5)
+    val cache = new FifoCache[String, DbAddress](5, a => a.id)
 
     assert(cache.get(a01.id) === None)
     assert(cache.isEmpty)
     assert(cache.size === 0)
 
-    cache.output(a01)
+    cache.put(a01)
 
     assert(cache.get(a01.id) === Some(a01))
     assert(cache(a01.id) === a01)
     assert(!cache.isEmpty)
     assert(cache.size === 1)
 
-    cache.output(a02)
-    cache.output(a03)
-    cache.output(a04)
-    cache.output(a05)
+    cache.put(a02)
+    cache.put(a03)
+    cache.put(a04)
+    cache.put(a05)
 
     assert(cache.size === 5)
 
-    cache.output(a06)
+    cache.put(a06)
 
     assert(cache.size === 5)
     assert(cache.get(a06.id) === Some(a06))
@@ -112,11 +68,10 @@ class OutputWriterCacheTest extends FunSuite with MockitoSugar {
   }
 
   test("clear") {
-    val peer = mock[OutputWriter]
-    val cache = new OutputWriterCache(peer, 10)
+    val cache = new FifoCache[String, DbAddress](10, a => a.id)
 
-    cache.output(a01)
-    cache.output(a02)
+    cache.put(a01)
+    cache.put(a02)
 
     assert(cache(a01.id) === a01)
     assert(cache(a02.id) === a02)
