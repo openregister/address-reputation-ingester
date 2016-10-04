@@ -65,7 +65,7 @@ object ForwardData {
   private lazy val streetDescMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.streetDescriptor.mapSize")
   private lazy val postcodeMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.postcode.mapSize")
 
-  private val blpuValueSize = 12
+  private val blpuValueSize = 20
   private val streetValueSize = 8
   private val streetDescValueSize = 60
   private val postcodeKeySize = 8

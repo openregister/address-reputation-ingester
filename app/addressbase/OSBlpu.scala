@@ -20,7 +20,8 @@
 package addressbase
 
 import ingest.Ingester
-import uk.co.hmrc.address.osgb.{Document, Postcode}
+import uk.gov.hmrc.address.osgb.Document
+import uk.gov.hmrc.address.uk.Postcode
 
 object OSBlpu {
   val RecordId = "21"
@@ -34,7 +35,9 @@ object OSBlpu {
     subdivision = -1,
     localCustodian = 11,
     postalCode = 16,
-    postcode = 17)
+    postcode = 17,
+    latitude = -1,
+    longitude = -1)
 
   val v2 = OSBlpuIdx(
     uprn = 3,
@@ -44,7 +47,9 @@ object OSBlpu {
     subdivision = 14,
     localCustodian = 13,
     postalCode = 19,
-    postcode = 20)
+    postcode = 20,
+    latitude = 10,
+    longitude = 11)
 
   var idx = v1
 
@@ -52,8 +57,10 @@ object OSBlpu {
     csv(idx.postalCode) != "N" // not a postal address
   }
 
-  def apply(csv: Array[String]): OSBlpu ={
+  def apply(csv: Array[String]): OSBlpu = {
     val subdivision = if (idx == v1) Ingester.UnknownSubdivision else csv(idx.subdivision).head
+    val lat = if(idx == v1) Ingester.UnknownLat else csv(idx.latitude)
+    val long = if(idx == v1) Ingester.UnknownLat else csv(idx.longitude)
     OSBlpu(
       csv(idx.uprn).toLong,
       blankToOptLong(csv(idx.parentUprn)),
@@ -61,15 +68,20 @@ object OSBlpu {
       toChar(csv(idx.blpuState)),
       subdivision,
       csv(idx.postcode),
-      csv(idx.localCustodian).toInt)
+      csv(idx.localCustodian).toInt,
+      lat,
+      long
+    )
   }
 
   private def toChar(s: String) = if (s.isEmpty) ' ' else s.head
 }
 
-case class OSBlpuIdx(uprn: Int, parentUprn: Int, logicalState: Int, blpuState: Int, subdivision: Int, localCustodian: Int, postalCode: Int, postcode: Int)
+case class OSBlpuIdx(uprn: Int, parentUprn: Int, logicalState: Int, blpuState: Int, subdivision: Int,
+                     localCustodian: Int, postalCode: Int, postcode: Int, latitude: Int, longitude: Int)
 
-case class OSBlpu(uprn: Long, parentUprn: Option[Long], logicalState: Char, blpuState: Char, subdivision: Char, postcode: String, localCustodianCode: Int) extends Document {
+case class OSBlpu(uprn: Long, parentUprn: Option[Long], logicalState: Char, blpuState: Char, subdivision: Char,
+                  postcode: String, localCustodianCode: Int, latitude: String, longitude: String) extends Document {
 
   // For use as input to MongoDbObject (hence it's not a Map)
   def tupled: List[(String, Any)] = List(
@@ -78,7 +90,13 @@ case class OSBlpu(uprn: Long, parentUprn: Option[Long], logicalState: Char, blpu
     "blpuState" -> blpuState,
     "subdivision" -> subdivision,
     "localCustodianCode" -> localCustodianCode,
-    "postcode" -> postcode) ++ parentUprn.map("parentUprn" -> _)
+    "postcode" -> postcode,
+    "location" -> location) ++ parentUprn.map("parentUprn" -> _)
 
-  def normalise: OSBlpu = new OSBlpu(uprn, parentUprn, logicalState, blpuState, subdivision, Postcode.normalisePostcode(postcode), localCustodianCode)
+  def location: String = {
+    s"$latitude,$longitude"
+  }
+
+  def normalise: OSBlpu = new OSBlpu(uprn, parentUprn, logicalState, blpuState, subdivision,
+    Postcode.normalisePostcode(postcode), localCustodianCode, latitude, longitude)
 }

@@ -24,8 +24,8 @@ import org.elasticsearch.common.settings.Settings
 import org.scalatest._
 import org.scalatestplus.play.ServerProvider
 import play.api.test.{FakeApplication, Helpers, TestServer}
-import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
-import uk.co.hmrc.util.FileUtils
+import uk.gov.hmrc.address.services.mongo.CasbahMongoConnection
+import uk.gov.hmrc.util.FileUtils
 
 trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedDatabase with AppServerTestApi {
   this: Suite =>

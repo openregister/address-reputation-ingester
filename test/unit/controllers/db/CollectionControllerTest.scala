@@ -34,8 +34,8 @@ import services.es.IndexMetadata
 import services.exec.WorkQueue
 import services.model.StatusLogger
 import services.mongo.{CollectionMetadata, CollectionMetadataItem, CollectionName, MongoSystemMetadataStore}
-import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
-import uk.co.hmrc.logging.StubLogger
+import uk.gov.hmrc.address.services.mongo.CasbahMongoConnection
+import uk.gov.hmrc.logging.StubLogger
 
 import scala.collection.mutable
 

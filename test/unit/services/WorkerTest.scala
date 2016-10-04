@@ -25,7 +25,7 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import services.exec.WorkQueue
 import services.model.StatusLogger
-import uk.co.hmrc.logging.StubLogger
+import uk.gov.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
 class WorkerTest extends FunSuite {

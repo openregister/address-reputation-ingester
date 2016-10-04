@@ -77,7 +77,7 @@ class FirstPass(continuer: Continuer, settings: Algorithm, val forwardData: Forw
 
   private def processBlpu(osBlpu: OSBlpu) {
     val n = osBlpu.normalise
-    val blpu = Blpu(n.parentUprn, n.postcode, n.logicalState, n.blpuState, n.subdivision, n.localCustodianCode)
+    val blpu = Blpu(n.parentUprn, n.postcode, n.logicalState, n.blpuState, n.subdivision, n.localCustodianCode, n.location)
     forwardData.blpu.put(osBlpu.uprn, blpu.pack)
 
     if (n.localCustodianCode != Ingester.DefaultLCC) {

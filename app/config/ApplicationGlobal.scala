@@ -24,8 +24,8 @@ import play.api._
 import services.es.{ElasticsearchHelper, IndexMetadata}
 import services.exec.WorkQueue
 import services.mongo.{CollectionMetadata, MongoSystemMetadataStoreFactory}
-import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
-import uk.co.hmrc.logging.LoggerFacade
+import uk.gov.hmrc.address.services.mongo.CasbahMongoConnection
+import uk.gov.hmrc.logging.LoggerFacade
 import uk.gov.hmrc.play.config.RunMode
 import uk.gov.hmrc.play.graphite.GraphiteConfig
 import uk.gov.hmrc.play.microservice.bootstrap.JsonErrorHandling

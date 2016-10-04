@@ -22,7 +22,7 @@ package services.es
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s._
 import com.sksamuel.elastic4s.mappings.DynamicMapping
-import com.sksamuel.elastic4s.mappings.FieldType.{ShortType, StringType}
+import com.sksamuel.elastic4s.mappings.FieldType.{GeoPointType, ShortType, StringType}
 
 object ESSchema {
 
@@ -71,7 +71,9 @@ object ESSchema {
         field("blpuState") typed ShortType,
         field("logicalState") typed ShortType,
         field("localCustodianCode") typed ShortType,
-        field("streetClass") typed ShortType
+        field("streetClass") typed ShortType,
+        field("blpuClass") typed StringType index NotAnalyzed,
+        field("location") typed GeoPointType
         )
     }
   }

@@ -27,7 +27,7 @@ import org.elasticsearch.client.transport.{NoNodeAvailableException, TransportCl
 import org.elasticsearch.cluster.health.ClusterHealthStatus
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.LocalTransportAddress
-import uk.co.hmrc.logging.SimpleLogger
+import uk.gov.hmrc.logging.SimpleLogger
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.Duration

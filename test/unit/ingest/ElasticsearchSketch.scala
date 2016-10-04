@@ -22,8 +22,8 @@ package ingest
 import ingest.writers.{OutputESWriter, WriterSettings}
 import services.es.ElasticsearchHelper
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.address.osgb.DbAddress
-import uk.co.hmrc.logging.Stdout
+import uk.gov.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.logging.Stdout
 
 // for manual test/development
 object ElasticsearchSketch {
@@ -37,7 +37,7 @@ object ElasticsearchSketch {
     println(indexMetadata.existingCollectionNames)
     w.begin()
     w.output(DbAddress("a1", List("1 High St"), Some("Town"), "NE1 1AA", Some("GB-ENG"), Some("UK"), Some(1234),
-      Some("en"), Some(2), Some(1), Some(8)))
+      Some("en"), Some(2), Some(1), Some(8), None, Some("1.0,-1.0")))
     w.end(true)
 
     println(indexMetadata.existingCollectionNames)

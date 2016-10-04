@@ -20,9 +20,9 @@
 package services.mongo
 
 import play.api.Logger
-import uk.co.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
-import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
-import uk.co.hmrc.logging.{LoggerFacade, SimpleLogger}
+import uk.gov.hmrc.address.admin.{MetadataStore, StoredMetadataItem}
+import uk.gov.hmrc.address.services.mongo.CasbahMongoConnection
+import uk.gov.hmrc.logging.{LoggerFacade, SimpleLogger}
 
 class MongoSystemMetadataStoreFactory {
   def newStore(mongo: CasbahMongoConnection): MongoSystemMetadataStore =

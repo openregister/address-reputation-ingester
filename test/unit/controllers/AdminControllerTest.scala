@@ -27,7 +27,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.exec.WorkQueue
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.logging.StubLogger
+import uk.gov.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
 class AdminControllerTest extends FunSuite {

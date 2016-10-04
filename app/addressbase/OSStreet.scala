@@ -19,8 +19,8 @@
 
 package addressbase
 
-import uk.co.hmrc.address.osgb.Document
-import uk.co.hmrc.address.services.Capitalisation
+import uk.gov.hmrc.address.osgb.Document
+import uk.gov.hmrc.address.services.Capitalisation
 
 object OSStreet {
   val RecordId = "11"

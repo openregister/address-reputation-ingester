@@ -22,7 +22,7 @@ package ingest.writers
 import java.util.Date
 
 import services.model.StateModel
-import uk.co.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.osgb.DbAddress
 
 import scala.collection.mutable
 

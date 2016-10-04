@@ -17,7 +17,7 @@
 package services.model
 
 import org.slf4j.helpers.MessageFormatter
-import uk.co.hmrc.logging.SimpleLogger
+import uk.gov.hmrc.logging.SimpleLogger
 
 import scala.collection.mutable
 

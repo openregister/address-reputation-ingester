@@ -24,8 +24,8 @@ package ingest
 import addressbase.{OSDpa, OSLpi}
 import ingest.Ingester.{Blpu, Street, StreetDescriptor}
 import ingest.algorithm.Algorithm
-import uk.co.hmrc.address.osgb.DbAddress
-import uk.co.hmrc.address.services.Capitalisation._
+import uk.gov.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.services.Capitalisation._
 
 private[ingest] object ExportDbAddress {
   val GBPrefix = "GB"
@@ -48,7 +48,9 @@ private[ingest] object ExportDbAddress {
       Some(language),
       toInt(blpu.blpuState),
       toInt(blpu.logicalState),
-      None)
+      None,
+      None,
+      Some(blpu.location))
   }
 
   def exportLPI(lpi: OSLpi,
@@ -90,7 +92,9 @@ private[ingest] object ExportDbAddress {
       isoLanguage(lpi.language),
       toInt(blpu.blpuState),
       toInt(blpu.logicalState),
-      toInt(street.classification))
+      toInt(street.classification),
+      None,
+      Some(blpu.location))
   }
 
   private def subdivisionCode(subdivision: Char) = subdivision match {

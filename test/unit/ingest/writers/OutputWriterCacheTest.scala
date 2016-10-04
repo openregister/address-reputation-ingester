@@ -26,7 +26,7 @@ import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
-import uk.co.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.osgb.DbAddress
 
 @RunWith(classOf[JUnitRunner])
 class OutputWriterCacheTest extends FunSuite with MockitoSugar {
@@ -61,7 +61,8 @@ class OutputWriterCacheTest extends FunSuite with MockitoSugar {
   }
 
   test("output") {
-    val a = DbAddress("GB100040230002", List("6 Prospect Gardens"), Some("Exeter"), "EX4 6TA", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(3), Some(1), None)
+    val a = DbAddress("GB100040230002", List("6 Prospect Gardens"), Some("Exeter"), "EX4 6TA", Some("GB-ENG"),
+      Some("UK"), Some(1110), Some("en"), Some(3), Some(1), None, None, None)
     val peer = mock[OutputWriter]
     val cache = new OutputWriterCache(peer)
     cache.output(a)
@@ -69,7 +70,8 @@ class OutputWriterCacheTest extends FunSuite with MockitoSugar {
   }
 
   test("size, get, remove") {
-    val a = DbAddress("GB100040230002", List("6 Prospect Gardens"), Some("Exeter"), "EX4 6TA", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(3), Some(1), None)
+    val a = DbAddress("GB100040230002", List("6 Prospect Gardens"), Some("Exeter"), "EX4 6TA", Some("GB-ENG"),
+      Some("UK"), Some(1110), Some("en"), Some(3), Some(1), None, None, None)
     val peer = mock[OutputWriter]
     val cache = new OutputWriterCache(peer)
     assert(cache.get(100040230002L) === None)

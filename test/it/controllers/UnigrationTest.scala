@@ -32,9 +32,9 @@ import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
 import services.es.IndexMetadata
 import services.mongo.{CollectionMetadata, CollectionName, MongoSystemMetadataStoreFactory}
-import uk.co.hmrc.address.admin.MetadataStore
-import uk.co.hmrc.logging.Stdout
-import uk.co.hmrc.util.FileUtils
+import uk.gov.hmrc.address.admin.MetadataStore
+import uk.gov.hmrc.logging.Stdout
+import uk.gov.hmrc.util.FileUtils
 
 import scala.collection.mutable.ListBuffer
 
@@ -267,7 +267,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       files.length mustBe 1
       val outFile = files.head
       outFile.exists() mustBe true
-      outFile.length() mustBe 682014L
+      outFile.length() mustBe 1109057L
     }
   }
 

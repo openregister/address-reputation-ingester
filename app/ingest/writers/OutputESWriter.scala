@@ -22,7 +22,7 @@ import com.sksamuel.elastic4s._
 import config.ApplicationGlobal
 import services.es.{ESSchema, IndexMetadata}
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.osgb.DbAddress
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}

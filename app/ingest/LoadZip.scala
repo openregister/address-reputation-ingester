@@ -19,7 +19,7 @@ package ingest
 import java.io._
 import java.util.zip.{ZipEntry, ZipFile}
 
-import uk.co.hmrc.address.services.CsvParser
+import uk.gov.hmrc.address.services.CsvParser
 
 
 case class EmptyFileException(msg: String) extends Exception(msg)

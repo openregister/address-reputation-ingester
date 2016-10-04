@@ -19,8 +19,9 @@
 
 package addressbase
 
-import uk.co.hmrc.address.osgb.{Document, Postcode}
-import uk.co.hmrc.address.services.Capitalisation
+import uk.gov.hmrc.address.osgb.Document
+import uk.gov.hmrc.address.services.Capitalisation
+import uk.gov.hmrc.address.uk.Postcode
 
 object OSDpa {
   val RecordId = "28"
