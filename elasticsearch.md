@@ -30,4 +30,3 @@ ES_HEAP_SIZE=4G
 Finally, add the Kopf plugin. This might be done by downloading the tgz and unpacking it in
 /usr/share/elasticsearch/plugins.
 
-

@@ -39,8 +39,8 @@ import play.api.test.Helpers._
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
 import services.mongo.{CollectionMetadata, CollectionName}
-import uk.co.hmrc.logging.StubLogger
-import uk.co.hmrc.util.FileUtils
+import uk.gov.hmrc.logging.StubLogger
+import uk.gov.hmrc.util.FileUtils
 
 import scala.concurrent.Future
 

@@ -24,7 +24,7 @@ import java.util.zip.GZIPOutputStream
 
 import controllers.ControllerConfig
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.osgb.DbAddress
 
 import scala.concurrent.ExecutionContext
 

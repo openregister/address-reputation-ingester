@@ -28,7 +28,7 @@ import config.ConfigHelper._
 import play.api.Play._
 import services.model.{StateModel, StatusLogger}
 import services.mongo.CollectionMetadata
-import uk.co.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.osgb.DbAddress
 
 import scala.concurrent.ExecutionContext
 

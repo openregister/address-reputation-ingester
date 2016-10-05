@@ -27,8 +27,8 @@ import org.scalatestplus.play.PlaySpec
 import org.specs2.mock.Mockito
 import ingest.StubContinuer
 import services.model.StatusLogger
-import uk.co.hmrc.logging.StubLogger
-import uk.co.hmrc.util.FileUtils
+import uk.gov.hmrc.logging.StubLogger
+import uk.gov.hmrc.util.FileUtils
 
 import scala.collection.JavaConversions._
 

@@ -31,8 +31,8 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar.mock
 import services.model.{StateModel, StatusLogger}
 import services.mongo.{CollectionMetadata, CollectionMetadataItem, CollectionName, MongoSystemMetadataStore}
-import uk.co.hmrc.address.osgb.DbAddress
-import uk.co.hmrc.logging.StubLogger
+import uk.gov.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
 class OutputDBWriterTest extends FreeSpec {
@@ -141,7 +141,8 @@ class OutputDBWriterTest extends FreeSpec {
          and the collection name is chosen correctly
         """ in {
           new Context("ts5", Set("admin", "x_4_ts0", "x_4_ts1", "x_4_ts4")) {
-            val someDBAddress = DbAddress("id1", List("1 Foo Rue"), Some("Puddletown"), "FX1 1XF", Some("GB-ENG"), Some("UK"), Some(1234), Some("en"), None, None, None)
+            val someDBAddress = DbAddress("id1", List("1 Foo Rue"), Some("Puddletown"), "FX1 1XF", Some("GB-ENG"),
+              Some("UK"), Some(1234), Some("en"), None, None, None, None, None)
 
             val outputDBWriter = new OutputDBWriter(false, model, status, collectionMetadata, WriterSettings(10, 0))
 

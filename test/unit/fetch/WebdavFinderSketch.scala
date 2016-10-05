@@ -19,7 +19,7 @@ package fetch
 import java.net.URL
 
 import services.model.StatusLogger
-import uk.co.hmrc.logging.Stdout
+import uk.gov.hmrc.logging.Stdout
 
 // for manual test/development
 object WebdavFinderSketch {

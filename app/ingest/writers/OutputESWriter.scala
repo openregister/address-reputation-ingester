@@ -22,7 +22,7 @@ import com.sksamuel.elastic4s._
 import config.ApplicationGlobal
 import services.es.{ESSchema, IndexMetadata}
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.osgb.DbAddress
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -83,15 +83,16 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
       }
 
       if (completed) {
+        client execute {
+          update settings indexName set Map(
+            "index.refresh_interval" -> "1s"
+          )
+        } await
+
         // we have finished! let's celebrate
         indexMetadata.writeCompletionDateTo(indexName)
       }
 
-      client execute {
-        update settings indexName set Map(
-          "index.refresh_interval" -> "1s"
-        )
-      }
     }
     statusLogger.info(s"Finished ingesting to index $indexName")
     model

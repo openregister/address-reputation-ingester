@@ -65,7 +65,7 @@ object ForwardData {
   private lazy val streetDescMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.streetDescriptor.mapSize")
   private lazy val postcodeMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.postcode.mapSize")
 
-  private val blpuValueSize = 12
+  private val blpuValueSize = 20
   private val lpiValueSize = 100 // ABP source data has, on average, 141 bytes per record
   private val streetValueSize = 8
   private val streetDescValueSize = 60

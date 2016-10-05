@@ -34,8 +34,8 @@ import services.es.IndexMetadata
 import services.exec.WorkQueue
 import services.model.{StateModel, StatusLogger}
 import services.mongo.{CollectionMetadataItem, CollectionName}
-import uk.co.hmrc.address.admin.StoredMetadataItem
-import uk.co.hmrc.logging.StubLogger
+import uk.gov.hmrc.address.admin.StoredMetadataItem
+import uk.gov.hmrc.logging.StubLogger
 import uk.gov.hmrc.secure.{Salt, Scrambled}
 
 import scala.concurrent.Future

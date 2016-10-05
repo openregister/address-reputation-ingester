@@ -21,7 +21,7 @@ package ingest.writers
 import java.util.Date
 
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.osgb.DbAddress
 
 import scala.concurrent.ExecutionContext
 

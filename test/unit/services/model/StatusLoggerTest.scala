@@ -21,7 +21,7 @@ package services.model
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuite, Matchers}
-import uk.co.hmrc.logging.StubLogger
+import uk.gov.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
 class StatusLoggerTest extends FunSuite with Matchers {

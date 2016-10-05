@@ -30,7 +30,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar.mock
 import services.es.IndexMetadata
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.logging.StubLogger
+import uk.gov.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
 class OutputESWriterTest extends FreeSpec {

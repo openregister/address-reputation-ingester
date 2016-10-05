@@ -21,12 +21,10 @@
 
 package ingest
 
-import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
 import addressbase.OSCsv
 import ingest.algorithm.Algorithm
-import ingest.writers.OutputWriter
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
 import org.scalatest.FunSuite
@@ -34,9 +32,8 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.address.osgb.DbAddress
-import uk.co.hmrc.address.services.CsvParser
-import uk.co.hmrc.logging.StubLogger
+import uk.gov.hmrc.address.services.CsvParser
+import uk.gov.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
 class FirstPassTest extends FunSuite with MockitoSugar {
@@ -194,7 +191,7 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       lock.take()
       worker.awaitCompletion()
       assert(firstPass.forwardData.blpu.size === 1)
-      assert(firstPass.forwardData.blpu.get(320077134L) === "|KY10 2PY|1|2|J|9066")
+      assert(firstPass.forwardData.blpu.get(320077134L) === "|KY10 2PY|1|2|J|9066|0,0")
       assert(firstPass.forwardData.postcodeLCCs.size === 1)
       assert(firstPass.forwardData.postcodeLCCs.get("KY10 2PY") === "9066")
       assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPAs, 0 streets, 0/0 street descriptors.")
@@ -226,9 +223,9 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       lock.take()
       worker.awaitCompletion()
       assert(firstPass.forwardData.blpu.size === 3)
-      assert(firstPass.forwardData.blpu.get(100091275899L) === "100091660014|CO14 8RX|1|2|E|1560")
-      assert(firstPass.forwardData.blpu.get(35008288L) === "|FK12 5AG|8|4|S|9056")
-      assert(firstPass.forwardData.blpu.get(35008270L) === "|FK12 5AG|1| |S|9056")
+      assert(firstPass.forwardData.blpu.get(100091275899L) === "100091660014|CO14 8RX|1|2|E|1560|51.8486717,1.2550278")
+      assert(firstPass.forwardData.blpu.get(35008288L) === "|FK12 5AG|8|4|S|9056|56.1520438,-3.7994337")
+      assert(firstPass.forwardData.blpu.get(35008270L) === "|FK12 5AG|1| |S|9056|56.1520921,-3.7985827")
       assert(firstPass.sizeInfo === "First pass obtained 3 BLPUs, 0 DPAs, 0 streets, 0/0 street descriptors.")
     }
   }

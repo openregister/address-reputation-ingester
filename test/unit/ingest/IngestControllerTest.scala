@@ -34,7 +34,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.exec.{Continuer, WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
-import uk.co.hmrc.logging.StubLogger
+import uk.gov.hmrc.logging.StubLogger
 
 import scala.concurrent.ExecutionContext
 

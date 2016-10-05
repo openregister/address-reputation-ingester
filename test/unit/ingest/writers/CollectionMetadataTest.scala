@@ -31,7 +31,7 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import services.mongo.{CollectionMetadata, CollectionMetadataItem, CollectionName, MongoSystemMetadataStore}
-import uk.co.hmrc.address.services.mongo.CasbahMongoConnection
+import uk.gov.hmrc.address.services.mongo.CasbahMongoConnection
 
 import scala.collection.mutable
 
