@@ -24,7 +24,6 @@ import java.util.Date
 import com.carrotsearch.hppc.ObjectLookupContainer
 import com.sksamuel.elastic4s.ElasticClient
 import com.sksamuel.elastic4s.ElasticDsl._
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.common.unit.TimeValue
 import services.DbFacade
@@ -87,8 +86,7 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
   def writeCompletionDateTo(indexName: String, date: Date = new Date()) {
     clients foreach { client =>
 
-      greenHealth(indexName)
-
+      greenHealth(TimeValue.timeValueMinutes(10), indexName)
       client execute {
         closeIndex(indexName)
       } await
@@ -144,9 +142,9 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
     }
   }
 
-  private def greenHealth(index: String*) = {
+  private def greenHealth(timeout: TimeValue, index: String*) = {
     val client0 = clients.head.java
-    client0.admin().cluster().prepareHealth(index: _*).setWaitForGreenStatus().setTimeout(twoSeconds).get
+    client0.admin().cluster().prepareHealth(index: _*).setWaitForGreenStatus().setTimeout(timeout).get
   }
 
   private val twoSeconds = TimeValue.timeValueSeconds(2)
