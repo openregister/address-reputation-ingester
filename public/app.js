@@ -88,11 +88,13 @@ function ajax(method, path, success) {
     });
 }
 
-function get(path, refresh) {
+function get(path, refresh, scrollToBottom) {
     ajax('GET', path, function (data) {
         consoleText(data);
         if (refresh)
             setTimeout(fullStatus, 250);
+        if (scrollToBottom)
+            $("html, body").animate({ scrollTop: $(document).height() }, "slow");
     });
 }
 
@@ -111,7 +113,7 @@ function getAndRefreshConsoleJson(path) {
 }
 
 function fullStatus() {
-    get('/admin/fullStatus');
+    get('/admin/fullStatus', false, true);
     if (!pollerIsOk) refreshStatusContinually();
 }
 
@@ -138,7 +140,7 @@ function doStartProductAction(action) {
     else
         get(action + '/' + product + '/' + epoch + '/' +
             variant + bulkSize + loopDelay + force +
-            include + prefer + streets, true);
+            include + prefer + streets, true, true);
 }
 
 function getTarget1() {
@@ -167,15 +169,15 @@ function doIngest() {
 
 function goAuto() {
     var target = getTarget1();
-    get('/goAuto/via/file/to/' + target, true);
+    get('/goAuto/via/file/to/' + target, true, false);
 }
 
 function cancelTask() {
-    get('/admin/cancelCurrent', true);
+    get('/admin/cancelCurrent', true, false);
 }
 
 function remoteTree() {
-    get('/fetch/showRemoteTree', false);
+    get('/fetch/showRemoteTree', false, false);
 }
 
 function cleanFs() {
@@ -203,7 +205,7 @@ function switchCol() {
         alert("Enter the collection name");
     else {
         colname = colname.replace(/_/g, '/');
-        get('/switch/' + target + '/' + colname, true);
+        get('/switch/' + target + '/' + colname, true, false);
     }
 }
 
