@@ -30,11 +30,12 @@ import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.JsObject
 import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
-import services.es.IndexMetadata
+import services.es.{ESSchema, IndexMetadata}
 import services.mongo.{CollectionMetadata, CollectionName, MongoSystemMetadataStoreFactory}
 import uk.gov.hmrc.address.admin.MetadataStore
 import uk.gov.hmrc.logging.Stdout
 import uk.gov.hmrc.util.FileUtils
+import com.sksamuel.elastic4s.ElasticDsl._
 
 import scala.collection.mutable.ListBuffer
 
@@ -145,7 +146,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     """
        * return the sorted list of MongoDB collections
        * along with the completion dates (if present)
-    """ ignore {
+    """ in {
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
       CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_ts5"))
@@ -162,12 +163,20 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     """
        * return the sorted list of ES collections
        * along with the completion dates (if present)
-    """ ignore {
+    """ in {
       implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
       val idx = "abp_39_ts5"
 
       val indexMetadata = new IndexMetadata(List(esClient), false, Map("abi" -> 2, "abp" -> 2))
+
+      indexMetadata.clients foreach { client =>
+        client execute {
+          ESSchema.createIndexDefinition(idx, indexMetadata.address, indexMetadata.metadata,
+            ESSchema.Settings(1, 0, "1s"))
+        } await
+      }
+
       indexMetadata.writeCompletionDateTo(idx)
 
       waitForIndex(idx)

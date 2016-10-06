@@ -49,13 +49,13 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
     if (indexMetadata.collectionExists(indexName))
       indexMetadata.dropCollection(indexName)
 
-    indexMetadata.writeIngestSettingsTo(indexName, settings)
-
     indexMetadata.clients foreach { client =>
       client execute {
         ESSchema.createIndexDefinition(indexName, address, metadata,
           ESSchema.Settings(indexMetadata.numShards(model.productName), 0, "60s"))
       } await
+
+    indexMetadata.writeIngestSettingsTo(indexName, settings)
     }
   }
 
