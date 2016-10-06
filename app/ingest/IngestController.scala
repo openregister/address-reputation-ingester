@@ -16,7 +16,7 @@
 
 package ingest
 
-import java.io.{File, FileOutputStream, InputStream}
+import java.io.File
 import java.nio.file.{Files, StandardCopyOption}
 
 import controllers.ControllerConfig
@@ -33,15 +33,14 @@ import scala.concurrent.ExecutionContext
 
 object IngestControllerHelper {
   val allowedTargets = Set("db", "es", "file", "null")
-
-  def settings(opBulkSize: Option[Int], opLoopDelay: Option[Int]): WriterSettings = {
-    val bulkSize = opBulkSize getOrElse defaultBulkSize
-    val loopDelay = opLoopDelay getOrElse defaultLoopDelay
-    WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000))
-  }
-
   val defaultBulkSize = 1000
   val defaultLoopDelay = 0
+
+  def settings(opBulkSize: Option[Int], opLoopDelay: Option[Int], algorithm: Algorithm = Algorithm()): WriterSettings = {
+    val bulkSize = opBulkSize getOrElse defaultBulkSize
+    val loopDelay = opLoopDelay getOrElse defaultLoopDelay
+    WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000), algorithm)
+  }
 }
 
 
@@ -81,9 +80,9 @@ class IngestController(action: ActionBuilder[Request],
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
-      val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
       val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
       val algorithmSettings = Algorithm(include, prefer, streetFilter)
+      val settings = IngestControllerHelper.settings(bulkSize, loopDelay, algorithmSettings)
 
       val worker = workerFactory.worker
       worker.push(

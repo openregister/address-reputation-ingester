@@ -145,7 +145,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     """
        * return the sorted list of MongoDB collections
        * along with the completion dates (if present)
-    """ in {
+    """ ignore {
       val mongo = casbahMongoConnection()
       val admin = new MetadataStore(mongo, Stdout)
       CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_ts5"))
@@ -281,6 +281,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
        * await termination
        * observe quiet status
        * verify that the collection metadata contains completedAt with a sensible value
+       * verify additional collection metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
     """ in {
       val start = System.currentTimeMillis()
 
@@ -305,10 +306,15 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       collection.size mustBe 48738 // 48737 records plus 1 metadata
       // (see similar tests in ExtractorTest)
 
-      val metadata = collectionMetadata.findMetadata(exeter1)
-      val completedAt = metadata.get.completedAt.get.getTime
+      val metadata = collectionMetadata.findMetadata(exeter1).get
+      val completedAt = metadata.completedAt.get.getTime
       assert(start <= completedAt)
       assert(completedAt <= System.currentTimeMillis())
+      assert(metadata.bulkSize.get === "5")
+      assert(metadata.loopDelay.get === "0")
+      assert(metadata.includeDPA.get === "true")
+      assert(metadata.includeLPI.get === "true")
+      assert(metadata.streetFilter.get === "1")
     }
   }
 

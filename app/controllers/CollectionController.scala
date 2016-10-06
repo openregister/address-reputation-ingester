@@ -67,7 +67,14 @@ class CollectionController(action: ActionBuilder[Request],
         systemCollections.contains(name),
         pc.contains(name),
         info.createdAt.map(_.toString),
-        info.completedAt.map(_.toString))
+        info.completedAt.map(_.toString),
+        info.bulkSize,
+        info.loopDelay,
+        info.includeDPA,
+        info.includeLPI,
+        info.prefer,
+        info.streetFilter
+      )
     }
   }
 

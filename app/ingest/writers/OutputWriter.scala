@@ -20,6 +20,7 @@ package ingest.writers
 
 import java.util.Date
 
+import ingest.algorithm.Algorithm
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.osgb.DbAddress
 
@@ -40,8 +41,8 @@ trait OutputWriterFactory {
 }
 
 
-case class WriterSettings(bulkSize: Int, loopDelay: Int)
+case class WriterSettings(bulkSize: Int, loopDelay: Int, algorithm: Algorithm = Algorithm())
 
 object WriterSettings {
-  val default = WriterSettings(1, 0)
+  val default = WriterSettings(1, 0, Algorithm())
 }

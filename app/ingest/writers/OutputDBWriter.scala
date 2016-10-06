@@ -59,6 +59,7 @@ class OutputDBWriter(cleardownOnError: Boolean,
   def begin() {
     statusLogger.info(s"Writing new collection '$collectionName'")
     CollectionMetadata.writeCreationDateTo(collection)
+    CollectionMetadata.writeIngestSettingsTo(collection, settings)
   }
 
   def output(address: DbAddress) {
@@ -137,8 +138,8 @@ class BatchedBulkOperation(settings: WriterSettings, collection: MongoCollection
 
 class OutputDBWriterFactory extends OutputWriterFactory {
 
-  private def cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
-
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext): OutputWriter =
     new OutputDBWriter(cleardownOnError, model, statusLogger, ApplicationGlobal.mongoCollectionMetadata, settings)
+
+  private def cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
 }

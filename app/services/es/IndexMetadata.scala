@@ -24,6 +24,7 @@ import java.util.Date
 import com.carrotsearch.hppc.ObjectLookupContainer
 import com.sksamuel.elastic4s.ElasticClient
 import com.sksamuel.elastic4s.ElasticDsl._
+import ingest.writers.WriterSettings
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.common.unit.TimeValue
 import services.DbFacade
@@ -42,6 +43,13 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
   val metadata = "metadata"
 
   private val completedAt = "index.completedAt"
+  private val bulkSize = "index.bulkSize"
+  private val loopDelay = "index.loopDelay"
+  private val includeDPA = "index.includeDPA"
+  private val includeLPI = "index.includeLPI"
+  private val prefer = "index.prefer"
+  private val streetFilter = "index.streetFilter"
+  private val twoSeconds = TimeValue.timeValueSeconds(2)
 
   def numShards(productName: String): Int = {
     numShards.getOrElse(productName, 12)
@@ -49,18 +57,18 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
 
   def collectionExists(name: String): Boolean = existingCollectionNames.contains(name)
 
-  def dropCollection(name: String) {
-    clients foreach { client =>
-      client.admin.indices.delete(new DeleteIndexRequest(name)).actionGet
-    }
-  }
-
   def existingCollectionNames: List[String] = {
     val healths = clients.head.execute {
       get cluster health
     } await
 
     healths.getIndices.keySet.asScala.toList.sorted
+  }
+
+  def dropCollection(name: String) {
+    clients foreach { client =>
+      client.admin.indices.delete(new DeleteIndexRequest(name)).actionGet
+    }
   }
 
   def findMetadata(name: CollectionName): Option[CollectionMetadataItem] = {
@@ -74,9 +82,15 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
     } await
 
     val completedDate = Option(indexSettings.getSetting(index, completedAt)).map(s => new Date(s.toLong))
+    val bSize = Option(indexSettings.getSetting(index, bulkSize)).map(n => n.asInstanceOf[String])
+    val lDelay = Option(indexSettings.getSetting(index, loopDelay)).map(n => n.asInstanceOf[String])
+    val iDPA = Option(indexSettings.getSetting(index, includeDPA)).map(n => n.asInstanceOf[String])
+    val iLPI = Option(indexSettings.getSetting(index, includeLPI)).map(n => n.asInstanceOf[String])
+    val pref = Option(indexSettings.getSetting(index, prefer)).map(n => n.asInstanceOf[String])
+    val sFilter = Option(indexSettings.getSetting(index, streetFilter)).map(n => n.asInstanceOf[String])
     val count = rCount.await.totalHits
 
-    Some(CollectionMetadataItem(name, count.toInt, None, completedDate))
+    Some(CollectionMetadataItem(name, count.toInt, None, completedDate, bSize, lDelay, iDPA, iLPI, pref, sFilter))
   }
 
   def writeCreationDateTo(indexName: String, date: Date = new Date()) {
@@ -84,6 +98,10 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
   }
 
   def writeCompletionDateTo(indexName: String, date: Date = new Date()) {
+    updateIndexSettings(indexName, Map(completedAt -> date.getTime.toString))
+  }
+
+  def updateIndexSettings(indexName: String, settings: Map[String, String]) {
     clients foreach { client =>
 
       greenHealth(TimeValue.timeValueMinutes(10), indexName)
@@ -92,7 +110,7 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
       } await
 
       client execute {
-        update settings indexName set Map(completedAt -> date.getTime.toString)
+        update settings indexName set settings
       } await
 
       client.execute {
@@ -101,8 +119,43 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
     }
   }
 
+  private def greenHealth(timeout: TimeValue, index: String*) = {
+    val client0 = clients.head.java
+    client0.admin().cluster().prepareHealth(index: _*).setWaitForGreenStatus().setTimeout(timeout).get
+  }
+
+  def writeIngestSettingsTo(indexName: String, writerSettings: WriterSettings): Unit = {
+    updateIndexSettings(indexName,
+      Map(
+        bulkSize -> writerSettings.bulkSize.toString,
+        loopDelay -> writerSettings.loopDelay.toString,
+        includeDPA -> writerSettings.algorithm.includeDPA.toString,
+        includeLPI -> writerSettings.algorithm.includeLPI.toString,
+        prefer -> writerSettings.algorithm.prefer,
+        streetFilter -> writerSettings.algorithm.streetFilter.toString
+      )
+    )
+  }
+
   def getCollectionInUseFor(product: String): Option[CollectionName] = {
     aliasOf(product).flatMap(n => CollectionName(n))
+  }
+
+  private def aliasOf(name: String): Option[String] = {
+    val gar = clients.head.execute {
+      getAlias(name)
+    } await
+
+    val olc: ObjectLookupContainer[String] = gar.getAliases.keys
+
+    if (olc.isEmpty)
+      None
+    else {
+      val names = olc.toArray
+      //      assert(names.length == 1, names)
+      val n = names(0).toString
+      Some(n)
+    }
   }
 
   def setCollectionInUseFor(name: CollectionName) {
@@ -124,30 +177,6 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
       }
     }
   }
-
-  private def aliasOf(name: String): Option[String] = {
-    val gar = clients.head.execute {
-      getAlias(name)
-    } await
-
-    val olc: ObjectLookupContainer[String] = gar.getAliases.keys
-
-    if (olc.isEmpty)
-      None
-    else {
-      val names = olc.toArray
-      //      assert(names.length == 1, names)
-      val n = names(0).toString
-      Some(n)
-    }
-  }
-
-  private def greenHealth(timeout: TimeValue, index: String*) = {
-    val client0 = clients.head.java
-    client0.admin().cluster().prepareHealth(index: _*).setWaitForGreenStatus().setTimeout(timeout).get
-  }
-
-  private val twoSeconds = TimeValue.timeValueSeconds(2)
 }
 
 object IndexMetadata {

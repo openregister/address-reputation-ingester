@@ -27,7 +27,13 @@ case class ListCI(collections: List[CollectionInfo])
 
 case class CollectionInfo(name: String, size: Int, system: Boolean, inUse: Boolean,
                           createdAt: Option[String] = None,
-                          completedAt: Option[String] = None)
+                          completedAt: Option[String] = None,
+                          bulkSize: Option[String] = None,
+                          loopDelay: Option[String] = None,
+                          includeDPA: Option[String] = None,
+                          includeLPI: Option[String] = None,
+                          prefer: Option[String] = None,
+                          streetFilter: Option[String] = None)
 
 
 object CollectionInfo {
@@ -38,7 +44,13 @@ object CollectionInfo {
       (JsPath \ "system").read[Boolean] and
       (JsPath \ "inUse").read[Boolean] and
       (JsPath \ "createdAt").readNullable[String] and
-      (JsPath \ "completedAt").readNullable[String]) (CollectionInfo.apply _)
+      (JsPath \ "completedAt").readNullable[String] and
+      (JsPath \ "bulkSize").readNullable[String] and
+      (JsPath \ "loopDelay").readNullable[String] and
+      (JsPath \ "includeDPA").readNullable[String] and
+      (JsPath \ "includeLPI").readNullable[String] and
+      (JsPath \ "prefer").readNullable[String] and
+      (JsPath \ "streetFilter").readNullable[String]) (CollectionInfo.apply _)
 
   implicit val CollectionInfoWrites: Writes[CollectionInfo] = (
     (JsPath \ "name").write[String] and
@@ -46,7 +58,13 @@ object CollectionInfo {
       (JsPath \ "system").write[Boolean] and
       (JsPath \ "inUse").write[Boolean] and
       (JsPath \ "createdAt").writeNullable[String] and
-      (JsPath \ "completedAt").writeNullable[String]) (unlift(CollectionInfo.unapply))
+      (JsPath \ "completedAt").writeNullable[String] and
+      (JsPath \ "bulkSize").writeNullable[String] and
+      (JsPath \ "loopDelay").writeNullable[String] and
+      (JsPath \ "includeDPA").writeNullable[String] and
+      (JsPath \ "includeLPI").writeNullable[String] and
+      (JsPath \ "prefer").writeNullable[String] and
+      (JsPath \ "streetFilter").writeNullable[String]) (unlift(CollectionInfo.unapply))
 
   implicit val ListCollectionInfoWrites: Writes[ListCI] = Json.format[ListCI]
 }
