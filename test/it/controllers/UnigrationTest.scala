@@ -23,6 +23,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption._
 
+import com.sksamuel.elastic4s.ElasticDsl._
 import helper.AppServerUnderTest
 import org.elasticsearch.common.unit.TimeValue
 import org.scalatest.SequentialNestedSuiteExecution
@@ -35,7 +36,6 @@ import services.mongo.{CollectionMetadata, CollectionName, MongoSystemMetadataSt
 import uk.gov.hmrc.address.admin.MetadataStore
 import uk.gov.hmrc.logging.Stdout
 import uk.gov.hmrc.util.FileUtils
-import com.sksamuel.elastic4s.ElasticDsl._
 
 import scala.collection.mutable.ListBuffer
 
@@ -148,13 +148,11 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
        * along with the completion dates (if present)
     """ in {
       val mongo = casbahMongoConnection()
-      val admin = new MetadataStore(mongo, Stdout)
       CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_ts5"))
 
       val request = newRequest("GET", "/collections/db/list")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === OK)
-      //      assert(response.body === "foo")
 
       assert(waitUntil("/admin/status", "idle", 100000) === true)
       mongo.close()
@@ -375,7 +373,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
   //-----------------------------------------------------------------------------------------------
 
-  "ingest resource - errors" must {
+  "ingest resource - db - errors" must {
     """
        * passing bad parameters
        * should give 400
@@ -394,9 +392,28 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     }
   }
 
+  "ingest resource - es - errors" must {
+    """
+       * passing bad parameters
+       * should give 400
+    """ in {
+      assert(get("/ingest/from/file/to/es/abp/not-a-number/full").status === BAD_REQUEST)
+      //TODO fix this assert(get("/ingest/to/db/abp/1/not-a-number").status === BAD_REQUEST)
+    }
+
+    """
+       * when a wrong password is supplied
+       * the response should be 401
+    """ in {
+      val request = newRequest("GET", "/ingest/from/file/to/es/exeter/1/sample")
+      val response = await(request.withAuth("admin", "wrong", BASIC).execute())
+      assert(response.status === UNAUTHORIZED)
+    }
+  }
+
   //-----------------------------------------------------------------------------------------------
 
-  "switch-over resource error journeys" must {
+  "switch-over resource error journeys - db" must {
     """
        * attempt to switch to non-existent collection
        * should not change the nominated collection
@@ -453,9 +470,99 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     }
   }
 
+  "switch-over resource happy journey - es" must {
+    """
+       * attempt to switch to existing collection that has completedAt metadata
+       * should change the nominated collection
+    """ in {
+      implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+
+      val idx = "abp_39_200102030405"
+
+      val indexMetadata = new IndexMetadata(List(esClient), false, Map("abi" -> 1, "abp" -> 1))
+
+      indexMetadata.clients foreach { client =>
+        client execute {
+          ESSchema.createIndexDefinition(idx, indexMetadata.address, indexMetadata.metadata,
+            ESSchema.Settings(1, 0, "1s"))
+        } await
+      }
+
+      val request = newRequest("GET", "/switch/es/abp/39/200102030405")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      assert(response.status === ACCEPTED)
+      assert(waitUntil("/admin/status", "idle", 100000) === true)
+
+      val collectionName = indexMetadata.getCollectionInUseFor("abp").get.toString
+      assert(collectionName === "abp_39_200102030405")
+    }
+  }
+
+
+  "switch-over resource error journeys - es" must {
+    """
+       * attempt to switch to non-existent collection
+       * should not change the nominated collection
+    """ in {
+      implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+
+      val indexMetadata = new IndexMetadata(List(esClient), false, Map("abi" -> 1, "abp" -> 1))
+      val initialCollectionName = indexMetadata.getCollectionInUseFor("abp")
+
+      val request = newRequest("GET", "/switch/es/abp/39/209902030405")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      assert(response.status === ACCEPTED)
+      assert(waitUntil("/admin/status", "idle", 100000) === true)
+
+      val collectionName = indexMetadata.getCollectionInUseFor("abp")
+      assert(collectionName === initialCollectionName)
+    }
+
+    """
+       * attempt to switch to existing collection that has no completedAt metadata
+       * should not change the nominated collection
+    """ in {
+      implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+
+      val indexMetadata = new IndexMetadata(List(esClient), false, Map("abi" -> 1, "abp" -> 1))
+      val initialCollectionName = indexMetadata.getCollectionInUseFor("abp")
+
+      indexMetadata.clients foreach { client =>
+        client execute {
+          ESSchema.createIndexDefinition("209902030405", indexMetadata.address, indexMetadata.metadata,
+            ESSchema.Settings(1, 0, "1s"))
+        } await
+      }
+
+      val request = newRequest("GET", "/switch/es/abp/39/209002030405")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      assert(response.status === ACCEPTED)
+      assert(waitUntil("/admin/status", "idle", 100000) === true)
+
+      val collectionName = indexMetadata.getCollectionInUseFor("abp")
+      assert(collectionName === initialCollectionName)
+    }
+
+    """
+       * when a wrong password is supplied
+       * the response should be 401
+    """ in {
+      val request = newRequest("GET", "/switch/es/abp/39/200102030405")
+      val response = await(request.withAuth("admin", "wrong", BASIC).execute())
+      assert(response.status === UNAUTHORIZED)
+    }
+
+    """
+       * passing bad parameters
+       * should give 400
+    """ in {
+      assert(get("/switch/es/abp/not-a-number/1").status === BAD_REQUEST)
+    }
+  }
+
   //-----------------------------------------------------------------------------------------------
 
-  "switch-over resource happy journey" must {
+  "switch-over resource happy journey - db" must {
     """
        * attempt to switch to existing collection that has completedAt metadata
        * should change the nominated collection
