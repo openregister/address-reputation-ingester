@@ -38,7 +38,7 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedD
     .put("http.enabled", false)
     .put("path.home", esDataPath)
 
-  val esClient = ElasticClient.local(esSettings.build)
+  lazy val esClient = ElasticClient.local(esSettings.build)
 
   def appConfiguration: Map[String, String]
 

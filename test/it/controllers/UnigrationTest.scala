@@ -57,8 +57,8 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     "app.files.outputFolder" -> s"$tmpDir/output"
   )
 
-  def waitForIndex(idx: String) {
-    esClient.java.admin.cluster.prepareHealth(idx).setWaitForGreenStatus().setTimeout(TimeValue.timeValueSeconds(2)).get
+  def waitForIndex(idx: String, timeout: TimeValue = TimeValue.timeValueSeconds(2)) {
+    esClient.java.admin.cluster.prepareHealth(idx).setWaitForGreenStatus().setTimeout(timeout).get
   }
 
   //-----------------------------------------------------------------------------------------------
@@ -316,6 +316,52 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       // (see similar tests in ExtractorTest)
 
       val metadata = collectionMetadata.findMetadata(exeter1).get
+      val completedAt = metadata.completedAt.get.getTime
+      assert(start <= completedAt)
+      assert(completedAt <= System.currentTimeMillis())
+      assert(metadata.bulkSize.get === "5")
+      assert(metadata.loopDelay.get === "0")
+      assert(metadata.includeDPA.get === "true")
+      assert(metadata.includeLPI.get === "true")
+      assert(metadata.streetFilter.get === "1")
+    }
+  }
+
+  //-----------------------------------------------------------------------------------------------
+
+  "ingest resource happy journey - to ES" must {
+    """
+       * observe quiet status
+       * start ingest
+       * observe busy status
+       * await termination
+       * observe quiet status
+       * verify that the collection metadata contains completedAt with a sensible value
+       * verify additional collection metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
+    """ in {
+      implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+
+      val start = System.currentTimeMillis()
+
+      assert(waitUntil("/admin/status", "idle", 100000) === true)
+
+      val request = newRequest("GET", "/ingest/from/file/to/es/exeter/1/sample?bulkSize=5&loopDelay=0&forceChange=true")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      response.status mustBe ACCEPTED
+
+      verifyOK("/admin/status", "busy ingesting to es exeter/1/sample (forced)")
+
+      waitWhile("/admin/status", "busy ingesting to es exeter/1/sample (forced)", 100000)
+
+      verifyOK("/admin/status", "idle")
+
+      val indexMetadata = new IndexMetadata(List(esClient), false, Map("abi" -> 1, "abp" -> 1))
+      waitForIndex("exeter", TimeValue.timeValueSeconds(30))
+      val exeter1 = indexMetadata.existingCollectionNamesLike(CollectionName("exeter", Some(1))).head
+      val metadata = indexMetadata.findMetadata(exeter1).get
+      metadata.size mustBe 48737 // one less than DB because metadata stored in idx settings
+
+      // (see similar tests in ExtractorTest)
       val completedAt = metadata.completedAt.get.getTime
       assert(start <= completedAt)
       assert(completedAt <= System.currentTimeMillis())
