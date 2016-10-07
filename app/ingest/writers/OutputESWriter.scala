@@ -30,6 +30,8 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMetadata: IndexMetadata,
                      settings: WriterSettings, ec: ExecutionContext) extends OutputWriter with ElasticDsl {
 
+  val collectionName = model.collectionName
+
   private implicit val x = ec
   private val address = indexMetadata.address
   private val metadata = indexMetadata.metadata

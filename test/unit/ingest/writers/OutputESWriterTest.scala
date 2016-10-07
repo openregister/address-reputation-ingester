@@ -21,7 +21,6 @@ package ingest.writers
 
 import java.util.Date
 
-import com.mongodb.casbah.MongoCollection
 import com.sksamuel.elastic4s.ElasticClient
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
@@ -30,6 +29,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar.mock
 import services.es.IndexMetadata
 import services.model.{StateModel, StatusLogger}
+import services.mongo.{CollectionMetadataItem, CollectionName}
 import uk.gov.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
@@ -39,31 +39,19 @@ class OutputESWriterTest extends FreeSpec {
   val now = new Date()
   val yesterday = new Date(now.getTime - 86400000L)
 
+  val x_1_ts1 = CollectionName("x_1_ts1").get
+  val x_4_ts1 = CollectionName("x_4_ts1").get
+  val x_4_ts2 = CollectionName("x_4_ts2").get
+
   class Context(timestamp: String, collectionNames: Set[String]) {
-    //    val mongoDB = mock[MongoDB]
-    //    val store = mock[MongoSystemMetadataStore]
     val esClient = mock[ElasticClient]
     val indexMetadata = mock[IndexMetadata]
-    //    val bulk = mock[BulkWriteOperation]
     val logger = new StubLogger()
     val model = new StateModel(productName = "x", epoch = 4, timestamp = Some(timestamp))
     val status = new StatusLogger(logger)
 
-    //    when(collectionMetadata.db) thenReturn mongoDB
-    //    when(collectionMetadata.systemMetadata) thenReturn store
     when(indexMetadata.clients) thenReturn List(esClient)
     when(indexMetadata.existingCollectionNames) thenReturn collectionNames.toList.sorted
-
-    val all = collectionNames + ("x_4_" + timestamp)
-    val collections = all.map(n => n -> mock[MongoCollection]).toMap
-
-    for (n <- all) {
-      val collection = collections(n)
-      //      when(mongoDB.collectionExists(n)) thenReturn true
-      //      when(mongoDB(n)) thenReturn collection
-      when(collection.name) thenReturn n
-      //      when(collection.initializeUnorderedBulkOperation) thenReturn bulk
-    }
   }
 
   "targetExistsAndIsNewerThan" - {
@@ -81,21 +69,52 @@ class OutputESWriterTest extends FreeSpec {
 
 
     "when the model has corresponding collections without any completion dates" - {
-      "then targetExistsAndIsNewerThan will return None" ignore {
-        //TODO
+      "then targetExistsAndIsNewerThan will return None" in {
+        new Context("ts3", Set("admin", "x_4_ts1", "x_4_ts2")) {
+          when(indexMetadata.existingCollectionNames) thenReturn List("admin", "x_4_ts1", "x_4_ts2")
+          when(indexMetadata.findMetadata(x_4_ts1)) thenReturn None
+          when(indexMetadata.findMetadata(x_4_ts2)) thenReturn None
+          val outputESWriter = new OutputESWriter(model, status, indexMetadata, WriterSettings(10, 0), ec)
+
+          val result = outputESWriter.existingTargetThatIsNewerThan(yesterday)
+
+          assert(result === None)
+        }
       }
     }
 
-
     "when the model has corresponding collections with old completion dates" - {
-      "then targetExistsAndIsNewerThan will return None" ignore {
-        //TODO
+      "then targetExistsAndIsNewerThan will return None" in {
+        new Context("ts3", Set("admin", "x_4_ts1", "x_4_ts2")) {
+          when(indexMetadata.existingCollectionNames) thenReturn List("admin", "x_4_ts1", "x_4_ts2")
+          when(indexMetadata.findMetadata(x_4_ts1)) thenReturn None
+          when(indexMetadata.findMetadata(x_4_ts2)) thenReturn None
+
+          val outputESWriter = new OutputESWriter(model, status, indexMetadata, WriterSettings(10, 0), ec)
+
+          val result = outputESWriter.existingTargetThatIsNewerThan(now)
+
+          assert(result === None)
+        }
       }
     }
 
     "when the model has corresponding collections with newish completion dates" - {
-      "then targetExistsAndIsNewerThan will return the last collection name" ignore {
-        //TODO
+      "then targetExistsAndIsNewerThan will return the last collection name" in {
+        new Context("ts3", Set("admin", "x_4_ts1", "x_4_ts2")) {
+          val now = new Date()
+          val yesterday = new Date(now.getTime - 86400000L)
+
+          when(indexMetadata.existingCollectionNames) thenReturn List("admin", "x_4_ts1", "x_4_ts2")
+          when(indexMetadata.findMetadata(x_4_ts1)) thenReturn Some(CollectionMetadataItem(x_4_ts1, 10, None, Some(dateAgo(864000000))))
+          when(indexMetadata.findMetadata(x_4_ts2)) thenReturn Some(CollectionMetadataItem(x_4_ts2, 10, None, Some(dateAgo(1000))))
+
+          val outputESWriter = new OutputESWriter(model, status, indexMetadata, WriterSettings(10, 0), ec)
+
+          val result = outputESWriter.existingTargetThatIsNewerThan(yesterday)
+
+          assert(result === Some("x_4_ts2"))
+        }
       }
     }
   }
@@ -121,5 +140,10 @@ class OutputESWriterTest extends FreeSpec {
         //TODO
       }
     }
+  }
+
+  private def dateAgo(ms: Long) = {
+    val now = System.currentTimeMillis
+    new Date(now - ms)
   }
 }
