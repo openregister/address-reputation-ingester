@@ -189,7 +189,7 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
       }
     } catch {
       case t: Throwable =>
-        statusLogger.warn(t.getClass.getName + " " + t.getMessage)
+        statusLogger.warn(t.getClass.getName + " " + t.getMessage, t)
     } finally {
       statusLogger.info(s"Worker thread has terminated. running=$running")
       _executionState.set(TERMINATED)
