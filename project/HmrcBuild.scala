@@ -43,7 +43,7 @@ object HmrcBuild extends Build with MicroService {
     "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.1" excludeAll ExclusionRule(organization = "io.netty"),
     // for some reason this dependency is skipping the local cache and forcing resolution from the internet
     // hence the exclusion
-    "com.github.lookfirst" % "sardine" % "5.7" excludeAll ExclusionRule(organization = "org.apache.httpcomponents"),
+    "com.github.lookfirst" % "sardine" % "5.7" excludeAll ExclusionRule(organization = "org.apache.httpcomponents", name = "httpclient"),
     "org.apache.httpcomponents" % "httpclient" % "4.5.1",
     "net.openhft" % "chronicle-map" % "3.8.0",
     "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
