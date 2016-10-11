@@ -142,6 +142,8 @@ class WorkQueue(val statusLogger: StatusLogger) {
 
 private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogger) extends Thread with Continuer {
 
+  setDaemon(true)
+
   import ExecutionState._
 
   private[exec] var running = true
@@ -185,23 +187,27 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
       while (running) {
         doNextTask()
       }
+    } catch {
+      case t: Throwable =>
+        statusLogger.warn(t.getClass.getName + " " + t.getMessage)
     } finally {
-      statusLogger.info("Worker thread has terminated.")
+      statusLogger.info(s"Worker thread has terminated. running=$running")
       _executionState.set(TERMINATED)
     }
   }
 
   private def doNextTask() {
-    val task = queue.take() // blocks until there is something to do
-    _executionState.compareAndSet(IDLE, BUSY)
-    assert(task.info!=null)
-    _currentInfo.set(task.info)
-    statusLogger.startAfresh()
     try {
+      val task = queue.take() // blocks until there is something to do
+      _executionState.compareAndSet(IDLE, BUSY)
+      assert(task.info != null)
+      _currentInfo.set(task.info)
+      statusLogger.startAfresh()
       runTask(task)
     } catch {
       case NonFatal(e) =>
-        statusLogger.warn(status, e)
+        statusLogger.warn(e.getClass.getName + " " + e.getMessage)
+        statusLogger.tee.warn(doing, e)
     } finally {
       _currentInfo.set(WorkQueue.idle)
       if (queue.isEmpty) {
@@ -213,19 +219,9 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
   private def runTask(task: Task) {
     val info = doing
     statusLogger.info(s"Starting $info.")
-    try {
-      val timer = new DiagnosticTimer
-      task.action(this)
-      statusLogger.info(s"Finished $info after {}.", timer)
-    } catch {
-      case re: RuntimeException =>
-        statusLogger.warn(re.getClass.getName + " " + re.getMessage)
-        statusLogger.tee.warn(info, re)
-        throw re
-      case e: Exception =>
-        statusLogger.warn(e.getClass.getName + " " + e.getMessage)
-        throw e
-    }
+    val timer = new DiagnosticTimer
+    task.action(this)
+    statusLogger.info(s"Finished $info after {}.", timer)
   }
 }
 
