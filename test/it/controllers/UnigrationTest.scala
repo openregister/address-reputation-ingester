@@ -170,7 +170,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
       indexMetadata.clients foreach { client =>
         client execute {
-          ESSchema.createIndexDefinition(idx, indexMetadata.address, indexMetadata.metadata,
+          ESSchema.createIndexDefinition(idx, indexMetadata.address,
             ESSchema.Settings(1, 0, "1s"))
         } await
       }
@@ -483,7 +483,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
       indexMetadata.clients foreach { client =>
         client execute {
-          ESSchema.createIndexDefinition(idx, indexMetadata.address, indexMetadata.metadata,
+          ESSchema.createIndexDefinition(idx, indexMetadata.address,
             ESSchema.Settings(1, 0, "1s"))
         } await
       }
@@ -529,7 +529,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
       indexMetadata.clients foreach { client =>
         client execute {
-          ESSchema.createIndexDefinition("209902030405", indexMetadata.address, indexMetadata.metadata,
+          ESSchema.createIndexDefinition("209902030405", indexMetadata.address,
             ESSchema.Settings(1, 0, "1s"))
         } await
       }

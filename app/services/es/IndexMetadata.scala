@@ -40,7 +40,6 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
   val ariAliasName = "address-reputation-data"
   val indexAlias = "addressbase-index"
   val address = "address"
-  val metadata = "metadata"
 
   private val completedAt = "index.completedAt"
   private val bulkSize = "index.bulkSize"

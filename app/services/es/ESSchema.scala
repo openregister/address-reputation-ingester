@@ -39,7 +39,6 @@ object ESSchema {
 
   def createIndexDefinition(indexName: String,
                             addressDocType: String = "address",
-                            metadataDocType: String = "metadata",
                             settings: Settings = Settings()): CreateIndexDefinition = {
 
     val definition = CreateIndexDefinition(indexName)

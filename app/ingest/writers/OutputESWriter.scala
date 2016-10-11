@@ -34,7 +34,6 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
 
   private implicit val x = ec
   private val address = indexMetadata.address
-  private val metadata = indexMetadata.metadata
   private val indexName = model.collectionName.toString
 
   override def existingTargetThatIsNewerThan(date: Date): Option[String] = {
@@ -53,7 +52,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
 
     indexMetadata.clients foreach { client =>
       client execute {
-        ESSchema.createIndexDefinition(indexName, address, metadata,
+        ESSchema.createIndexDefinition(indexName, address,
           ESSchema.Settings(indexMetadata.numShards(model.productName), 0, "60s"))
       } await
 
