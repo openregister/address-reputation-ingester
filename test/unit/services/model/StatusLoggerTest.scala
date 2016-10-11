@@ -45,37 +45,37 @@ class StatusLoggerTest extends FunSuite with Matchers {
 
     statusLogger.startAfresh()
     statusLogger.info("b3")
-    statusLogger.status should fullyMatch regex "a1\na2\n~~~~~~~~~~~~~~~\nb3"
+    statusLogger.status should fullyMatch regex "a1\na2\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nb3"
 
     statusLogger.info("b4")
-    statusLogger.status should fullyMatch regex "a1\na2\n~~~~~~~~~~~~~~~\nb3\nb4"
+    statusLogger.status should fullyMatch regex "a1\na2\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nb3\nb4"
 
     statusLogger.info("b5")
-    statusLogger.status should fullyMatch regex "a1\na2\n~~~~~~~~~~~~~~~\nb3\nb4\nb5"
+    statusLogger.status should fullyMatch regex "a1\na2\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nb3\nb4\nb5"
 
     statusLogger.info("b6")
-    statusLogger.status should fullyMatch regex "a1\na2\n~~~~~~~~~~~~~~~\nb3\nb4\nb5\nb6"
+    statusLogger.status should fullyMatch regex "a1\na2\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nb3\nb4\nb5\nb6"
 
     statusLogger.startAfresh()
     statusLogger.info("c7")
-    statusLogger.status should fullyMatch regex "a1\na2\n~~~~~~~~~~~~~~~\nb3\nb4\nb5\nb6\n~~~~~~~~~~~~~~~\nc7"
+    statusLogger.status should fullyMatch regex "a1\na2\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nb3\nb4\nb5\nb6\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nc7"
 
     statusLogger.info("c8")
-    statusLogger.status should fullyMatch regex "a1\na2\n~~~~~~~~~~~~~~~\nb3\nb4\nb5\nb6\n~~~~~~~~~~~~~~~\nc7\nc8"
+    statusLogger.status should fullyMatch regex "a1\na2\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nb3\nb4\nb5\nb6\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nc7\nc8"
 
     statusLogger.startAfresh()
     statusLogger.info("d9")
-    statusLogger.status should fullyMatch regex "b3\nb4\nb5\nb6\n~~~~~~~~~~~~~~~\nc7\nc8\n~~~~~~~~~~~~~~~\nd9"
+    statusLogger.status should fullyMatch regex "b3\nb4\nb5\nb6\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nc7\nc8\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nd9"
 
     statusLogger.info("d10")
-    statusLogger.status should fullyMatch regex "b3\nb4\nb5\nb6\n~~~~~~~~~~~~~~~\nc7\nc8\n~~~~~~~~~~~~~~~\nd9\nd10"
+    statusLogger.status should fullyMatch regex "b3\nb4\nb5\nb6\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nc7\nc8\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nd9\nd10"
 
     statusLogger.startAfresh()
     statusLogger.info("e11")
-    statusLogger.status should fullyMatch regex "c7\nc8\n~~~~~~~~~~~~~~~\nd9\nd10\n~~~~~~~~~~~~~~~\ne11"
+    statusLogger.status should fullyMatch regex "c7\nc8\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nd9\nd10\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\ne11"
 
     statusLogger.info("e12")
-    statusLogger.status should fullyMatch regex "c7\nc8\n~~~~~~~~~~~~~~~\nd9\nd10\n~~~~~~~~~~~~~~~\ne11\ne12"
+    statusLogger.status should fullyMatch regex "c7\nc8\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\nd9\nd10\n~~~~~~~~~~~~~~~ .* ~~~~~~~~~~~~~~~\ne11\ne12"
   }
 
 }
