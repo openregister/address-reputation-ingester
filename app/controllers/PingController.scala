@@ -16,6 +16,8 @@
 
 package controllers
 
+import scala.concurrent.Future
+
 import config.Provenance
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -28,5 +30,13 @@ trait PingController extends BaseController {
 
   def ping(): Action[AnyContent] = Action { request =>
     Ok(Provenance.versionInfo).withHeaders(CONTENT_TYPE -> "application/json")
+  }
+
+  def exit(): Action[AnyContent] = Action { request =>
+    Future.successful {
+      Thread.sleep(500)
+      System.exit(10)
+    }
+    Ok("exiting\n").withHeaders(CONTENT_TYPE -> "text/plain")
   }
 }

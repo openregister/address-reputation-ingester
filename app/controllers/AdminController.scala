@@ -21,6 +21,8 @@ package controllers
 import java.io.{File, IOException}
 import java.net.URL
 import java.nio.file.Files
+import java.text.DateFormat
+import java.util.Date
 
 import config.JacksonMapper
 import fetch.WebDavFile
@@ -44,6 +46,7 @@ class AdminController(action: ActionBuilder[Request],
 
   private val PlainText = CONTENT_TYPE -> MimeTypes.TEXT
   private val ApplJson = CONTENT_TYPE -> MimeTypes.JSON
+  private val startTime = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM).format(new Date())
 
   def index: Action[AnyContent] = action {
     Redirect("ui/index.html")
@@ -86,7 +89,7 @@ class AdminController(action: ActionBuilder[Request],
   }
 
   def realm: Action[AnyContent] = action {
-    Ok(realmString).withHeaders(PlainText)
+    Ok(s"$realmString\n$startTime").withHeaders(PlainText)
   }
 }
 

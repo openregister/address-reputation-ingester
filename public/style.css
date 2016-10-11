@@ -233,3 +233,8 @@ a.button.grey {
     color: #090;
     border: 2px outset #7e7;
 }
+
+#since {
+    font-weight: normal;
+    font-size: 70%;
+}

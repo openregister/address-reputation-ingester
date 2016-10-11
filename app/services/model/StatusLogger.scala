@@ -16,6 +16,9 @@
 
 package services.model
 
+import java.text.DateFormat
+import java.util.Date
+
 import org.slf4j.helpers.MessageFormatter
 import uk.gov.hmrc.logging.SimpleLogger
 
@@ -54,8 +57,9 @@ class StatusLogger(val tee: SimpleLogger, history: Int = 1) {
   }
 
   def startAfresh() {
+    val now = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM).format(new Date())
     synchronized {
-      pushMessage("~~~~~~~~~~~~~~~")
+      pushMessage(s"~~~~~~~~~~~~~~~ $now ~~~~~~~~~~~~~~~")
       // note that 'buffers' builds up in reverse
       if (buffers.size > history) {
         buffers = buffers.take(history)

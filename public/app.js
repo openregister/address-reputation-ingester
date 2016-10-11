@@ -249,7 +249,11 @@ function toggleFieldset(id) {
 
 function showTheRealm() {
     ajax('GET', '/admin/realm', function (data) {
-        $('#realm').addClass(data).text(data);
+        var lines = data.split("\n");
+        var realm = lines[0];
+        $('#realm').addClass(realm).text(realm);
+        var start = lines[1];
+        $('#since').text("Up since " + start);
     });
 }
 

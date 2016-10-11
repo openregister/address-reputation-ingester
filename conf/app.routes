@@ -7,6 +7,7 @@ GET    /admin/metrics             com.kenshoo.play.metrics.MetricsController.met
 # ----- Ping -----
 HEAD   /ping                                                    controllers.PingController.ping
 GET    /ping                                                    controllers.PingController.ping
+GET    /exit                                                    controllers.PingController.exit
 
 # store is db | file (local storage area)
 # target is db | file | null (target for processed output records)
