@@ -44,7 +44,8 @@ object HmrcBuild extends Build with MicroService {
     // for some reason this dependency is skipping the local cache and forcing resolution from the internet
     // hence the exclusion
     "com.github.lookfirst" % "sardine" % "5.7" excludeAll ExclusionRule(organization = "org.apache.httpcomponents", name = "httpclient"),
-    "org.apache.httpcomponents" % "httpclient" % "4.5.1",
+    "org.apache.httpcomponents" % "httpclient" % "4.5.1" force(),
+    "org.apache.httpcomponents" % "httpcore" % "4.4.3" force(),
     "net.openhft" % "chronicle-map" % "3.8.0",
     "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
     "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
