@@ -57,7 +57,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
     val dir = new File(getClass.getClassLoader.getResource(".").getFile)
     val found = Ingester.listFiles(dir, ".zip")
     assert(found.head.getName === "3files.zip")
-    assert(found.last.getPath.endsWith("/exeter/1/sample/addressbase-premium-csv-sample-data.zip"))
+    assert(found.last.getPath.endsWith("/exeter/1/full/data/addressbase-premium-csv-sample-data.zip"))
   }
 
 

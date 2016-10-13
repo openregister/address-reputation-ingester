@@ -40,6 +40,8 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedD
 
   lazy val esClient = ElasticClient.local(esSettings.build)
 
+  lazy val webdavStub = new helper.WebdavStub(getClass.getClassLoader.getResource("ut").toURI.getPath)
+
   def appConfiguration: Map[String, String]
 
   def casbahMongoConnection() = new CasbahMongoConnection(mongoTestConnection.uri)
@@ -51,7 +53,11 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedD
   def afterAppServerStops() {}
 
   implicit override final lazy val app: FakeApplication = new FakeApplication(
-    additionalConfiguration = appConfiguration ++ Map(mongoTestConnection.configItem, "elastic.localmode" -> true))
+    additionalConfiguration = appConfiguration ++
+      Map(
+        mongoTestConnection.configItem, "elastic.localmode" -> true,
+        "app.remote.server" -> "http://localhost:8080/webdav")
+      )
 
   /**
     * The port used by the `TestServer`.  By default this will be set to the result returned from
@@ -66,6 +72,7 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedD
     beforeAppServerStarts()
     val testServer = TestServer(port, app)
     testServer.start()
+    webdavStub.start()
     try {
       val newConfigMap = args.configMap + ("org.scalatestplus.play.app" -> app) + ("org.scalatestplus.play.port" -> port)
       val newArgs = args.copy(configMap = newConfigMap)
@@ -74,6 +81,7 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedD
       status
     }
     finally {
+      webdavStub.stop()
       testServer.stop()
       afterAppServerStops()
       mongoTestConnection.stop()

@@ -584,6 +584,52 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     }
   }
 
+  "WebDav functionality"  must {
+    "get remote directory listing" in {
+      val r =
+        """http://localhost:8080/webdav
+          |/
+          |  webdav/
+          |    exeter/
+          |      1/
+          |        full/
+          |          data/
+          |            addressbase-premium-csv-sample-data.zip            (data)       6715 KiB
+          |          ready-to-collect.txt                               (txt)           0 KiB
+          |  exeter/
+          |    1/
+          |      full/
+          |        data/
+          |          addressbase-premium-csv-sample-data.zip            (data)       6715 KiB
+          |        ready-to-collect.txt                               (txt)           0 KiB
+          |""".stripMargin
+
+      val request = newRequest("GET", "/fetch/showRemoteTree")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+
+      assert(response.body === r )
+    }
+
+    "retrieve a file from remote endpoint" in {
+      // Have to use full as the WebDaveTree code expects only full
+      val request = newRequest("GET", "/fetch/to/file/exeter/1/full?forceChange=true")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+
+      assert(response.status === ACCEPTED)
+
+      verifyOK("/admin/status", "busy fetching exeter/1/full (forced)")
+
+      assert(waitUntil("/admin/status", "idle", 100000) === true)
+
+      val outputDir = new File(s"${tmpDir}/download/exeter/1/full")
+      val files = outputDir.listFiles()
+      files.length mustBe 2 // zip & done
+      val outFile = files.head
+      outFile.exists() mustBe true
+      outFile.length() mustBe 6876716L
+    }
+  }
+
   //-----------------------------------------------------------------------------------------------
 
   override def beforeAppServerStarts() {
@@ -595,11 +641,6 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     Files.copy(sample, new File(unpackFolder, "SX9090.zip").toPath, REPLACE_EXISTING)
     sample.close()
   }
-
-  //  override def afterAppServerStops() {
-  //    super.afterAppServerStops()
-  //    deleteDir(tmpDir)
-  //  }
 
 }
 

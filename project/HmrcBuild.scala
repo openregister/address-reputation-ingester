@@ -62,7 +62,8 @@ object HmrcBuild extends Build with MicroService {
     "uk.gov.hmrc" %% "hmrctest" % "1.8.0" % scope,
     "org.scalatestplus" %% "play" % "1.2.0" % scope,
     "org.mockito" % "mockito-all" % "1.10.19" % scope,
-    "com.pyruby" % "java-stub-server" % "0.14" % scope)
+    "com.pyruby" % "java-stub-server" % "0.14" % scope,
+    "io.milton" % "milton-server-ce" % "2.7.1.5" % scope)
 
   val testDependencies = baseTestDependencies("test")
 

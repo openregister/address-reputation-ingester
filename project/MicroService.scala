@@ -71,6 +71,7 @@ trait MicroService {
     .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
 
     .settings(resolvers += Resolver.bintrayRepo("hmrc", "releases"))
+    .settings(resolvers += Resolver.bintrayRepo("milton", "Milton"))
     .enablePlugins(SbtDistributablesPlugin, SbtGitVersioning)
 }
 
