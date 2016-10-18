@@ -20,9 +20,10 @@ import java.util.Date
 
 import com.sksamuel.elastic4s._
 import config.ApplicationGlobal
-import services.es.{ESSchema, IndexMetadata}
+import services.es.IndexMetadata
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.services.es.ESSchema
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}

@@ -31,9 +31,10 @@ import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.JsObject
 import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
-import services.es.{ESSchema, IndexMetadata}
+import services.es.IndexMetadata
 import services.mongo.{CollectionMetadata, CollectionName, MongoSystemMetadataStoreFactory}
 import uk.gov.hmrc.address.admin.MetadataStore
+import uk.gov.hmrc.address.services.es.ESSchema
 import uk.gov.hmrc.logging.Stdout
 import uk.gov.hmrc.util.FileUtils
 
@@ -249,12 +250,60 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
   //-----------------------------------------------------------------------------------------------
 
+  "webdav fetch"  must {
+    "get remote directory listing" in {
+      val r =
+        """http://localhost:8080/webdav
+          |/
+          |  webdav/
+          |    exeter/
+          |      1/
+          |        full/
+          |          data/
+          |            addressbase-premium-csv-sample-data.zip            (data)       6715 KiB
+          |          ready-to-collect.txt                               (txt)           0 KiB
+          |  exeter/
+          |    1/
+          |      full/
+          |        data/
+          |          addressbase-premium-csv-sample-data.zip            (data)       6715 KiB
+          |        ready-to-collect.txt                               (txt)           0 KiB
+          |""".stripMargin
+
+      val request = newRequest("GET", "/fetch/showRemoteTree")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+
+      assert(response.body === r )
+    }
+
+    "retrieve a file from remote endpoint" ignore {
+      // Have to use full as the WebDaveTree code expects only full
+      val request = newRequest("GET", "/fetch/to/file/exeter/1/full?forceChange=true")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+
+      assert(response.status === ACCEPTED)
+
+      verifyOK("/admin/status", "busy fetching exeter/1/full (forced)")
+
+      assert(waitUntil("/admin/status", "idle", 100000) === true)
+
+      val outputDir = new File(s"$tmpDir/download/exeter/1/full")
+      val files = outputDir.listFiles()
+      files.length mustBe 2 // zip & done
+      val outFile = files.head
+      outFile.exists() mustBe true
+      outFile.length() mustBe 6876716L
+    }
+  }
+
+  //-----------------------------------------------------------------------------------------------
+
   "ingest resource happy journey - to file" must {
     """
        * observe quiet status,
        * start ingest,
        * observe busy status,
-       * await termination,
+       * await successful outcome,
        * observe quiet status
     """ in {
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -285,7 +334,7 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
        * observe quiet status
        * start ingest
        * observe busy status
-       * await termination
+       * await successful outcome
        * observe quiet status
        * verify that the collection metadata contains completedAt with a sensible value
        * verify additional collection metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
@@ -327,12 +376,12 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
   //-----------------------------------------------------------------------------------------------
 
-  "ingest resource happy journey - to ES" must {
+  "ingest resource happy journey - to es" must {
     """
        * observe quiet status
        * start ingest
        * observe busy status
-       * await termination
+       * await successful outcome
        * observe quiet status
        * verify that the collection metadata contains completedAt with a sensible value
        * verify additional collection metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
@@ -470,6 +519,30 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     }
   }
 
+  "switch-over resource happy journey - db" must {
+    """
+       * attempt to switch to existing collection that has completedAt metadata
+       * should change the nominated collection
+    """ in {
+      val mongo = casbahMongoConnection()
+      val admin = new MetadataStore(mongo, Stdout)
+      CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_200102030405"))
+      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_200102030405"))
+
+      val request = newRequest("GET", "/switch/db/abp/39/200102030405")
+      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      assert(response.status === ACCEPTED)
+      assert(waitUntil("/admin/status", "idle", 100000) === true)
+
+      val collectionName = admin.gbAddressBaseCollectionName.get
+      assert(collectionName === "abp_39_200102030405")
+
+      mongo.close()
+    }
+  }
+
+  //-----------------------------------------------------------------------------------------------
+
   "switch-over resource happy journey - es" must {
     """
        * attempt to switch to existing collection that has completedAt metadata
@@ -497,7 +570,6 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       assert(collectionName === "abp_39_200102030405")
     }
   }
-
 
   "switch-over resource error journeys - es" must {
     """
@@ -557,76 +629,6 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
        * should give 400
     """ in {
       assert(get("/switch/es/abp/not-a-number/1").status === BAD_REQUEST)
-    }
-  }
-
-  //-----------------------------------------------------------------------------------------------
-
-  "switch-over resource happy journey - db" must {
-    """
-       * attempt to switch to existing collection that has completedAt metadata
-       * should change the nominated collection
-    """ in {
-      val mongo = casbahMongoConnection()
-      val admin = new MetadataStore(mongo, Stdout)
-      CollectionMetadata.writeCreationDateTo(mongo.getConfiguredDb("abp_39_200102030405"))
-      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_200102030405"))
-
-      val request = newRequest("GET", "/switch/db/abp/39/200102030405")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
-      assert(response.status === ACCEPTED)
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
-
-      val collectionName = admin.gbAddressBaseCollectionName.get
-      assert(collectionName === "abp_39_200102030405")
-
-      mongo.close()
-    }
-  }
-
-  "WebDav functionality"  must {
-    "get remote directory listing" in {
-      val r =
-        """http://localhost:8080/webdav
-          |/
-          |  webdav/
-          |    exeter/
-          |      1/
-          |        full/
-          |          data/
-          |            addressbase-premium-csv-sample-data.zip            (data)       6715 KiB
-          |          ready-to-collect.txt                               (txt)           0 KiB
-          |  exeter/
-          |    1/
-          |      full/
-          |        data/
-          |          addressbase-premium-csv-sample-data.zip            (data)       6715 KiB
-          |        ready-to-collect.txt                               (txt)           0 KiB
-          |""".stripMargin
-
-      val request = newRequest("GET", "/fetch/showRemoteTree")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
-
-      assert(response.body === r )
-    }
-
-    "retrieve a file from remote endpoint" in {
-      // Have to use full as the WebDaveTree code expects only full
-      val request = newRequest("GET", "/fetch/to/file/exeter/1/full?forceChange=true")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
-
-      assert(response.status === ACCEPTED)
-
-      verifyOK("/admin/status", "busy fetching exeter/1/full (forced)")
-
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
-
-      val outputDir = new File(s"${tmpDir}/download/exeter/1/full")
-      val files = outputDir.listFiles()
-      files.length mustBe 2 // zip & done
-      val outFile = files.head
-      outFile.exists() mustBe true
-      outFile.length() mustBe 6876716L
     }
   }
 

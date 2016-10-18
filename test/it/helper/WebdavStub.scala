@@ -22,6 +22,8 @@ import io.milton.config.HttpManagerBuilder
 import io.milton.http.fs.{FileSystemResourceFactory, NullSecurityManager}
 import io.milton.simpleton.SimpletonServer
 
+//TODO this is hard-wired to port 8080; it needs to use an ephemeral port during testing
+
 class WebdavStub(rootDir: String, port: Int = 8080) {
   val resourceFactory = new FileSystemResourceFactory(new File(rootDir), new NullSecurityManager(), "/")
   resourceFactory.setAllowDirectoryBrowsing(true)
@@ -42,4 +44,6 @@ class WebdavStub(rootDir: String, port: Int = 8080) {
   def stop() {
     ss.stop
   }
+
+  //TODO getPort: Int = ???
 }

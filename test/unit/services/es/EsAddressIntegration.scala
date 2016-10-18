@@ -27,6 +27,7 @@ import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.unit.TimeValue
 import org.scalatest.FunSuite
 import uk.gov.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.services.es.ESSchema
 import uk.gov.hmrc.util.FileUtils
 
 class EsAddressIntegration extends FunSuite {
