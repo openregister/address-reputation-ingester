@@ -54,7 +54,8 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
       client execute {
         ESSchema.createIndexDefinition(indexName, address,
           ESSchema.Settings(indexMetadata.numShards(model.productName), 0, "60s"))
-      } await
+      } await()
+      Unit
     }
     indexMetadata.writeIngestSettingsTo(indexName, settings)
   }
