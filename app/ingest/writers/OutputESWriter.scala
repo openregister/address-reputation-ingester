@@ -55,9 +55,8 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
         ESSchema.createIndexDefinition(indexName, address,
           ESSchema.Settings(indexMetadata.numShards(model.productName), 0, "60s"))
       } await
-
-    indexMetadata.writeIngestSettingsTo(indexName, settings)
     }
+    indexMetadata.writeIngestSettingsTo(indexName, settings)
   }
 
   override def output(a: DbAddress) {
