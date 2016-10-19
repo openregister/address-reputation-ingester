@@ -93,6 +93,10 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
           )
         } await
 
+        //This should be removed by TXMNT-384
+        //give ES a few seconds to ensure all records are inserted
+        //before updating metadata
+        Thread.sleep(5000)
         // we have finished! let's celebrate
         indexMetadata.writeCompletionDateTo(indexName)
       }

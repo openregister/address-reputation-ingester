@@ -41,6 +41,8 @@ class ForwardData(
   def sizeInfo: String =
     s"${blpu.size} BLPUs, ${uprns.size} ${preferred}s, ${streets.size} streets, ${streetDescriptorsEn.size}/${streetDescriptorsCy.size} street descriptors"
 
+  def numRecords: Int = blpu.size()
+
   def close() {
     closeCollection(blpu)
     closeCollection(uprns)
