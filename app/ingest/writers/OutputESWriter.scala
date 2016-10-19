@@ -85,23 +85,22 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
           }
         }
       }
+    }
 
-      if (completed) {
+    // we have finished! let's celebrate
+    if(completed) {
+      indexMetadata.clients foreach { client =>
         client execute {
           update settings indexName set Map(
             "index.refresh_interval" -> "1s"
           )
-        } await
-
-        //This should be removed by TXMNT-384
-        //give ES a few seconds to ensure all records are inserted
-        //before updating metadata
-        Thread.sleep(5000)
-        // we have finished! let's celebrate
-        indexMetadata.writeCompletionDateTo(indexName)
+        } await()
+        Unit
       }
 
+      indexMetadata.writeCompletionDateTo(indexName)
     }
+
     statusLogger.info(s"Finished ingesting to index $indexName")
     model
   }
