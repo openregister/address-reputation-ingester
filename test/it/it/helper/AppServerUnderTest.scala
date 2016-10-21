@@ -1,46 +1,44 @@
 /*
- * Copyright 2016 HM Revenue & Customs
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2016 HM Revenue & Customs
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
-package helper
+package it.helper
 
 import java.io.File
 
 import com.github.simplyscala.MongoEmbedDatabase
-import com.sksamuel.elastic4s.ElasticClient
-import org.elasticsearch.common.settings.Settings
 import org.scalatest._
 import org.scalatestplus.play.ServerProvider
 import play.api.test.{FakeApplication, Helpers, TestServer}
+import uk.gov.hmrc.address.services.es.ElasticsearchHelper
 import uk.gov.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.gov.hmrc.util.FileUtils
 
 trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedDatabase with AppServerTestApi {
   this: Suite =>
 
-  val esDataPath = System.getProperty("java.io.tmpdir") + "/es"
-
   val mongoTestConnection = new MongoTestConnection(mongoStart())
 
-  val esSettings = Settings.settingsBuilder()
-    .put("http.enabled", false)
-    .put("path.home", esDataPath)
+  val esDataPath = System.getProperty("java.io.tmpdir") + "/es"
 
-  lazy val esClient = ElasticClient.local(esSettings.build)
+  lazy val esClient = ElasticsearchHelper.buildDiskClient(esDataPath)
 
-  lazy val webdavStub = new helper.WebdavStub(getClass.getClassLoader.getResource("ut").toURI.getPath)
+  lazy val webdavStub = new WebdavStub(getClass.getClassLoader.getResource("ut").toURI.getPath)
 
   def appConfiguration: Map[String, String]
 
@@ -57,7 +55,7 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedD
       Map(
         mongoTestConnection.configItem, "elastic.localmode" -> true,
         "app.remote.server" -> "http://localhost:8080/webdav")
-      )
+  )
 
   /**
     * The port used by the `TestServer`.  By default this will be set to the result returned from

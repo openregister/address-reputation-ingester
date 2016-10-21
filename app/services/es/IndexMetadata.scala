@@ -178,5 +178,3 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
   }
 }
 
-object IndexMetadata {
-}

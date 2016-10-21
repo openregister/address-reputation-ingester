@@ -17,7 +17,7 @@
  *
  */
 
-package controllers
+package it
 
 import java.io.File
 import java.nio.file.Files

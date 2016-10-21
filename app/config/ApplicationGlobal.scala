@@ -21,9 +21,10 @@ package config
 import config.ConfigHelper._
 import play.api.Play._
 import play.api._
-import services.es.{ElasticsearchHelper, IndexMetadata}
+import services.es.IndexMetadata
 import services.exec.WorkQueue
 import services.mongo.{CollectionMetadata, MongoSystemMetadataStoreFactory}
+import uk.gov.hmrc.address.services.es.ElasticsearchHelper
 import uk.gov.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.gov.hmrc.logging.LoggerFacade
 import uk.gov.hmrc.play.config.RunMode
@@ -32,6 +33,8 @@ import uk.gov.hmrc.play.microservice.bootstrap.JsonErrorHandling
 import uk.gov.hmrc.play.microservice.bootstrap.Routing.RemovingOfTrailingSlashes
 
 object ApplicationGlobal extends GlobalSettings with GraphiteConfig with RemovingOfTrailingSlashes with JsonErrorHandling with RunMode {
+
+  implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
   lazy val mongoConnection = {
     val mongoDbUri = mustGetConfigString(current.mode, current.configuration, "mongodb.uri")
@@ -43,24 +46,22 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
   lazy val mongoCollectionMetadata = new CollectionMetadata(mongoConnection.getConfiguredDb, metadataStore)
 
   lazy val elasticSearchService: IndexMetadata = {
+    val elasticSearchLocalMode = getConfigString(current.mode, current.configuration, "elastic.localmode").exists(_.toBoolean)
     if (elasticSearchLocalMode) {
-      ElasticsearchHelper(scala.concurrent.ExecutionContext.Implicits.global)
+      val client = ElasticsearchHelper.buildNodeLocalClient()
+      new IndexMetadata(List(client), false, Map())
     }
     else {
       val clusterName = mustGetConfigString(current.mode, current.configuration, "elastic.clustername")
       val connectionString = mustGetConfigString(current.mode, current.configuration, "elastic.uri")
-      val isCluster = getConfigBoolean(current.mode, current.configuration, "elastic.is-cluster").getOrElse(true)
+      val isCluster = getConfigString(current.mode, current.configuration, "elastic.is-cluster").exists(_.toBoolean)
       val numShards = current.configuration.getConfig("elastic.shards").map(
         _.entrySet.foldLeft(Map.empty[String, Int])((m, a) => m + (a._1 -> a._2.unwrapped().asInstanceOf[Int]))
       ).getOrElse(Map.empty[String, Int])
 
-      ElasticsearchHelper(clusterName, connectionString, isCluster, numShards,
-        scala.concurrent.ExecutionContext.Implicits.global, new LoggerFacade(Logger.logger))
+      val clients = ElasticsearchHelper.buildNetClients(clusterName, connectionString, new LoggerFacade(Logger.logger))
+      new IndexMetadata(clients, isCluster, numShards)
     }
-  }
-
-  lazy val elasticSearchLocalMode: Boolean = {
-    getConfigBoolean(current.mode, current.configuration, "elastic.localmode").getOrElse(false)
   }
 
   override def onStart(app: Application) {

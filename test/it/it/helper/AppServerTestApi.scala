@@ -17,7 +17,7 @@
  *
  */
 
-package helper
+package it.helper
 
 import org.scalatest.Assertions
 import play.api.Application

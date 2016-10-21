@@ -79,13 +79,6 @@ object ConfigHelper {
     config.getInt(modeKey).orElse(config.getInt(key))
   }
 
-  def getConfigBoolean(config: Configuration, key: String): Option[Boolean] = config.getBoolean(key)
-
-  def getConfigBoolean(mode: Mode, config: Configuration, key: String): Option[Boolean] = {
-    val modeKey = s"$mode.$key"
-    config.getBoolean(modeKey).orElse(config.getBoolean(key))
-  }
-
   def replaceHome(string: String): String = {
     if (string.startsWith("$HOME")) System.getenv("HOME") + string.substring(5)
     else string
