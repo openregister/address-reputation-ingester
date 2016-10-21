@@ -32,9 +32,9 @@ import uk.gov.hmrc.logging.Stdout
 class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val app: Application)
   extends WordSpec with MustMatchers with AppServerTestApi {
 
-  "list collections" must {
+  "db list collections" must {
     """
-       * return the sorted list of MongoDB collections
+       * return the sorted list of collections
        * along with the completion dates (if present)
     """ in {
       val mongo = new CasbahMongoConnection(mongoUri)
@@ -51,20 +51,20 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
 
   //-----------------------------------------------------------------------------------------------
 
-  "collection endpoints should be protected by basic auth" must {
-    "list Mongo collections" in {
+  "db collection endpoints should be protected by basic auth" must {
+    "list collections" in {
       val request = newRequest("GET", "/collections/db/list")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
-    "drop Mongo collection" in {
+    "drop collection" in {
       val request = newRequest("DELETE", "/collections/db/foo")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
-    "clean db" in {
+    "clean" in {
       val request = newRequest("POST", "/collections/db/clean")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
@@ -73,8 +73,8 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
 
   //-----------------------------------------------------------------------------------------------
 
-  "collection endpoints" must {
-    "drop unknown Mongo collection should give NOT_FOUND" in {
+  "db collection endpoints" must {
+    "drop unknown collection should give NOT_FOUND" in {
       val request = newRequest("DELETE", "/collections/db/2001-12-31-01-02")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe NOT_FOUND
@@ -83,7 +83,7 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
 
   //-----------------------------------------------------------------------------------------------
 
-  "ingest resource happy journey - to Mongo" must {
+  "db ingest resource happy journey" must {
     """
        * observe quiet status
        * start ingest
@@ -131,7 +131,7 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
 
   //-----------------------------------------------------------------------------------------------
 
-  "ingest resource - db - errors" must {
+  "db ingest resource - errors" must {
     """
        * passing bad parameters
        * should give 400
@@ -174,7 +174,7 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
     }
   }
 
-  "switch-over resource error journeys - db" must {
+  "db switch-over resource error journeys" must {
     """
        * attempt to switch to non-existent collection
        * should not change the nominated collection

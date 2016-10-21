@@ -65,7 +65,6 @@ class OutputESWriterTest extends FreeSpec {
 
     when(esClient.execute[BulkDefinition, BulkResponse, BulkResult](any[BulkDefinition])(any[Executable[BulkDefinition,BulkResponse,BulkResult]])) thenReturn Future(BulkResult(new BulkResponse(Array[BulkItemResponse](),0)))
     when(indexMetadata.clients) thenReturn List(esClient)
-    when(indexMetadata.address) thenReturn "address"
     when(indexMetadata.existingCollectionNames) thenReturn indexNames.toList.sorted
   }
 

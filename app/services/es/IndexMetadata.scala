@@ -33,14 +33,17 @@ import services.mongo.{CollectionMetadataItem, CollectionName}
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
 
-class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, numShards: Map[String, Int])
-                   (implicit val ec: ExecutionContext) extends DbFacade {
-
+object IndexMetadata {
   val replicaCount = "1"
   val ariAliasName = "address-reputation-data"
   val indexAlias = "addressbase-index"
   val address = "address"
+}
 
+class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, numShards: Map[String, Int])
+                   (implicit val ec: ExecutionContext) extends DbFacade {
+
+  import IndexMetadata._
   private val completedAt = "index.completedAt"
   private val bulkSize = "index.bulkSize"
   private val loopDelay = "index.loopDelay"
@@ -59,7 +62,7 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
   def existingCollectionNames: List[String] = {
     val healths = clients.head.execute {
       get cluster health
-    } await
+    } await()
 
     healths.getIndices.keySet.asScala.toList.sorted
   }
@@ -78,7 +81,7 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
 
     val indexSettings = clients.head.execute {
       get settings index
-    } await
+    } await()
 
     val completedDate = Option(indexSettings.getSetting(index, completedAt)).map(s => new Date(s.toLong))
     val bSize = Option(indexSettings.getSetting(index, bulkSize)).map(n => n.asInstanceOf[String])
@@ -106,15 +109,15 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
       greenHealth(TimeValue.timeValueMinutes(10), indexName)
       client execute {
         closeIndex(indexName)
-      } await
+      } await()
 
       client execute {
         update settings indexName set settings
-      } await
+      } await()
 
       client.execute {
         openIndex(indexName)
-      } await
+      } await()
     }
   }
 
@@ -143,7 +146,7 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
   private def aliasOf(name: String): Option[String] = {
     val gar = clients.head.execute {
       getAlias(name)
-    } await
+    } await()
 
     val olc: ObjectLookupContainer[String] = gar.getAliases.keys
 
@@ -166,13 +169,13 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
             remove alias name.productName on inUse.get,
             add alias name.productName on name.toString
           )
-        } await
+        } await()
       }
     } else {
       clients foreach { client =>
         client execute {
           aliases(add alias name.productName on name.toString)
-        } await
+        } await()
       }
     }
   }

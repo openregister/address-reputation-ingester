@@ -116,19 +116,19 @@ class SwitchoverController(action: ActionBuilder[Request],
     implicit val ecx = ec
     val ariIndexName = model.collectionName.toString
     val indexMetadata = collectionMetadata.asInstanceOf[IndexMetadata] //bit dirty this, will be cleaned up on mongo removal
-    val ariAliasName = indexMetadata.ariAliasName
+    val ariAliasName = IndexMetadata.ariAliasName
 
     val fr = indexMetadata.clients map {
       client => Future {
         if (indexMetadata.isCluster) {
           status.info(s"Setting replica count to ${
-            indexMetadata.replicaCount
+            IndexMetadata.replicaCount
           } for $ariAliasName")
           client execute {
             update settings ariIndexName set Map(
-              "index.number_of_replicas" -> indexMetadata.replicaCount
+              "index.number_of_replicas" -> IndexMetadata.replicaCount
             )
-          } await
+          } await()
 
           status.info(s"Waiting for $ariAliasName to go green after increasing replica count")
 
@@ -142,7 +142,7 @@ class SwitchoverController(action: ActionBuilder[Request],
 
         val gar = client execute {
           getAlias(model.productName).on("*")
-        } await
+        } await()
 
         val olc = gar.getAliases.keys
         val aliasStatements: Array[MutateAliasDefinition] = olc.toArray().flatMap(a => {
@@ -173,7 +173,7 @@ class SwitchoverController(action: ActionBuilder[Request],
             update settings aliasIndex set Map(
               "index.number_of_replicas" -> "0"
             )
-          } await
+          } await()
         })
       }
     }

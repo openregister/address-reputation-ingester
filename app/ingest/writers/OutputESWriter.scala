@@ -34,7 +34,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
   val collectionName = model.collectionName
 
   private implicit val x = ec
-  private val address = indexMetadata.address
+  private val address = IndexMetadata.address
   private val indexName = model.collectionName.toString
 
   override def existingTargetThatIsNewerThan(date: Date): Option[String] = {

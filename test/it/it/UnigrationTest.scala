@@ -31,18 +31,11 @@ import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
 import uk.gov.hmrc.util.FileUtils
 
-//-------------------------------------------------------------------------------------------------
-// This is a long test file to ensure that everything runs in sequence, not overlapping.
-// It is also important to start/stop embedded mongo cleanly.
-//
-// Use the Folds, Luke!!!
-//-------------------------------------------------------------------------------------------------
-
 class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNestedSuiteExecution {
 
   //  private val tmp = System.getProperty("java.io.tmpdir")
   // this will get deleted so BE CAREFUL to include the subdirectory!
-  private val tmpDir = new File("target", "ars")
+  private val tmpDir = new File("target", "ari")
 
   def appConfiguration: Map[String, String] = Map(
     "app.files.downloadFolder" -> s"$tmpDir/download",
@@ -103,5 +96,9 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     sample.close()
   }
 
+  override def afterAppServerStops() {
+    FileUtils.deleteDir(tmpDir)
+    super.afterAppServerStops()
+  }
 }
 

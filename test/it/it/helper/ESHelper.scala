@@ -19,13 +19,44 @@
 
 package it.helper
 
-import com.sksamuel.elastic4s.ElasticClient
+import com.sksamuel.elastic4s.{ElasticClient, RichSearchResponse}
+import com.sksamuel.elastic4s.ElasticDsl._
 import org.elasticsearch.common.unit.TimeValue
+import services.es.IndexMetadata
+import uk.gov.hmrc.address.osgb.{DbAddress, DbAddressOrderingByLine1}
+import uk.gov.hmrc.address.services.es.ESSchema
+import uk.gov.hmrc.address.uk.Postcode
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Sorting
 
 trait ESHelper {
+
   def esClient: ElasticClient
+
+  def createSchema(idx: String, clients: List[ElasticClient]) {
+    clients foreach { client =>
+      client execute {
+        ESSchema.createIndexDefinition(idx, IndexMetadata.address,
+          ESSchema.Settings(1, 0, "1s"))
+      } await()
+    }
+  }
 
   def waitForIndex(idx: String, timeout: TimeValue = TimeValue.timeValueSeconds(2)) {
     esClient.java.admin.cluster.prepareHealth(idx).setWaitForGreenStatus().setTimeout(timeout).get
+  }
+
+  def findPostcode(idx: String, postcode: Postcode)(implicit ec: ExecutionContext): Future[List[DbAddress]] = {
+    val searchResponse = esClient.execute {
+      search in idx -> IndexMetadata.address query matchQuery("postcode.raw", postcode.toString) routing postcode.toString size 100
+    }
+    searchResponse map convertSearchResponse
+  }
+
+  private def convertSearchResponse(response: RichSearchResponse): List[DbAddress] = {
+    val arr: Array[DbAddress] = response.hits.map(hit => DbAddress.apply(hit.sourceAsMap))
+    Sorting.quickSort(arr)(DbAddressOrderingByLine1)
+    arr.toList
   }
 }

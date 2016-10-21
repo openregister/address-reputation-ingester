@@ -21,16 +21,14 @@ package services.es
 
 import java.io.File
 
-import com.sksamuel.elastic4s.ElasticClient
 import com.sksamuel.elastic4s.ElasticDsl._
-import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.unit.TimeValue
 import org.scalatest.FunSuite
 import uk.gov.hmrc.address.osgb.DbAddress
-import uk.gov.hmrc.address.services.es.ESSchema
+import uk.gov.hmrc.address.services.es.{ESSchema, ElasticsearchHelper}
 import uk.gov.hmrc.util.FileUtils
 
-class EsAddressIntegration extends FunSuite {
+class EsAddressTest extends FunSuite {
 
   import DbAddress._
 
@@ -44,16 +42,12 @@ class EsAddressIntegration extends FunSuite {
   // local client will create a temporary directory tree containing its data; start by erasing previous stuff
   FileUtils.deleteDir(new File(esDataPath))
 
-  val esSettings = Settings.settingsBuilder()
-    .put("http.enabled", false)
-    .put("path.home", esDataPath)
-
-  val esClient = ElasticClient.local(esSettings.build)
+  val esClient = ElasticsearchHelper.buildDiskClient(esDataPath)
   val indexName = "test"
 
   esClient execute {
     ESSchema.createIndexDefinition(indexName)
-  } await
+  } await()
 
 
   test("write then read using ES") {
@@ -63,15 +57,15 @@ class EsAddressIntegration extends FunSuite {
 
     esClient execute {
       index into indexName / "address" fields a1t id a1.id routing a1.postcode
-    } await
+    } await()
 
     esClient execute {
       index into indexName / "address" fields a2t id a2.id routing a1.postcode
-    } await
+    } await()
 
     esClient execute {
       refresh index indexName
-    } await
+    } await()
 
     greenHealth(indexName)
 
@@ -83,7 +77,7 @@ class EsAddressIntegration extends FunSuite {
 
     val searchResult = esClient execute {
       search in indexName / "address" size 100
-    } await
+    } await()
 
     val results = searchResult.hits.map(hit => DbAddress(hit.sourceAsMap)).toList
     assert(results.toSet === Set(a1, a2))
