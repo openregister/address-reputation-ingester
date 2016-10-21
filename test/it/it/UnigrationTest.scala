@@ -24,9 +24,10 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption._
 
 import com.sksamuel.elastic4s.ElasticDsl._
-import helper.AppServerUnderTest
+import helper.{AppServerUnderTest, PSuites}
+import it.suites._
 import org.elasticsearch.common.unit.TimeValue
-import org.scalatest.SequentialNestedSuiteExecution
+import org.scalatest.{Args, SequentialNestedSuiteExecution, Status}
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.JsObject
 import play.api.libs.ws.WSAuthScheme.BASIC
@@ -62,16 +63,11 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     esClient.java.admin.cluster.prepareHealth(idx).setWaitForGreenStatus().setTimeout(timeout).get
   }
 
-  //-----------------------------------------------------------------------------------------------
-
-  "ping resource" must {
-    "give a successful response" in {
-      get("/ping").status mustBe OK
-    }
-
-    "give version information in the response body" in {
-      (get("/ping").json \ "version").as[String] must not be empty
-    }
+  override def runNestedSuites(args: Args): Status = {
+    val s = new PSuites(
+      new PingSuite(appEndpoint)(app)
+    )
+    s.runNestedSuites(args)
   }
 
   //-----------------------------------------------------------------------------------------------

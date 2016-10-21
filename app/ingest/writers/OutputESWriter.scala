@@ -88,7 +88,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
     }
 
     // we have finished! let's celebrate
-    if(completed) {
+    if (completed) {
       indexMetadata.clients foreach { client =>
         client execute {
           update settings indexName set Map(

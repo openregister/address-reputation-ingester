@@ -29,7 +29,7 @@ object PingController extends PingController
 trait PingController extends BaseController {
 
   def ping(): Action[AnyContent] = Action { request =>
-    Ok(Provenance.versionInfo).withHeaders(CONTENT_TYPE -> "application/json")
+    Ok(Provenance.versionInfo).withHeaders(CACHE_CONTROL -> "no-cache,max-age=0,must-revalidate", CONTENT_TYPE -> "application/json")
   }
 
   def exit(): Action[AnyContent] = Action { request =>
