@@ -26,7 +26,6 @@ import org.scalatest._
 import org.scalatestplus.play.ServerProvider
 import play.api.test.{FakeApplication, Helpers, TestServer}
 import uk.gov.hmrc.address.services.es.ElasticsearchHelper
-import uk.gov.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.gov.hmrc.util.FileUtils
 
 trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedDatabase with AppServerTestApi {
@@ -41,8 +40,6 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedD
   lazy val webdavStub = new WebdavStub(getClass.getClassLoader.getResource("ut").toURI.getPath)
 
   def appConfiguration: Map[String, String]
-
-  def casbahMongoConnection() = new CasbahMongoConnection(mongoTestConnection.uri)
 
   def beforeAppServerStarts() {
     FileUtils.deleteDir(new File(esDataPath))
