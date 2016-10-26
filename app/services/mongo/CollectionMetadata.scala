@@ -44,6 +44,7 @@ class CollectionMetadata(val db: MongoDB, val systemMetadata: MongoSystemMetadat
     val m = collection.findOneByID(metadata)
     if (m.isEmpty)
       Some(CollectionMetadataItem(name, size))
+
     else {
       val created = Option(m.get.get(createdAt)).map(n => new Date(n.asInstanceOf[Long]))
       val completed = Option(m.get.get(completedAt)).map(n => new Date(n.asInstanceOf[Long]))
@@ -115,7 +116,8 @@ case class CollectionMetadataItem(name: CollectionName,
                                   includeDPA: Option[String] = None,
                                   includeLPI: Option[String] = None,
                                   prefer: Option[String] = None,
-                                  streetFilter: Option[String] = None) {
+                                  streetFilter: Option[String] = None,
+                                  aliases: List[String] = Nil) {
 
   def completedAfter(date: Date): Boolean = completedAt.isDefined && completedAt.get.after(date)
 

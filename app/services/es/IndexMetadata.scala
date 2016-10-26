@@ -21,7 +21,6 @@ package services.es
 
 import java.util.Date
 
-import com.carrotsearch.hppc.ObjectLookupContainer
 import com.sksamuel.elastic4s.ElasticClient
 import com.sksamuel.elastic4s.ElasticDsl._
 import ingest.writers.WriterSettings
@@ -44,6 +43,7 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
                    (implicit val ec: ExecutionContext) extends DbFacade {
 
   import IndexMetadata._
+
   private val completedAt = "index.completedAt"
   private val bulkSize = "index.bulkSize"
   private val loopDelay = "index.loopDelay"
@@ -84,15 +84,16 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
     } await()
 
     val completedDate = Option(indexSettings.getSetting(index, completedAt)).map(s => new Date(s.toLong))
-    val bSize = Option(indexSettings.getSetting(index, bulkSize)).map(n => n.asInstanceOf[String])
-    val lDelay = Option(indexSettings.getSetting(index, loopDelay)).map(n => n.asInstanceOf[String])
-    val iDPA = Option(indexSettings.getSetting(index, includeDPA)).map(n => n.asInstanceOf[String])
-    val iLPI = Option(indexSettings.getSetting(index, includeLPI)).map(n => n.asInstanceOf[String])
-    val pref = Option(indexSettings.getSetting(index, prefer)).map(n => n.asInstanceOf[String])
-    val sFilter = Option(indexSettings.getSetting(index, streetFilter)).map(n => n.asInstanceOf[String])
+    val bSize = Option(indexSettings.getSetting(index, bulkSize))
+    val lDelay = Option(indexSettings.getSetting(index, loopDelay))
+    val iDPA = Option(indexSettings.getSetting(index, includeDPA))
+    val iLPI = Option(indexSettings.getSetting(index, includeLPI))
+    val pref = Option(indexSettings.getSetting(index, prefer))
+    val sFilter = Option(indexSettings.getSetting(index, streetFilter))
     val count = rCount.await.totalHits
 
-    Some(CollectionMetadataItem(name, count.toInt, None, completedDate, bSize, lDelay, iDPA, iLPI, pref, sFilter))
+    Some(CollectionMetadataItem(name, count.toInt, None, completedDate, bSize, lDelay, iDPA, iLPI, pref, sFilter,
+      aliasesFor(index)))
   }
 
   def writeCreationDateTo(indexName: String, date: Date = new Date()) {
@@ -140,33 +141,45 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
   }
 
   def getCollectionInUseFor(product: String): Option[CollectionName] = {
-    aliasOf(product).flatMap(n => CollectionName(n))
+    aliasesOf(product).headOption.flatMap(n => CollectionName(n))
   }
 
-  private def aliasOf(name: String): Option[String] = {
+  private def aliasesOf(aliasName: String): List[String] = {
     val gar = clients.head.execute {
-      getAlias(name)
+      getAlias(aliasName)
     } await()
 
-    val olc: ObjectLookupContainer[String] = gar.getAliases.keys
+    gar.getAliases.keys.toArray.map(_.toString).toList
+  }
 
-    if (olc.isEmpty)
-      None
-    else {
-      val names = olc.toArray
-      //      assert(names.length == 1, names)
-      val n = names(0).toString
-      Some(n)
+  private def aliasesFor(indexName: String): List[String] = {
+    val found = allAliases.find(_._1 == indexName)
+    val optionalMatchingList = found.toList map (_._2)
+    optionalMatchingList.flatten
+  }
+
+  def allAliases: Map[String, List[String]] = {
+    val gar = clients.head.execute {
+      getAlias("*")
+    } await()
+
+    val allAliases = gar.getAliases.asScala
+    val converted = allAliases.map {
+      kv =>
+        val k = kv.key
+        val v = kv.value.asScala.map(_.alias).toList
+        k -> v
     }
+    converted.toMap
   }
 
   def setCollectionInUseFor(name: CollectionName) {
-    val inUse = aliasOf(name.productName)
-    if (inUse.isDefined) {
+    val inUse = aliasesOf(name.productName)
+    if (inUse.nonEmpty) {
       clients foreach { client =>
         client execute {
           aliases(
-            remove alias name.productName on inUse.get,
+            remove alias name.productName on inUse.head,
             add alias name.productName on name.toString
           )
         } await()

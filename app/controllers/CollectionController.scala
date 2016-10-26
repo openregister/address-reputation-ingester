@@ -63,7 +63,9 @@ class CollectionController(action: ActionBuilder[Request],
     val collections = collectionMetadata.existingCollectionMetadata
     for (info <- collections) yield {
       val name = info.name.toString
-      CollectionInfo(name, info.size,
+      CollectionInfo(
+        name,
+        info.size,
         systemCollections.contains(name),
         pc.contains(name),
         info.createdAt.map(_.toString),
@@ -73,7 +75,8 @@ class CollectionController(action: ActionBuilder[Request],
         info.includeDPA,
         info.includeLPI,
         info.prefer,
-        info.streetFilter
+        info.streetFilter,
+        info.aliases
       )
     }
   }

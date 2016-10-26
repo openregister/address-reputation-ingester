@@ -25,15 +25,20 @@ import play.api.libs.json.{JsPath, Json, Reads, Writes}
 case class ListCI(collections: List[CollectionInfo])
 
 
-case class CollectionInfo(name: String, size: Int, system: Boolean, inUse: Boolean,
-                          createdAt: Option[String] = None,
-                          completedAt: Option[String] = None,
-                          bulkSize: Option[String] = None,
-                          loopDelay: Option[String] = None,
-                          includeDPA: Option[String] = None,
-                          includeLPI: Option[String] = None,
-                          prefer: Option[String] = None,
-                          streetFilter: Option[String] = None)
+case class CollectionInfo(
+                           name: String, size: Int,
+                           system: Boolean,
+                           inUse: Boolean,
+                           createdAt: Option[String] = None,
+                           completedAt: Option[String] = None,
+                           bulkSize: Option[String] = None,
+                           loopDelay: Option[String] = None,
+                           includeDPA: Option[String] = None,
+                           includeLPI: Option[String] = None,
+                           prefer: Option[String] = None,
+                           streetFilter: Option[String] = None,
+                           aliases: List[String] = Nil
+                         )
 
 
 object CollectionInfo {
@@ -50,7 +55,8 @@ object CollectionInfo {
       (JsPath \ "includeDPA").readNullable[String] and
       (JsPath \ "includeLPI").readNullable[String] and
       (JsPath \ "prefer").readNullable[String] and
-      (JsPath \ "streetFilter").readNullable[String]) (CollectionInfo.apply _)
+      (JsPath \ "streetFilter").readNullable[String] and
+      (JsPath \ "aliases").read[List[String]]) (CollectionInfo.apply _)
 
   implicit val CollectionInfoWrites: Writes[CollectionInfo] = (
     (JsPath \ "name").write[String] and
@@ -64,7 +70,8 @@ object CollectionInfo {
       (JsPath \ "includeDPA").writeNullable[String] and
       (JsPath \ "includeLPI").writeNullable[String] and
       (JsPath \ "prefer").writeNullable[String] and
-      (JsPath \ "streetFilter").writeNullable[String]) (unlift(CollectionInfo.unapply))
+      (JsPath \ "streetFilter").writeNullable[String] and
+      (JsPath \ "aliases").write[List[String]]) (unlift(CollectionInfo.unapply))
 
   implicit val ListCollectionInfoWrites: Writes[ListCI] = Json.format[ListCI]
 }
