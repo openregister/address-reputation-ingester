@@ -2,7 +2,7 @@
 
 GET    /                          controllers.AdminController.index
 GET    /ui/*file                  controllers.Assets.at(path="/public", file)
-GET    /admin/metrics             com.kenshoo.play.metrics.MetricsController.metrics
+GET    /admin/metrics             @com.kenshoo.play.metrics.MetricsController.metrics
 
 # ----- Ping -----
 HEAD   /ping                                                    controllers.PingController.ping

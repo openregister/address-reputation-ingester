@@ -18,6 +18,8 @@ package controllers
 
 import java.util.Date
 
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, Materializer}
 import ingest.StubWorkerFactory
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
@@ -43,6 +45,9 @@ import scala.concurrent.Future
 
 @RunWith(classOf[JUnitRunner])
 class SwitchoverControllerTest extends FunSuite with MockitoSugar {
+
+  implicit val system = ActorSystem("test")
+  implicit def mat: Materializer = ActorMaterializer()
 
   val abp_40_ts12345 = CollectionName("abp_40_200102030405").get
 

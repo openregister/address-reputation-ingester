@@ -19,13 +19,15 @@ package fetch
 import java.io.{File, FileInputStream}
 import java.net.{URI, URL}
 
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, Materializer}
 import com.github.sardine.{DavResource, Sardine}
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatestplus.play.PlaySpec
-import org.specs2.mock.Mockito
 import ingest.StubContinuer
+import org.scalatest.mock.MockitoSugar
 import services.model.StatusLogger
 import uk.gov.hmrc.logging.StubLogger
 import uk.gov.hmrc.util.FileUtils
@@ -33,7 +35,10 @@ import uk.gov.hmrc.util.FileUtils
 import scala.collection.JavaConversions._
 
 @RunWith(classOf[JUnitRunner])
-class WebdavFetcherTest extends PlaySpec with Mockito {
+class WebdavFetcherTest extends PlaySpec with MockitoSugar {
+
+  implicit val system = ActorSystem("test")
+  implicit def mat: Materializer = ActorMaterializer()
 
   val outputDirectory = new File(System.getProperty("java.io.tmpdir") + "/webdav-fetcher-test")
   val downloadDirectory = new File(outputDirectory, "downloads")

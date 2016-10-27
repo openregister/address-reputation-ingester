@@ -23,6 +23,8 @@ import java.io.File
 import java.net.URL
 import java.util.Date
 
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, Materializer}
 import com.github.sardine.Sardine
 import controllers.PassThroughAction
 import ingest.writers.OutputFileWriterFactory
@@ -46,6 +48,9 @@ import scala.concurrent.Future
 
 @RunWith(classOf[JUnitRunner])
 class FetchControllerTest extends PlaySpec with MockitoSugar {
+
+  implicit val system = ActorSystem("test")
+  implicit def mat: Materializer = ActorMaterializer()
 
   import WebDavTree.readyToCollectFile
 

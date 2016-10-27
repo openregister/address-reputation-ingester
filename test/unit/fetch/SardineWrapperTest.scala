@@ -18,19 +18,24 @@ package fetch
 
 import java.net.URL
 
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, Materializer}
 import com.github.sardine.{DavResource, Sardine}
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.PlaySpec
-import org.specs2.mock.Mockito
 import services.model.StatusLogger
 import uk.gov.hmrc.logging.StubLogger
 
 import scala.collection.JavaConverters._
 
 @RunWith(classOf[JUnitRunner])
-class SardineWrapperTest extends PlaySpec with Mockito {
+class SardineWrapperTest extends PlaySpec with MockitoSugar {
+
+  implicit val system = ActorSystem("test")
+  implicit def mat: Materializer = ActorMaterializer()
 
   import StubDavResource._
 

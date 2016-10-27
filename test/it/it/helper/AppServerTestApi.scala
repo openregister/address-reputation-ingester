@@ -19,12 +19,16 @@
 
 package it.helper
 
+import java.util.concurrent.TimeUnit
+
+import akka.util.ByteString
 import org.scalatest.Assertions
 import play.api.Application
-import play.api.libs.ws.{InMemoryBody, WS, WSRequestHolder, WSResponse}
+import play.api.libs.ws.{InMemoryBody, WS, WSRequest, WSResponse}
 import play.api.test.Helpers._
 
 import scala.annotation.tailrec
+import scala.concurrent.duration.Duration
 
 trait AppServerTestApi extends Assertions {
   def appEndpoint: String
@@ -35,12 +39,12 @@ trait AppServerTestApi extends Assertions {
 
   //-----------------------------------------------------------------------------------------------
 
-  def newRequest(method: String, path: String): WSRequestHolder = {
-    WS.url(appEndpoint + path)(app).withMethod(method).withRequestTimeout(120 * 1000)
+  def newRequest(method: String, path: String): WSRequest = {
+    WS.url(appEndpoint + path)(app).withMethod(method).withRequestTimeout(Duration(120, TimeUnit.SECONDS))
   }
 
-  def newRequest(method: String, path: String, body: String): WSRequestHolder = {
-    val wsBody = InMemoryBody(body.trim.getBytes("UTF-8"))
+  def newRequest(method: String, path: String, body: String): WSRequest = {
+    val wsBody = InMemoryBody(ByteString(body.trim))
     newRequest(method, path).withHeaders("Content-Type" -> "application/json").withBody(wsBody)
   }
 

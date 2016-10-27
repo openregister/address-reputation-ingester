@@ -21,6 +21,8 @@ package ingest
 
 import java.io.File
 
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, Materializer}
 import controllers.PassThroughAction
 import ingest.algorithm.Algorithm
 import ingest.writers._
@@ -40,6 +42,9 @@ import scala.concurrent.ExecutionContext
 
 @RunWith(classOf[JUnitRunner])
 class IngestControllerTest extends FunSuite with MockitoSugar {
+
+  implicit val system = ActorSystem("test")
+  implicit def mat: Materializer = ActorMaterializer()
 
   // scalastyle:off
   class context {

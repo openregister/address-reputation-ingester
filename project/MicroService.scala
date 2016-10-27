@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import play.PlayImport.PlayKeys
+import play.sbt.PlayImport.PlayKeys
+import play.routes.compiler.StaticRoutesGenerator
 import sbt.Keys._
 import sbt.Tests.{Group, SubProcess}
 import sbt._
@@ -28,11 +29,12 @@ trait MicroService {
   import DefaultBuildSettings._
   import TestPhases._
   import uk.gov.hmrc.SbtBuildInfo
+  import play.sbt.routes.RoutesKeys.routesGenerator
 
   val appName: String
 
   lazy val appDependencies: Seq[ModuleID] = ???
-  lazy val plugins: Seq[Plugins] = Seq(play.PlayScala)
+  lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala)
   lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
   lazy val microservice = Project(appName, file("."))
@@ -47,7 +49,8 @@ trait MicroService {
       libraryDependencies ++= appDependencies,
       parallelExecution in Test := false,
       fork in Test := false,
-      retrieveManaged := true
+      retrieveManaged := true,
+      routesGenerator := StaticRoutesGenerator
     )
     .settings(Provenance.setting)
 //    .settings(Repositories.playPublishingSettings: _*)
@@ -70,8 +73,11 @@ trait MicroService {
     .settings(SbtBuildInfo(): _*)
     .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
 
-    .settings(resolvers += Resolver.bintrayRepo("hmrc", "releases"))
-    .settings(resolvers += Resolver.bintrayRepo("milton", "Milton"))
+    .settings(resolvers ++= Seq(
+      Resolver.bintrayRepo("hmrc", "releases"),
+      Resolver.bintrayRepo("milton", "Milton"),
+      Resolver.jcenterRepo
+    ))
     .enablePlugins(SbtDistributablesPlugin, SbtGitVersioning)
 }
 

@@ -24,6 +24,8 @@ package controllers
 import java.io.File
 import java.net.URL
 
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, Materializer}
 import com.github.sardine.Sardine
 import fetch.{FetchController, SardineWrapper, WebDavFile, WebDavTree}
 import ingest.algorithm.Algorithm
@@ -51,6 +53,8 @@ class GoControllerTest extends FunSuite with MockitoSugar {
   val username = "foo"
   val password = "bar"
 
+  implicit val system = ActorSystem("test")
+  implicit def mat: Materializer = ActorMaterializer()
 
   trait context {
     val request = FakeRequest()

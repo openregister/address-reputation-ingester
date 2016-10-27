@@ -15,7 +15,7 @@
  */
 
 import sbt.{ExclusionRule, _}
-import play.PlayImport._
+import play.sbt.PlayImport._
 import play.core.PlayVersion
 
 object HmrcBuild extends Build with MicroService {
@@ -34,11 +34,11 @@ object HmrcBuild extends Build with MicroService {
     "io.netty" % "netty" % "3.9.9.Final" force(),
     "uk.gov.hmrc" %% "address-reputation-store" % "1.26.0" withSources()
       excludeAll (ExclusionRule(organization = "org.reactivemongo"), ExclusionRule(organization = "io.netty")),
-    "uk.gov.hmrc" %% "microservice-bootstrap" % "4.2.1",
+    "uk.gov.hmrc" %% "microservice-bootstrap" % "5.4.0",
 //    "uk.gov.hmrc" %% "play-authorisation" % "3.1.0",
-    "uk.gov.hmrc" %% "play-health" % "1.1.0",
-    "uk.gov.hmrc" %% "play-config" % "2.1.0",
-    "uk.gov.hmrc" %% "play-json-logger" % "2.1.1",
+    "uk.gov.hmrc" %% "play-health" % "2.0.0",
+    "uk.gov.hmrc" %% "play-config" % "3.0.0",
+    "uk.gov.hmrc" %% "logback-json-logger" % "3.0.0",
     "org.mongodb" %% "casbah" % "3.1.1",
     "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.1" excludeAll ExclusionRule(organization = "io.netty"),
     // for some reason this dependency is skipping the local cache and forcing resolution from the internet
@@ -59,8 +59,8 @@ object HmrcBuild extends Build with MicroService {
     "org.scalamock" %% "scalamock-scalatest-support" % "3.2" % scope,
     "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2" % scope,
     "org.pegdown" % "pegdown" % "1.4.2" % scope,
-    "uk.gov.hmrc" %% "hmrctest" % "1.8.0" % scope,
-    "org.scalatestplus" %% "play" % "1.2.0" % scope,
+    "uk.gov.hmrc" %% "hmrctest" % "2.0.0" % scope,
+    "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % scope,
     "org.mockito" % "mockito-all" % "1.10.19" % scope,
     "com.pyruby" % "java-stub-server" % "0.14" % scope,
     "io.milton" % "milton-server-ce" % "2.7.1.5" % scope)

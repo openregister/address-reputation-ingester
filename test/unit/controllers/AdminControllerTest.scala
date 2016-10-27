@@ -20,6 +20,8 @@ package controllers
 
 import java.util.concurrent.SynchronousQueue
 
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, Materializer}
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -33,6 +35,8 @@ import uk.gov.hmrc.logging.StubLogger
 class AdminControllerTest extends FunSuite {
 
   val pta = new PassThroughAction
+  implicit val system = ActorSystem("test")
+  implicit def mat: Materializer = ActorMaterializer()
 
   test(
     """
