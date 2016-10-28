@@ -222,7 +222,6 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
           status.info(s"Waiting for $ariAliasName to go green after increasing replica count")
 
           blockUntil("Expected cluster to have green status", 1200) {
-            () =>
               client.execute {
                 get cluster health
               }.await.getStatus == ClusterHealthStatus.GREEN
