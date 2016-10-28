@@ -16,20 +16,17 @@
 
 package controllers
 
-import com.sksamuel.elastic4s.{ElasticDsl, MutateAliasDefinition}
+import com.sksamuel.elastic4s.ElasticDsl
 import controllers.SimpleValidator._
-import org.elasticsearch.cluster.health.ClusterHealthStatus
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.DbFacade
 import services.audit.AuditClient
-import services.es.IndexMetadata
 import services.exec.{WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import services.mongo.CollectionName
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 
 object MongoSwitchoverController extends SwitchoverController(

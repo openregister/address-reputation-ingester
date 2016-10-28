@@ -212,8 +212,8 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
 
         //        val allAliases = indexMetadata.allAliases
         //        status.info(allAliases.toString)
-        //        val theseAliases = allAliases(newIndexName)
-        //        status.info(s"Removing index $newIndexName from aliases $theseAliases")
+        //val theseAliases = getAllAliases(getAlias(productName).on("*"))
+        //status.info(s"Removing index $newIndexName from aliases $theseAliases")
         //        val aliasStatements = theseAliases map (a => remove alias ariAliasName on a)
 
         val gar = client execute {
