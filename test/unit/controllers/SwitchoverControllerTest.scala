@@ -23,7 +23,7 @@ import akka.stream.{ActorMaterializer, Materializer}
 import ingest.StubWorkerFactory
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
-import org.scalatest.FunSuite
+import org.scalatest.FreeSpec
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import play.api.http.HeaderNames.{WWW_AUTHENTICATE => _}
@@ -44,7 +44,7 @@ import scala.concurrent.Future
 
 
 @RunWith(classOf[JUnitRunner])
-class SwitchoverControllerTest extends FunSuite with MockitoSugar {
+class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
 
   implicit val system = ActorSystem("test")
   implicit def mat: Materializer = ActorMaterializer()
@@ -57,12 +57,10 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
 
   val pta = new PassThroughAction
 
-  test(
-    """
-       when an invalid product is passed to ingest
-       then an exception is thrown
-    """) {
-    parameterTest("db", "$%", 40, "200102030405")
+  "when an invalid product is passed to ingest" - {
+    "then an exception is thrown" in {
+      parameterTest("db", "$%", 40, "200102030405")
+    }
   }
 
   def parameterTest(target: String, product: String, epoch: Int, timestamp: String): Unit = {
@@ -98,120 +96,129 @@ class SwitchoverControllerTest extends FunSuite with MockitoSugar {
     val dbFacade = mock[DbFacade]
   }
 
-  test(
-    """
-      given that the intended collection exists and contains the containedAt metadata
-      when valid parameters are passed to doSwitchTo
-      then a successful response is returned
-      and the stored metadata item for the product in question is set to the new collection name
-      and an audit message is logged that describes the change
-    """) {
-    new Context {
-      when(dbFacade.collectionExists("abp_40_200102030405")) thenReturn true
-      when(dbFacade.findMetadata(abp_40_ts12345)) thenReturn Some(CollectionMetadataItem(abp_40_ts12345, 10, None, Some(dateAgo(3600000))))
+  "given that the intended collection exists and contains the containedAt metadata" - {
+    "when valid parameters are passed to doSwitchTo" - {
+      """
+          then a successful response is returned
+          and the stored metadata item for the product in question is set to the new collection name
+          and an audit message is logged that describes the change
+      """ in {
+        new Context {
+          when(dbFacade.collectionExists("abp_40_200102030405")) thenReturn true
+          when(dbFacade.findMetadata(abp_40_ts12345)) thenReturn Some(CollectionMetadataItem(abp_40_ts12345, 10, None, Some(dateAgo(3600000))))
 
-      val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
-        "db", scala.concurrent.ExecutionContext.Implicits.global)
-      val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
+          val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
+            "db", scala.concurrent.ExecutionContext.Implicits.global)
+          val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
-      assert(response.header.status / 100 === 2)
-      worker.awaitCompletion()
-      worker.terminate()
+          assert(response.header.status / 100 === 2)
+          worker.awaitCompletion()
+          worker.terminate()
 
-      verify(dbFacade).setCollectionInUseFor(abp_40_ts12345)
-      verify(auditClient).succeeded(Map("product" -> "abp", "epoch" -> "40", "newCollection" -> "abp_40_200102030405"))
+          verify(dbFacade).setCollectionInUseFor(abp_40_ts12345)
+          verify(auditClient).succeeded(Map("product" -> "abp", "epoch" -> "40", "newCollection" -> "abp_40_200102030405"))
+        }
+      }
     }
   }
 
-  test(
-    """
-      given that the intended collection does not exist
-      when valid parameters are passed to ingest
-      then the switch-over fails due to missing the collection
-      and the stored metadata item for the product in question is left unchanged
-    """) {
-    new Context {
-      //      when(db.collectionExists(anyString)) thenReturn false
+  "given that the intended collection does not exist" - {
+    "when valid parameters are passed to ingest" - {
+      """
+         then the switch-over fails due to missing the collection
+         and the stored metadata item for the product in question is left unchanged
+      """ in {
+        new
+            Context {
+          //      when(db.collectionExists(anyString)) thenReturn false
 
-      val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
-        "db", scala.concurrent.ExecutionContext.Implicits.global)
-      val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
+          val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
+            "db",
+            scala.concurrent.ExecutionContext.Implicits.global)
+          val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
-      worker.awaitCompletion()
-      worker.terminate()
+          worker.awaitCompletion()
+          worker.terminate()
 
-      verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
-      assert(logger.warns.size === 2, logger.all)
-      assert(logger.warns.head.message === "Warn:abp_40_200102030405: collection was not found")
+          verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
+          assert(logger.warns.size === 2, logger.all)
+          assert(logger.warns.head.message === "Warn:abp_40_200102030405: collection was not found")
+        }
+      }
     }
   }
 
-  test(
-    """
-      given that the intended collection exists but does not contain the metadata completedAt
-      when valid parameters are passed to ingest
-      then the switch-over fails due to conflict
-      and the stored metadata item for the product in question is left unchanged
-    """) {
-    new Context {
-      when(dbFacade.collectionExists("abp_40_200102030405")) thenReturn true
-      when(dbFacade.findMetadata(abp_40_ts12345)) thenReturn Some(CollectionMetadataItem(abp_40_ts12345, 10, None, None))
+  "given that the intended collection exists but does not contain the metadata completedAt" - {
+    "when valid parameters are passed to ingest" - {
+      """
+         then the switch-over fails due to conflict
+         and the stored metadata item for the product in question is left unchanged
+      """ in {
+        new
+            Context {
+          when(
+            dbFacade.collectionExists("abp_40_200102030405")) thenReturn true
+          when(dbFacade.findMetadata(abp_40_ts12345)) thenReturn Some(CollectionMetadataItem(abp_40_ts12345, 10, None, None))
 
-      val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
-        "db", scala.concurrent.ExecutionContext.Implicits.global)
-      val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
+          val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
+            "db", scala.concurrent.ExecutionContext.Implicits.global)
+          val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
-      worker.awaitCompletion()
-      worker.terminate()
+          worker.awaitCompletion()
+          worker.terminate()
 
-      assert(response.header.status === 202)
-      verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
-      assert(logger.warns.size === 2, logger.all)
-      assert(logger.warns.head.message === "Warn:abp_40_200102030405: collection is still being written")
+          assert(response.header.status === 202)
+          verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
+          assert(logger.warns.size === 2, logger.all)
+          assert(logger.warns.head.message === "Warn:abp_40_200102030405: collection is still being written")
+        }
+      }
     }
   }
 
-  test(
+  "when a request is received without valid basic-auth headers" - {
     """
-      when a request is received without valid basic-auth headers
       then the response is 401
       and the stored metadata item for the product in question is left unchanged
-    """) {
-    new Context {
-      val sc = new SwitchoverController(new FailAuthAction, status, workerFactory, dbFacade, auditClient,
-        "db", scala.concurrent.ExecutionContext.Implicits.global)
-      val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
+    """ in {
+      new Context {
+        val sc = new SwitchoverController(new FailAuthAction, status, workerFactory, dbFacade, auditClient,
+          "db", scala.concurrent.ExecutionContext.Implicits.global)
+        val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
-      worker.awaitCompletion()
-      worker.terminate()
+        worker.awaitCompletion()
+        worker.terminate()
 
-      assert(response.header.status === 401)
-      verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
+        assert(response.header.status === 401)
+        verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
+      }
     }
   }
 
-  test(
-    """
-      given a StateModel that is in a failed state
-      when the inner switchIfOK method is called
-      then no task is performed
-      and the state model stays in its current state
-    """) {
-    new Context {
-      val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
-        "db", scala.concurrent.ExecutionContext.Implicits.global)
-      val model1 = new StateModel("abp", 40, Some("full"), Some("200102030405"), hasFailed = true)
+  "given a StateModel that is in a failed state" - {
+    "when the inner switchIfOK method is called" - {
+      """
+        then no task is performed
+        and the state model stays in its current state
+      """ in {
+        new
+            Context {
+          val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
+            "db", scala.concurrent.ExecutionContext.Implicits.global)
+          val model1 = new StateModel("abp", 40, Some("full"), Some("200102030405"), hasFailed = true)
 
-      val model2 = sc.switchIfOK(model1)
+          val model2 = sc.switchIfOK(model1)
 
-      worker.awaitCompletion()
+          worker.awaitCompletion()
 
-      assert(model2 === model1)
-      verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
-      assert(logger.size === 1, logger.all.mkString("\n"))
-      assert(logger.infos.map(_.message) === List("Info:Switchover was skipped."))
+          assert(model2 === model1)
+          verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
+          assert(logger.size === 1, logger.all.mkString("\n"))
+          assert(logger.infos.map(_.message) === List("Info:Switchover was skipped."))
 
-      worker.terminate()
+          worker.terminate()
+        }
+      }
     }
   }
 

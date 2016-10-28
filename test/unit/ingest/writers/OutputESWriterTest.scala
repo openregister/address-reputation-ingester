@@ -130,6 +130,7 @@ class OutputESWriterTest extends FreeSpec {
           assert(result === Some("x_4_ts2"))
         }
       }
+
     }
   }
 
