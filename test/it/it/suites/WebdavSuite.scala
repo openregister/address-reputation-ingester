@@ -56,7 +56,7 @@ class WebdavSuite(val appEndpoint: String, tmpDir: File)(implicit val app: Appli
       assert(response.body === r )
     }
 
-    "retrieve a file from remote endpoint" ignore {
+    "retrieve a file from remote endpoint" in {
       // Have to use full as the WebDaveTree code expects only full
       val request = newRequest("GET", "/fetch/to/file/exeter/1/full?forceChange=true")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
@@ -70,7 +70,7 @@ class WebdavSuite(val appEndpoint: String, tmpDir: File)(implicit val app: Appli
       val outputDir = new File(s"$tmpDir/download/exeter/1/full")
       val files = outputDir.listFiles()
       files.length mustBe 2 // zip & done
-      val outFile = files.head
+      val outFile = files.find(_.getName.endsWith(".zip")).get
       outFile.exists() mustBe true
       outFile.length() mustBe 6876716L
     }

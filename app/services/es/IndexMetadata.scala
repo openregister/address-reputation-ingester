@@ -185,7 +185,7 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
     converted.toMap
   }
 
-  def setCollectionInUseFor(name: CollectionName) {
+  def zsetCollectionInUseFor(name: CollectionName) {
     val inUse = indexesAliasedBy(name.productName)
     if (inUse.nonEmpty) {
       clients foreach { client =>
@@ -205,7 +205,7 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
     }
   }
 
-  def zsetCollectionInUseFor(collectionName: CollectionName) {
+  def setCollectionInUseFor(collectionName: CollectionName) {
     val newIndexName = collectionName.toString
     val productName = collectionName.productName
 
@@ -222,9 +222,10 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
           status.info(s"Waiting for $ariAliasName to go green after increasing replica count")
 
           blockUntil("Expected cluster to have green status", 1200) {
-            client.execute {
-              get cluster health
-            }.await.getStatus == ClusterHealthStatus.GREEN
+            () =>
+              client.execute {
+                get cluster health
+              }.await.getStatus == ClusterHealthStatus.GREEN
           }
         }
 

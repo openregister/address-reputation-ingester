@@ -31,7 +31,6 @@ import play.api.test.Helpers._
 import services.es.IndexMetadata
 import services.model.StatusLogger
 import services.mongo.CollectionName
-import uk.gov.hmrc.address.osgb.DbAddress
 import uk.gov.hmrc.address.services.es.ESSchema
 import uk.gov.hmrc.address.uk.Postcode
 import uk.gov.hmrc.logging.StubLogger
@@ -120,7 +119,7 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
        * observe quiet status
        * verify that the collection metadata contains completedAt with a sensible value
        * verify additional collection metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
-    """ ignore {
+    """ in {
       val start = System.currentTimeMillis()
 
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -172,7 +171,7 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
     """
        * passing bad parameters
        * should give 400
-    """ ignore {
+    """ in {
       assert(get("/ingest/from/file/to/es/abp/not-a-number/full").status === BAD_REQUEST)
       //TODO fix this
       //assert(get("/ingest/from/file/to/es/abp/1/not-a-number").status === BAD_REQUEST)
@@ -181,7 +180,7 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
     """
        * when a wrong password is supplied
        * the response should be 401
-    """ ignore {
+    """ in {
       val request = newRequest("GET", "/ingest/from/file/to/es/exeter/1/sample")
       val response = await(request.withAuth("admin", "wrong", BASIC).execute())
       assert(response.status === UNAUTHORIZED)

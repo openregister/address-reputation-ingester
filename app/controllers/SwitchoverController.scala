@@ -17,7 +17,6 @@
 package controllers
 
 import com.sksamuel.elastic4s.{ElasticDsl, MutateAliasDefinition}
-import config.ApplicationGlobal
 import controllers.SimpleValidator._
 import org.elasticsearch.cluster.health.ClusterHealthStatus
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
