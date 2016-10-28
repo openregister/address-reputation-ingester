@@ -150,18 +150,16 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
   }
 
   private def indexesAliasedBy(aliasName: String): List[String] = {
-    val gar = clients.head.execute {
+    val gar = getAllAliases {
       getAlias(aliasName)
-    } await()
-
-    gar.getAliases.keys.toArray.map(_.toString).toList
+    }
+    gar.keys.toList
   }
 
   def aliasesFor(indexName: String): List[String] = {
-    val aliasMap = getAllAliases {
-      getAlias(indexName).on("*")
-    }
-    aliasMap.values.toList.flatten
+    val found = allAliases.find(_._1 == indexName)
+    val optionalMatchingList = found.toList map (_._2)
+    optionalMatchingList.flatten
   }
 
   /**
