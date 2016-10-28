@@ -22,7 +22,7 @@ package services.es
 import java.util.Date
 
 import com.sksamuel.elastic4s.ElasticDsl._
-import com.sksamuel.elastic4s.{ElasticClient, MutateAliasDefinition}
+import com.sksamuel.elastic4s.{ElasticClient, GetAliasDefinition, MutateAliasDefinition}
 import ingest.writers.WriterSettings
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.cluster.health.ClusterHealthStatus
@@ -158,9 +158,10 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
   }
 
   def aliasesFor(indexName: String): List[String] = {
-    val found = allAliases.find(_._1 == indexName)
-    val optionalMatchingList = found.toList map (_._2)
-    optionalMatchingList.flatten
+    val aliasMap = getAllAliases {
+      getAlias(indexName).on("*")
+    }
+    aliasMap.values.toList.flatten
   }
 
   /**
@@ -171,10 +172,13 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
     * )
     */
   def allAliases: Map[String, List[String]] = {
-    val gar = clients.head.execute {
+    getAllAliases {
       getAlias("*")
-    } await()
+    }
+  }
 
+  private def getAllAliases(gad: GetAliasDefinition): Map[String, List[String]] = {
+    val gar = clients.head.execute(gad) await()
     val rawTree = gar.getAliases.asScala
     val converted = rawTree.map {
       kv =>
@@ -183,26 +187,6 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
         k -> v
     }
     converted.toMap
-  }
-
-  def zsetCollectionInUseFor(name: CollectionName) {
-    val inUse = indexesAliasedBy(name.productName)
-    if (inUse.nonEmpty) {
-      clients foreach { client =>
-        client execute {
-          aliases(
-            remove alias name.productName on inUse.head,
-            add alias name.productName on name.toString
-          )
-        } await()
-      }
-    } else {
-      clients foreach { client =>
-        client execute {
-          aliases(add alias name.productName on name.toString)
-        } await()
-      }
-    }
   }
 
   def setCollectionInUseFor(collectionName: CollectionName) {
