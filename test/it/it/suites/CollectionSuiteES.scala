@@ -207,21 +207,15 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
         } await()
       }
 
-//      val tuples = db_se1_9py.forElasticsearch
-//      esClient execute {
-//        index into idx -> IndexMetadata.address fields tuples id db_se1_9py.id routing db_se1_9py.postcode
-//      }
+      indexMetadata.writeCompletionDateTo(idx)
 
-//      println(indexMetadata.allAliases)
-//      Thread.sleep(2500)
-//      println(indexMetadata.allAliases)
+      // TODO improve this
+      Thread.sleep(100)
 
       val request = newRequest("GET", "/switch/es/abp/39/200102030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
-
-      println(indexMetadata.allAliases)
 
       val collectionName = indexMetadata.getCollectionInUseFor("abp").get.toString
       assert(collectionName === "abp_39_200102030405")
