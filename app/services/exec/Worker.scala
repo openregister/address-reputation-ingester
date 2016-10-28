@@ -62,7 +62,8 @@ object Task {
 // flow of work cleanly.
 
 object WorkQueue {
-  val singleton = new WorkQueue(new StatusLogger(new LoggerFacade(Logger.logger)))
+  val statusLogger = new StatusLogger(new LoggerFacade(Logger.logger))
+  val singleton = new WorkQueue(statusLogger)
 
   val idle = TaskInfo(None, "idle")
 }

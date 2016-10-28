@@ -19,11 +19,10 @@
 
 package controllers
 
-import config.ApplicationGlobal
 import play.api.libs.json.Json
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.DbFacade
-import services.exec.WorkerFactory
+import services.exec.{WorkQueue, WorkerFactory}
 import services.model.StatusLogger
 import services.mongo.{CollectionMetadataItem, CollectionName}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -31,17 +30,17 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 object MongoCollectionController extends CollectionController(
   ControllerConfig.authAction,
-  ControllerConfig.logger,
+  WorkQueue.statusLogger,
   ControllerConfig.workerFactory,
-  ApplicationGlobal.mongoCollectionMetadata
+  ControllerConfig.mongoCollectionMetadata
 )
 
 
 object ElasticCollectionController extends CollectionController(
   ControllerConfig.authAction,
-  ControllerConfig.logger,
+  WorkQueue.statusLogger,
   ControllerConfig.workerFactory,
-  ApplicationGlobal.elasticSearchService
+  ControllerConfig.elasticSearchService
 )
 
 

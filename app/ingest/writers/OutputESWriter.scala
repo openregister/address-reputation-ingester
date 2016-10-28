@@ -19,14 +19,14 @@ package ingest.writers
 import java.util.Date
 
 import com.sksamuel.elastic4s._
-import config.ApplicationGlobal
+import controllers.ControllerConfig
 import services.es.IndexMetadata
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.osgb.DbAddress
 import uk.gov.hmrc.address.services.es.ESSchema
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMetadata: IndexMetadata,
                      settings: WriterSettings, ec: ExecutionContext) extends OutputWriter with ElasticDsl {
@@ -62,41 +62,35 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
   }
 
   override def output(a: DbAddress) {
-    val at = a.tupledFlat.toMap + ("id" -> a.id)
+    val at = a.forElasticsearch
     addBulk(
       index into indexName -> address fields at id a.id routing a.postcode
     )
   }
 
   override def end(completed: Boolean): StateModel = {
-    indexMetadata.clients foreach { client =>
-      if (bulkCount != 0) {
-        val fr = client execute {
+    if (bulkCount != 0) {
+      val fbrs = indexMetadata.clients map { client =>
+        client execute {
           bulk(
             bulkStatements
           )
         }
-
-        Await.ready(fr, Duration.Inf) foreach { br =>
-          if (br.hasFailures) {
-            statusLogger.warn(s"Elasticsearch failure processing bulk insertion - ${br.failureMessage}")
-            model = model.copy(hasFailed = true)
-            throw new Exception(s"Elasticsearch failure processing bulk insertion - ${br.failureMessage}")
-          }
-        }
       }
+
+      awaitBulkResultsAndCheckFailures(fbrs)
     }
 
     // we have finished! let's celebrate
     if (completed) {
-      indexMetadata.clients foreach { client =>
+      val fuss = indexMetadata.clients map { client =>
         client execute {
           update settings indexName set Map(
             "index.refresh_interval" -> "1s"
           )
-        } await()
-        Unit
+        }
       }
+      Future.sequence(fuss).await(Duration.Inf)
 
       indexMetadata.writeCompletionDateTo(indexName)
     }
@@ -113,7 +107,7 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
     bulkCount += 1
 
     if (bulkCount >= settings.bulkSize) {
-      val fr = indexMetadata.clients map { client =>
+      val fbrs = indexMetadata.clients map { client =>
         client execute {
           bulk(
             bulkStatements
@@ -121,24 +115,30 @@ class OutputESWriter(var model: StateModel, statusLogger: StatusLogger, indexMet
         }
       }
 
-      Await.result(Future.sequence(fr), Duration.Inf) foreach { br =>
-        if (br.hasFailures) {
-          statusLogger.warn(s"Elasticsearch failure processing bulk insertion - ${br.failureMessage}")
-          model = model.copy(hasFailed = true)
-          throw new Exception(s"Elasticsearch failure processing bulk insertion - ${br.failureMessage}")
-        }
-      }
+      awaitBulkResultsAndCheckFailures(fbrs)
 
       bulkCount = 0
       bulkStatements.clear()
       Thread.sleep(settings.loopDelay)
     }
+  }
 
+  private def awaitBulkResultsAndCheckFailures(fbrs: Seq[Future[BulkResult]]) {
+    val bulkResults = Future.sequence(fbrs).await(Duration.Inf)
+
+    val failures = bulkResults.filter(_.hasFailures)
+
+    failures.foreach {
+      br =>
+        statusLogger.warn(s"Elasticsearch failure processing bulk insertion - ${br.failureMessage}")
+        model = model.copy(hasFailed = true)
+        throw new Exception(s"Elasticsearch failure processing bulk insertion - ${br.failureMessage}")
+    }
   }
 }
 
 class OutputESWriterFactory extends OutputWriterFactory {
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext): OutputESWriter = {
-    new OutputESWriter(model, statusLogger, ApplicationGlobal.elasticSearchService, settings, ec)
+    new OutputESWriter(model, statusLogger, ControllerConfig.elasticSearchService, settings, ec)
   }
 }

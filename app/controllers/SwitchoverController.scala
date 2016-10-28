@@ -24,7 +24,7 @@ import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.DbFacade
 import services.audit.AuditClient
 import services.es.IndexMetadata
-import services.exec.WorkerFactory
+import services.exec.{WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import services.mongo.CollectionName
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -35,11 +35,10 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 object MongoSwitchoverController extends SwitchoverController(
   ControllerConfig.authAction,
-  ControllerConfig.logger,
+  WorkQueue.statusLogger,
   ControllerConfig.workerFactory,
-  ApplicationGlobal.mongoCollectionMetadata,
+  ControllerConfig.mongoCollectionMetadata,
   services.audit.Services.auditClient,
-
   "db",
   scala.concurrent.ExecutionContext.Implicits.global
 )
@@ -47,9 +46,9 @@ object MongoSwitchoverController extends SwitchoverController(
 
 object ElasticSwitchoverController extends SwitchoverController(
   ControllerConfig.authAction,
-  ControllerConfig.logger,
+  WorkQueue.statusLogger,
   ControllerConfig.workerFactory,
-  ApplicationGlobal.elasticSearchService,
+  ControllerConfig.elasticSearchService,
   services.audit.Services.auditClient,
   "es",
   scala.concurrent.ExecutionContext.Implicits.global
@@ -89,6 +88,7 @@ class SwitchoverController(action: ActionBuilder[Request],
         case "es" => switchEs(model)
         case _ => switchDb(model)
       }
+      //      switchDb(model)
     }
   }
 
@@ -114,7 +114,8 @@ class SwitchoverController(action: ActionBuilder[Request],
   private def switchEs(model: StateModel): StateModel = {
 
     implicit val ecx = ec
-    val ariIndexName = model.collectionName.toString
+    val newIndexName = model.collectionName.toString
+    val productName = model.productName
     val indexMetadata = collectionMetadata.asInstanceOf[IndexMetadata] //bit dirty this, will be cleaned up on mongo removal
     val ariAliasName = IndexMetadata.ariAliasName
 
@@ -125,7 +126,7 @@ class SwitchoverController(action: ActionBuilder[Request],
             IndexMetadata.replicaCount
           } for $ariAliasName")
           client execute {
-            update settings ariIndexName set Map(
+            update settings newIndexName set Map(
               "index.number_of_replicas" -> IndexMetadata.replicaCount
             )
           } await()
@@ -139,6 +140,12 @@ class SwitchoverController(action: ActionBuilder[Request],
               }.await.getStatus == ClusterHealthStatus.GREEN
           }
         }
+
+        //        val allAliases = indexMetadata.allAliases
+        //        status.info(allAliases.toString)
+        //        val theseAliases = allAliases(newIndexName)
+        //        status.info(s"Removing index $newIndexName from aliases $theseAliases")
+        //        val aliasStatements = theseAliases map (a => remove alias ariAliasName on a)
 
         val gar = client execute {
           getAlias(model.productName).on("*")
@@ -157,14 +164,12 @@ class SwitchoverController(action: ActionBuilder[Request],
           aliases(
             aliasStatements ++
               Seq(
-                add alias ariAliasName on ariIndexName,
-                add alias model.productName on ariIndexName
+                add alias ariAliasName on newIndexName,
+                add alias productName on newIndexName
               )
           )
         }
-        status.info(s"Adding index $ariIndexName to $ariAliasName and ${
-          model.productName
-        }")
+        status.info(s"Adding index $newIndexName to $ariAliasName and $productName")
 
         olc.toArray().foreach(a => {
           val aliasIndex = a.asInstanceOf[String]

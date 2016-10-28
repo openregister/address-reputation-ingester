@@ -21,25 +21,24 @@ package fetch
 import java.io.File
 import java.net.URL
 
-import config.ApplicationGlobal
 import controllers.SimpleValidator._
 import controllers.{ControllerConfig, KnownProducts}
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.exec.{Continuer, WorkerFactory}
+import services.exec.{Continuer, WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import services.mongo.{CollectionMetadata, CollectionName}
-import uk.gov.hmrc.util.FileUtils
 import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.util.FileUtils
 
 
 object FetchController extends FetchController(
   ControllerConfig.authAction,
-  ControllerConfig.logger,
+  WorkQueue.statusLogger,
   ControllerConfig.workerFactory,
   ControllerConfig.fetcher,
   ControllerConfig.sardine,
   ControllerConfig.remoteServer,
-  ApplicationGlobal.mongoCollectionMetadata)
+  ControllerConfig.mongoCollectionMetadata)
 
 
 class FetchController(action: ActionBuilder[Request],

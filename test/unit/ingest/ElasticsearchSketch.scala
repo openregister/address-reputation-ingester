@@ -35,7 +35,7 @@ object ElasticsearchSketch {
     val status = new StatusLogger(Stdout)
 
     val esClients = ElasticsearchHelper.buildNetClients("elasticsearch", "elasticsearch://localhost:9300", Stdout)
-    val indexMetadata = new IndexMetadata(esClients, false, Map("essay" -> 2))(ec)
+    val indexMetadata = new IndexMetadata(esClients, false, Map("essay" -> 2), status, ec)
     val w = new OutputESWriter(model, status, indexMetadata, WriterSettings.default, ec)
     println(indexMetadata.existingCollectionNames)
     w.begin()

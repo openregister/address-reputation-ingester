@@ -22,7 +22,7 @@ import ingest.algorithm.Algorithm
 import ingest.writers.WriterSettings
 import ingest.{IngestController, IngestControllerHelper}
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.exec.{Continuer, WorkerFactory}
+import services.exec.{Continuer, WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -33,7 +33,7 @@ object KnownProducts {
 
 object GoController extends GoController(
   ControllerConfig.authAction,
-  ControllerConfig.logger,
+  WorkQueue.statusLogger,
   ControllerConfig.workerFactory,
   ControllerConfig.sardine,
   FetchController,

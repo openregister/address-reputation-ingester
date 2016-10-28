@@ -20,7 +20,7 @@
 package it.suites
 
 import it.helper.AppServerTestApi
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.{FreeSpec, MustMatchers}
 import play.api.Application
 import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
@@ -30,9 +30,9 @@ import uk.gov.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.gov.hmrc.logging.Stdout
 
 class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val app: Application)
-  extends WordSpec with MustMatchers with AppServerTestApi {
+  extends FreeSpec with MustMatchers with AppServerTestApi {
 
-  "db list collections" must {
+  "db list collections" - {
     """
        * return the sorted list of collections
        * along with the completion dates (if present)
@@ -51,7 +51,7 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
 
   //-----------------------------------------------------------------------------------------------
 
-  "db collection endpoints should be protected by basic auth" must {
+  "db collection endpoints should be protected by basic auth" - {
     "list collections" in {
       val request = newRequest("GET", "/collections/db/list")
       val response = await(request.execute())
@@ -73,7 +73,7 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
 
   //-----------------------------------------------------------------------------------------------
 
-  "db collection endpoints" must {
+  "db collection endpoints" - {
     "drop unknown collection should give NOT_FOUND" in {
       val request = newRequest("DELETE", "/collections/db/2001-12-31-01-02")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
@@ -83,7 +83,7 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
 
   //-----------------------------------------------------------------------------------------------
 
-  "db ingest resource happy journey" must {
+  "db ingest resource happy journey" - {
     """
        * observe quiet status
        * start ingest
@@ -131,7 +131,7 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
 
   //-----------------------------------------------------------------------------------------------
 
-  "db ingest resource - errors" must {
+  "db ingest resource - errors" - {
     """
        * passing bad parameters
        * should give 400
@@ -152,7 +152,7 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
 
   //-----------------------------------------------------------------------------------------------
 
-  "switch-over resource happy journey - db" must {
+  "switch-over resource happy journey - db" - {
     """
        * attempt to switch to existing collection that has completedAt metadata
        * should change the nominated collection
@@ -174,7 +174,7 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
     }
   }
 
-  "db switch-over resource error journeys" must {
+  "db switch-over resource error journeys" - {
     """
        * attempt to switch to non-existent collection
        * should not change the nominated collection

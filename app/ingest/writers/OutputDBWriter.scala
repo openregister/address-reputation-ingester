@@ -23,8 +23,8 @@ import java.util.Date
 import com.mongodb._
 import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
-import config.ApplicationGlobal
 import config.ConfigHelper._
+import controllers.ControllerConfig
 import play.api.Play._
 import services.model.{StateModel, StatusLogger}
 import services.mongo.CollectionMetadata
@@ -139,7 +139,7 @@ class BatchedBulkOperation(settings: WriterSettings, collection: MongoCollection
 class OutputDBWriterFactory extends OutputWriterFactory {
 
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext): OutputWriter =
-    new OutputDBWriter(cleardownOnError, model, statusLogger, ApplicationGlobal.mongoCollectionMetadata, settings)
+    new OutputDBWriter(cleardownOnError, model, statusLogger, ControllerConfig.mongoCollectionMetadata, settings)
 
   private def cleardownOnError = mustGetConfigString(current.mode, current.configuration, "mongodb.cleardownOnError").toBoolean
 }
