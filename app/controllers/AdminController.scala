@@ -56,40 +56,40 @@ class AdminController(action: ActionBuilder[Request],
     if (worker.abort()) {
       Accepted
     } else {
-      Ok("Nothing to cancel").withHeaders(PlainText)
+      Ok("Nothing to cancel").as(MimeTypes.TEXT)
     }
   }
 
   def cancelQueue(id: Int): Action[AnyContent] = action {
-    Ok(JacksonMapper.writeValueAsString(worker.dropQueueItem(id))).withHeaders(ApplJson)
+    Ok(JacksonMapper.writeValueAsString(worker.dropQueueItem(id))).as(MimeTypes.JSON)
   }
 
   // widely used in tests - so this is *not* basic-auth protected
   def status(): Action[AnyContent] = Action {
-    Ok(worker.status).withHeaders(PlainText)
+    Ok(worker.status).as(MimeTypes.TEXT)
   }
 
   def fullStatus(): Action[AnyContent] = action {
-    Ok(worker.fullStatus).withHeaders(PlainText)
+    Ok(worker.fullStatus).as(MimeTypes.TEXT)
   }
 
   def viewQueue(): Action[AnyContent] = action {
-    Ok(JacksonMapper.writeValueAsString(worker.viewQueue)).withHeaders(ApplJson)
+    Ok(JacksonMapper.writeValueAsString(worker.viewQueue)).as(MimeTypes.JSON)
   }
 
   def showLog(dir: Option[String]): Action[AnyContent] = action {
     val d = if (dir.isEmpty) "." else dir.get
-    Ok(LogFileHelper.readLogFile(new File(d).getCanonicalFile)).withHeaders(PlainText)
+    Ok(LogFileHelper.readLogFile(new File(d).getCanonicalFile)).as(MimeTypes.TEXT)
   }
 
   def dirTree(root: Option[String], max: Option[Int]): Action[AnyContent] = action {
     val dir = if (root.isDefined) new File(root.get) else ControllerConfig.downloadFolder
     val treeInfo = DirTreeHelper.dirTreeInfo(dir, max getOrElse 2)
-    Ok(treeInfo).withHeaders(PlainText)
+    Ok(treeInfo).as(MimeTypes.TEXT)
   }
 
   def realm: Action[AnyContent] = action {
-    Ok(s"$realmString\n$startTime").withHeaders(PlainText)
+    Ok(s"$realmString\n$startTime").as(MimeTypes.TEXT)
   }
 }
 

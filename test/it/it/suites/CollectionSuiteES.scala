@@ -136,7 +136,7 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
       verifyOK("/admin/status", "idle")
 
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val indexMetadata = new IndexMetadata(List(esClient), false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
+      val indexMetadata = new IndexMetadata(List(esClient), false, Map("exeter" -> 1, "abi" -> 1, "abp" -> 1), statusLogger, ec)
       waitForIndex("exeter", TimeValue.timeValueSeconds(30))
 
       val exeter1 = indexMetadata.existingCollectionNamesLike(CollectionName("exeter", Some(1))).head
@@ -196,30 +196,28 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
        * attempt to switch to existing collection that has completedAt metadata
        * should change the nominated collection
     """ in {
-      val idx = "abp_39_200102030405"
+      val timestamp = CollectionName.newTimestamp
+      val idx = CollectionName("abp", Some(40), Some(timestamp))
 
       val statusLogger = new StatusLogger(new StubLogger(true))
       val indexMetadata = new IndexMetadata(List(esClient), false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
 
       indexMetadata.clients foreach { client =>
         client execute {
-          ESSchema.createIndexDefinition(idx, IndexMetadata.address,
+          ESSchema.createIndexDefinition(idx.toString, IndexMetadata.address,
             ESSchema.Settings(1, 0, "1s"))
         } await()
       }
 
-      indexMetadata.writeCompletionDateTo(idx)
+      indexMetadata.writeCompletionDateTo(idx.toString)
 
-      // TODO improve this
-      Thread.sleep(100)
-
-      val request = newRequest("GET", "/switch/es/abp/39/200102030405")
+      val request = newRequest("GET", "/switch/es/abp/40/" + timestamp)
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
-      val collectionName = indexMetadata.getCollectionInUseFor("abp").get.toString
-      assert(collectionName === "abp_39_200102030405")
+      val collectionName = indexMetadata.getCollectionInUseFor("abp").get
+      assert(collectionName === idx)
     }
   }
 
@@ -249,10 +247,10 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
       val indexMetadata = new IndexMetadata(List(esClient), false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
       val initialCollectionName = indexMetadata.getCollectionInUseFor("abp")
 
-      createSchema("209902030405", indexMetadata.clients)
-      waitForIndex("209902030405")
+      createSchema("abp_41_209002030405", indexMetadata.clients)
+      waitForIndex("abp_41_209002030405")
 
-      val request = newRequest("GET", "/switch/es/abp/39/209002030405")
+      val request = newRequest("GET", "/switch/es/abp/41/209002030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -265,7 +263,7 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
        * when a wrong password is supplied
        * the response should be 401
     """ in {
-      val request = newRequest("GET", "/switch/es/abp/39/200102030405")
+      val request = newRequest("GET", "/switch/es/abp/42/200102030405")
       val response = await(request.withAuth("admin", "wrong", BASIC).execute())
       assert(response.status === UNAUTHORIZED)
     }

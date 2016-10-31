@@ -27,8 +27,6 @@ import it.helper.{AppServerUnderTest, PSuites}
 import it.suites._
 import org.scalatest.{Args, SequentialNestedSuiteExecution, Status}
 import org.scalatestplus.play.PlaySpec
-import play.api.libs.ws.WSAuthScheme.BASIC
-import play.api.test.Helpers._
 import uk.gov.hmrc.util.FileUtils
 
 class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNestedSuiteExecution {
@@ -44,44 +42,15 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
 
   override def runNestedSuites(args: Args): Status = {
     val s = new PSuites(
+      new AdminSuite(appEndpoint)(app),
+      new IngestFileSuite(appEndpoint, tmpDir)(app),
+      new WebdavSuite(appEndpoint, tmpDir)(app),
       new CollectionSuiteDB(appEndpoint, mongoTestConnection.uri)(app),
       new CollectionSuiteES(appEndpoint, esClient)(app),
-      new WebdavSuite(appEndpoint, tmpDir)(app),
-      new AdminSuite(appEndpoint)(app),
+      new GoSuiteES(appEndpoint, esClient)(app),
       new PingSuite(appEndpoint)(app)
     )
     s.runNestedSuites(args)
-  }
-
-  //-----------------------------------------------------------------------------------------------
-
-  "ingest resource happy journey - to file" must {
-    """
-       * observe quiet status,
-       * start ingest,
-       * observe busy status,
-       * await successful outcome,
-       * observe quiet status
-    """ in {
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
-
-      val request = newRequest("GET", "/ingest/from/file/to/file/exeter/1/sample?forceChange=true")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
-      response.status mustBe ACCEPTED
-
-      verifyOK("/admin/status", "busy ingesting to file exeter/1/sample (forced)")
-
-      assert(waitWhile("/admin/status", "busy ingesting to file exeter/1/sample (forced)", 100000) === true)
-
-      verifyOK("/admin/status", "idle")
-
-      val outputDir = new File(tmpDir, "output")
-      val files = outputDir.listFiles()
-      files.length mustBe 1
-      val outFile = files.head
-      outFile.exists() mustBe true
-      outFile.length() mustBe 1109057L
-    }
   }
 
   //-----------------------------------------------------------------------------------------------

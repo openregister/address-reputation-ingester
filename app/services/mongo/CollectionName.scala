@@ -28,7 +28,7 @@ import org.joda.time.format.DateTimeFormat
 
 case class CollectionName(productName: String,
                           epoch: Option[Int],
-                          timestamp: Option[String] = None) {
+                          timestamp: Option[String] = None) extends Ordered[CollectionName] {
 
   def toPrefix: String = s"${productName}_${epoch.get}"
 
@@ -36,6 +36,8 @@ case class CollectionName(productName: String,
     if (timestamp.isDefined) CollectionName.format(productName, epoch.get, timestamp.get)
     else if (epoch.isDefined) toPrefix
     else productName
+
+  override def compare(that: CollectionName): Int = this.toString compare that.toString
 }
 
 
@@ -58,5 +60,10 @@ object CollectionName {
   }
 
   def format(productName: String, epoch: Int, timestamp: String): String = "%s_%d_%s".format(productName, epoch, timestamp)
+
+  def newTimestamp = timestampFormatter.print(new DateTime())
+
+  // note: no underscores (would break our logic) and no dashes (they are problematic in Mongo)
+  val timestampFormatter = DateTimeFormat.forPattern("yyyyMMddHHmm")
 }
 

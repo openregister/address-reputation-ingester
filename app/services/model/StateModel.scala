@@ -17,8 +17,6 @@
 package services.model
 
 import fetch.OSGBProduct
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import services.mongo.CollectionName
 
 case class StateModel(
@@ -39,12 +37,7 @@ case class StateModel(
     s"$productName/$epoch/$v"
   }
 
-  def withNewTimestamp: StateModel = {
-    // note: no underscores (would break our logic) and no dashes (they are problematic in Mongo)
-    val formatter = DateTimeFormat.forPattern("yyyyMMddHHmm")
-    val timestamp = formatter.print(new DateTime())
-    copy(timestamp = Some(timestamp))
-  }
+  def withNewTimestamp: StateModel = copy(timestamp = Some(CollectionName.newTimestamp))
 
   def collectionName: CollectionName = CollectionName(productName, Some(epoch), timestamp)
 }

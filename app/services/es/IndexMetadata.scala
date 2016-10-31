@@ -109,10 +109,12 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
     updateIndexSettings(indexName, Map(completedAt -> date.getTime.toString))
   }
 
+  private val tenMinutes = TimeValue.timeValueMinutes(10)
+
   def updateIndexSettings(indexName: String, settings: Map[String, String]) {
     clients foreach { client =>
+      greenHealth(client, tenMinutes, indexName)
 
-      greenHealth(TimeValue.timeValueMinutes(10), indexName)
       client execute {
         closeIndex(indexName)
       } await()
@@ -124,12 +126,17 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
       client.execute {
         openIndex(indexName)
       } await()
+
+      greenHealth(client, tenMinutes, indexName)
     }
   }
 
-  private def greenHealth(timeout: TimeValue, index: String*) = {
-    val client0 = clients.head.java
-    client0.admin().cluster().prepareHealth(index: _*).setWaitForGreenStatus().setTimeout(timeout).get
+  def waitForGreenStatus(indices: String*) {
+    clients.foreach(client => greenHealth(client, tenMinutes, indices: _*))
+  }
+
+  private def greenHealth(client: ElasticClient, timeout: TimeValue, index: String*) = {
+    client.java.admin().cluster().prepareHealth(index: _*).setWaitForGreenStatus().setTimeout(timeout).get
   }
 
   def writeIngestSettingsTo(indexName: String, writerSettings: WriterSettings): Unit = {
@@ -192,7 +199,11 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
     val productName = collectionName.productName
 
     if (isCluster) {
+      status.info(s"Increasing replication count for $newIndexName")
       increaseReplicationCount(newIndexName)
+
+      status.info(s"Waiting for $ariAliasName to go green after increasing replica count")
+      waitForGreenStatus(newIndexName)
     }
 
     val priorIndexes = switchAliasesTo(newIndexName, productName)
@@ -211,14 +222,6 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
             "index.number_of_replicas" -> replicaCount
           )
         } await()
-
-        status.info(s"Waiting for $ariAliasName to go green after increasing replica count")
-
-        blockUntil("Expected cluster to have green status", 1200) {
-          client.execute {
-            get cluster health
-          }.await.getStatus == ClusterHealthStatus.GREEN
-        }
       }
     }
     awaitAll(fr)
@@ -272,19 +275,6 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
 
   private def awaitAll[T](fr: Seq[Future[T]]): Seq[T] = {
     Await.result(Future.sequence(fr), Duration("60s"))
-  }
-
-  // simple spin-lock algorithm
-  private def blockUntil(explain: String, maxWait: Int = 10)(done: => Boolean) {
-    var count = 1
-    Thread.sleep(1000)
-
-    while (count < maxWait && !done) {
-      Thread.sleep(1000)
-      count = count + 1
-    }
-
-    require(done, s"Failed waiting on $explain")
   }
 }
 

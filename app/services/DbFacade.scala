@@ -41,7 +41,7 @@ trait DbFacade {
 
   final def existingCollectionNamesLike(name: CollectionName): List[CollectionName] = {
     val collectionNamePrefix = name.toPrefix + "_"
-    val stringNames = existingCollectionNames.filter(_.startsWith(collectionNamePrefix)).toList.sorted
+    val stringNames = existingCollectionNames.filter(_.startsWith(collectionNamePrefix)).sorted
     stringNames.flatMap(s => CollectionName.apply(s))
   }
 

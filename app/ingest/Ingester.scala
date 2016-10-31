@@ -149,7 +149,7 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
     val fewerFiles = pass(files, fp)
     statusLogger.info(s"First pass complete after {}.", dt)
 
-    if(fewerFiles.size > 0) {
+    if (fewerFiles.nonEmpty) {
       val rfd = reduceDefaultedLCCs(forwardData)
 
       statusLogger.info(s"Starting second pass through ${fewerFiles.size} files.")

@@ -17,8 +17,8 @@
 package controllers
 
 import scala.concurrent.Future
-
 import config.Provenance
+import play.api.http.MimeTypes
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -29,7 +29,7 @@ object PingController extends PingController
 trait PingController extends BaseController {
 
   def ping(): Action[AnyContent] = Action { request =>
-    Ok(Provenance.versionInfo).withHeaders(CACHE_CONTROL -> "no-cache,max-age=0,must-revalidate", CONTENT_TYPE -> "application/json")
+    Ok(Provenance.versionInfo).as(MimeTypes.JSON).withHeaders(CACHE_CONTROL -> "no-cache,max-age=0,must-revalidate")
   }
 
   def exit(): Action[AnyContent] = Action { request =>
@@ -37,6 +37,6 @@ trait PingController extends BaseController {
       Thread.sleep(500)
       System.exit(10)
     }
-    Ok("exiting\n").withHeaders(CONTENT_TYPE -> "text/plain")
+    Ok("exiting\n").as(MimeTypes.TEXT)
   }
 }

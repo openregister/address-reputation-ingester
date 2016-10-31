@@ -25,7 +25,6 @@ import it.helper.{AppServerTestApi, ESHelper}
 import org.elasticsearch.common.unit.TimeValue
 import org.scalatest.{FreeSpec, MustMatchers}
 import play.api.Application
-import play.api.libs.json.JsObject
 import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
 import services.es.IndexMetadata
@@ -35,7 +34,6 @@ import uk.gov.hmrc.address.services.es.ESSchema
 import uk.gov.hmrc.address.uk.Postcode
 import uk.gov.hmrc.logging.StubLogger
 
-import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, Future}
 
@@ -74,22 +72,22 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
 
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
-      val request = newRequest("GET", "/go/via/file/to/es/exeter/1/full?bulkSize=7&loopDelay=0&forceChange=true")
+      val request = newRequest("GET", "/go/via/file/to/es/exeter/1/sample?bulkSize=7&loopDelay=0&forceChange=true")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe ACCEPTED
 
-      verifyOK("/admin/status", "busy ingesting to es exeter/1/sample (forced)")
+      verifyOK("/admin/status", "busy automatically loading to es exeter/1/sample (forced)")
 
-      waitWhile("/admin/status", "busy ingesting to es exeter/1/sample (forced)", 100000)
+      waitWhile("/admin/status", "busy automatically loading to es exeter/1/sample (forced)", 100000)
 
       Thread.sleep(1)
       verifyOK("/admin/status", "idle")
 
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val indexMetadata = new IndexMetadata(List(esClient), false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
+      val indexMetadata = new IndexMetadata(List(esClient), false, Map("exeter" -> 1, "abi" -> 1, "abp" -> 1), statusLogger, ec)
       waitForIndex("exeter", TimeValue.timeValueSeconds(30))
 
-      val exeter1 = indexMetadata.existingCollectionNamesLike(CollectionName("exeter", Some(1))).head
+      val exeter1 = indexMetadata.existingCollectionNamesLike(CollectionName("exeter", Some(1))).last
       waitForIndex(exeter1.toString, TimeValue.timeValueSeconds(30))
 
       val metadata = indexMetadata.findMetadata(exeter1).get
@@ -104,7 +102,7 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
       assert(metadata.includeDPA.get === "true")
       assert(metadata.includeLPI.get === "true")
       assert(metadata.streetFilter.get === "1")
-      assert(metadata.prefer.get === "LPI")
+      assert(metadata.prefer.get === "DPA")
 
       val ex46aw = await(findPostcode(exeter1.toString, Postcode("EX4 6AW")))
       assert(ex46aw.size === 38)
