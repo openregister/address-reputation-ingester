@@ -22,12 +22,18 @@ package it.suites
 import it.helper.AppServerTestApi
 import org.scalatest.{FreeSpec, MustMatchers}
 import play.api.Application
+import play.api.libs.json.JsObject
 import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
 import services.mongo.{CollectionMetadata, CollectionName, MongoSystemMetadataStoreFactory}
 import uk.gov.hmrc.address.admin.MetadataStore
 import uk.gov.hmrc.address.services.mongo.CasbahMongoConnection
+import uk.gov.hmrc.address.uk.Postcode
 import uk.gov.hmrc.logging.Stdout
+
+import scala.collection.mutable.ListBuffer
+import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.{Await, Future}
 
 class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val app: Application)
   extends FreeSpec with MustMatchers with AppServerTestApi {
@@ -37,12 +43,18 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
        * return the sorted list of collections
        * along with the completion dates (if present)
     """ in {
+      val idx = "abp_39_ts5"
+
       val mongo = new CasbahMongoConnection(mongoUri)
-      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb("abp_39_ts5"))
+      CollectionMetadata.writeCompletionDateTo(mongo.getConfiguredDb(idx))
 
       val request = newRequest("GET", "/collections/db/list")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
+
       assert(response.status === OK)
+      assert((response.json \ "collections").as[ListBuffer[JsObject]].nonEmpty)
+      assert(((response.json \ "collections") (0) \ "name").as[String] === idx)
+//      assert(((response.json \ "collections") (0) \ "size").as[Int] === 0)
 
       assert(waitUntil("/admin/status", "idle", 100000) === true)
       mongo.close()
@@ -125,6 +137,15 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
       assert(metadata.includeDPA.get === "true")
       assert(metadata.includeLPI.get === "true")
       assert(metadata.streetFilter.get === "1")
+      assert(metadata.prefer.get === "DPA")
+
+//      val ex46aw = await(findPostcode(exeter1.toString, Postcode("EX4 6AW")))
+//      assert(ex46aw.size === 38)
+//      for (a <- ex46aw) {
+//        assert(a.postcode === "EX4 6AW")
+//        assert(a.town === Some("Exeter"))
+//      }
+//      assert(ex46aw.head.lines === List("33 Longbrook Street"))
       mongo.close()
     }
   }
@@ -230,4 +251,6 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
       assert(get("/switch/db/abp/not-a-number/1").status === BAD_REQUEST)
     }
   }
+
+  private def await[T](future: Future[T], timeout: Duration = FiniteDuration(20, "s")): T = Await.result(future, timeout)
 }

@@ -39,60 +39,20 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, Future}
 
-class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit val app: Application)
+class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit val app: Application)
   extends FreeSpec with MustMatchers with AppServerTestApi with ESHelper {
 
   implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
-//  val db_se1_9py = DbAddress("GB10091836674", List("Dorset House 27-45", "Stamford Street"), Some("London"), "SE1 9PY",
-//    Some("GB-ENG"), Some("UK"), Some(5840), Some("en"), Some(2), Some(1), None, None, Some("51.5069937,-0.1088798"))
-
-  "es list collections" - {
-    """
-       * return the sorted list of collections
-       * along with the completion dates (if present)
-    """ in {
-
-      val idx = "abp_39_ts5"
-
-      val statusLogger = new StatusLogger(new StubLogger(true))
-      val indexMetadata = new IndexMetadata(List(esClient), false, Map("abi" -> 2, "abp" -> 2), statusLogger, ec)
-
-      createSchema(idx, indexMetadata.clients)
-
-      indexMetadata.writeCompletionDateTo(idx)
-
-      waitForIndex(idx)
-
-      val request = newRequest("GET", "/collections/es/list")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
-
-      assert(response.status === OK)
-      assert((response.json \ "collections").as[ListBuffer[JsObject]].length === 1)
-      assert(((response.json \ "collections") (0) \ "name").as[String] === idx)
-      assert(((response.json \ "collections") (0) \ "size").as[Int] === 0)
-
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
-    }
-  }
-
-  //-----------------------------------------------------------------------------------------------
-
   "es collection endpoints should be protected by basic auth" - {
-    "list collections" in {
-      val request = newRequest("GET", "/collections/es/list")
+    "go-via-file" in {
+      val request = newRequest("GET", "/go/via/file/to/es/exeter/1/full?forceChange=true")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
-    "drop collection" in {
-      val request = newRequest("DELETE", "/collections/es/foo")
-      val response = await(request.execute())
-      assert(response.status === UNAUTHORIZED)
-    }
-
-    "clean" in {
-      val request = newRequest("POST", "/collections/es/clean")
+    "go-auto" in {
+      val request = newRequest("GET", "/goAuto/via/file/to/es")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
@@ -100,17 +60,7 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
 
   //-----------------------------------------------------------------------------------------------
 
-  "es collection endpoints" - {
-    "drop unknown collection should give NOT_FOUND" in {
-      val request = newRequest("DELETE", "/collections/es/2001-12-31-01-02")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
-      response.status mustBe NOT_FOUND
-    }
-  }
-
-  //-----------------------------------------------------------------------------------------------
-
-  "es ingest resource happy journey" - {
+  "es go resource happy journey" - {
     """
        * observe quiet status
        * start ingest
@@ -124,7 +74,7 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
 
       assert(waitUntil("/admin/status", "idle", 100000) === true)
 
-      val request = newRequest("GET", "/ingest/from/file/to/es/exeter/1/sample?bulkSize=5&loopDelay=0&forceChange=true")
+      val request = newRequest("GET", "/go/via/file/to/es/exeter/1/full?bulkSize=7&loopDelay=0&forceChange=true")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe ACCEPTED
 
@@ -149,12 +99,12 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
       val completedAt = metadata.completedAt.get.getTime
       assert(start <= completedAt)
       assert(completedAt <= System.currentTimeMillis())
-      assert(metadata.bulkSize.get === "5")
+      assert(metadata.bulkSize.get === "7")
       assert(metadata.loopDelay.get === "0")
       assert(metadata.includeDPA.get === "true")
       assert(metadata.includeLPI.get === "true")
       assert(metadata.streetFilter.get === "1")
-      assert(metadata.prefer.get === "DPA")
+      assert(metadata.prefer.get === "LPI")
 
       val ex46aw = await(findPostcode(exeter1.toString, Postcode("EX4 6AW")))
       assert(ex46aw.size === 38)
