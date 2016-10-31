@@ -62,7 +62,7 @@ class CollectionMetadata(val db: MongoDB, val systemMetadata: MongoSystemMetadat
   def getCollectionInUseFor(product: String): Option[CollectionName] =
     CollectionName(systemMetadata.addressBaseCollectionItem(product).get)
 
-  def setCollectionInUseFor(name: CollectionName) {
+  def setCollectionInUse(name: CollectionName) {
     val addressBaseCollectionName = systemMetadata.addressBaseCollectionItem(name.productName)
     addressBaseCollectionName.set(name.toString)
   }

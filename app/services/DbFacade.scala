@@ -47,5 +47,5 @@ trait DbFacade {
 
   def getCollectionInUseFor(product: String): Option[CollectionName]
 
-  def setCollectionInUseFor(name: CollectionName)
+  def setCollectionInUse(name: CollectionName)
 }

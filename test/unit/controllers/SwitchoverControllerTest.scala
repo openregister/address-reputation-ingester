@@ -115,7 +115,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
           worker.awaitCompletion()
           worker.terminate()
 
-          verify(dbFacade).setCollectionInUseFor(abp_40_ts12345)
+          verify(dbFacade).setCollectionInUse(abp_40_ts12345)
           verify(auditClient).succeeded(Map("product" -> "abp", "epoch" -> "40", "newCollection" -> "abp_40_200102030405"))
         }
       }
@@ -140,7 +140,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
           worker.awaitCompletion()
           worker.terminate()
 
-          verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
+          verify(dbFacade, never).setCollectionInUse(abp_40_ts12345)
           assert(logger.warns.size === 2, logger.all)
           assert(logger.warns.head.message === "Warn:abp_40_200102030405: collection was not found")
         }
@@ -168,7 +168,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
           worker.terminate()
 
           assert(response.header.status === 202)
-          verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
+          verify(dbFacade, never).setCollectionInUse(abp_40_ts12345)
           assert(logger.warns.size === 2, logger.all)
           assert(logger.warns.head.message === "Warn:abp_40_200102030405: collection is still being written")
         }
@@ -190,7 +190,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
         worker.terminate()
 
         assert(response.header.status === 401)
-        verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
+        verify(dbFacade, never).setCollectionInUse(abp_40_ts12345)
       }
     }
   }
@@ -212,7 +212,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
           worker.awaitCompletion()
 
           assert(model2 === model1)
-          verify(dbFacade, never).setCollectionInUseFor(abp_40_ts12345)
+          verify(dbFacade, never).setCollectionInUse(abp_40_ts12345)
           assert(logger.size === 1, logger.all.mkString("\n"))
           assert(logger.infos.map(_.message) === List("Info:Switchover was skipped."))
 

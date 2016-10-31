@@ -104,7 +104,7 @@ class SwitchoverController(action: ActionBuilder[Request],
   }
 
   private def setCollectionName(name: CollectionName) {
-    collectionMetadata.setCollectionInUseFor(name)
+    collectionMetadata.setCollectionInUse(name)
     auditClient.succeeded(Map("product" -> name.productName, "epoch" -> name.epoch.get.toString, "newCollection" -> name.toString))
   }
 }
