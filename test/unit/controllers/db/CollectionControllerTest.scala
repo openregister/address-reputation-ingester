@@ -221,9 +221,9 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
       collectionController.cleanup()
       assert(logger.all.size === 3, logger.all.mkString(","))
       assert(logger.infos.map(_.message).toSet == Set(
-        "Info:Deleting obsolete MongoDB collection abi_38_ts1",
-        "Info:Deleting obsolete MongoDB collection abi_39_ts1",
-        "Info:Deleting obsolete MongoDB collection abi_39_ts4"
+        "Deleting obsolete MongoDB collection abi_38_ts1",
+        "Deleting obsolete MongoDB collection abi_39_ts1",
+        "Deleting obsolete MongoDB collection abi_39_ts4"
       ))
       verify(collectionMap("abi_38_ts1")).drop()
       verify(collectionMap("abi_39_ts1")).drop()

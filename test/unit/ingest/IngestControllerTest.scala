@@ -167,7 +167,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       assert(model3 === model2)
       verify(ingester).ingestFrom(any[File], anyObject())
       assert(logger.size === 1, logger.all.mkString("\n"))
-      assert(logger.infos.map(_.message) === List("Info:Cleaning up the ingester."))
+      assert(logger.infos.map(_.message) === List("Cleaning up the ingester."))
 
       worker.terminate()
     }
@@ -190,7 +190,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       assert(model2 === model1)
       verify(ingester, never).ingestFrom(any[File], anyObject())
       assert(logger.size === 1, logger.all.mkString("\n"))
-      assert(logger.infos.map(_.message) === List("Info:Ingest was skipped."))
+      assert(logger.infos.map(_.message) === List("Ingest was skipped."))
 
       worker.terminate()
     }

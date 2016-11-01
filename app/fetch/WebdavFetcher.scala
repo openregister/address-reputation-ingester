@@ -23,7 +23,7 @@ import java.nio.file._
 import com.github.sardine.{DavResource, Sardine}
 import services.exec.Continuer
 import services.model.StatusLogger
-import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
+import uk.co.bigbeeconsultants.util.DiagnosticTimer
 
 class WebdavFetcher(factory: SardineWrapper, val downloadFolder: File, status: StatusLogger) {
 

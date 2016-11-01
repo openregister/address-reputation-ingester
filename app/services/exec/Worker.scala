@@ -23,7 +23,7 @@ import java.util.concurrent.{BlockingQueue, LinkedTransferQueue}
 
 import play.api.Logger
 import services.model.StatusLogger
-import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
+import uk.co.bigbeeconsultants.util.DiagnosticTimer
 import uk.gov.hmrc.logging.LoggerFacade
 
 import scala.util.control.NonFatal

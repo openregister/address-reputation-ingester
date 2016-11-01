@@ -82,13 +82,13 @@ class WebdavFetcherTest extends PlaySpec with MockitoSugar {
 //      val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
 //      stuff.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
 //      logger.infos.map(_.message) must be(List(
-//        "Info:Listing {}.",
-//        "Info:Fetching {} to bar.txt.",
-//        "Info:Fetched bar.txt in {}.",
-//        "Info:Fetching {} to baz.txt.",
-//        "Info:Fetched baz.txt in {}.",
-//        "Info:Fetching {} to foo.txt.",
-//        "Info:Fetched foo.txt in {}."
+//        "Listing {}.",
+//        "Fetching {} to bar.txt.",
+//        "Fetched bar.txt in {}.",
+//        "Fetching {} to baz.txt.",
+//        "Fetched baz.txt in {}.",
+//        "Fetching {} to foo.txt.",
+//        "Fetched foo.txt in {}."
 //      ))
 //      // finally
 //      teardown()
@@ -114,13 +114,13 @@ class WebdavFetcherTest extends PlaySpec with MockitoSugar {
 //      val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
 //      stuff.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
 //      logger.infos.map(_.message) must be(List(
-//        "Info:Listing {}.",
-//        "Info:Fetching {} to bar.txt.",
-//        "Info:Fetched bar.txt in {}.",
-//        "Info:Fetching {} to baz.txt.",
-//        "Info:Fetched baz.txt in {}.",
-//        "Info:Fetching {} to foo.txt.",
-//        "Info:Fetched foo.txt in {}."
+//        "Listing {}.",
+//        "Fetching {} to bar.txt.",
+//        "Fetched bar.txt in {}.",
+//        "Fetching {} to baz.txt.",
+//        "Fetched baz.txt in {}.",
+//        "Fetching {} to foo.txt.",
+//        "Fetched foo.txt in {}."
 //      ))
 //      // finally
 //      teardown()
@@ -147,13 +147,13 @@ class WebdavFetcherTest extends PlaySpec with MockitoSugar {
 //      val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
 //      stuff.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
 //      logger.infos.map(_.message) must be(List(
-//        "Info:Listing {}.",
-//        "Info:Fetching {} to bar.txt.",
-//        "Info:Fetched bar.txt in {}.",
-//        "Info:Fetching {} to baz.txt.",
-//        "Info:Fetched baz.txt in {}.",
-//        "Info:Fetching {} to foo.txt.",
-//        "Info:Fetched foo.txt in {}."
+//        "Listing {}.",
+//        "Fetching {} to bar.txt.",
+//        "Fetched bar.txt in {}.",
+//        "Fetching {} to baz.txt.",
+//        "Fetched baz.txt in {}.",
+//        "Fetching {} to foo.txt.",
+//        "Fetched foo.txt in {}."
 //      ))
 //      // finally
 //      teardown()
@@ -179,10 +179,10 @@ class WebdavFetcherTest extends PlaySpec with MockitoSugar {
 //      val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
 //      stuff.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
 //      logger.infos.map(_.message) must be(List(
-//        "Info:Listing {}.",
-//        "Info:Already had bar.txt.",
-//        "Info:Already had baz.txt.",
-//        "Info:Already had foo.txt."
+//        "Listing {}.",
+//        "Already had bar.txt.",
+//        "Already had baz.txt.",
+//        "Already had foo.txt."
 //      ))
 //      // finally
 //      teardown()
@@ -209,13 +209,13 @@ class WebdavFetcherTest extends PlaySpec with MockitoSugar {
 //      val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
 //      stuff.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
 //      logger.infos.map(_.message) must be(List(
-//        "Info:Listing {}.",
-//        "Info:Fetching {} to bar.txt (forced).",
-//        "Info:Fetched bar.txt in {}.",
-//        "Info:Fetching {} to baz.txt (forced).",
-//        "Info:Fetched baz.txt in {}.",
-//        "Info:Fetching {} to foo.txt (forced).",
-//        "Info:Fetched foo.txt in {}."
+//        "Listing {}.",
+//        "Fetching {} to bar.txt (forced).",
+//        "Fetched bar.txt in {}.",
+//        "Fetching {} to baz.txt (forced).",
+//        "Fetched baz.txt in {}.",
+//        "Fetching {} to foo.txt (forced).",
+//        "Fetched foo.txt in {}."
 //      ))
 //      // finally
 //      teardown()
@@ -246,13 +246,13 @@ class WebdavFetcherTest extends PlaySpec with MockitoSugar {
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       downloadDirectory.toPath.resolve("stuff").toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
-        "Info:Product bundle: {}",
-        "Info:Fetching {} to bar.txt.",
-        "Info:Fetched bar.txt in {}.",
-        "Info:Fetching {} to baz.txt.",
-        "Info:Fetched baz.txt in {}.",
-        "Info:Fetching {} to foo.txt.",
-        "Info:Fetched foo.txt in {}."
+        "Product bundle: {}",
+        "Fetching {} to bar.txt.",
+        "Fetched bar.txt in {}.",
+        "Fetching {} to baz.txt.",
+        "Fetched baz.txt in {}.",
+        "Fetching {} to foo.txt.",
+        "Fetched foo.txt in {}."
       ))
       // finally
       teardown()
@@ -282,10 +282,10 @@ class WebdavFetcherTest extends PlaySpec with MockitoSugar {
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       downloadDirectory.toPath.resolve("stuff").toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
-        "Info:Product bundle: {}",
-        "Info:Already had bar.txt.",
-        "Info:Already had baz.txt.",
-        "Info:Already had foo.txt."
+        "Product bundle: {}",
+        "Already had bar.txt.",
+        "Already had baz.txt.",
+        "Already had foo.txt."
       ))
       // finally
       teardown()
@@ -316,13 +316,13 @@ class WebdavFetcherTest extends PlaySpec with MockitoSugar {
       val doneFiles: Set[String] = files.map(_.getName + ".done").toSet
       downloadDirectory.toPath.resolve("stuff").toFile.list().toSet must be(files.map(_.getName).toSet ++ doneFiles)
       logger.infos.map(_.message) must be(List(
-        "Info:Product bundle: {}",
-        "Info:Fetching {} to bar.txt (forced).",
-        "Info:Fetched bar.txt in {}.",
-        "Info:Fetching {} to baz.txt (forced).",
-        "Info:Fetched baz.txt in {}.",
-        "Info:Fetching {} to foo.txt (forced).",
-        "Info:Fetched foo.txt in {}."
+        "Product bundle: {}",
+        "Fetching {} to bar.txt (forced).",
+        "Fetched bar.txt in {}.",
+        "Fetching {} to baz.txt (forced).",
+        "Fetched baz.txt in {}.",
+        "Fetching {} to foo.txt (forced).",
+        "Fetched foo.txt in {}."
       ))
       // finally
       teardown()

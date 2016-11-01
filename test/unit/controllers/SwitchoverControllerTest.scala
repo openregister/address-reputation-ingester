@@ -142,7 +142,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
 
           verify(dbFacade, never).setCollectionInUse(abp_40_ts12345)
           assert(logger.warns.size === 2, logger.all)
-          assert(logger.warns.head.message === "Warn:abp_40_200102030405: collection was not found")
+          assert(logger.warns.head.message === "abp_40_200102030405: collection was not found")
         }
       }
     }
@@ -170,7 +170,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
           assert(response.header.status === 202)
           verify(dbFacade, never).setCollectionInUse(abp_40_ts12345)
           assert(logger.warns.size === 2, logger.all)
-          assert(logger.warns.head.message === "Warn:abp_40_200102030405: collection is still being written")
+          assert(logger.warns.head.message === "abp_40_200102030405: collection is still being written")
         }
       }
     }
@@ -214,7 +214,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
           assert(model2 === model1)
           verify(dbFacade, never).setCollectionInUse(abp_40_ts12345)
           assert(logger.size === 1, logger.all.mkString("\n"))
-          assert(logger.infos.map(_.message) === List("Info:Switchover was skipped."))
+          assert(logger.infos.map(_.message) === List("Switchover was skipped."))
 
           worker.terminate()
         }

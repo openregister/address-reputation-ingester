@@ -162,19 +162,19 @@ class IngesterTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
 
       assert(logger.infos.map(_.message) === List(
-        "Info:Starting testing.",
-        "Info:Starting first pass through 1 files.",
-        "Info:Reading zip entry sx9090.csv...",
-        "Info:Reading from 1 CSV files in {} (1 of 1) took {}.",
-        "Info:First pass obtained 48737 BLPUs, 42874 DPAs, 1686 streets, 1686/0 street descriptors.",
-        "Info:First pass complete after {}.",
-        "Info:Default LCC reduction altered 282 BLPUs and took {}.",
-        "Info:Starting second pass through 1 files.",
-        "Info:Reading zip entry sx9090.csv...",
-        "Info:Reading from 1 CSV files in {} (1 of 1) took {}.",
-        "Info:Second pass processed 42874 DPAs, 5863 LPIs.", // n.b. there are 53577 LPIs in the sample file
-        "Info:Ingester finished after {}.",
-        "Info:Finished testing after {}."
+        "Starting testing.",
+        "Starting first pass through 1 files.",
+        "Reading zip entry sx9090.csv...",
+        "Reading from 1 CSV files in {} (1 of 1) took {}.",
+        "First pass obtained 48737 BLPUs, 42874 DPAs, 1686 streets, 1686/0 street descriptors.",
+        "First pass complete after {}.",
+        "Default LCC reduction altered 282 BLPUs and took {}.",
+        "Starting second pass through 1 files.",
+        "Reading zip entry sx9090.csv...",
+        "Reading from 1 CSV files in {} (1 of 1) took {}.",
+        "Second pass processed 42874 DPAs, 5863 LPIs.", // n.b. there are 53577 LPIs in the sample file
+        "Ingester finished after {}.",
+        "Finished testing after {}."
       ))
       assert(addressesProduced.size === 48737)
       assert(!closed) // the writer is closed at a higher scope level
@@ -322,19 +322,19 @@ class IngesterTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
 
       assert(logger.infos.map(_.message) === List(
-        "Info:Starting testing.",
-        "Info:Starting first pass through 1 files.",
-        "Info:Reading zip entry sx9090.csv...",
-        "Info:Reading from 1 CSV files in {} (1 of 1) took {}.",
-        "Info:First pass obtained 48737 BLPUs, 52475 LPIs, 1686 streets, 1686/0 street descriptors.",
-        "Info:First pass complete after {}.",
-        "Info:Default LCC reduction altered 282 BLPUs and took {}.",
-        "Info:Starting second pass through 1 files.",
-        "Info:Reading zip entry sx9090.csv...",
-        "Info:Reading from 1 CSV files in {} (1 of 1) took {}.",
-        "Info:Second pass processed 0 DPAs, 48737 LPIs.", // n.b. there are 53577 LPIs in the sample file
-        "Info:Ingester finished after {}.",
-        "Info:Finished testing after {}."
+        "Starting testing.",
+        "Starting first pass through 1 files.",
+        "Reading zip entry sx9090.csv...",
+        "Reading from 1 CSV files in {} (1 of 1) took {}.",
+        "First pass obtained 48737 BLPUs, 52475 LPIs, 1686 streets, 1686/0 street descriptors.",
+        "First pass complete after {}.",
+        "Default LCC reduction altered 282 BLPUs and took {}.",
+        "Starting second pass through 1 files.",
+        "Reading zip entry sx9090.csv...",
+        "Reading from 1 CSV files in {} (1 of 1) took {}.",
+        "Second pass processed 0 DPAs, 48737 LPIs.", // n.b. there are 53577 LPIs in the sample file
+        "Ingester finished after {}.",
+        "Finished testing after {}."
       ))
       assert(addressesProduced.size === 48737)
       assert(!closed) // the writer is closed at a higher scope level

@@ -25,7 +25,7 @@ import ingest.algorithm.Algorithm
 import ingest.writers.OutputWriter
 import services.exec.Continuer
 import services.model.{StateModel, StatusLogger}
-import uk.co.bigbeeconsultants.http.util.DiagnosticTimer
+import uk.co.bigbeeconsultants.util.DiagnosticTimer
 
 import scala.annotation.tailrec
 import scala.collection.mutable
