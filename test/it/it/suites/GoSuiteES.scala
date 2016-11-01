@@ -80,7 +80,8 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
 
       waitWhile("/admin/status", "busy automatically loading to es exeter/1/sample (forced)", 100000)
 
-      Thread.sleep(1)
+      Thread.sleep(10) // really would like to get rid of this
+
       verifyOK("/admin/status", "idle")
 
       val statusLogger = new StatusLogger(new StubLogger(true))
