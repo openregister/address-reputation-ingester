@@ -68,6 +68,8 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
        * verify that the collection metadata contains completedAt with a sensible value
        * verify additional collection metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
     """ in {
+      val statusLogger = new StatusLogger(new StubLogger(true))
+      val indexMetadata = new IndexMetadata(List(esClient), false, Map("exeter" -> 1, "abi" -> 1, "abp" -> 1), statusLogger, ec)
       val start = System.currentTimeMillis()
 
       assert(waitUntil("/admin/status", "idle", 100000) === true)
@@ -80,19 +82,13 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
 
       waitWhile("/admin/status", "busy automatically loading to es exeter/1/sample (forced)", 100000)
 
-      Thread.sleep(10) // really would like to get rid of this
-
-      verifyOK("/admin/status", "idle")
-
-      val statusLogger = new StatusLogger(new StubLogger(true))
-      val indexMetadata = new IndexMetadata(List(esClient), false, Map("exeter" -> 1, "abi" -> 1, "abp" -> 1), statusLogger, ec)
-      waitForIndex("exeter", TimeValue.timeValueSeconds(30))
-
       val exeter1 = indexMetadata.existingCollectionNamesLike(CollectionName("exeter", Some(1))).last
       waitForIndex(exeter1.toString, TimeValue.timeValueSeconds(30))
 
+      verifyOK("/admin/status", "idle")
+
       val metadata = indexMetadata.findMetadata(exeter1).get
-      metadata.size mustBe 48737 // one less than DB because metadata stored in idx settings
+      metadata.size mustBe 48737 // one less than MongoDB because metadata stored in idx settings
 
       // (see similar tests in ExtractorTest)
       val completedAt = metadata.completedAt.get.getTime
