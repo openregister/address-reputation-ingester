@@ -80,7 +80,7 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
 
       verifyOK("/admin/status", "busy automatically loading to es exeter/1/sample (forced)")
 
-      waitWhile("/admin/status", "busy automatically loading to es exeter/1/sample (forced)", 100000)
+      waitWhile("/admin/status", "busy automatically loading to es exeter/1/sample (forced)", 1200000)
 
       val exeter1 = indexMetadata.existingCollectionNamesLike(CollectionName("exeter", Some(1))).last
       waitForIndex(exeter1.toString, TimeValue.timeValueSeconds(30))
