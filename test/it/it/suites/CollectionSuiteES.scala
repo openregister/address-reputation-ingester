@@ -21,7 +21,7 @@ package it.suites
 
 import com.sksamuel.elastic4s.ElasticClient
 import com.sksamuel.elastic4s.ElasticDsl._
-import it.helper.{AppServerTestApi, ESHelper}
+import it.helper.{AppServerTestApi, ESHelper, Synopsis}
 import org.elasticsearch.common.unit.TimeValue
 import org.scalatest.{FreeSpec, MustMatchers}
 import play.api.Application
@@ -44,7 +44,9 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
 
   implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
-//  val db_se1_9py = DbAddress("GB10091836674", List("Dorset House 27-45", "Stamford Street"), Some("London"), "SE1 9PY",
+  val idle = Synopsis.OkText("idle")
+
+  //  val db_se1_9py = DbAddress("GB10091836674", List("Dorset House 27-45", "Stamford Street"), Some("London"), "SE1 9PY",
 //    Some("GB-ENG"), Some("UK"), Some(5840), Some("en"), Some(2), Some(1), None, None, Some("51.5069937,-0.1088798"))
 
   "es list collections" - {
@@ -72,7 +74,7 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
       assert(((response.json \ "collections") (0) \ "name").as[String] === idx)
       assert(((response.json \ "collections") (0) \ "size").as[Int] === 0)
 
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
     }
   }
 
@@ -122,18 +124,15 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
     """ in {
       val start = System.currentTimeMillis()
 
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
 
       val request = newRequest("GET", "/ingest/from/file/to/es/exeter/1/sample?bulkSize=5&loopDelay=0&forceChange=true")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe ACCEPTED
 
-      verifyOK("/admin/status", "busy ingesting to es exeter/1/sample (forced)")
-
-      waitWhile("/admin/status", "busy ingesting to es exeter/1/sample (forced)", 100000)
-
-      Thread.sleep(1)
-      verifyOK("/admin/status", "idle")
+      val busy = Synopsis.OkText("busy ingesting to es exeter/1/sample (forced)")
+      assert(waitWhile("/admin/status", idle) === busy)
+      assert(waitWhile("/admin/status", busy) === idle)
 
       val statusLogger = new StatusLogger(new StubLogger(true))
       val indexMetadata = new IndexMetadata(List(esClient), false, Map("exeter" -> 1, "abi" -> 1, "abp" -> 1), statusLogger, ec)
@@ -214,7 +213,7 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
       val request = newRequest("GET", "/switch/es/abp/40/" + timestamp)
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
 
       val collectionName = indexMetadata.getCollectionInUseFor("abp").get
       assert(collectionName === idx)
@@ -233,7 +232,7 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
       val request = newRequest("GET", "/switch/es/abp/39/209902030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
 
       val collectionName = indexMetadata.getCollectionInUseFor("abp")
       assert(collectionName === initialCollectionName)
@@ -253,7 +252,7 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
       val request = newRequest("GET", "/switch/es/abp/41/209002030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
 
       val collectionName = indexMetadata.getCollectionInUseFor("abp")
       assert(collectionName === initialCollectionName)

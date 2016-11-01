@@ -21,7 +21,7 @@ package it.suites
 
 import java.io.File
 
-import it.helper.AppServerTestApi
+import it.helper.{AppServerTestApi, Synopsis}
 import org.scalatest.{MustMatchers, WordSpec}
 import play.api.Application
 import play.api.libs.ws.WSAuthScheme.BASIC
@@ -29,6 +29,8 @@ import play.api.test.Helpers._
 
 class IngestFileSuite(val appEndpoint: String, tmpDir: File)(implicit val app: Application)
   extends WordSpec with MustMatchers with AppServerTestApi {
+
+  val idle = Synopsis.OkText("idle")
 
   "ingest resource happy journey - to file" must {
     """
@@ -38,17 +40,15 @@ class IngestFileSuite(val appEndpoint: String, tmpDir: File)(implicit val app: A
        * await successful outcome,
        * observe quiet status
     """ in {
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
 
       val request = newRequest("GET", "/ingest/from/file/to/file/exeter/1/sample?forceChange=true")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe ACCEPTED
 
-      verifyOK("/admin/status", "busy ingesting to file exeter/1/sample (forced)")
-
-      assert(waitWhile("/admin/status", "busy ingesting to file exeter/1/sample (forced)", 100000) === true)
-
-      verifyOK("/admin/status", "idle")
+      val busy = Synopsis.OkText("busy ingesting to file exeter/1/sample (forced)")
+      assert(waitWhile("/admin/status", idle) === busy)
+      assert(waitWhile("/admin/status", busy) === idle)
 
       val outputDir = new File(tmpDir, "output")
       val files = outputDir.listFiles()

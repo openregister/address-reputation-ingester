@@ -21,7 +21,7 @@ package it.suites
 
 import java.io.File
 
-import it.helper.AppServerTestApi
+import it.helper.{AppServerTestApi, Synopsis}
 import org.scalatest.{MustMatchers, WordSpec}
 import play.api.Application
 import play.api.libs.ws.WSAuthScheme.BASIC
@@ -29,6 +29,8 @@ import play.api.test.Helpers._
 
 class WebdavSuite(val appEndpoint: String, tmpDir: File)(implicit val app: Application)
   extends WordSpec with MustMatchers with AppServerTestApi {
+
+  val idle = Synopsis.OkText("idle")
 
   "webdav fetch"  must {
     "get remote directory listing" in {
@@ -63,9 +65,8 @@ class WebdavSuite(val appEndpoint: String, tmpDir: File)(implicit val app: Appli
 
       assert(response.status === ACCEPTED)
 
-      verifyOK("/admin/status", "busy fetching exeter/1/full (forced)")
-
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      val busy = Synopsis.OkText("busy fetching exeter/1/full (forced)")
+      assert(waitWhile("/admin/status", busy) === idle)
 
       val outputDir = new File(s"$tmpDir/download/exeter/1/full")
       val files = outputDir.listFiles()

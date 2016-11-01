@@ -19,7 +19,7 @@
 
 package it.suites
 
-import it.helper.AppServerTestApi
+import it.helper.{AppServerTestApi, Synopsis}
 import org.scalatest.{FreeSpec, MustMatchers}
 import play.api.Application
 import play.api.libs.json.JsObject
@@ -28,7 +28,6 @@ import play.api.test.Helpers._
 import services.mongo.{CollectionMetadata, CollectionName, MongoSystemMetadataStoreFactory}
 import uk.gov.hmrc.address.admin.MetadataStore
 import uk.gov.hmrc.address.services.mongo.CasbahMongoConnection
-import uk.gov.hmrc.address.uk.Postcode
 import uk.gov.hmrc.logging.Stdout
 
 import scala.collection.mutable.ListBuffer
@@ -37,6 +36,8 @@ import scala.concurrent.{Await, Future}
 
 class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val app: Application)
   extends FreeSpec with MustMatchers with AppServerTestApi {
+
+  val idle = Synopsis.OkText("idle")
 
   "db list collections" - {
     """
@@ -54,9 +55,9 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
       assert(response.status === OK)
       assert((response.json \ "collections").as[ListBuffer[JsObject]].nonEmpty)
       assert(((response.json \ "collections") (0) \ "name").as[String] === idx)
-//      assert(((response.json \ "collections") (0) \ "size").as[Int] === 0)
+      //      assert(((response.json \ "collections") (0) \ "size").as[Int] === 0)
 
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
       mongo.close()
     }
   }
@@ -107,17 +108,15 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
     """ in {
       val start = System.currentTimeMillis()
 
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
 
       val request = newRequest("GET", "/ingest/from/file/to/db/exeter/1/sample?bulkSize=5&loopDelay=0&forceChange=true")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe ACCEPTED
 
-      verifyOK("/admin/status", "busy ingesting to db exeter/1/sample (forced)")
-
-      waitWhile("/admin/status", "busy ingesting to db exeter/1/sample (forced)", 100000)
-
-      verifyOK("/admin/status", "idle")
+      val busy = Synopsis.OkText("busy ingesting to db exeter/1/sample (forced)")
+      assert(waitWhile("/admin/status", idle) === busy)
+      assert(waitWhile("/admin/status", busy) === idle)
 
       val mongo = new CasbahMongoConnection(mongoUri)
       val db = mongo.getConfiguredDb
@@ -139,13 +138,13 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
       assert(metadata.streetFilter.get === "1")
       assert(metadata.prefer.get === "DPA")
 
-//      val ex46aw = await(findPostcode(exeter1.toString, Postcode("EX4 6AW")))
-//      assert(ex46aw.size === 38)
-//      for (a <- ex46aw) {
-//        assert(a.postcode === "EX4 6AW")
-//        assert(a.town === Some("Exeter"))
-//      }
-//      assert(ex46aw.head.lines === List("33 Longbrook Street"))
+      //      val ex46aw = await(findPostcode(exeter1.toString, Postcode("EX4 6AW")))
+      //      assert(ex46aw.size === 38)
+      //      for (a <- ex46aw) {
+      //        assert(a.postcode === "EX4 6AW")
+      //        assert(a.town === Some("Exeter"))
+      //      }
+      //      assert(ex46aw.head.lines === List("33 Longbrook Street"))
       mongo.close()
     }
   }
@@ -186,7 +185,7 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
       val request = newRequest("GET", "/switch/db/abp/39/200102030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
 
       val collectionName = admin.gbAddressBaseCollectionName.get
       assert(collectionName === "abp_39_200102030405")
@@ -207,7 +206,7 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
       val request = newRequest("GET", "/switch/db/abp/39/200102030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
 
       val collectionName = admin.gbAddressBaseCollectionName.get
       assert(collectionName === initialCollectionName)
@@ -227,7 +226,7 @@ class CollectionSuiteDB(val appEndpoint: String, mongoUri: String)(implicit val 
       val request = newRequest("GET", "/switch/db/abp/39/200102030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
 
       val collectionName = admin.gbAddressBaseCollectionName.get
       assert(collectionName === initialCollectionName)

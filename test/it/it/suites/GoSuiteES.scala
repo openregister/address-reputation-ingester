@@ -21,7 +21,7 @@ package it.suites
 
 import com.sksamuel.elastic4s.ElasticClient
 import com.sksamuel.elastic4s.ElasticDsl._
-import it.helper.{AppServerTestApi, ESHelper}
+import it.helper.{AppServerTestApi, ESHelper, Synopsis}
 import org.elasticsearch.common.unit.TimeValue
 import org.scalatest.{FreeSpec, MustMatchers}
 import play.api.Application
@@ -41,6 +41,8 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
   extends FreeSpec with MustMatchers with AppServerTestApi with ESHelper {
 
   implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+
+  val idle = Synopsis.OkText("idle")
 
   "es collection endpoints should be protected by basic auth" - {
     "go-via-file" in {
@@ -72,20 +74,18 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
       val indexMetadata = new IndexMetadata(List(esClient), false, Map("exeter" -> 1, "abi" -> 1, "abp" -> 1), statusLogger, ec)
       val start = System.currentTimeMillis()
 
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
 
       val request = newRequest("GET", "/go/via/file/to/es/exeter/1/sample?bulkSize=7&loopDelay=0&forceChange=true")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe ACCEPTED
 
-      verifyOK("/admin/status", "busy automatically loading to es exeter/1/sample (forced)")
-
-      waitWhile("/admin/status", "busy automatically loading to es exeter/1/sample (forced)", 1200000)
+      val busy = Synopsis.OkText("busy automatically loading to es exeter/1/sample (forced)")
+      assert(waitWhile("/admin/status", idle) === busy)
+      assert(waitWhile("/admin/status", busy) === idle)
 
       val exeter1 = indexMetadata.existingCollectionNamesLike(CollectionName("exeter", Some(1))).last
       waitForIndex(exeter1.toString, TimeValue.timeValueSeconds(30))
-
-      verifyOK("/admin/status", "idle")
 
       val metadata = indexMetadata.findMetadata(exeter1).get
       metadata.size mustBe 48737 // one less than MongoDB because metadata stored in idx settings
@@ -161,7 +161,7 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
       val request = newRequest("GET", "/switch/es/abp/39/200102030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
 
       val collectionName = indexMetadata.getCollectionInUseFor("abp").get.toString
       assert(collectionName === "abp_39_200102030405")
@@ -180,7 +180,7 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
       val request = newRequest("GET", "/switch/es/abp/39/209902030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
 
       val collectionName = indexMetadata.getCollectionInUseFor("abp")
       assert(collectionName === initialCollectionName)
@@ -200,7 +200,7 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
       val request = newRequest("GET", "/switch/es/abp/39/209002030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
-      assert(waitUntil("/admin/status", "idle", 100000) === true)
+      assert(waitUntil("/admin/status", idle) === idle)
 
       val collectionName = indexMetadata.getCollectionInUseFor("abp")
       assert(collectionName === initialCollectionName)

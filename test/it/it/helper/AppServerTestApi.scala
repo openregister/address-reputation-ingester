@@ -40,7 +40,7 @@ trait AppServerTestApi extends Assertions {
   //-----------------------------------------------------------------------------------------------
 
   def newRequest(method: String, path: String): WSRequest = {
-    WS.url(appEndpoint + path)(app).withMethod(method).withRequestTimeout(Duration(120, TimeUnit.SECONDS))
+    WS.url(appEndpoint + path)(app).withMethod(method).withRequestTimeout(Duration(60, TimeUnit.SECONDS))
   }
 
   def newRequest(method: String, path: String, body: String): WSRequest = {
@@ -51,10 +51,10 @@ trait AppServerTestApi extends Assertions {
   //-----------------------------------------------------------------------------------------------
 
   def request(method: String, path: String, hdrs: (String, String)*): WSResponse =
-    await(newRequest(method, path).withHeaders(hdrs:_*).execute())
+    await(newRequest(method, path).withHeaders(hdrs: _*).execute())
 
   def request(method: String, path: String, body: String, hdrs: (String, String)*): WSResponse =
-    await(newRequest(method, path, body).withHeaders(hdrs:_*).execute())
+    await(newRequest(method, path, body).withHeaders(hdrs: _*).execute())
 
   def get(path: String): WSResponse =
     await(newRequest("GET", path).withHeaders("User-Agent" -> "xyz").execute())
@@ -62,55 +62,46 @@ trait AppServerTestApi extends Assertions {
   def delete(path: String): WSResponse =
     await(newRequest("DELETE", path).withHeaders("User-Agent" -> "xyz").execute())
 
-  def post(path: String, body: String, ct: String = "application/json") =
+  def post(path: String, body: String, ct: String = "application/json"): WSResponse =
     await(newRequest("POST", path, body).withHeaders("Content-Type" -> ct, "User-Agent" -> "xyz").execute())
 
-  def put(path: String, body: String, ct: String = "application/json") =
+  def put(path: String, body: String, ct: String = "application/json"): WSResponse =
     await(newRequest("PUT", path, body).withHeaders("Content-Type" -> ct, "User-Agent" -> "xyz").execute())
 
   //-----------------------------------------------------------------------------------------------
 
-  def verifyOK(path: String, expectedBody: String, expectedContent: String = "text/plain") {
-    verify(path, OK, expectedBody, expectedContent)
-  }
-
-  def verify(path: String, expectedStatus: Int, expectedBody: String, expectedContent: String = "text/plain") {
-    val step = get(path)
-    assert(step.status === expectedStatus)
-    assert(step.header("Content-Type") === Some(expectedContent))
-    assert(step.body === expectedBody)
-  }
+  val defaultTimeout = 600000
 
   @tailrec
-  final def waitWhile(path: String, currentBody: String, timeout: Int): Boolean = {
+  final def waitWhile(path: String, current: Synopsis, timeout: Int = defaultTimeout): Synopsis = {
     if (timeout < 0) {
-      false
+      println("Timed out")
+      Synopsis.empty
     } else {
+      if (timeout % 10000 == 0) println(s"Waiting on $path while " + current.body)
       Thread.sleep(200)
-      val step = get(path)
-      if (step.status != OK || step.body != currentBody) true
-      else waitWhile(path, currentBody, timeout - 200)
+      val step = Synopsis(get(path))
+      if (step != current) step
+      else waitWhile(path, current, timeout - 200)
     }
   }
 
   @tailrec
-  final def waitUntil(path: String, currentBody: String, timeout: Int): Boolean = {
+  final def waitUntil(path: String, current: Synopsis, timeout: Int = defaultTimeout): Synopsis = {
     if (timeout < 0) {
-      false
+      println("Timed out")
+      Synopsis.empty
     } else {
+      if (timeout % 10000 == 0) println(s"Waiting on $path until " + current.body)
       Thread.sleep(200)
-      val step = get(path)
-      if (step.status == OK && step.body == currentBody) true
-      else waitUntil(path, currentBody, timeout - 200)
+      val step = Synopsis(get(path))
+      if (step == current) step
+      else waitUntil(path, current, timeout - 200)
     }
   }
 
-  def dump(response: WSResponse) =
-    new WSResponseDumper(response) // provides a lazy wrapper containing a toString method
+  // provides a lazy wrapper containing a toString method
   // (normally there is no need to dump the response)
+  def dump(response: WSResponse): WSResponseDumper = new WSResponseDumper(response)
 }
 
-class WSResponseDumper(response: WSResponse) {
-  override def toString =
-    "\n  Got " + response.status + ":" + response.body
-}
