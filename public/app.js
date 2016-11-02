@@ -257,14 +257,21 @@ function showTheRealm() {
     });
 }
 
+//-------------------------------------------------------------------------------------------------
+
 function syncTargetSelects(s1, s2) {
     var t1v = $(s1).val();
-    if (t1v == "es" || t1v == "db") {
-        $('#collectionActions legend').text(t1v + " collections");
+    if (t1v == "es") {
+        $('#collectionActions legend').text("es indexes");
         $(s2).val(t1v);
-        // wipe the collection name
-        $('#colname').val('');
+        $('#colname-label').text('Index');
+    } else if (t1v == "db") {
+        $('#collectionActions legend').text("db collections");
+        $(s2).val(t1v);
+        $('#colname-label').text('Collection');
     }
+    // wipe the collection name
+    $('#colname').val('');
 }
 
 function target1Changed() {
@@ -274,6 +281,8 @@ function target1Changed() {
 function target2Changed() {
     syncTargetSelects('#target2', '#target1');
 }
+
+//-------------------------------------------------------------------------------------------------
 
 $(document).ready(
     function () {
