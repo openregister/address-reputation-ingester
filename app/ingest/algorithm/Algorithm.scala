@@ -39,7 +39,7 @@ case class Algorithm(
                       includeDPA: Boolean = true,
                       includeLPI: Boolean = true,
                       prefer: String = "DPA",
-                      streetFilter: Int = 1
+                      streetFilter: Int = 0
                     ) {
 
   val preferLPI = prefer == "LPI"
