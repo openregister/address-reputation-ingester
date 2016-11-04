@@ -24,7 +24,7 @@ import uk.gov.hmrc.logging.SimpleLogger
 
 import scala.collection.mutable
 
-class StatusLogger(val tee: SimpleLogger, history: Int = 1) {
+class StatusLogger(val tee: SimpleLogger, history: Int = 1) extends SimpleLogger {
   require(history > 0)
 
   private var buffers = List(new mutable.ListBuffer[String]())
@@ -37,6 +37,10 @@ class StatusLogger(val tee: SimpleLogger, history: Int = 1) {
   def warn(format: String, arguments: AnyRef*) {
     tee.warn(format, arguments: _*)
     pushMessage("Warn: " + format, arguments: _*)
+  }
+
+  def error(format: String, arguments: AnyRef*) {
+    warn(format, arguments: _*)
   }
 
   private def pushMessage(format: String, arguments: AnyRef*) {
@@ -67,4 +71,10 @@ class StatusLogger(val tee: SimpleLogger, history: Int = 1) {
       buffers = new mutable.ListBuffer[String]() :: buffers
     }
   }
+
+  def info(msg: String, t: Throwable): Unit = ???
+
+  def warn(msg: String, t: Throwable): Unit = ???
+
+  def error(msg: String, t: Throwable): Unit = ???
 }
