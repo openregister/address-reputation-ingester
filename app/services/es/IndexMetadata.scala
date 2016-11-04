@@ -25,7 +25,7 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.{ElasticClient, GetAliasDefinition}
 import ingest.writers.WriterSettings
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
-import org.elasticsearch.cluster.health.ClusterHealthStatus
+import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse
 import org.elasticsearch.common.unit.TimeValue
 import services.DbFacade
 import services.model.StatusLogger
@@ -80,11 +80,18 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
 
   def findMetadata(name: CollectionName): Option[CollectionMetadataItem] = {
     val index = name.toString
-    val rCount = clients.head.execute {
-      search in index / address size 0
-    }
 
-    val indexSettings = clients.head.execute {
+    val indicesStatsResponse = clients.head.admin.indices.prepareStats(index).all.execute.actionGet
+
+    val rCount =
+      if (indicesStatsResponse.getTotalShards != indicesStatsResponse.getSuccessfulShards + indicesStatsResponse.getFailedShards)
+        0
+      else
+        clients.head.execute {
+          search in index / address size 0
+        }.await.totalHits
+
+    val indexSettings: GetSettingsResponse = clients.head.execute {
       get settings index
     } await()
 
@@ -95,7 +102,7 @@ class IndexMetadata(val clients: List[ElasticClient], val isCluster: Boolean, nu
     val iLPI = Option(indexSettings.getSetting(index, includeLPI))
     val pref = Option(indexSettings.getSetting(index, prefer))
     val sFilter = Option(indexSettings.getSetting(index, streetFilter))
-    val count = rCount.await.totalHits
+    val count = rCount
 
     Some(CollectionMetadataItem(name, count.toInt, None, completedDate, bSize, lDelay, iDPA, iLPI, pref, sFilter,
       aliasesFor(index)))
