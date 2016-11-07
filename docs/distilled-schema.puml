@@ -20,19 +20,26 @@ class Successor {
 }
 
 class Classification {
- -record_identifier: 32
- -change_type
- -processing_order
- +UPRN
- class_key
- classification_code
- class_scheme
- scheme_version
+ - 1: record_identifier: 32
+ - 2: change_type
+ - 3: processing_order
+ + 4: UPRN
+ 5; class_key
+ 6: classification_code
+ 7: class_scheme
+ 8: scheme_version
  date_fields
 }
 
 class Organisation {
- -record_identifier: 31
+ - 1: record_identifier: 31
+ - 2: change_type
+ - 3: processing_order
+ + 4: UPRN
+ 5: org_key
+ 6: organisation
+ 7: legal_name
+ date_fields
 }
 
 class Metadata {
@@ -48,108 +55,109 @@ class Trailer {
 }
 
 class Street << (S,yellow) >> {
- -record_identifier: 11
- -change_type
- -processing_order
- +USRN
- record_type_code
- swa_org_ref_naming_code
- state_code?
- state_date?
- street_surface_code?
- street_classification?
- version: int
+ - 1: record_identifier: 11
+ - 2: change_type
+ - 3:  processing_order
+ + 4: USRN
+ 5: record_type_code
+ 6: swa_org_ref_naming_code
+ 7: state_code?
+ 8: state_date?
+ 9: street_surface_code?
+ 10: street_classification?
+ 11: version: int
  date_fields
  start_xy: bng
  latitude_longitude_ etrs89
  end_xy: bng
- tolerance: metres
+ 24: tolerance: metres
 }
 
 class Street_descriptor << (S,yellow) >> {
- -record_identifier: 15
- -change_type
- -processing_order
- ~USRN
- description
- locality?
- town_name?
- administrative_area
- language_code
+ - 1: record_identifier: 15
+ - 2: change_type
+ - 3: processing_order
+ ~ 4: USRN
+ 5: description
+ 6: locality?
+ 7: town_name?
+ 8: administrative_area
+ 9: language_code
  date_fields
 }
 
 class BLPU << (B,#88FF88) >> {
- -record_identifier: 21
- -change_type
- -processing_order
- +UPRN
- logical_status_code
- state_code?
- state_date?
- ~parent_uprn?
+ - 1: record_identifier: 21
+ - 2: change_type
+ - 3: processing_order
+ + 4: UPRN
+ 5: logical_status_code
+ 6: state_code?
+ 7: state_date?
+ ~ 8: parent_uprn?
  coordinate_xy: bng
  latitude_longitude: etrs89
- representative_point_code
- ~local_custodian_code: int
- country: char
+ 13: representative_point_code
+ ~ 14: local_custodian_code: int
+ 15: country: char
  date_fields
- addressbase_postal_code
- postcode_locator: char
- number_of_child_records: int
+ 20: addressbase_postal_code
+ 21: postcode_locator: char
+ 22: number_of_child_records: int
 }
 
 note left: Basic land and property unit
 
 class Land_and_property_identifier {
- -record_identifier: 24
- -change_type
- -processing_order
- +UPRN
- +LPI_key
- language_code
+ - 1: record_identifier: 24
+ - 2: change_type
+ - 3: processing_order
+ + 4: UPRN
+ + 5: LPI_key
+ 6: language_code
  date_fields
- sao_start_number?
- sao_start_suffix?
- sao_end_number?
- sao_end_suffix?
- sao_text?
- pao_start_number?
- pao_start_suffix?
- pao_end_number?
- pao_end_suffix?
- pao_text?
- usrn_match_indicator_code
- area_name?
- vertical_level?
- official_flag_code?
+ 12: sao_start_number?
+ 13: sao_start_suffix?
+ 14: sao_end_number?
+ 15: sao_end_suffix?
+ 16: sao_text?
+ 17: pao_start_number?
+ 18: pao_start_suffix?
+ 19: pao_end_number?
+ 20: pao_end_suffix?
+ 21: pao_text?
+ 22: usrn
+ 23: usrn_match_indicator_code
+ 24: area_name?
+ 25: vertical_level?
+ 26: official_flag_code?
 }
 
 class Delivery_point_address {
- -record_identifier: 28
- -change_type
- -processing_order
- +UPRN
- +UDPRN
- organisation_name?
- department_name?
- sub_building_name?
- building_name?
- building_number?
- dependent_thoroughfare?
- thoroughfare?
- double_dependent_locality?
- dependent_locality?
- post_town
- postcode
- postcode_type_code
- delivery_point_suffix_code
- welsh_dependent_thoroughfare?
- welsh_thoroughfare?
- welsh_double_dependent_locality?
- welsh_dependent_locality?
- welsh_post_town?
- po_box_number?
+ - 1: record_identifier: 28
+ - 2: change_type
+ - 3: processing_order
+ + 4: UPRN
+ + 5: UDPRN
+ 6: organisation_name?
+ 7: department_name?
+ 8: sub_building_name?
+ 9: building_name?
+ 10: building_number?
+ 11: dependent_thoroughfare?
+ 12: thoroughfare?
+ 13: double_dependent_locality?
+ 14: dependent_locality?
+ 15: post_town
+ 16: postcode
+ 17: postcode_type_code
+ 18: delivery_point_suffix_code
+ 19: welsh_dependent_thoroughfare?
+ 20: welsh_thoroughfare?
+ 21: welsh_double_dependent_locality?
+ 22: welsh_dependent_locality?
+ 23: welsh_post_town?
+ 24: po_box_number?
  date_fields
 }
 
