@@ -98,7 +98,7 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
       assert(metadata.loopDelay.get === "0")
       assert(metadata.includeDPA.get === "true")
       assert(metadata.includeLPI.get === "true")
-      assert(metadata.streetFilter.get === "1")
+      assert(metadata.streetFilter.get === "0")
       assert(metadata.prefer.get === "DPA")
 
       val ex46aw = await(findPostcode(exeter1.toString, Postcode("EX4 6AW")))

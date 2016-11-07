@@ -290,7 +290,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val lpi = OSLpi(csvLpiLine).normalise
     val out = ExportDbAddress.exportLPI(lpi, blpu, street, streetDesc, Algorithm())
     assert(out.id === "GB131041604")
-    assert(out.lines === List("Locality Name"))
+    assert(out.lines === List("1a-2b Maidenhill From Stables", "Locality Name"))
     assert(out.town === Some("Town Name"))
     assert(out.postcode === "G77 6RT")
     assert(out.subdivision === Some("GB-SCT"))
