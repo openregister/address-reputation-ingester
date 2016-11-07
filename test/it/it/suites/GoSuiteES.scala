@@ -88,7 +88,7 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
       waitForIndex(exeter1.toString, TimeValue.timeValueSeconds(30))
 
       val metadata = indexMetadata.findMetadata(exeter1).get
-      metadata.size mustBe 48737 // one less than MongoDB because metadata stored in idx settings
+      metadata.size mustBe Some(48737) // one less than MongoDB because metadata stored in idx settings
 
       // (see similar tests in ExtractorTest)
       val completedAt = metadata.completedAt.get.getTime

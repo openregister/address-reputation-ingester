@@ -233,11 +233,11 @@ class CollectionControllerTest extends FunSuite with MockitoSugar {
 
   val anyDate = Some(new Date(0))
 
-  private def fakeIrrelevantCollection(name: String) = CollectionMetadataItem(CollectionName(name).get, 123, None, None)
+  private def fakeIrrelevantCollection(name: String) = CollectionMetadataItem(CollectionName(name).get, Some(123), None, None)
 
-  private def fakeIncompleteCollection(name: String) = CollectionMetadataItem(CollectionName(name).get, 123, anyDate, None)
+  private def fakeIncompleteCollection(name: String) = CollectionMetadataItem(CollectionName(name).get, Some(123), anyDate, None)
 
-  private def fakeCompletedCollection(name: String) = CollectionMetadataItem(CollectionName(name).get, 123, anyDate, anyDate)
+  private def fakeCompletedCollection(name: String) = CollectionMetadataItem(CollectionName(name).get, Some(123), anyDate, anyDate)
 
   private def convert(cmi: CollectionMetadataItem) =
     if (cmi.completedAt.isDefined) Some(MongoDBObject("createdAt" -> cmi.createdAt.get.getTime, "completedAt" -> cmi.completedAt.get.getTime))

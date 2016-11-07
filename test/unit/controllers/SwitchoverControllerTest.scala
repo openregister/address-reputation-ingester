@@ -105,7 +105,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
       """ in {
         new Context {
           when(dbFacade.collectionExists("abp_40_200102030405")) thenReturn true
-          when(dbFacade.findMetadata(abp_40_ts12345)) thenReturn Some(CollectionMetadataItem(abp_40_ts12345, 10, None, Some(dateAgo(3600000))))
+          when(dbFacade.findMetadata(abp_40_ts12345)) thenReturn Some(CollectionMetadataItem(abp_40_ts12345, Some(10), None, Some(dateAgo(3600000))))
 
           val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
             "db", scala.concurrent.ExecutionContext.Implicits.global)
@@ -158,7 +158,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
             Context {
           when(
             dbFacade.collectionExists("abp_40_200102030405")) thenReturn true
-          when(dbFacade.findMetadata(abp_40_ts12345)) thenReturn Some(CollectionMetadataItem(abp_40_ts12345, 10, None, None))
+          when(dbFacade.findMetadata(abp_40_ts12345)) thenReturn Some(CollectionMetadataItem(abp_40_ts12345, Some(10), None, None))
 
           val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
             "db", scala.concurrent.ExecutionContext.Implicits.global)

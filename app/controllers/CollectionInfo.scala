@@ -26,7 +26,8 @@ case class ListCI(collections: List[CollectionInfo])
 
 
 case class CollectionInfo(
-                           name: String, size: Int,
+                           name: String,
+                           size: Option[Int],
                            system: Boolean,
                            inUse: Boolean,
                            createdAt: Option[String] = None,
@@ -45,7 +46,7 @@ object CollectionInfo {
 
   implicit val CollectionInfoReads: Reads[CollectionInfo] = (
     (JsPath \ "name").read[String] and
-      (JsPath \ "size").read[Int] and
+      (JsPath \ "size").readNullable[Int] and
       (JsPath \ "system").read[Boolean] and
       (JsPath \ "inUse").read[Boolean] and
       (JsPath \ "createdAt").readNullable[String] and
@@ -60,7 +61,7 @@ object CollectionInfo {
 
   implicit val CollectionInfoWrites: Writes[CollectionInfo] = (
     (JsPath \ "name").write[String] and
-      (JsPath \ "size").write[Int] and
+      (JsPath \ "size").writeNullable[Int] and
       (JsPath \ "system").write[Boolean] and
       (JsPath \ "inUse").write[Boolean] and
       (JsPath \ "createdAt").writeNullable[String] and

@@ -43,7 +43,7 @@ class CollectionMetadata(val db: MongoDB, val systemMetadata: MongoSystemMetadat
     val size = collection.size
     val m = collection.findOneByID(metadata)
     if (m.isEmpty)
-      Some(CollectionMetadataItem(name, size))
+      Some(CollectionMetadataItem(name, Some(size)))
 
     else {
       val created = Option(m.get.get(createdAt)).map(n => new Date(n.asInstanceOf[Long]))
@@ -55,7 +55,7 @@ class CollectionMetadata(val db: MongoDB, val systemMetadata: MongoSystemMetadat
       val pref = Option(m.get.get(prefer)).map(n => n.asInstanceOf[String])
       val sFilter = Option(m.get.get(streetFilter)).map(n => n.asInstanceOf[String])
 
-      Some(CollectionMetadataItem(name, size, created, completed, bSize, lDelay, iDPA, iLPI, pref, sFilter))
+      Some(CollectionMetadataItem(name, Some(size), created, completed, bSize, lDelay, iDPA, iLPI, pref, sFilter))
     }
   }
 
@@ -108,7 +108,7 @@ object CollectionMetadata {
 
 
 case class CollectionMetadataItem(name: CollectionName,
-                                  size: Int,
+                                  size: Option[Int],
                                   createdAt: Option[Date] = None,
                                   completedAt: Option[Date] = None,
                                   bulkSize: Option[String] = None,

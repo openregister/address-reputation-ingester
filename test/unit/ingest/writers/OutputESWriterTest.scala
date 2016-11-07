@@ -120,8 +120,8 @@ class OutputESWriterTest extends FreeSpec {
           val yesterday = new Date(now.getTime - 86400000L)
 
           when(indexMetadata.existingCollectionNames) thenReturn List("admin", "x_4_ts1", "x_4_ts2")
-          when(indexMetadata.findMetadata(x_4_ts1)) thenReturn Some(CollectionMetadataItem(x_4_ts1, 10, None, Some(dateAgo(864000000))))
-          when(indexMetadata.findMetadata(x_4_ts2)) thenReturn Some(CollectionMetadataItem(x_4_ts2, 10, None, Some(dateAgo(1000))))
+          when(indexMetadata.findMetadata(x_4_ts1)) thenReturn Some(CollectionMetadataItem(x_4_ts1, Some(10), None, Some(dateAgo(864000000))))
+          when(indexMetadata.findMetadata(x_4_ts2)) thenReturn Some(CollectionMetadataItem(x_4_ts2, Some(10), None, Some(dateAgo(1000))))
 
           val outputESWriter = new OutputESWriter(model, status, indexMetadata, WriterSettings(10, 0), ec)
 

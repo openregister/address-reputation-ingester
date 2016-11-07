@@ -122,8 +122,8 @@ class OutputDBWriterTest extends FreeSpec {
           val yesterday = new Date(now.getTime - 86400000L)
 
           when(collectionMetadata.existingCollectionNames) thenReturn List("admin", "x_4_ts1", "x_4_ts2")
-          when(collectionMetadata.findMetadata(x_4_ts1)) thenReturn Some(CollectionMetadataItem(x_4_ts1, 10, None, Some(dateAgo(864000000))))
-          when(collectionMetadata.findMetadata(x_4_ts2)) thenReturn Some(CollectionMetadataItem(x_4_ts2, 10, None, Some(dateAgo(1000))))
+          when(collectionMetadata.findMetadata(x_4_ts1)) thenReturn Some(CollectionMetadataItem(x_4_ts1, Some(10), None, Some(dateAgo(864000000))))
+          when(collectionMetadata.findMetadata(x_4_ts2)) thenReturn Some(CollectionMetadataItem(x_4_ts2, Some(10), None, Some(dateAgo(1000))))
 
           val outputDBWriter = new OutputDBWriter(false, model, status, collectionMetadata, WriterSettings(10, 0))
 

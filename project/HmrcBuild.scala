@@ -33,7 +33,7 @@ object HmrcBuild extends Build with MicroService {
     // netty 3.10 has a breaking API change
     "io.netty" % "netty" % "3.9.9.Final" force(),
 //    "uk.gov.hmrc" %% "logging" % "0.2.0" withSources(),
-    "uk.gov.hmrc" %% "address-reputation-store" % "2.2.0" withSources()
+    "uk.gov.hmrc" %% "address-reputation-store" % "2.3.0" withSources()
       excludeAll (ExclusionRule(organization = "org.reactivemongo"), ExclusionRule(organization = "io.netty")),
     "uk.gov.hmrc" %% "microservice-bootstrap" % "5.4.0",
 //    "uk.gov.hmrc" %% "play-authorisation" % "3.1.0",

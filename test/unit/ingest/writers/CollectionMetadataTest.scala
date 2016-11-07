@@ -129,9 +129,9 @@ class CollectionMetadataTest extends FunSuite with MockitoSugar {
       val names = collectionMetadata.existingCollectionMetadata
 
       //then
-      val cmi38 = CollectionMetadataItem(foo_38_ts1, 138, Some(anyDate), None)
-      val cmi39 = CollectionMetadataItem(foo_39_ts1, 139, None, Some(anyDate))
-      val cmi40 = CollectionMetadataItem(foo_40_ts1, 140, None, None)
+      val cmi38 = CollectionMetadataItem(foo_38_ts1, Some(138), Some(anyDate), None)
+      val cmi39 = CollectionMetadataItem(foo_39_ts1, Some(139), None, Some(anyDate))
+      val cmi40 = CollectionMetadataItem(foo_40_ts1, Some(140), None, None)
       assert(names === List(cmi38, cmi39, cmi40))
     }
   }
