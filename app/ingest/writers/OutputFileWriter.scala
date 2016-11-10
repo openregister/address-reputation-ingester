@@ -23,17 +23,26 @@ import java.util.Date
 import java.util.zip.GZIPOutputStream
 
 import controllers.ControllerConfig
+import ingest.algorithm.Algorithm
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.osgb.DbAddress
 
 import scala.concurrent.ExecutionContext
 
 
-class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger, fieldSeparator: String = "\t") extends OutputWriter {
+class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, fieldSeparator: String = "\t") extends OutputWriter {
 
+  val algChoice = settings.algorithm match {
+    case Algorithm(true, true, "DPA", _) => "DPA+LPI"
+    case Algorithm(true, true, "LPI", _) => "LPI+DPA"
+    case Algorithm(true, false, "DPA", _) => "DPA"
+    case Algorithm(false, true, "LPI", _) => "LPI"
+    case _ => ""
+  }
+  val filter = settings.algorithm.streetFilter
   val fileRoot = model.collectionName.toString
   val kind = if (fieldSeparator == "\t") "tsv" else "txt"
-  val outputFile = new File(ControllerConfig.outputFolder, s"$fileRoot.$kind.gz")
+  val outputFile = new File(ControllerConfig.outputFolder, s"$fileRoot-$algChoice-$filter.$kind.gz")
 
   private val bufSize = 32 * 1024
   private var outCSV: PrintWriter = _
@@ -84,5 +93,5 @@ class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger, fieldS
 
 class OutputFileWriterFactory extends OutputWriterFactory {
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext) =
-    new OutputFileWriter(model, statusLogger)
+    new OutputFileWriter(model, statusLogger, settings)
 }

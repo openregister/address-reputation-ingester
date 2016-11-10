@@ -53,7 +53,7 @@ class SecondPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, f
     false
   }
 
-  private def processLPI(csvLine: Array[String], out: OutputWriter): Unit = {
+  private def processLPI(csvLine: Array[String], out: OutputWriter) {
     val lpi = OSLpi(csvLine).normalise
 
     if (settings.prefer == "LPI" || !fd.uprns.contains(lpi.uprn)) {
@@ -80,7 +80,7 @@ class SecondPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, f
   val defaultStreet = Street('X', "")
   val defaultStreetDescriptor = StreetDescriptor("<SUnknown>", "<SUnknown>", "<TUnknown>")
 
-  private def processDPA(csvLine: Array[String], out: OutputWriter): Unit = {
+  private def processDPA(csvLine: Array[String], out: OutputWriter) {
     //TODO this only ingests English, ignoring any Welsh that is provided
     val dpa = OSDpa(csvLine).normalise
 
