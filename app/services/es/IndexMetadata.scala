@@ -22,6 +22,7 @@ package services.es
 import java.util.Date
 
 import com.sksamuel.elastic4s.ElasticClient
+import config.Provenance
 import ingest.writers.WriterSettings
 import org.elasticsearch.common.unit.TimeValue
 import services.DbFacade
@@ -46,13 +47,15 @@ class IndexMetadata(xclients: List[ElasticClient], val isCluster: Boolean, numSh
 
   private implicit val xec = ec
 
-  private val completedAt = "index.completedAt"
-  private val bulkSize = "index.bulkSize"
-  private val loopDelay = "index.loopDelay"
-  private val includeDPA = "index.includeDPA"
-  private val includeLPI = "index.includeLPI"
-  private val prefer = "index.prefer"
-  private val streetFilter = "index.streetFilter"
+  private val iCompletedAt = "index.completedAt"
+  private val iBulkSize = "index.bulkSize"
+  private val iLoopDelay = "index.loopDelay"
+  private val iIncludeDPA = "index.includeDPA"
+  private val iIncludeLPI = "index.includeLPI"
+  private val iPrefer = "index.prefer"
+  private val iStreetFilter = "index.streetFilter"
+  private val iBuildVersion = "index.buildVersion"
+  private val iBuildNumber = "index.buildNumber"
   private val twoSeconds = TimeValue.timeValueSeconds(2)
 
   def existingCollectionNames: List[String] = existingIndexNames
@@ -76,15 +79,21 @@ class IndexMetadata(xclients: List[ElasticClient], val isCluster: Boolean, numSh
     val count = countDocuments(index, address)
     val settings = getIndexSettings(index)
 
-    val completedDate = settings.get(completedAt).map(s => new Date(s.toLong))
-    val bSize = settings.get(bulkSize)
-    val lDelay = settings.get(loopDelay)
-    val iDPA = settings.get(includeDPA)
-    val iLPI = settings.get(includeLPI)
-    val pref = settings.get(prefer)
-    val sFilter = settings.get(streetFilter)
+    val completedDate = settings.get(iCompletedAt).map(s => new Date(s.toLong))
+    val bSize = settings.get(iBulkSize)
+    val lDelay = settings.get(iLoopDelay)
+    val iDPA = settings.get(iIncludeDPA)
+    val iLPI = settings.get(iIncludeLPI)
+    val pref = settings.get(iPrefer)
+    val sFilter = settings.get(iStreetFilter)
+    val buildVersion = settings.get(iBuildVersion)
+    val buildNumber = settings.get(iBuildNumber)
 
-    Some(CollectionMetadataItem(name, count, None, completedDate, bSize, lDelay, iDPA, iLPI, pref, sFilter, aliasesFor(index)))
+    Some(CollectionMetadataItem(name = name, size = count, createdAt = None, completedAt = completedDate,
+      bulkSize = bSize, loopDelay = lDelay,
+      includeDPA = iDPA, includeLPI = iLPI, prefer = pref, streetFilter = sFilter,
+      buildVersion = buildVersion, buildNumber = buildNumber,
+      aliases = aliasesFor(index)))
   }
 
   def writeCreationDateTo(indexName: String, date: Date = new Date()) {
@@ -92,19 +101,21 @@ class IndexMetadata(xclients: List[ElasticClient], val isCluster: Boolean, numSh
   }
 
   def writeCompletionDateTo(indexName: String, date: Date = new Date()) {
-    writeIndexSettings(indexName, Map(completedAt -> date.getTime.toString))
+    writeIndexSettings(indexName, Map(iCompletedAt -> date.getTime.toString))
   }
 
-  def writeIngestSettingsTo(indexName: String, writerSettings: WriterSettings): Unit = {
+  def writeIngestSettingsTo(indexName: String, writerSettings: WriterSettings) {
+    val buildVersion = Provenance.version.map(iBuildVersion -> _)
+    val buildNumber = Provenance.buildNumber.map(iBuildNumber -> _)
     writeIndexSettings(indexName,
       Map(
-        bulkSize -> writerSettings.bulkSize.toString,
-        loopDelay -> writerSettings.loopDelay.toString,
-        includeDPA -> writerSettings.algorithm.includeDPA.toString,
-        includeLPI -> writerSettings.algorithm.includeLPI.toString,
-        prefer -> writerSettings.algorithm.prefer,
-        streetFilter -> writerSettings.algorithm.streetFilter.toString
-      )
+        iBulkSize -> writerSettings.bulkSize.toString,
+        iLoopDelay -> writerSettings.loopDelay.toString,
+        iIncludeDPA -> writerSettings.algorithm.includeDPA.toString,
+        iIncludeLPI -> writerSettings.algorithm.includeLPI.toString,
+        iPrefer -> writerSettings.algorithm.prefer,
+        iStreetFilter -> writerSettings.algorithm.streetFilter.toString
+      ) ++ buildVersion ++ buildNumber
     )
   }
 
