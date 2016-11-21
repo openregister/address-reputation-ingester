@@ -55,7 +55,9 @@ class CollectionMetadata(val db: MongoDB, val systemMetadata: MongoSystemMetadat
       val pref = Option(m.get.get(prefer)).map(n => n.asInstanceOf[String])
       val sFilter = Option(m.get.get(streetFilter)).map(n => n.asInstanceOf[String])
 
-      Some(CollectionMetadataItem(name, Some(size), created, completed, bSize, lDelay, iDPA, iLPI, pref, sFilter))
+      Some(CollectionMetadataItem(name = name, size = Some(size), createdAt = created, completedAt = completed,
+        bulkSize = bSize, loopDelay = lDelay,
+        includeDPA = iDPA, includeLPI = iLPI, prefer = pref, streetFilter = sFilter))
     }
   }
 
@@ -117,12 +119,14 @@ case class CollectionMetadataItem(name: CollectionName,
                                   includeLPI: Option[String] = None,
                                   prefer: Option[String] = None,
                                   streetFilter: Option[String] = None,
+                                  buildVersion: Option[String] = None,
+                                  buildNumber: Option[String] = None,
                                   aliases: List[String] = Nil) {
 
   def completedAfter(date: Date): Boolean = completedAt.isDefined && completedAt.get.after(date)
 
-  def isIncomplete = createdAt.isDefined && completedAt.isEmpty
+  def isIncomplete: Boolean = createdAt.isDefined && completedAt.isEmpty
 
-  def isComplete = createdAt.isDefined && completedAt.isDefined
+  def isComplete: Boolean = createdAt.isDefined && completedAt.isDefined
 }
 

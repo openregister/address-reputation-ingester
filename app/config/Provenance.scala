@@ -19,10 +19,32 @@
 
 package config
 
+import com.fasterxml.jackson.core.`type`.TypeReference
+
 import scala.io.Source
 
 object Provenance {
   private val stream = getClass.getResourceAsStream("/provenance.json")
   val versionInfo = Source.fromInputStream(stream).mkString
   stream.close()
+
+  private val tr = new TypeReference[Map[String, String]] {}
+  private lazy val versionDetails = JacksonMapper.readValue[Map[String, String]](versionInfo, tr)
+
+  private def versionDetailsWithoutDefault(key: String, default: String) = {
+    val v = versionDetails.get(key)
+    if (v.isEmpty || v.get == default) None
+    else v
+  }
+
+  def version: Option[String] = versionDetailsWithoutDefault("version", "999-SNAPSHOT")
+
+  def buildNumber: Option[String] = versionDetailsWithoutDefault("buildNumber", "")
+
+  // others:
+  //  "buildId"
+  //  "jobUrl"
+  //  "gitCommit"
+  //  "gitBranch"
+  //  "timestamp"
 }

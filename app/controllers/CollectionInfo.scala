@@ -38,6 +38,8 @@ case class CollectionInfo(
                            includeLPI: Option[String] = None,
                            prefer: Option[String] = None,
                            streetFilter: Option[String] = None,
+                           buildVersion: Option[String] = None,
+                           buildNumber: Option[String] = None,
                            aliases: List[String] = Nil
                          )
 
@@ -57,6 +59,8 @@ object CollectionInfo {
       (JsPath \ "includeLPI").readNullable[String] and
       (JsPath \ "prefer").readNullable[String] and
       (JsPath \ "streetFilter").readNullable[String] and
+      (JsPath \ "buildVersion").readNullable[String] and
+      (JsPath \ "buildNumber").readNullable[String] and
       (JsPath \ "aliases").read[List[String]]) (CollectionInfo.apply _)
 
   implicit val CollectionInfoWrites: Writes[CollectionInfo] = (
@@ -72,6 +76,8 @@ object CollectionInfo {
       (JsPath \ "includeLPI").writeNullable[String] and
       (JsPath \ "prefer").writeNullable[String] and
       (JsPath \ "streetFilter").writeNullable[String] and
+      (JsPath \ "buildVersion").writeNullable[String] and
+      (JsPath \ "buildNumber").writeNullable[String] and
       (JsPath \ "aliases").write[List[String]]) (unlift(CollectionInfo.unapply))
 
   implicit val ListCollectionInfoWrites: Writes[ListCI] = Json.format[ListCI]

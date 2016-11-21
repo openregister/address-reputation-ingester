@@ -63,19 +63,21 @@ class CollectionController(action: ActionBuilder[Request],
     for (info <- collections) yield {
       val name = info.name.toString
       CollectionInfo(
-        name,
-        info.size,
-        systemCollections.contains(name),
-        pc.contains(name),
-        info.createdAt.map(_.toString),
-        info.completedAt.map(_.toString),
-        info.bulkSize,
-        info.loopDelay,
-        info.includeDPA,
-        info.includeLPI,
-        info.prefer,
-        info.streetFilter,
-        info.aliases
+        name = name,
+        size = info.size,
+        system = systemCollections.contains(name),
+        inUse = pc.contains(name),
+        createdAt = info.createdAt.map(_.toString),
+        completedAt = info.completedAt.map(_.toString),
+        bulkSize = info.bulkSize,
+        loopDelay = info.loopDelay,
+        includeDPA = info.includeDPA,
+        includeLPI = info.includeLPI,
+        prefer = info.prefer,
+        streetFilter = info.streetFilter,
+        buildVersion = info.buildVersion,
+        buildNumber = info.buildNumber,
+        aliases = info.aliases
       )
     }
   }
