@@ -50,8 +50,7 @@ trait MicroService {
       parallelExecution in Test := false,
       fork in Test := false,
       retrieveManaged := true,
-      routesGenerator := StaticRoutesGenerator,
-      extraFiles := Seq(new File("start-docker.sh"))
+      routesGenerator := StaticRoutesGenerator
     )
     .settings(Provenance.setting)
 //    .settings(Repositories.playPublishingSettings: _*)
