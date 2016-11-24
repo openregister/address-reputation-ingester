@@ -29,19 +29,17 @@ object HmrcBuild extends Build with MicroService {
   val jacksonVersion = "2.7.4"
 
   val compile = Seq(
-    ws excludeAll(ExclusionRule(organization = "commons-logging"), ExclusionRule(organization = "io.netty")),
+    ws excludeAll(ExclusionRule(organization = "commons-logging")),
     // netty 3.10 has a breaking API change
-    "io.netty" % "netty" % "3.9.9.Final" force(),
+    "io.netty" % "netty" % "3.10.6.Final" force(),
 //    "uk.gov.hmrc" %% "logging" % "0.2.0" withSources(),
-    "uk.gov.hmrc" %% "address-reputation-store" % "2.3.0" withSources()
-      excludeAll (ExclusionRule(organization = "org.reactivemongo"), ExclusionRule(organization = "io.netty")),
+    "uk.gov.hmrc" %% "address-reputation-store" % "2.4.0" withSources(),
     "uk.gov.hmrc" %% "microservice-bootstrap" % "5.4.0",
 //    "uk.gov.hmrc" %% "play-authorisation" % "3.1.0",
     "uk.gov.hmrc" %% "play-health" % "2.0.0",
     "uk.gov.hmrc" %% "play-config" % "3.0.0",
     "uk.gov.hmrc" %% "logback-json-logger" % "3.0.0",
-    "org.mongodb" %% "casbah" % "3.1.1",
-    "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.1" excludeAll ExclusionRule(organization = "io.netty"),
+    "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.1",
     // for some reason this dependency is skipping the local cache and forcing resolution from the internet
     // hence the exclusion
     "com.github.lookfirst" % "sardine" % "5.7" excludeAll ExclusionRule(organization = "org.apache.httpcomponents", name = "httpclient"),

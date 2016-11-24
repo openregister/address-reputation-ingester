@@ -47,7 +47,6 @@ object IngestControllerHelper {
 object IngestController extends IngestController(
   ControllerConfig.authAction,
   ControllerConfig.downloadFolder,
-  new OutputDBWriterFactory,
   new OutputESWriterFactory,
   new OutputFileWriterFactory,
   new OutputNullWriterFactory,
@@ -58,7 +57,6 @@ object IngestController extends IngestController(
 
 class IngestController(action: ActionBuilder[Request],
                        unpackedFolder: File,
-                       dbWriterFactory: OutputWriterFactory,
                        esWriterFactory: OutputWriterFactory,
                        fileWriterFactory: OutputWriterFactory,
                        nullWriterFactory: OutputWriterFactory,
@@ -161,7 +159,6 @@ class IngestController(action: ActionBuilder[Request],
 
   private def pickWriter(target: String) = {
     target match {
-      case "db" => dbWriterFactory
       case "es" => esWriterFactory
       case "file" => fileWriterFactory
       case "null" => nullWriterFactory

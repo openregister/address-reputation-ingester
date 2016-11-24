@@ -25,9 +25,9 @@ import com.sksamuel.elastic4s.ElasticClient
 import config.Provenance
 import ingest.writers.WriterSettings
 import org.elasticsearch.common.unit.TimeValue
-import services.DbFacade
+import services.{CollectionMetadataItem, DbFacade}
 import services.model.StatusLogger
-import services.mongo.{CollectionMetadataItem, CollectionName}
+import services.CollectionName
 import uk.gov.hmrc.address.services.es.ESAdminImpl
 
 import scala.concurrent.duration.Duration

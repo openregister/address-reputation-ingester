@@ -30,9 +30,9 @@ import org.mockito.Mockito._
 import org.scalatest.FreeSpec
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar.mock
+import services.{CollectionMetadataItem, CollectionName}
 import services.es.IndexMetadata
 import services.model.{StateModel, StatusLogger}
-import services.mongo.{CollectionMetadataItem, CollectionName}
 import uk.gov.hmrc.address.osgb.DbAddress
 import uk.gov.hmrc.logging.StubLogger
 

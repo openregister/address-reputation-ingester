@@ -19,7 +19,7 @@
 
 package services
 
-import services.mongo.{CollectionMetadataItem, CollectionName}
+import services.CollectionName
 
 trait DbFacade {
 

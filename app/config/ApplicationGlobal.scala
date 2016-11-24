@@ -44,7 +44,6 @@ object ApplicationGlobal extends GlobalSettings with GraphiteConfig with Removin
   override def onStop(app: Application): Unit = {
     Logger.info(s"Stopping microservice")
     WorkQueue.singleton.terminate()
-    ControllerConfig.mongoConnection.close()
   }
 }
 

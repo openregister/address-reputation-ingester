@@ -19,25 +19,13 @@ package controllers
 import com.sksamuel.elastic4s.ElasticDsl
 import controllers.SimpleValidator._
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.DbFacade
+import services.{CollectionName, DbFacade}
 import services.audit.AuditClient
 import services.exec.{WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
-import services.mongo.CollectionName
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext
-
-
-object MongoSwitchoverController extends SwitchoverController(
-  ControllerConfig.authAction,
-  WorkQueue.statusLogger,
-  ControllerConfig.workerFactory,
-  ControllerConfig.mongoCollectionMetadata,
-  services.audit.Services.auditClient,
-  "db",
-  scala.concurrent.ExecutionContext.Implicits.global
-)
 
 
 object ElasticSwitchoverController extends SwitchoverController(

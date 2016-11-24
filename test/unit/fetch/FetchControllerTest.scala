@@ -38,9 +38,10 @@ import org.scalatestplus.play.PlaySpec
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import services.CollectionName
+import services.es.IndexMetadata
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
-import services.mongo.{CollectionMetadata, CollectionName}
 import uk.gov.hmrc.logging.StubLogger
 import uk.gov.hmrc.util.FileUtils
 
@@ -90,9 +91,9 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
 
     val webdavFetcher = mock[WebdavFetcher]
     val request = FakeRequest()
-    val collectionMetadata = mock[CollectionMetadata]
+    val indexMetadata = mock[IndexMetadata]
 
-    val fetchController = new FetchController(pta, statusLogger, workerFactory, webdavFetcher, sardineWrapper, url, collectionMetadata)
+    val fetchController = new FetchController(pta, statusLogger, workerFactory, webdavFetcher, sardineWrapper, url, indexMetadata)
 
     def parameterTest(product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]
@@ -394,7 +395,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         foo40.mkdirs()
 
         when(webdavFetcher.downloadFolder) thenReturn downloadDirectory
-        when(collectionMetadata.existingCollectionNames) thenReturn List("bar_40_002", "foo_38_001", "foo_39_001", "foo_40_001")
+        when(indexMetadata.existingCollectionNames) thenReturn List("bar_40_002", "foo_38_001", "foo_39_001", "foo_40_001")
 
         // when
         val files = fetchController.determineObsoleteFiles(List("foo", "bar"))
@@ -412,7 +413,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         foo40.mkdirs()
 
         when(webdavFetcher.downloadFolder) thenReturn downloadDirectory
-        when(collectionMetadata.existingCollectionNames) thenReturn List("foo_40_001")
+        when(indexMetadata.existingCollectionNames) thenReturn List("foo_40_001")
 
         // when
         val files = fetchController.determineObsoleteFiles(List("foo", "bar"))
@@ -430,7 +431,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         foo40.mkdirs()
 
         when(webdavFetcher.downloadFolder) thenReturn downloadDirectory
-        when(collectionMetadata.existingCollectionNames) thenReturn List("bar_40_002")
+        when(indexMetadata.existingCollectionNames) thenReturn List("bar_40_002")
 
         // when
         val files = fetchController.determineObsoleteFiles(List("foo", "bar"))
@@ -478,7 +479,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         foo41.mkdirs()
 
         when(webdavFetcher.downloadFolder) thenReturn downloadDirectory
-        when(collectionMetadata.existingCollectionNames) thenReturn List("bar_40_002", "foo_39_001", "foo_40_001")
+        when(indexMetadata.existingCollectionNames) thenReturn List("bar_40_002", "foo_39_001", "foo_40_001")
 
         // when
         val files = fetchController.determineObsoleteFiles(List("bar", "foo"))

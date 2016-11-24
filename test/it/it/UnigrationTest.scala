@@ -45,7 +45,6 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       new AdminSuite(appEndpoint)(app),
       new IngestFileSuite(appEndpoint, tmpDir)(app),
       new WebdavSuite(appEndpoint, tmpDir)(app),
-      new CollectionSuiteDB(appEndpoint, mongoTestConnection.uri)(app),
       new CollectionSuiteES(appEndpoint, esClient)(app),
       new GoSuiteES(appEndpoint, esClient)(app),
       new PingSuite(appEndpoint)(app)

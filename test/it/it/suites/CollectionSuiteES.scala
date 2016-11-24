@@ -28,9 +28,9 @@ import play.api.Application
 import play.api.libs.json.JsObject
 import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
+import services.CollectionName
 import services.es.IndexMetadata
 import services.model.StatusLogger
-import services.mongo.CollectionName
 import uk.gov.hmrc.address.services.es.ESSchema
 import uk.gov.hmrc.address.uk.Postcode
 import uk.gov.hmrc.logging.StubLogger

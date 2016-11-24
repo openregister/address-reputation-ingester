@@ -30,13 +30,11 @@ import play.api.http.HeaderNames.{WWW_AUTHENTICATE => _}
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.DbFacade
+import services.{CollectionMetadataItem, CollectionName, DbFacade}
 import services.audit.AuditClient
 import services.es.IndexMetadata
 import services.exec.WorkQueue
 import services.model.{StateModel, StatusLogger}
-import services.mongo.{CollectionMetadataItem, CollectionName}
-import uk.gov.hmrc.address.admin.StoredMetadataItem
 import uk.gov.hmrc.logging.StubLogger
 import uk.gov.hmrc.secure.{Salt, Scrambled}
 
@@ -59,7 +57,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
 
   "when an invalid product is passed to ingest" - {
     "then an exception is thrown" in {
-      parameterTest("db", "$%", 40, "200102030405")
+      parameterTest("es", "$%", 40, "200102030405")
     }
   }
 
@@ -108,7 +106,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
           when(dbFacade.findMetadata(abp_40_ts12345)) thenReturn Some(CollectionMetadataItem(abp_40_ts12345, Some(10), None, Some(dateAgo(3600000))))
 
           val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
-            "db", scala.concurrent.ExecutionContext.Implicits.global)
+            "es", scala.concurrent.ExecutionContext.Implicits.global)
           val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
           assert(response.header.status / 100 === 2)
@@ -133,7 +131,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
           //      when(db.collectionExists(anyString)) thenReturn false
 
           val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
-            "db",
+            "es",
             scala.concurrent.ExecutionContext.Implicits.global)
           val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
@@ -161,7 +159,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
           when(dbFacade.findMetadata(abp_40_ts12345)) thenReturn Some(CollectionMetadataItem(abp_40_ts12345, Some(10), None, None))
 
           val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
-            "db", scala.concurrent.ExecutionContext.Implicits.global)
+            "es", scala.concurrent.ExecutionContext.Implicits.global)
           val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
           worker.awaitCompletion()
@@ -183,7 +181,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
     """ in {
       new Context {
         val sc = new SwitchoverController(new FailAuthAction, status, workerFactory, dbFacade, auditClient,
-          "db", scala.concurrent.ExecutionContext.Implicits.global)
+          "es", scala.concurrent.ExecutionContext.Implicits.global)
         val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
         worker.awaitCompletion()
@@ -204,7 +202,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
         new
             Context {
           val sc = new SwitchoverController(pta, status, workerFactory, dbFacade, auditClient,
-            "db", scala.concurrent.ExecutionContext.Implicits.global)
+            "es", scala.concurrent.ExecutionContext.Implicits.global)
           val model1 = new StateModel("abp", 40, Some("full"), Some("200102030405"), hasFailed = true)
 
           val model2 = sc.switchIfOK(model1)
@@ -227,19 +225,6 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
     new Date(now - ms)
   }
 }
-
-
-class StoredMetadataStub(private var _value: String = "the initial value") extends StoredMetadataItem {
-
-  override def get: String = _value
-
-  override def set(value: String) {
-    _value = value
-  }
-
-  override def reset() {}
-}
-
 
 class FailAuthAction extends ActionBuilder[Request] with ActionFilter[Request] {
 

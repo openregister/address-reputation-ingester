@@ -9,8 +9,8 @@ HEAD   /ping                                                    controllers.Ping
 GET    /ping                                                    controllers.PingController.ping
 GET    /exit                                                    controllers.PingController.exit
 
-# store is db | file (local storage area)
-# target is db | file | null (target for processed output records)
+# store is es | file (local storage area)
+# target is es | file | null (target for processed output records)
 GET    /goAuto/via/file/to/:target                              controllers.GoController.doGoAuto(target, bulkSize: Option[Int], loopDelay: Option[Int])
 GET    /go/via/file/to/:target/:product/:epoch/:variant         controllers.GoController.doGo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean])
 
@@ -20,12 +20,7 @@ GET    /fetch/showRemoteTree                                    fetch.FetchContr
 
 GET    /ingest/from/file/to/:target/:product/:epoch/:variant    ingest.IngestController.doIngestFileTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean], include: Option[String], prefer: Option[String], streetFilter: Option[Int])
 
-GET    /switch/db/:product/:epoch/:version                      controllers.MongoSwitchoverController.doSwitchTo(product, epoch: Int, version)
 GET    /switch/es/:product/:epoch/:version                      controllers.ElasticSwitchoverController.doSwitchTo(product, epoch: Int, version)
-
-GET    /collections/db/list                                     controllers.MongoCollectionController.doListCollections
-DELETE /collections/db/:name                                    controllers.MongoCollectionController.doDropCollection(name)
-POST   /collections/db/clean                                    controllers.MongoCollectionController.doCleanup
 
 GET    /collections/es/list                                     controllers.ElasticCollectionController.doListCollections
 DELETE /collections/es/:name                                    controllers.ElasticCollectionController.doDropCollection(name)

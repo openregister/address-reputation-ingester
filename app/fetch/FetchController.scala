@@ -24,9 +24,10 @@ import java.net.URL
 import controllers.SimpleValidator._
 import controllers.{ControllerConfig, KnownProducts}
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
+import services.es.IndexMetadata
+import services.CollectionName
 import services.exec.{Continuer, WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
-import services.mongo.{CollectionMetadata, CollectionName}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.util.FileUtils
 
@@ -38,7 +39,7 @@ object FetchController extends FetchController(
   ControllerConfig.fetcher,
   ControllerConfig.sardine,
   ControllerConfig.remoteServer,
-  ControllerConfig.mongoCollectionMetadata)
+  ControllerConfig.elasticSearchService)
 
 
 class FetchController(action: ActionBuilder[Request],
@@ -47,7 +48,7 @@ class FetchController(action: ActionBuilder[Request],
                       webdavFetcher: WebdavFetcher,
                       sardine: SardineWrapper,
                       url: URL,
-                      collectionMetadata: CollectionMetadata) extends BaseController {
+                      indexMetadata: IndexMetadata) extends BaseController {
 
   def doFetchToFile(product: String, epoch: Int, variant: String, forceChange: Option[Boolean]): Action[AnyContent] = action {
     request =>
@@ -103,7 +104,7 @@ class FetchController(action: ActionBuilder[Request],
 
   private[fetch] def determineObsoleteFiles(products: List[String]): List[File] = {
     // already sorted
-    val existingCollections: List[CollectionName] = collectionMetadata.existingCollections
+    val existingCollections: List[CollectionName] = indexMetadata.existingCollections
     val productDirs: List[File] = webdavFetcher.downloadFolder.listFiles.toList
     val epochDirs: List[File] = productDirs.flatMap(_.listFiles)
     val filtered = for (p <- products) yield {

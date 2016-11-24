@@ -21,17 +21,14 @@ package it.helper
 
 import java.io.File
 
-import com.github.simplyscala.MongoEmbedDatabase
 import org.scalatest._
 import org.scalatestplus.play.ServerProvider
 import play.api.test.{FakeApplication, Helpers, TestServer}
 import uk.gov.hmrc.address.services.es.ElasticsearchHelper
 import uk.gov.hmrc.util.FileUtils
 
-trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedDatabase with AppServerTestApi {
+trait AppServerUnderTest extends SuiteMixin with ServerProvider with AppServerTestApi {
   this: Suite =>
-
-  val mongoTestConnection = new MongoTestConnection(mongoStart())
 
   val esDataPath = System.getProperty("java.io.tmpdir") + "/es"
 
@@ -50,7 +47,7 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedD
   implicit override final lazy val app: FakeApplication = new FakeApplication(
     additionalConfiguration = appConfiguration ++
       Map(
-        mongoTestConnection.configItem, "elastic.localmode" -> true,
+        "elastic.localmode" -> true,
         "app.remote.server" -> "http://localhost:8080/webdav")
   )
 
@@ -79,7 +76,6 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with MongoEmbedD
       webdavStub.stop()
       testServer.stop()
       afterAppServerStops()
-      mongoTestConnection.stop()
       esClient.close()
     }
   }

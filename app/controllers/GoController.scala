@@ -38,8 +38,6 @@ object GoController extends GoController(
   ControllerConfig.sardine,
   FetchController,
   IngestController,
-  MongoSwitchoverController,
-  MongoCollectionController,
   ElasticSwitchoverController,
   ElasticCollectionController
 )
@@ -51,8 +49,6 @@ class GoController(action: ActionBuilder[Request],
                    sardine: SardineWrapper,
                    fetchController: FetchController,
                    ingestController: IngestController,
-                   dbSwitchoverController: SwitchoverController,
-                   dbCollectionController: CollectionController,
                    esSwitchoverController: SwitchoverController,
                    esCollectionController: CollectionController) extends BaseController {
 
@@ -75,7 +71,6 @@ class GoController(action: ActionBuilder[Request],
           }
           if (continuer.isBusy) {
             target match {
-              case "db" => dbCollectionController.cleanup()
               case "es" => esCollectionController.cleanup()
               case _ => // no action
             }
@@ -108,7 +103,6 @@ class GoController(action: ActionBuilder[Request],
       val model2 = fetchController.fetch(model1, continuer)
       val model3 = ingestController.ingestIfOK(model2, logger, settings, Algorithm(), target, continuer)
       target match {
-        case "db" => dbSwitchoverController.switchIfOK(model3)
         case "es" => esSwitchoverController.switchIfOK(model3)
         case _ => // no further action
       }

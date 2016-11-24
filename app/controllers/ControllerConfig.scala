@@ -31,9 +31,7 @@ import play.api.Logger
 import play.api.Play._
 import services.es.IndexMetadata
 import services.exec.{WorkQueue, WorkerFactory}
-import services.mongo.{CollectionMetadata, MongoSystemMetadataStoreFactory}
 import uk.gov.hmrc.address.services.es.ElasticsearchHelper
-import uk.gov.hmrc.address.services.mongo.CasbahMongoConnection
 import uk.gov.hmrc.logging.LoggerFacade
 
 object ControllerConfig {
@@ -69,15 +67,6 @@ object ControllerConfig {
   val outputFolder = new File(replaceHome(mustGetConfigString(current.mode, current.configuration, "app.files.outputFolder")))
 
   val workerFactory = new WorkerFactory()
-
-  lazy val mongoConnection = {
-    val mongoDbUri = mustGetConfigString(current.mode, current.configuration, "mongodb.uri")
-    new CasbahMongoConnection(mongoDbUri)
-  }
-
-  lazy val metadataStore = new MongoSystemMetadataStoreFactory().newStore(mongoConnection)
-
-  lazy val mongoCollectionMetadata = new CollectionMetadata(mongoConnection.getConfiguredDb, metadataStore)
 
   lazy val elasticSearchService: IndexMetadata = {
     val elasticSearchLocalMode = getConfigString(current.mode, current.configuration, "elastic.localmode").exists(_.toBoolean)

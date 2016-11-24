@@ -71,14 +71,11 @@ class GoControllerTest extends FunSuite with MockitoSugar {
 
     val fetchController = mock[FetchController]
     val ingestController = mock[IngestController]
-    val dbSwitchoverController = mock[SwitchoverController]
     val esSwitchoverController = mock[SwitchoverController]
-    val dbCollectionController = mock[CollectionController]
     val esCollectionController = mock[CollectionController]
 
     val goController = new GoController(new PassThroughAction, status, workerFactory, sardineWrapper,
       fetchController, ingestController,
-      dbSwitchoverController, dbCollectionController,
       esSwitchoverController, esCollectionController)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
@@ -141,7 +138,6 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel], any[Continuer])
       verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
-      verify(dbSwitchoverController, never).switchIfOK(any[StateModel])
       verify(esSwitchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }
@@ -162,35 +158,33 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel], any[Continuer])
       verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
-      verify(dbSwitchoverController, never).switchIfOK(any[StateModel])
       verify(esSwitchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }
   }
 
   test(
-    """Given a db target,
+    """Given an es target,
           doGo should download files using webdav
           then unzip every zip file
           and then switch over collections
     """) {
     new context {
       // when
-      val response = await(call(goController.doGo("db", "product", 123, "variant", None, None, None), request))
+      val response = await(call(goController.doGo("es", "product", 123, "variant", None, None, None), request))
 
       // then
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel], any[Continuer])
       verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
-      verify(dbSwitchoverController).switchIfOK(any[StateModel])
-      verify(esSwitchoverController, never).switchIfOK(any[StateModel])
+      verify(esSwitchoverController).switchIfOK(any[StateModel])
       teardown()
     }
   }
 
   test(
-    """Given a db target and a tree containing abpi and abp files
+    """Given an es target and a tree containing abpi and abp files
           doGoAuto should find remote files
           then download files for both products using webdav
           then unzip every zip file
@@ -226,16 +220,15 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       when(sardineWrapper.exploreRemoteTree) thenReturn tree
 
       // when
-      val response = await(call(goController.doGoAuto("db", None, None), request))
+      val response = await(call(goController.doGoAuto("es", None, None), request))
 
       // then
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController, times(2)).fetch(any[StateModel], any[Continuer])
       verify(ingestController, times(2)).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
-      verify(dbSwitchoverController, times(2)).switchIfOK(any[StateModel])
-      verify(dbCollectionController).cleanup()
-      verify(esCollectionController, never).cleanup()
+      verify(esSwitchoverController, times(2)).switchIfOK(any[StateModel])
+      verify(esCollectionController).cleanup()
       teardown()
     }
   }
@@ -254,14 +247,13 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       when(sardineWrapper.exploreRemoteTree) thenReturn tree
 
       // when
-      val response = await(call(goController.doGoAuto("db", None, None), request))
+      val response = await(call(goController.doGoAuto("es", None, None), request))
 
       // then
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController, never).fetch(any[StateModel], any[Continuer])
       verify(ingestController, never).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
-      verify(dbSwitchoverController, never).switchIfOK(any[StateModel])
       verify(esSwitchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }

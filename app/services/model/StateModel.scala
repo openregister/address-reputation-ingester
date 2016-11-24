@@ -17,7 +17,7 @@
 package services.model
 
 import fetch.OSGBProduct
-import services.mongo.CollectionName
+import services.CollectionName
 
 case class StateModel(
                        productName: String = "",

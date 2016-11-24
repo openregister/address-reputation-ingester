@@ -54,12 +54,10 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
     val ingester = mock[Ingester]
     val outputFileWriter = mock[OutputFileWriter]
-    val outputDBWriter = mock[OutputWriter]
     val outputESWriter = mock[OutputWriter]
     val outputNullWriter = mock[OutputWriter]
 
     val ingesterFactory = new StubIngesterFactory(ingester)
-    val dbFactory = new StubOutputWriterFactory(outputDBWriter)
     val esFactory = new StubOutputWriterFactory(outputESWriter)
     val fwFactory = new StubOutputWriterFactory(outputFileWriter)
     val nullFactory = new StubOutputWriterFactory(outputNullWriter)
@@ -71,7 +69,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     private val pta = new PassThroughAction
     val ec = scala.concurrent.ExecutionContext.Implicits.global
 
-    val ingestController = new IngestController(pta, folder, dbFactory, esFactory, fwFactory, nullFactory, ingesterFactory, workerFactory, ec)
+    val ingestController = new IngestController(pta, folder, esFactory, fwFactory, nullFactory, ingesterFactory, workerFactory, ec)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val folder = new File(".")
@@ -116,16 +114,16 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
 
   test(
     """
-      when valid parameters are passed to ingestToDB
+      when valid parameters are passed to ingestToES
       then a successful response is returned
     """) {
     new context {
       // when
-      val response = await(call(ingestController.doIngestFileTo("db", "abp", 40, "full", Some(1), Some(0), None, None, None, None), request))
+      val response = await(call(ingestController.doIngestFileTo("es", "abp", 40, "full", Some(1), Some(0), None, None, None, None), request))
 
       // then
       worker.awaitCompletion()
-      verify(ingester, times(1)).ingestFrom(new File(folder, "abp/40/full"), outputDBWriter)
+      verify(ingester, times(1)).ingestFrom(new File(folder, "abp/40/full"), outputESWriter)
       assert(response.header.status / 100 === 2)
       worker.terminate()
     }
@@ -158,10 +156,10 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       val model1 = new StateModel("abp", 40, Some("full"))
       val model2 = model1.copy(timestamp = Some("timestamp"))
       val settings = WriterSettings(1, 0)
-      when(outputDBWriter.end(true)) thenReturn model2
+      when(outputESWriter.end(true)) thenReturn model2
 
       // when
-      val model3 = ingestController.ingestIfOK(model1, status, settings, Algorithm(), "db", new StubContinuer)
+      val model3 = ingestController.ingestIfOK(model1, status, settings, Algorithm(), "es", new StubContinuer)
 
       // then
       assert(model3 === model2)

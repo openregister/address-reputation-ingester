@@ -17,7 +17,7 @@
  *
  */
 
-package services.mongo
+package services
 
 import config.Divider._
 import org.joda.time.DateTime
