@@ -34,11 +34,11 @@ object HmrcBuild extends Build with MicroService {
     "io.netty" % "netty" % "3.10.6.Final" force(),
 //    "uk.gov.hmrc" %% "logging" % "0.2.0" withSources(),
     "uk.gov.hmrc" %% "address-reputation-store" % "2.4.0" withSources(),
-    "uk.gov.hmrc" %% "microservice-bootstrap" % "5.4.0",
+    "uk.gov.hmrc" %% "microservice-bootstrap" % "5.8.0",
 //    "uk.gov.hmrc" %% "play-authorisation" % "3.1.0",
     "uk.gov.hmrc" %% "play-health" % "2.0.0",
     "uk.gov.hmrc" %% "play-config" % "3.0.0",
-    "uk.gov.hmrc" %% "logback-json-logger" % "3.0.0",
+    "uk.gov.hmrc" %% "logback-json-logger" % "3.1.0",
     "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.1",
     // for some reason this dependency is skipping the local cache and forcing resolution from the internet
     // hence the exclusion
