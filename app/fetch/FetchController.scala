@@ -103,18 +103,18 @@ class FetchController(action: ActionBuilder[Request],
 
   private[fetch] def determineObsoleteFiles(products: List[String]): List[File] = {
     // already sorted
-    val existingCollections: List[IndexName] = indexMetadata.existingIndexes
+    val existingIndexes: List[IndexName] = indexMetadata.existingIndexes
     val productDirs: List[File] = webdavFetcher.downloadFolder.listFiles.toList
     val epochDirs: List[File] = productDirs.flatMap(_.listFiles)
     val filtered = for (p <- products) yield {
-      determineObsoleteFilesFor(p, existingCollections, productDirs)
+      determineObsoleteFilesFor(p, existingIndexes, productDirs)
     }
     filtered.flatten.sorted
   }
 
-  private def determineObsoleteFilesFor(product: String, existingCollections: List[IndexName], productDirs: List[File]): List[File] = {
-    val relevantCollections = existingCollections.filter(_.productName == product)
-    val relevantEpochs: List[Int] = relevantCollections.flatMap(_.epoch)
+  private def determineObsoleteFilesFor(product: String, existingIndexes: List[IndexName], productDirs: List[File]): List[File] = {
+    val relevantIndexes = existingIndexes.filter(_.productName == product)
+    val relevantEpochs: List[Int] = relevantIndexes.flatMap(_.epoch)
     val relevantDirs = productDirs.filter(_.getName == product)
     val epochDirs: List[File] = relevantDirs.flatMap(_.listFiles)
     epochDirs.filterNot {

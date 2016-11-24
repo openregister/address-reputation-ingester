@@ -57,7 +57,6 @@
                     <label for="target1">to</label>
                     <select id="target1">
                         <option value="es">es</option>
-                        <option value="db">db</option>
                         <option value="file">file</option>
                         <option value="null">null</option>
                     </select>
@@ -107,8 +106,8 @@
                     <a id="dirTree" class="button" href="#">Dir Tree</a>
                 </div>
             </fieldset>
-            <fieldset id="collectionActions" class="visible">
-                <legend class="toggler">es indexes</legend>
+            <fieldset id="indexActions" class="visible">
+                <legend class="toggler">Elasticsearch indexes</legend>
                 <div>
                     <a id="cleanCol" class="start button" title="this will join the queue" href="#">Auto clean</a>
                     <span class="spacer1"></span>
@@ -118,11 +117,6 @@
                     <input id="colname" placeholder="abx_nn_yyyymmddhhmm" size="25"/>
                     <a id="switchCol" class="start button" title="this will join the queue" href="#">Switch to</a> or
                     <a id="dropCol" class="stop button" title="this will join the queue" href="#">Drop</a>
-                    <label for="target2">for</label>
-                    <select id="target2">
-                        <option value="es">es</option>
-                        <option value="db">db</option>
-                    </select>
                 </div>
             </fieldset>
             <fieldset id="infoActions" class="visible">

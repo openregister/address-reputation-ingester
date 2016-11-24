@@ -27,7 +27,7 @@ import uk.gov.hmrc.address.services.es.{IndexMetadata, IndexMetadataItem, IndexN
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
-object ElasticCollectionController extends CollectionController(
+object ElasticsearchIndexController extends IndexController(
   ControllerConfig.authAction,
   WorkQueue.statusLogger,
   ControllerConfig.workerFactory,
@@ -35,12 +35,12 @@ object ElasticCollectionController extends CollectionController(
 )
 
 
-class CollectionController(action: ActionBuilder[Request],
-                           status: StatusLogger,
-                           workerFactory: WorkerFactory,
-                           indexMetadata: IndexMetadata) extends BaseController {
+class IndexController(action: ActionBuilder[Request],
+                      status: StatusLogger,
+                      workerFactory: WorkerFactory,
+                      indexMetadata: IndexMetadata) extends BaseController {
 
-  import CollectionInfo._
+  import IndexInfo._
 
   def doListIndexes(): Action[AnyContent] = action {
     request =>
@@ -48,12 +48,12 @@ class CollectionController(action: ActionBuilder[Request],
       Ok(Json.toJson(ListCI(result)))
   }
 
-  private def listIndexes(): List[CollectionInfo] = {
+  private def listIndexes(): List[IndexInfo] = {
     val pc = indexesInUse
     val indexes = indexMetadata.existingIndexMetadata
     for (info <- indexes) yield {
       val name = info.name.toString
-      CollectionInfo(
+      IndexInfo(
         name = name,
         size = info.size,
         system = systemIndexes.contains(name),

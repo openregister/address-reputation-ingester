@@ -72,11 +72,11 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     val fetchController = mock[FetchController]
     val ingestController = mock[IngestController]
     val esSwitchoverController = mock[SwitchoverController]
-    val esCollectionController = mock[CollectionController]
+    val esIndexController = mock[IndexController]
 
     val goController = new GoController(new PassThroughAction, status, workerFactory, sardineWrapper,
       fetchController, ingestController,
-      esSwitchoverController, esCollectionController)
+      esSwitchoverController, esIndexController)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]
@@ -127,7 +127,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     """Given an aborted state,
           doGo should not download files using webdav
           then not unzip every zip file
-          and not switch over collections
+          and not switch over indexes
     """) {
     new context {
       // when
@@ -147,7 +147,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     """Given a null target,
           doGo should download files using webdav
           then unzip every zip file
-          but not switch over collections
+          but not switch over indexes
     """) {
     new context {
       // when
@@ -167,7 +167,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     """Given an es target,
           doGo should download files using webdav
           then unzip every zip file
-          and then switch over collections
+          and then switch over indexes
     """) {
     new context {
       // when
@@ -188,7 +188,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
           doGoAuto should find remote files
           then download files for both products using webdav
           then unzip every zip file
-          and then switch over collections
+          and then switch over indexes
     """) {
     new context {
       // given
@@ -228,7 +228,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       verify(fetchController, times(2)).fetch(any[StateModel], any[Continuer])
       verify(ingestController, times(2)).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(esSwitchoverController, times(2)).switchIfOK(any[StateModel])
-      verify(esCollectionController).cleanup()
+      verify(esIndexController).cleanup()
       teardown()
     }
   }

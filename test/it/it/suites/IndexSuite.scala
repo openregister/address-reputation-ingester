@@ -37,7 +37,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, Future}
 
-class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit val app: Application)
+class IndexSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit val app: Application)
   extends FreeSpec with MustMatchers with AppServerTestApi with ESHelper {
 
   private implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
@@ -47,9 +47,9 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
   //  val db_se1_9py = DbAddress("GB10091836674", List("Dorset House 27-45", "Stamford Street"), Some("London"), "SE1 9PY",
   //    Some("GB-ENG"), Some("UK"), Some(5840), Some("en"), Some(2), Some(1), None, None, Some("51.5069937,-0.1088798"))
 
-  "es list collections" - {
+  "es list indexes" - {
     """
-       * return the sorted list of collections
+       * return the sorted list of indexes
        * along with the completion dates (if present)
     """ in {
 
@@ -65,13 +65,13 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
 
       waitForIndex(idx.formattedName)
 
-      val request = newRequest("GET", "/collections/es/list")
+      val request = newRequest("GET", "/indexes/es/list")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
 
       assert(response.status === OK)
-      assert((response.json \ "collections").as[ListBuffer[JsObject]].length === 1)
-      assert(((response.json \ "collections") (0) \ "name").as[String] === idx.formattedName)
-      assert(((response.json \ "collections") (0) \ "size").as[Int] === 0)
+      assert((response.json \ "indexes").as[ListBuffer[JsObject]].length === 1)
+      assert(((response.json \ "indexes") (0) \ "name").as[String] === idx.formattedName)
+      assert(((response.json \ "indexes") (0) \ "size").as[Int] === 0)
 
       assert(waitUntil("/admin/status", idle) === idle)
     }
@@ -79,21 +79,21 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
 
   //-----------------------------------------------------------------------------------------------
 
-  "es collection endpoints should be protected by basic auth" - {
-    "list collections" in {
-      val request = newRequest("GET", "/collections/es/list")
+  "es index endpoints should be protected by basic auth" - {
+    "list indexes" in {
+      val request = newRequest("GET", "/indexes/es/list")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
-    "drop collection" in {
-      val request = newRequest("DELETE", "/collections/es/foo")
+    "drop index" in {
+      val request = newRequest("DELETE", "/indexes/es/foo")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
 
     "clean" in {
-      val request = newRequest("POST", "/collections/es/clean")
+      val request = newRequest("POST", "/indexes/es/clean")
       val response = await(request.execute())
       assert(response.status === UNAUTHORIZED)
     }
@@ -101,9 +101,9 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
 
   //-----------------------------------------------------------------------------------------------
 
-  "es collection endpoints" - {
-    "drop unknown collection should give NOT_FOUND" in {
-      val request = newRequest("DELETE", "/collections/es/2001-12-31-01-02")
+  "es index endpoints" - {
+    "drop unknown index should give NOT_FOUND" in {
+      val request = newRequest("DELETE", "/indexes/es/2001-12-31-01-02")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       response.status mustBe NOT_FOUND
     }
@@ -118,8 +118,8 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
        * observe busy status
        * await successful outcome
        * observe quiet status
-       * verify that the collection metadata contains completedAt with a sensible value
-       * verify additional collection metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
+       * verify that the index metadata contains completedAt with a sensible value
+       * verify additional index metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
     """ in {
       val start = System.currentTimeMillis()
 
@@ -192,8 +192,8 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
 
   "switch-over resource happy journey" - {
     """
-       * attempt to switch to existing collection that has completedAt metadata
-       * should change the nominated collection
+       * attempt to switch to existing index that has completedAt metadata
+       * should change the nominated index
     """ in {
       val timestamp = IndexName.newTimestamp
       val idx = IndexName("abp", Some(40), Some(timestamp))
@@ -216,38 +216,38 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", idle) === idle)
 
-      val collectionName = indexMetadata.getIndexNameInUseFor("abp").get
-      assert(collectionName === idx)
+      val indexName = indexMetadata.getIndexNameInUseFor("abp").get
+      assert(indexName === idx)
     }
   }
 
   "switch-over resource error journeys" - {
     """
-       * attempt to switch to non-existent collection
-       * should not change the nominated collection
+       * attempt to switch to non-existent index
+       * should not change the nominated index
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
       val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
       val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
-      val initialCollectionName = indexMetadata.getIndexNameInUseFor("abp")
+      val initialIndexName = indexMetadata.getIndexNameInUseFor("abp")
 
       val request = newRequest("GET", "/switch/es/abp/39/209902030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", idle) === idle)
 
-      val collectionName = indexMetadata.getIndexNameInUseFor("abp")
-      assert(collectionName === initialCollectionName)
+      val indexName = indexMetadata.getIndexNameInUseFor("abp")
+      assert(indexName === initialIndexName)
     }
 
     """
-       * attempt to switch to existing collection that has no completedAt metadata
-       * should not change the nominated collection
+       * attempt to switch to existing index that has no completedAt metadata
+       * should not change the nominated index
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
       val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
       val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
-      val initialCollectionName = indexMetadata.getIndexNameInUseFor("abp")
+      val initialIndexName = indexMetadata.getIndexNameInUseFor("abp")
 
       val idx = IndexName("abp", Some(41), Some("209002030405"))
       createSchema(idx, indexMetadata.clients)
@@ -258,8 +258,8 @@ class CollectionSuiteES(val appEndpoint: String, val esClient: ElasticClient)(im
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", idle) === idle)
 
-      val collectionName = indexMetadata.getIndexNameInUseFor("abp")
-      assert(collectionName === initialCollectionName)
+      val indexName = indexMetadata.getIndexNameInUseFor("abp")
+      assert(indexName === initialIndexName)
     }
 
     """

@@ -45,8 +45,8 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
       new AdminSuite(appEndpoint)(app),
       new IngestFileSuite(appEndpoint, tmpDir)(app),
       new WebdavSuite(appEndpoint, tmpDir)(app),
-      new CollectionSuiteES(appEndpoint, esClient)(app),
-      new GoSuiteES(appEndpoint, esClient)(app),
+      new IndexSuite(appEndpoint, esClient)(app),
+      new GoSuite(appEndpoint, esClient)(app),
       new PingSuite(appEndpoint)(app)
     )
     s.runNestedSuites(args)

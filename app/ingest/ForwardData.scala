@@ -44,12 +44,12 @@ class ForwardData(
   def numRecords: Int = blpu.size()
 
   def close() {
-    closeCollection(blpu)
-    closeCollection(uprns)
-    closeCollection(streets)
+    closeIndex(blpu)
+    closeIndex(uprns)
+    closeIndex(streets)
   }
 
-  private def closeCollection(m: AnyRef) {
+  private def closeIndex(m: AnyRef) {
     m match {
       case c: Closeable => c.close()
       case _ =>

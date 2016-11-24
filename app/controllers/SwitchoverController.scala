@@ -34,8 +34,7 @@ object ElasticSwitchoverController extends SwitchoverController(
   ControllerConfig.workerFactory,
   ControllerConfig.elasticSearchService,
   services.audit.Services.auditClient,
-  "es",
-  scala.concurrent.ExecutionContext.Implicits.global
+  ControllerConfig.ec
 )
 
 
@@ -44,16 +43,15 @@ class SwitchoverController(action: ActionBuilder[Request],
                            workerFactory: WorkerFactory,
                            indexMetadata: IndexMetadata,
                            auditClient: AuditClient,
-                           target: String,
                            ec: ExecutionContext) extends BaseController with ElasticDsl {
 
-  // TODO should these args just be the collection name?
+  // TODO should these args just be the index name?
   def doSwitchTo(product: String, epoch: Int, timestamp: String): Action[AnyContent] = action {
     request =>
       require(isAlphaNumeric(product))
       require(isTimestamp(timestamp))
 
-      val model = new StateModel(product, Some(epoch), None, Some(timestamp), target = target)
+      val model = new StateModel(product, Some(epoch), None, Some(timestamp), target = "es")
       workerFactory.worker.push(s"switching to ${model.indexName.toString}", continuer => switchIfOK(model))
       Accepted
   }
@@ -76,7 +74,7 @@ class SwitchoverController(action: ActionBuilder[Request],
 
     val newName = model.indexName
     if (!indexMetadata.indexExists(newName)) {
-      status.warn(s"$newName: collection was not found")
+      status.warn(s"$newName: index was not found")
       model.copy(hasFailed = true)
     }
     else if (indexMetadata.findMetadata(newName).exists(_.completedAt.isDefined)) {
@@ -86,13 +84,13 @@ class SwitchoverController(action: ActionBuilder[Request],
       model // unchanged
     }
     else {
-      status.warn(s"$newName: collection is still being written")
+      status.warn(s"$newName: index is still being written")
       model.copy(hasFailed = true)
     }
   }
 
   private def setIndexName(name: IndexName) {
     indexMetadata.setIndexInUse(name)
-    auditClient.succeeded(Map("product" -> name.productName, "epoch" -> name.epoch.get.toString, "newCollection" -> name.toString))
+    auditClient.succeeded(Map("product" -> name.productName, "epoch" -> name.epoch.get.toString, "newIndex" -> name.toString))
   }
 }

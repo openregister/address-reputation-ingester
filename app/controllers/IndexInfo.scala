@@ -22,31 +22,31 @@ package controllers
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Json, Reads, Writes}
 
-case class ListCI(collections: List[CollectionInfo])
+case class ListCI(indexes: List[IndexInfo])
 
 
-case class CollectionInfo(
-                           name: String,
-                           size: Option[Int],
-                           system: Boolean,
-                           inUse: Boolean,
-                           createdAt: Option[String] = None,
-                           completedAt: Option[String] = None,
-                           bulkSize: Option[String] = None,
-                           loopDelay: Option[String] = None,
-                           includeDPA: Option[String] = None,
-                           includeLPI: Option[String] = None,
-                           prefer: Option[String] = None,
-                           streetFilter: Option[String] = None,
-                           buildVersion: Option[String] = None,
-                           buildNumber: Option[String] = None,
-                           aliases: List[String] = Nil
-                         )
+case class IndexInfo(
+                      name: String,
+                      size: Option[Int],
+                      system: Boolean,
+                      inUse: Boolean,
+                      createdAt: Option[String] = None,
+                      completedAt: Option[String] = None,
+                      bulkSize: Option[String] = None,
+                      loopDelay: Option[String] = None,
+                      includeDPA: Option[String] = None,
+                      includeLPI: Option[String] = None,
+                      prefer: Option[String] = None,
+                      streetFilter: Option[String] = None,
+                      buildVersion: Option[String] = None,
+                      buildNumber: Option[String] = None,
+                      aliases: List[String] = Nil
+                    )
 
 
-object CollectionInfo {
+object IndexInfo {
 
-  implicit val CollectionInfoReads: Reads[CollectionInfo] = (
+  implicit val IndexInfoReads: Reads[IndexInfo] = (
     (JsPath \ "name").read[String] and
       (JsPath \ "size").readNullable[Int] and
       (JsPath \ "system").read[Boolean] and
@@ -61,9 +61,9 @@ object CollectionInfo {
       (JsPath \ "streetFilter").readNullable[String] and
       (JsPath \ "buildVersion").readNullable[String] and
       (JsPath \ "buildNumber").readNullable[String] and
-      (JsPath \ "aliases").read[List[String]]) (CollectionInfo.apply _)
+      (JsPath \ "aliases").read[List[String]]) (IndexInfo.apply _)
 
-  implicit val CollectionInfoWrites: Writes[CollectionInfo] = (
+  implicit val IndexInfoWrites: Writes[IndexInfo] = (
     (JsPath \ "name").write[String] and
       (JsPath \ "size").writeNullable[Int] and
       (JsPath \ "system").write[Boolean] and
@@ -78,8 +78,8 @@ object CollectionInfo {
       (JsPath \ "streetFilter").writeNullable[String] and
       (JsPath \ "buildVersion").writeNullable[String] and
       (JsPath \ "buildNumber").writeNullable[String] and
-      (JsPath \ "aliases").write[List[String]]) (unlift(CollectionInfo.unapply))
+      (JsPath \ "aliases").write[List[String]]) (unlift(IndexInfo.unapply))
 
-  implicit val ListCollectionInfoWrites: Writes[ListCI] = Json.format[ListCI]
+  implicit val ListIndexInfoWrites: Writes[ListCI] = Json.format[ListCI]
 }
 

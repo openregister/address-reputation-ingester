@@ -35,14 +35,14 @@ import uk.gov.hmrc.logging.StubLogger
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, Future}
 
-class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit val app: Application)
+class GoSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit val app: Application)
   extends FreeSpec with MustMatchers with AppServerTestApi with ESHelper {
 
   private implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
   val idle = Synopsis.OkText("idle")
 
-  "es collection endpoints should be protected by basic auth" - {
+  "es index endpoints should be protected by basic auth" - {
     "go-via-file" in {
       val request = newRequest("GET", "/go/via/file/to/es/exeter/1/full?forceChange=true")
       val response = await(request.execute())
@@ -65,8 +65,8 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
        * observe busy status
        * await successful outcome
        * observe quiet status
-       * verify that the collection metadata contains completedAt with a sensible value
-       * verify additional collection metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
+       * verify that the index metadata contains completedAt with a sensible value
+       * verify additional index metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
       val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
@@ -137,8 +137,8 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
 
   "switch-over resource happy journey" - {
     """
-       * attempt to switch to existing collection that has completedAt metadata
-       * should change the nominated collection
+       * attempt to switch to existing index that has completedAt metadata
+       * should change the nominated index
     """ in {
       val idx = IndexName("abp", Some(39), Some("200102030405"))
 
@@ -170,13 +170,13 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
 
   "switch-over resource error journeys" - {
     """
-       * attempt to switch to non-existent collection
-       * should not change the nominated collection
+       * attempt to switch to non-existent index
+       * should not change the nominated index
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
       val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
       val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
-      val initialCollectionName = indexMetadata.getIndexNameInUseFor("abp")
+      val initialIndexName = indexMetadata.getIndexNameInUseFor("abp")
 
       val request = newRequest("GET", "/switch/es/abp/39/209902030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
@@ -184,17 +184,17 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
       assert(waitUntil("/admin/status", idle) === idle)
 
       val indexName = indexMetadata.getIndexNameInUseFor("abp")
-      assert(indexName === initialCollectionName)
+      assert(indexName === initialIndexName)
     }
 
     """
-       * attempt to switch to existing collection that has no completedAt metadata
-       * should not change the nominated collection
+       * attempt to switch to existing index that has no completedAt metadata
+       * should not change the nominated index
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
       val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
       val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
-      val initialCollectionName = indexMetadata.getIndexNameInUseFor("abp")
+      val initialIndexName = indexMetadata.getIndexNameInUseFor("abp")
 
       val idx = IndexName("abp", Some(39), Some("209002030405"))
       createSchema(idx, indexMetadata.clients)
@@ -206,7 +206,7 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
       assert(waitUntil("/admin/status", idle) === idle)
 
       val indexName = indexMetadata.getIndexNameInUseFor("abp")
-      assert(indexName === initialCollectionName)
+      assert(indexName === initialIndexName)
     }
 
     """

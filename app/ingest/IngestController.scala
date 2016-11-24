@@ -53,7 +53,7 @@ object IngestController extends IngestController(
   new OutputNullWriterFactory,
   new IngesterFactory,
   ControllerConfig.workerFactory,
-  scala.concurrent.ExecutionContext.Implicits.global
+  ControllerConfig.ec
 )
 
 class IngestController(action: ActionBuilder[Request],
@@ -115,7 +115,7 @@ class IngestController(action: ActionBuilder[Request],
 
     val dataLoc = model.productName match {
       case "test" => new File(cannedDataLoc)
-      case _ =>new File(unpackedFolder, model.pathSegment)
+      case _ => new File(unpackedFolder, model.pathSegment)
     }
     val writer = writerFactory.writer(model, status, writerSettings, ec)
     var result = model
@@ -141,12 +141,12 @@ class IngestController(action: ActionBuilder[Request],
     Option(getClass.getClassLoader.getResource("data/canned.zip")).map { url =>
       url.getProtocol match {
         case "file" => url.getFile
-        case "jar"  => {
+        case "jar" => {
           val tempFile = Files.createTempFile("ari-canned", ".zip")
           Files.copy(url.openStream, tempFile, StandardCopyOption.REPLACE_EXISTING)
           tempFile.toString
         }
-        case _      => "data/canned.zip"
+        case _ => "data/canned.zip"
       }
     }.getOrElse("data/canned.zip")
   }

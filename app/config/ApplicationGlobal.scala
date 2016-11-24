@@ -18,7 +18,6 @@
 
 package config
 
-import controllers.ControllerConfig
 import play.api._
 import services.exec.WorkQueue
 import uk.gov.hmrc.play.config.RunMode

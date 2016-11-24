@@ -170,7 +170,7 @@ a.button.grey {
     top: 2.7em;
     right: 1em;
     color: #6b7f6a;
-    background: #fffcd3;
+    background: #fcfcf4;
     z-index: 20;
 }
 
@@ -198,7 +198,7 @@ a.button.grey {
     margin: 1em;
     padding: 0.5em;
     color: #555;
-    background: #ffe;
+    background: #fcfcf4;
     border: 2px inset #ccb;
 }
 

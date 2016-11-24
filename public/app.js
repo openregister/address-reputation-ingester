@@ -147,10 +147,6 @@ function getTarget1() {
     return $('#target1').val();
 }
 
-function getTarget2() {
-    return $('#target2').val();
-}
-
 function doGo() {
     var target = getTarget1();
     doStartProductAction('/go/via/file/to/' + target);
@@ -185,13 +181,11 @@ function cleanFs() {
 }
 
 function cleanCol() {
-    var target = getTarget2();
-    post('/collections/' + target + '/clean', true);
+    post('/indexes/es/clean', true);
 }
 
 function listCol() {
-    var target = getTarget2();
-    getAndRefreshConsoleJson('/collections/' + target + '/list');
+    getAndRefreshConsoleJson('/indexes/es/list');
 }
 
 function ping() {
@@ -200,22 +194,20 @@ function ping() {
 
 function switchCol() {
     var colname = $('#colname').val();
-    var target = getTarget2();
     if (colname == '')
-        alert("Enter the collection name");
+        alert("Enter the index name");
     else {
         colname = colname.replace(/_/g, '/');
-        get('/switch/' + target + '/' + colname, true, false);
+        get('/switch/es/' + colname, true, false);
     }
 }
 
 function dropCol() {
     var colname = $('#colname').val();
-    var target = getTarget2();
     if (colname == '')
-        alert("Enter the collection name");
+        alert("Enter the index name");
     else {
-        ajax('DELETE', '/collections/' + target + '/' + colname, function (data) {
+        ajax('DELETE', '/indexes/es/' + colname, function (data) {
             setTimeout(listCol, 250);
         });
     }
@@ -259,31 +251,6 @@ function showTheRealm() {
 
 //-------------------------------------------------------------------------------------------------
 
-function syncTargetSelects(s1, s2) {
-    var t1v = $(s1).val();
-    if (t1v == "es") {
-        $('#collectionActions legend').text("es indexes");
-        $(s2).val(t1v);
-        $('#colname-label').text('Index');
-    } else if (t1v == "db") {
-        $('#collectionActions legend').text("db collections");
-        $(s2).val(t1v);
-        $('#colname-label').text('Collection');
-    }
-    // wipe the collection name
-    $('#colname').val('');
-}
-
-function target1Changed() {
-    syncTargetSelects('#target1', '#target2');
-}
-
-function target2Changed() {
-    syncTargetSelects('#target2', '#target1');
-}
-
-//-------------------------------------------------------------------------------------------------
-
 $(document).ready(
     function () {
         setupContextPath();
@@ -304,11 +271,9 @@ $(document).ready(
         $('#ping').click(ping);
         $('#dirTree').click(dirTree);
         $('#showLog').click(showLog);
-        $('#target1').change(target1Changed);
-        $('#target2').change(target2Changed);
         // view toggles
         $('#fileActions legend').click(function() { toggleFieldset('#fileActions')} );
-        $('#collectionActions legend').click(function() { toggleFieldset('#collectionActions')});
+        $('#indexActions legend').click(function() { toggleFieldset('#indexActions')});
         $('#infoActions legend').click(function() { toggleFieldset('#infoActions')});
         getAndRefreshConsoleJson('/ping');
         refreshStatusContinually();

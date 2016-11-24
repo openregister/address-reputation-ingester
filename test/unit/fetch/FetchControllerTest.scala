@@ -444,7 +444,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
     }
 
     """
-      given that there are some collections in the DB
+      given that there are some indexes in the DB
       and their existence implies that the corresponding files are still needed,
       and given there exist some other files/directories from earlier versions
       when determineObsoleteFiles is called

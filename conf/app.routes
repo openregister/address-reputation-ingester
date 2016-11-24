@@ -22,9 +22,9 @@ GET    /ingest/from/file/to/:target/:product/:epoch/:variant    ingest.IngestCon
 
 GET    /switch/es/:product/:epoch/:version                      controllers.ElasticSwitchoverController.doSwitchTo(product, epoch: Int, version)
 
-GET    /collections/es/list                                     controllers.ElasticCollectionController.doListIndexes
-DELETE /collections/es/:name                                    controllers.ElasticCollectionController.doDeleteIndex(name)
-POST   /collections/es/clean                                    controllers.ElasticCollectionController.doCleanup
+GET    /indexes/es/list                                     controllers.ElasticsearchIndexController.doListIndexes
+DELETE /indexes/es/:name                                    controllers.ElasticsearchIndexController.doDeleteIndex(name)
+POST   /indexes/es/clean                                    controllers.ElasticsearchIndexController.doCleanup
 
 GET    /admin/realm                                             controllers.AdminController.realm
 GET    /admin/cancelCurrent                                     controllers.AdminController.cancelTask

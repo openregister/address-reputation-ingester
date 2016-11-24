@@ -38,7 +38,7 @@ object GoController extends GoController(
   FetchController,
   IngestController,
   ElasticSwitchoverController,
-  ElasticCollectionController
+  ElasticsearchIndexController
 )
 
 
@@ -49,7 +49,7 @@ class GoController(action: ActionBuilder[Request],
                    fetchController: FetchController,
                    ingestController: IngestController,
                    esSwitchoverController: SwitchoverController,
-                   esCollectionController: CollectionController) extends BaseController {
+                   esIndexController: IndexController) extends BaseController {
 
   def doGoAuto(target: String,
                bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = action {
@@ -70,7 +70,7 @@ class GoController(action: ActionBuilder[Request],
           }
           if (continuer.isBusy) {
             target match {
-              case "es" => esCollectionController.cleanup()
+              case "es" => esIndexController.cleanup()
               case _ => // no action
             }
             fetchController.cleanup()
