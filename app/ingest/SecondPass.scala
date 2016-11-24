@@ -23,9 +23,8 @@ package ingest
 
 import addressbase.{OSCsv, OSDpa, OSHeader, OSLpi}
 import ingest.Ingester.{Blpu, Street, StreetDescriptor}
-import ingest.algorithm.Algorithm
-import ingest.writers.OutputWriter
 import services.exec.Continuer
+import uk.gov.hmrc.address.services.writers.{Algorithm, OutputWriter}
 
 class SecondPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, fd: ForwardData) extends Pass {
 

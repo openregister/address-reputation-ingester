@@ -23,9 +23,9 @@ package ingest
 
 import addressbase.{OSDpa, OSLpi}
 import ingest.Ingester.{Blpu, Street, StreetDescriptor}
-import ingest.algorithm.Algorithm
 import uk.gov.hmrc.address.osgb.DbAddress
 import uk.gov.hmrc.address.services.Capitalisation._
+import uk.gov.hmrc.address.services.writers.Algorithm
 
 private[ingest] object ExportDbAddress {
   val GBPrefix = "GB"

@@ -27,7 +27,7 @@ import fetch.{OSGBProduct, WebDavFile}
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuite, Matchers}
-import services.CollectionName
+import uk.gov.hmrc.address.services.es.IndexName
 
 @RunWith(classOf[JUnitRunner])
 class StateModelTest extends FunSuite with Matchers {
@@ -43,18 +43,18 @@ class StateModelTest extends FunSuite with Matchers {
     val p = OSGBProduct("abp", 38, List(f1))
     val m = StateModel(p)
 
-    m should be(StateModel("abp", 38, None, None,  Some(p)))
+    m should be(StateModel("abp", Some(38), None, None,  Some(p)))
   }
 
   test(
     """
-      StateModel.apply correctly converts a CollectionName
+      StateModel.apply correctly converts a IndexName
     """) {
     val f1 = WebDavFile(new URL(base + "/abp/38/full/DVD1.zip"), "DVD1.zip", isDataFile = true)
-    val c = CollectionName("abp", Some(38), Some("ts1"))
+    val c = IndexName("abp", Some(38), Some("ts1"))
     val m = StateModel(c)
 
-    m should be(StateModel("abp", 38, None, Some("ts1")))
+    m should be(StateModel("abp", Some(38), None, Some("ts1")))
   }
 
 }

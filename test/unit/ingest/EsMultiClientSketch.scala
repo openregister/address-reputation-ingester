@@ -19,15 +19,18 @@
 
 package ingest
 
+import java.io.File
+
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.BuildProvenance
 import uk.gov.hmrc.address.osgb.DbAddress
 import uk.gov.hmrc.address.services.es.{ESAdminImpl, ElasticsearchHelper, IndexMetadata}
 import uk.gov.hmrc.address.services.writers.{OutputESWriter, WriterSettings}
 import uk.gov.hmrc.logging.Stdout
+import uk.gov.hmrc.util.FileUtils
 
 // for manual test/development
-object ElasticsearchSketch {
+object EsMultiClientSketch {
   private val ec = scala.concurrent.ExecutionContext.Implicits.global
 
   def main(args: Array[String]) {
@@ -35,12 +38,15 @@ object ElasticsearchSketch {
     //.withNewTimestamp
     val status = new StatusLogger(Stdout)
 
-    val esClients = ElasticsearchHelper.buildNetClients("elasticsearch", "elasticsearch://localhost:9300", Stdout)
-    val esImpl = new ESAdminImpl(esClients, Stdout, ec)
-    val indexMetadata = new IndexMetadata(esImpl, false, Map("essay" -> 2), status, ec)
-    val w = new OutputESWriter(model, status, indexMetadata, WriterSettings.default, ec, BuildProvenance(None, None))
+    val esDataPath = System.getProperty("java.io.tmpdir") + "/es"
+    FileUtils.deleteDir(new File(esDataPath))
 
-    println(indexMetadata.existingIndexes)
+    val diskEsClient = ElasticsearchHelper.buildDiskClient(esDataPath)
+    val diskEsImpl = new ESAdminImpl(List(diskEsClient), Stdout, ec)
+    val diskIndexMetadata = new IndexMetadata(diskEsImpl, false, Map("essay" -> 2), status, ec)
+    val w = new OutputESWriter(model, status, diskIndexMetadata, WriterSettings.default, ec, BuildProvenance(None, None))
+
+    println("Before: " + diskIndexMetadata.existingIndexes)
     println("begin...")
 
     w.begin()
@@ -49,7 +55,16 @@ object ElasticsearchSketch {
     w.end(true)
 
     println("ended.")
-    println(indexMetadata.existingIndexes)
-    println(indexMetadata.findMetadata(model.indexName))
+    println("From disk:  " + diskIndexMetadata.existingIndexes)
+    println(diskIndexMetadata.findMetadata(model.indexName))
+
+    Thread.sleep(1000)
+
+    val localEsClient = ElasticsearchHelper.buildNodeLocalClient()
+    val localEsImpl = new ESAdminImpl(List(localEsClient), Stdout, ec)
+    val localIndexMetadata = new IndexMetadata(localEsImpl, false, Map("essay" -> 2), status, ec)
+
+    println("From local: " + localIndexMetadata.existingIndexes)
+    println(localIndexMetadata.findMetadata(model.indexName))
   }
 }

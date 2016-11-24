@@ -21,11 +21,10 @@ import java.util.Date
 
 import config.Divider
 import ingest.Ingester.{Blpu, PostcodeLCC}
-import ingest.algorithm.Algorithm
-import ingest.writers.OutputWriter
 import services.exec.Continuer
 import services.model.{StateModel, StatusLogger}
 import uk.co.bigbeeconsultants.util.DiagnosticTimer
+import uk.gov.hmrc.address.services.writers.{Algorithm, OutputWriter}
 
 import scala.annotation.tailrec
 import scala.collection.mutable

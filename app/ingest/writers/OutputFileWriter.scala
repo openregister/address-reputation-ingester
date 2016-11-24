@@ -23,24 +23,26 @@ import java.util.Date
 import java.util.zip.GZIPOutputStream
 
 import controllers.ControllerConfig
-import ingest.algorithm.Algorithm
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.services.writers.{Algorithm, OutputWriter, WriterSettings}
 
 import scala.concurrent.ExecutionContext
 
 
-class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, fieldSeparator: String = "\t") extends OutputWriter {
+class OutputFileWriter(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, fieldSeparator: String = "\t") extends OutputWriter {
+
+  private var hasFailed = false
 
   val algChoice = settings.algorithm match {
-    case Algorithm(true, true, "DPA", _) => "DPA+LPI"
-    case Algorithm(true, true, "LPI", _) => "LPI+DPA"
-    case Algorithm(true, false, "DPA", _) => "DPA"
-    case Algorithm(false, true, "LPI", _) => "LPI"
+    case Algorithm(true, true, true, _, _, _) => "DPA+LPI"
+    case Algorithm(true, true, false, _, _, _) => "LPI+DPA"
+    case Algorithm(true, false, true, _, _, _) => "DPA"
+    case Algorithm(false, true, false, _, _, _) => "LPI"
     case _ => ""
   }
   val filter = settings.algorithm.streetFilter
-  val fileRoot = model.collectionName.toString
+  val fileRoot = model.indexName.toString
   val kind = if (fieldSeparator == "\t") "tsv" else "txt"
   val outputFile = new File(ControllerConfig.outputFolder, s"$fileRoot-$algChoice-$filter.$kind.gz")
 
@@ -79,14 +81,14 @@ class OutputFileWriter(var model: StateModel, statusLogger: StatusLogger, settin
     asStrings.mkString(fieldSeparator)
   }
 
-  def end(completed: Boolean): StateModel = {
+  def end(completed: Boolean): Boolean = {
     if (outCSV.checkError()) {
       statusLogger.warn(s"Failed whilst writing to $outputFile")
-      model = model.copy(hasFailed = true)
+      hasFailed = true
     }
     outCSV.close()
     println(s"*** document count = $count")
-    model
+    hasFailed
   }
 }
 

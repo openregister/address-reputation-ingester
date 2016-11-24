@@ -18,31 +18,13 @@
 
 package ingest.writers
 
-import java.util.Date
-
-import ingest.algorithm.Algorithm
 import services.model.{StateModel, StatusLogger}
-import uk.gov.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.services.writers.{OutputWriter, WriterSettings}
 
 import scala.concurrent.ExecutionContext
-
-trait OutputWriter {
-  def existingTargetThatIsNewerThan(date: Date): Option[String]
-
-  def begin()
-
-  def output(a: DbAddress)
-
-  def end(completed: Boolean): StateModel
-}
 
 trait OutputWriterFactory {
   def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext): OutputWriter
 }
 
 
-case class WriterSettings(bulkSize: Int, loopDelay: Int, algorithm: Algorithm = Algorithm())
-
-object WriterSettings {
-  val default = WriterSettings(1, 0, Algorithm())
-}

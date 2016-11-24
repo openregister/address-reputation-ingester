@@ -38,10 +38,9 @@ import org.scalatestplus.play.PlaySpec
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.CollectionName
-import services.es.IndexMetadata
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
+import uk.gov.hmrc.address.services.es.{IndexMetadata, IndexName}
 import uk.gov.hmrc.logging.StubLogger
 import uk.gov.hmrc.util.FileUtils
 
@@ -69,10 +68,10 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
 
   val anyDate = new Date(0)
 
-  val foo_38_001 = CollectionName("foo_38_001").get
-  val foo_39_001 = CollectionName("foo_39_001").get
-  val foo_40_001 = CollectionName("foo_40_001").get
-  val bar_40_002 = CollectionName("bar_40_002").get
+  val foo_38_001 = IndexName("foo_38_001").get
+  val foo_39_001 = IndexName("foo_39_001").get
+  val foo_40_001 = IndexName("foo_40_001").get
+  val bar_40_002 = IndexName("bar_40_002").get
 
   val pta = new PassThroughAction
 
@@ -223,7 +222,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
       new context {
         // given
         val product = OSGBProduct("product", 123, List(zip1))
-        val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
+        val model1 = StateModel("product", Some(123), Some("variant"), None, Some(product))
 
         val f0Txt = new DownloadedFile("/a/b/" + readyToCollectFile)
         val f1Zip = new DownloadedFile("/a/b/f1.zip")
@@ -247,7 +246,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
       new context {
         // given
         val product = OSGBProduct("product", 123, List(zip1))
-        val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
+        val model1 = StateModel("product", Some(123), Some("variant"), None, Some(product))
 
         val f0Txt = new DownloadedFile("/a/b/" + readyToCollectFile)
         val f1Zip = new DownloadedFile("/a/b/f1.zip")
@@ -272,7 +271,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
     """ in {
       new context {
         val product = OSGBProduct("product", 123, List(zip1))
-        val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
+        val model1 = StateModel("product", Some(123), Some("variant"), None, Some(product))
 
         val f1Txt = new DownloadedFile("/a/b/product/123/variant/" + readyToCollectFile)
         val f1Zip = new DownloadedFile("/a/b/product/123/variant/DVD1.zip")
@@ -309,7 +308,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         when(sardineWrapper.exploreRemoteTree) thenReturn tree
 
         val product = OSGBProduct("product", 123, List(zip1))
-        val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
+        val model1 = StateModel("product", Some(123), Some("variant"), None, Some(product))
 
         val f1Txt = new DownloadedFile("/a/b/" + readyToCollectFile)
         val f1Zip = new DownloadedFile("/a/b/DVD1.zip")
@@ -347,7 +346,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         when(sardineWrapper.exploreRemoteTree) thenReturn tree
 
         val product = OSGBProduct("product", 123, List(zip1))
-        val model1 = StateModel("product", 123, Some("variant"), None, Some(product), forceChange = true)
+        val model1 = StateModel("product", Some(123), Some("variant"), None, Some(product), forceChange = true)
 
         val f1Txt = new DownloadedFile("/a/b/" + readyToCollectFile)
         val f1Zip = new DownloadedFile("/a/b/DVD1.zip")
@@ -369,7 +368,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
       new context {
         // given
         val product = OSGBProduct("product", 123, List(zip1))
-        val model1 = StateModel("product", 123, Some("variant"), None, Some(product))
+        val model1 = StateModel("product", Some(123), Some("variant"), None, Some(product))
 
         val items = List[DownloadItem]()
         when(webdavFetcher.fetchList(product, "product/123/variant", stubContinuer, false)) thenReturn items
@@ -395,7 +394,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         foo40.mkdirs()
 
         when(webdavFetcher.downloadFolder) thenReturn downloadDirectory
-        when(indexMetadata.existingCollectionNames) thenReturn List("bar_40_002", "foo_38_001", "foo_39_001", "foo_40_001")
+        when(indexMetadata.existingIndexes) thenReturn List(bar_40_002, foo_38_001, foo_39_001, foo_40_001)
 
         // when
         val files = fetchController.determineObsoleteFiles(List("foo", "bar"))
@@ -413,7 +412,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         foo40.mkdirs()
 
         when(webdavFetcher.downloadFolder) thenReturn downloadDirectory
-        when(indexMetadata.existingCollectionNames) thenReturn List("foo_40_001")
+        when(indexMetadata.existingIndexes) thenReturn List(foo_40_001)
 
         // when
         val files = fetchController.determineObsoleteFiles(List("foo", "bar"))
@@ -431,7 +430,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         foo40.mkdirs()
 
         when(webdavFetcher.downloadFolder) thenReturn downloadDirectory
-        when(indexMetadata.existingCollectionNames) thenReturn List("bar_40_002")
+        when(indexMetadata.existingIndexes) thenReturn List(bar_40_002)
 
         // when
         val files = fetchController.determineObsoleteFiles(List("foo", "bar"))
@@ -479,7 +478,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
         foo41.mkdirs()
 
         when(webdavFetcher.downloadFolder) thenReturn downloadDirectory
-        when(indexMetadata.existingCollectionNames) thenReturn List("bar_40_002", "foo_39_001", "foo_40_001")
+        when(indexMetadata.existingIndexes) thenReturn List(bar_40_002, foo_39_001, foo_40_001)
 
         // when
         val files = fetchController.determineObsoleteFiles(List("bar", "foo"))

@@ -21,11 +21,12 @@ import java.nio.file.{Files, StandardCopyOption}
 
 import controllers.ControllerConfig
 import controllers.SimpleValidator._
-import ingest.algorithm.Algorithm
+import ingest.algorithm.AlgorithmSettings
 import ingest.writers._
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.exec.{Continuer, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
+import uk.gov.hmrc.address.services.writers.{Algorithm, WriterSettings}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext
@@ -36,7 +37,7 @@ object IngestControllerHelper {
   val defaultBulkSize = 1000
   val defaultLoopDelay = 0
 
-  def settings(opBulkSize: Option[Int], opLoopDelay: Option[Int], algorithm: Algorithm = Algorithm()): WriterSettings = {
+  def settings(opBulkSize: Option[Int], opLoopDelay: Option[Int], algorithm: Algorithm = Algorithm.default): WriterSettings = {
     val bulkSize = opBulkSize getOrElse defaultBulkSize
     val loopDelay = opLoopDelay getOrElse defaultLoopDelay
     WriterSettings(constrainRange(bulkSize, 1, 10000), constrainRange(loopDelay, 0, 100000), algorithm)
@@ -78,14 +79,14 @@ class IngestController(action: ActionBuilder[Request],
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
-      val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
-      val algorithmSettings = Algorithm(include, prefer, streetFilter)
+      val model = new StateModel(product, Some(epoch), Some(variant), forceChange = forceChange getOrElse false)
+      val algorithmSettings = AlgorithmSettings(include, prefer, streetFilter)
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay, algorithmSettings)
 
       val worker = workerFactory.worker
       worker.push(
         s"ingesting to $target ${model.pathSegment}${model.forceChangeString}",
-        continuer => ingestIfOK(model, worker.statusLogger, settings, algorithmSettings, target, continuer)
+        continuer => ingestIfOK(model, worker.statusLogger, settings, target, continuer)
       )
 
       Accepted(s"Ingestion has started for ${model.pathSegment}${model.forceChangeString}")
@@ -94,13 +95,12 @@ class IngestController(action: ActionBuilder[Request],
   def ingestIfOK(model: StateModel,
                  status: StatusLogger,
                  writerSettings: WriterSettings,
-                 algorithmSettings: Algorithm,
                  target: String,
                  continuer: Continuer): StateModel = {
     if (!model.hasFailed) {
       val writerFactory = pickWriter(target)
       val modelWithTimestamp = model.withNewTimestamp
-      ingest(modelWithTimestamp, status, writerSettings, algorithmSettings, writerFactory, continuer)
+      ingest(modelWithTimestamp, status, writerSettings, writerFactory, continuer)
     } else {
       status.info("Ingest was skipped.")
       model // unchanged
@@ -110,7 +110,6 @@ class IngestController(action: ActionBuilder[Request],
   private def ingest(model: StateModel,
                      status: StatusLogger,
                      writerSettings: WriterSettings,
-                     algorithmSettings: Algorithm,
                      writerFactory: OutputWriterFactory,
                      continuer: Continuer): StateModel = {
 
@@ -120,20 +119,22 @@ class IngestController(action: ActionBuilder[Request],
     }
     val writer = writerFactory.writer(model, status, writerSettings, ec)
     var result = model
-    var failed = true
+    var ingestFailed = true
     try {
-      failed = ingesterFactory.ingester(continuer, algorithmSettings, model, status).ingestFrom(dataLoc, writer)
+      ingestFailed = ingesterFactory.ingester(continuer, writerSettings.algorithm, model, status).ingestFrom(dataLoc, writer)
     } catch {
       case e: Exception =>
         status.warn(e.getMessage)
         status.tee.warn(e.getMessage, e)
     } finally {
-      if (!failed) {
-        status.info("Cleaning up the ingester.")
-        result = writer.end(continuer.isBusy)
+      if (!ingestFailed) {
+        val endFailed = writer.end(continuer.isBusy)
+        val ok = if (endFailed) "failed" else "ok"
+        status.info(s"Cleaning up the ingester: $ok.")
+        result = result.copy(hasFailed = endFailed)
       }
     }
-    if (failed) result.copy(hasFailed = true) else result
+    if (ingestFailed) result.copy(hasFailed = true) else result
   }
 
   private def cannedDataLoc() = {

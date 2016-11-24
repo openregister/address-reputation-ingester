@@ -22,9 +22,8 @@ package it.helper
 import com.sksamuel.elastic4s.{ElasticClient, RichSearchResponse}
 import com.sksamuel.elastic4s.ElasticDsl._
 import org.elasticsearch.common.unit.TimeValue
-import services.es.IndexMetadata
 import uk.gov.hmrc.address.osgb.{DbAddress, DbAddressOrderingByLine1}
-import uk.gov.hmrc.address.services.es.ESSchema
+import uk.gov.hmrc.address.services.es.{ESSchema, IndexMetadata, IndexState}
 import uk.gov.hmrc.address.uk.Postcode
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,10 +33,10 @@ trait ESHelper {
 
   def esClient: ElasticClient
 
-  def createSchema(idx: String, clients: List[ElasticClient]) {
+  def createSchema(idx: IndexState, clients: List[ElasticClient]) {
     clients foreach { client =>
       client execute {
-        ESSchema.createIndexDefinition(idx, IndexMetadata.address,
+        ESSchema.createIndexDefinition(idx.formattedName, IndexMetadata.address,
           ESSchema.Settings(1, 0, "1s"))
       } await()
     }
@@ -47,9 +46,9 @@ trait ESHelper {
     esClient.java.admin.cluster.prepareHealth(idx).setWaitForGreenStatus().setTimeout(timeout).get
   }
 
-  def findPostcode(idx: String, postcode: Postcode)(implicit ec: ExecutionContext): Future[List[DbAddress]] = {
+  def findPostcode(idx: IndexState, postcode: Postcode)(implicit ec: ExecutionContext): Future[List[DbAddress]] = {
     val searchResponse = esClient.execute {
-      search in idx -> IndexMetadata.address query matchQuery("postcode.raw", postcode.toString) routing postcode.toString size 100
+      search in idx.formattedName -> IndexMetadata.address query matchQuery("postcode.raw", postcode.toString) routing postcode.toString size 100
     }
     searchResponse map convertSearchResponse
   }

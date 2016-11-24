@@ -26,8 +26,6 @@ import java.util.concurrent.SynchronousQueue
 
 import addressbase.{OSBlpu, OSCsv, OSLpi}
 import ingest.Ingester.{Blpu, Street, StreetDescriptor}
-import ingest.algorithm.Algorithm
-import ingest.writers.OutputWriter
 import org.junit.runner.RunWith
 import org.mockito.ArgumentCaptor
 import org.mockito.Mockito._
@@ -38,6 +36,7 @@ import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.osgb.DbAddress
 import uk.gov.hmrc.address.services.CsvParser
+import uk.gov.hmrc.address.services.writers.{Algorithm, OutputWriter}
 import uk.gov.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
@@ -89,12 +88,12 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
           count += 1
         }
 
-        def end(completed: Boolean) = model
+        def end(completed: Boolean) = false
       }
 
       when(continuer.isBusy) thenReturn true
 
-      val sp = new SecondPass(out, continuer, Algorithm(), fd)
+      val sp = new SecondPass(out, continuer, Algorithm.default, fd)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -134,12 +133,12 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
           count += 1
         }
 
-        def end(completed: Boolean) = model
+        def end(completed: Boolean) = false
       }
 
       when(continuer.isBusy) thenReturn false
 
-      val sp = new SecondPass(out, continuer, Algorithm(), fd)
+      val sp = new SecondPass(out, continuer, Algorithm.default, fd)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -179,12 +178,12 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
           count += 1
         }
 
-        def end(completed: Boolean) = model
+        def end(completed: Boolean) = false
       }
 
       when(continuer.isBusy) thenReturn true
 
-      val sp = new SecondPass(out, continuer, Algorithm(), fd)
+      val sp = new SecondPass(out, continuer, Algorithm.default, fd)
       worker.push("testing", {
         continuer =>
           lock.put(true)
@@ -221,7 +220,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val streetDesc = StreetDescriptor("streetDescription", "Locality Name", "Town Name")
 
     val lpi = OSLpi(csvLpiLine).normalise
-    val out = ExportDbAddress.exportLPI(lpi, blpu, street, streetDesc, Algorithm())
+    val out = ExportDbAddress.exportLPI(lpi, blpu, street, streetDesc, Algorithm.default)
     assert(out.id === "GB131041604")
     assert(out.lines === List("Maidenhill Stables", "Locality Name"))
     assert(out.town === Some("Town Name"))
@@ -255,7 +254,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val streetDesc = StreetDescriptor("streetDescription", "Locality Name", "Town Name")
 
     val lpi = OSLpi(csvLpiLine).normalise
-    val out = ExportDbAddress.exportLPI(lpi, blpu, street, streetDesc, Algorithm())
+    val out = ExportDbAddress.exportLPI(lpi, blpu, street, streetDesc, Algorithm.default)
     assert(out.id === "GB131041604")
     assert(out.lines === List("1a-2b Maidenhill Stables", "Locality Name"))
     assert(out.town === Some("Town Name"))
@@ -288,7 +287,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val streetDesc = StreetDescriptor("streetDescription", "Locality Name", "Town Name")
 
     val lpi = OSLpi(csvLpiLine).normalise
-    val out = ExportDbAddress.exportLPI(lpi, blpu, street, streetDesc, Algorithm())
+    val out = ExportDbAddress.exportLPI(lpi, blpu, street, streetDesc, Algorithm.default)
     assert(out.id === "GB131041604")
     assert(out.lines === List("1a-2b Maidenhill From Stables", "Locality Name"))
     assert(out.town === Some("Town Name"))
@@ -338,7 +337,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
     val out = mock[OutputWriter]
 
-    val secondPass = new SecondPass(out, continuer, Algorithm(prefer = "DPA"), fd)
+    val secondPass = new SecondPass(out, continuer, Algorithm(preferDPA = true), fd)
     val iterator = Iterator(csvOSHeaderLine, csvLpiLine, csvBlpuLine, csvDpaLine)
 
     secondPass.processFile(iterator)
@@ -398,7 +397,7 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
     val out = mock[OutputWriter]
 
-    val secondPass = new SecondPass(out, continuer, Algorithm(), fd)
+    val secondPass = new SecondPass(out, continuer, Algorithm.default, fd)
     val iterator = Iterator(csvOSHeaderLine, csvFirstLpiLine, csvSecondLpiLine, csvBlpuLine)
 
     secondPass.processFile(iterator)
@@ -482,12 +481,12 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
           count += 1
         }
 
-        def end(completed: Boolean) = model
+        def end(completed: Boolean) = false
       }
 
       when(continuer.isBusy) thenReturn true
 
-      val sp = new SecondPass(out, continuer, Algorithm(), fd)
+      val sp = new SecondPass(out, continuer, Algorithm.default, fd)
       worker.push("testing", {
         continuer =>
           lock.put(true)

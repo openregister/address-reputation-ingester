@@ -29,9 +29,8 @@ import config.ConfigHelper._
 import fetch._
 import play.api.Logger
 import play.api.Play._
-import services.es.IndexMetadata
 import services.exec.{WorkQueue, WorkerFactory}
-import uk.gov.hmrc.address.services.es.ElasticsearchHelper
+import uk.gov.hmrc.address.services.es.{ESAdminImpl, ElasticsearchHelper, IndexMetadata}
 import uk.gov.hmrc.logging.LoggerFacade
 
 object ControllerConfig {
@@ -72,7 +71,8 @@ object ControllerConfig {
     val elasticSearchLocalMode = getConfigString(current.mode, current.configuration, "elastic.localmode").exists(_.toBoolean)
     if (elasticSearchLocalMode) {
       val client = ElasticsearchHelper.buildNodeLocalClient()
-      new IndexMetadata(List(client), false, Map(), WorkQueue.statusLogger, ec)
+      val esImpl = new ESAdminImpl(List(client), WorkQueue.statusLogger, ec)
+      new IndexMetadata(esImpl, false, Map(), WorkQueue.statusLogger, ec)
     }
     else {
       val clusterName = mustGetConfigString(current.mode, current.configuration, "elastic.clustername")
@@ -83,7 +83,8 @@ object ControllerConfig {
       ).getOrElse(Map.empty[String, Int])
 
       val clients = ElasticsearchHelper.buildNetClients(clusterName, connectionString, new LoggerFacade(Logger.logger))
-      new IndexMetadata(clients, isCluster, numShards, WorkQueue.statusLogger, ec)
+      val esImpl = new ESAdminImpl(clients, WorkQueue.statusLogger, ec)
+      new IndexMetadata(esImpl, isCluster, numShards, WorkQueue.statusLogger, ec)
     }
   }
 

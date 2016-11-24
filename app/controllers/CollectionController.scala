@@ -21,9 +21,9 @@ package controllers
 
 import play.api.libs.json.Json
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.{CollectionMetadataItem, CollectionName, DbFacade}
 import services.exec.{WorkQueue, WorkerFactory}
 import services.model.StatusLogger
+import uk.gov.hmrc.address.services.es.{IndexMetadata, IndexMetadataItem, IndexName}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
@@ -38,25 +38,25 @@ object ElasticCollectionController extends CollectionController(
 class CollectionController(action: ActionBuilder[Request],
                            status: StatusLogger,
                            workerFactory: WorkerFactory,
-                           collectionMetadata: DbFacade) extends BaseController {
+                           indexMetadata: IndexMetadata) extends BaseController {
 
   import CollectionInfo._
 
-  def doListCollections(): Action[AnyContent] = action {
+  def doListIndexes(): Action[AnyContent] = action {
     request =>
-      val result = listCollections()
+      val result = listIndexes()
       Ok(Json.toJson(ListCI(result)))
   }
 
-  private def listCollections(): List[CollectionInfo] = {
-    val pc = collectionsInUse
-    val collections = collectionMetadata.existingCollectionMetadata
-    for (info <- collections) yield {
+  private def listIndexes(): List[CollectionInfo] = {
+    val pc = indexesInUse
+    val indexes = indexMetadata.existingIndexMetadata
+    for (info <- indexes) yield {
       val name = info.name.toString
       CollectionInfo(
         name = name,
         size = info.size,
-        system = systemCollections.contains(name),
+        system = systemIndexes.contains(name),
         inUse = pc.contains(name),
         createdAt = info.createdAt.map(_.toString),
         completedAt = info.completedAt.map(_.toString),
@@ -73,18 +73,18 @@ class CollectionController(action: ActionBuilder[Request],
     }
   }
 
-  def doDropCollection(name: String): Action[AnyContent] = action {
+  def doDeleteIndex(name: String): Action[AnyContent] = action {
     request =>
-      val cn = CollectionName(name)
+      val cn = IndexName(name)
       if (cn.isEmpty)
         BadRequest(name)
-      else if (!collectionMetadata.collectionExists(name)) {
+      else if (!indexMetadata.indexExists(cn.get)) {
         NotFound(name)
-      } else if (systemCollections.contains(name) || collectionsInUse.contains(name)) {
+      } else if (systemIndexes.contains(name) || indexesInUse.contains(name)) {
         BadRequest(name + " cannot be dropped")
       } else {
-        workerFactory.worker.push("dropping collection " + name, continuer => {
-          collectionMetadata.dropCollection(name)
+        workerFactory.worker.push("dropping index " + name, continuer => {
+          indexMetadata.deleteIndex(cn.get)
         })
         Accepted
       }
@@ -92,50 +92,50 @@ class CollectionController(action: ActionBuilder[Request],
 
   def doCleanup(): Action[AnyContent] = action {
     request =>
-      workerFactory.worker.push("cleaning up obsolete collections", continuer => cleanup())
+      workerFactory.worker.push("cleaning up obsolete indexes", continuer => cleanup())
       Accepted
   }
 
   private[controllers] def cleanup() {
-    val toGo = determineObsoleteCollections
-    deleteObsoleteCollections(toGo)
+    val toGo = determineObsoleteIndexes
+    deleteObsoleteIndexes(toGo)
   }
 
-  private[controllers] def determineObsoleteCollections: Set[CollectionMetadataItem] = {
+  private[controllers] def determineObsoleteIndexes: Set[IndexMetadataItem] = {
     // already sorted
-    val collections: List[CollectionMetadataItem] = collectionMetadata.existingCollectionMetadata
-    val mainCollections = collections.filterNot(cmi => systemCollections.contains(cmi.name.toString))
+    val indexes: List[IndexMetadataItem] = indexMetadata.existingIndexMetadata
+    val mainIndexes = indexes.filterNot(cmi => systemIndexes.contains(cmi.name.toString))
 
-    // all incomplete collections are cullable
-    val incompleteCollections = mainCollections.filter(_.isIncomplete)
-    val completeCollections = mainCollections.filter(_.isComplete)
+    // all incomplete indexes are cullable
+    val incompleteIndexes = mainIndexes.filter(_.isIncomplete)
+    val completeIndexes = mainIndexes.filter(_.isComplete)
 
-    val cullable: List[List[CollectionMetadataItem]] =
+    val cullable: List[List[IndexMetadataItem]] =
       for (product <- KnownProducts.OSGB) yield {
         // already sorted (still)
-        val completeCollectionsForProduct: List[CollectionMetadataItem] = completeCollections.filter(_.name.productName == product)
-        val inUse = collectionMetadata.getCollectionInUseFor(product)
-        val i = completeCollectionsForProduct.indexWhere(c => inUse.contains(c.name)) - 1
+        val completeIndexesForProduct: List[IndexMetadataItem] = completeIndexes.filter(_.name.productName == product)
+        val inUse = indexMetadata.getIndexNameInUseFor(product)
+        val i = completeIndexesForProduct.indexWhere(c => inUse.contains(c.name)) - 1
         if (i < 0) {
           Nil
         } else {
-          completeCollectionsForProduct.take(i)
+          completeIndexesForProduct.take(i)
         }
       }
-    (incompleteCollections ++ cullable.flatten).toSet
+    (incompleteIndexes ++ cullable.flatten).toSet
   }
 
-  private def deleteObsoleteCollections(unwantedCollections: Traversable[CollectionMetadataItem]) {
-    for (col <- unwantedCollections) {
+  private def deleteObsoleteIndexes(unwantedIndexes: Traversable[IndexMetadataItem]) {
+    for (col <- unwantedIndexes) {
       val name = col.name.toString
-      status.info(s"Deleting obsolete MongoDB collection $name")
-      collectionMetadata.dropCollection(name)
+      status.info(s"Deleting obsolete index $name")
+      indexMetadata.deleteIndex(col.name)
     }
   }
 
-  private val systemCollections = Set("system.indexes", "admin")
+  private val systemIndexes = Set("system.indexes", "admin")
 
-  private def collectionsInUse: Set[String] =
-    KnownProducts.OSGB.flatMap(n => collectionMetadata.getCollectionInUseFor(n)).map(_.toString).toSet
+  private def indexesInUse: Set[String] =
+    KnownProducts.OSGB.flatMap(n => indexMetadata.getIndexNameInUseFor(n)).map(_.toString).toSet
 }
 

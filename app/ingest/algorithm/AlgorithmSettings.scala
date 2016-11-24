@@ -19,40 +19,38 @@
 
 package ingest.algorithm
 
-object Algorithm {
+import uk.gov.hmrc.address.services.writers.Algorithm
+
+object AlgorithmSettings {
   def apply(
              include: Option[String],
              prefer: Option[String],
              streetFilter: Option[Int]
            ): Algorithm = {
-    val inc = include getOrElse "DPA,LPI"
+    val inc = include getOrElse "DPA LPI"
+    val sf = streetFilter.getOrElse(1)
     new Algorithm(
       inc.contains("DPA"),
       inc.contains("LPI"),
-      prefer.getOrElse("DPA"),
-      streetFilter.getOrElse(1))
+      prefer.isEmpty || prefer.get == "DPA",
+      sf,
+      containedPhrases(sf),
+      startingPhrases(sf))
   }
-}
 
-
-case class Algorithm(
-                      includeDPA: Boolean = true,
-                      includeLPI: Boolean = true,
-                      prefer: String = "DPA",
-                      streetFilter: Int = 0
-                    ) {
-
-  val preferLPI = prefer == "LPI"
-  val preferDPA = prefer == "DPA"
-
-  val containedPhrases: List[String] =
+  def containedPhrases(streetFilter: Int): List[String] =
     streetFilter match {
-      case 1 =>
+      case 1 => containedPhrases1
+      case 2 => containedPhrases2
+      case _ => Nil
+    }
+
+  val containedPhrases1: List[String] =
         List(
           "from ", "pump ", "pumping ", "mast ", "hydraulic ram", "helipad ", "across from", "fire station",
           "awaiting conversion", "ppg sta", "footway", "bridge", "pipeline", "redevelopment")
 
-      case 2 =>
+  val containedPhrases2: List[String] =
         List(
           " adjacent to ",
           " adj to ",
@@ -67,12 +65,13 @@ case class Algorithm(
           " to west of ",
           " to the west of ")
 
+  def startingPhrases(streetFilter: Int): List[String] =
+    streetFilter match {
+      case 2 => startingPhrases2
       case _ => Nil
     }
 
-  val startingPhrases: List[String] =
-    streetFilter match {
-      case 2 =>
+  val startingPhrases2: List[String] =
         List(
           "access to ",
           "adjacent to ",
@@ -101,8 +100,5 @@ case class Algorithm(
           "supply to ",
           "track from ",
           "track to ")
-
-      case _ => Nil
-    }
 }
 

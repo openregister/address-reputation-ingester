@@ -18,12 +18,11 @@ package controllers
 
 import controllers.SimpleValidator._
 import fetch.{FetchController, SardineWrapper}
-import ingest.algorithm.Algorithm
-import ingest.writers.WriterSettings
 import ingest.{IngestController, IngestControllerHelper}
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import services.exec.{Continuer, WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
+import uk.gov.hmrc.address.services.writers.{Algorithm, WriterSettings}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 object KnownProducts {
@@ -57,7 +56,7 @@ class GoController(action: ActionBuilder[Request],
     request =>
       require(IngestControllerHelper.allowedTargets.contains(target))
 
-      val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
+      val settings = IngestControllerHelper.settings(bulkSize, loopDelay, Algorithm.default)
       workerFactory.worker.push(s"automatically searching and loading to $target", {
         continuer =>
           val tree = sardine.exploreRemoteTree
@@ -88,8 +87,8 @@ class GoController(action: ActionBuilder[Request],
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
-      val settings = IngestControllerHelper.settings(bulkSize, loopDelay)
-      val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
+      val settings = IngestControllerHelper.settings(bulkSize, loopDelay, Algorithm.default)
+      val model = new StateModel(product, Some(epoch), Some(variant), forceChange = forceChange getOrElse false)
       val worker = workerFactory.worker
       worker.push(s"automatically loading to $target ${model.pathSegment}${model.forceChangeString}", {
         continuer =>
@@ -101,7 +100,7 @@ class GoController(action: ActionBuilder[Request],
   private def pipeline(target: String, model1: StateModel, settings: WriterSettings, continuer: Continuer) {
     if (continuer.isBusy) {
       val model2 = fetchController.fetch(model1, continuer)
-      val model3 = ingestController.ingestIfOK(model2, logger, settings, Algorithm(), target, continuer)
+      val model3 = ingestController.ingestIfOK(model2, logger, settings, target, continuer)
       target match {
         case "es" => esSwitchoverController.switchIfOK(model3)
         case _ => // no further action

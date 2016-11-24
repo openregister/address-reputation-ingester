@@ -27,10 +27,8 @@ import org.scalatest.{FreeSpec, MustMatchers}
 import play.api.Application
 import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
-import services.CollectionName
-import services.es.IndexMetadata
 import services.model.StatusLogger
-import uk.gov.hmrc.address.services.es.ESSchema
+import uk.gov.hmrc.address.services.es._
 import uk.gov.hmrc.address.uk.Postcode
 import uk.gov.hmrc.logging.StubLogger
 
@@ -40,7 +38,7 @@ import scala.concurrent.{Await, Future}
 class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit val app: Application)
   extends FreeSpec with MustMatchers with AppServerTestApi with ESHelper {
 
-  implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+  private implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
   val idle = Synopsis.OkText("idle")
 
@@ -71,7 +69,8 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
        * verify additional collection metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val indexMetadata = new IndexMetadata(List(esClient), false, Map("exeter" -> 1, "abi" -> 1, "abp" -> 1), statusLogger, ec)
+      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
+      val indexMetadata = new IndexMetadata(esAdmin, false, Map("exeter" -> 1, "abi" -> 1, "abp" -> 1), statusLogger, ec)
       val start = System.currentTimeMillis()
 
       assert(waitUntil("/admin/status", idle) === idle)
@@ -84,8 +83,8 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
       assert(waitWhile("/admin/status", idle) === busy)
       assert(waitWhile("/admin/status", busy) === idle)
 
-      val exeter1 = indexMetadata.existingCollectionNamesLike(CollectionName("exeter", Some(1))).last
-      waitForIndex(exeter1.toString, TimeValue.timeValueSeconds(30))
+      val exeter1 = indexMetadata.existingIndexNamesLike(IndexName("exeter", Some(1))).last
+      waitForIndex(exeter1.formattedName, TimeValue.timeValueSeconds(30))
 
       val metadata = indexMetadata.findMetadata(exeter1).get
       metadata.size mustBe Some(48737) // one less than MongoDB because metadata stored in idx settings
@@ -101,7 +100,7 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
       assert(metadata.streetFilter.get === "0")
       assert(metadata.prefer.get === "DPA")
 
-      val ex46aw = await(findPostcode(exeter1.toString, Postcode("EX4 6AW")))
+      val ex46aw = await(findPostcode(exeter1, Postcode("EX4 6AW")))
       assert(ex46aw.size === 38)
       for (a <- ex46aw) {
         assert(a.postcode === "EX4 6AW")
@@ -141,14 +140,15 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
        * attempt to switch to existing collection that has completedAt metadata
        * should change the nominated collection
     """ in {
-      val idx = "abp_39_200102030405"
+      val idx = IndexName("abp", Some(39), Some("200102030405"))
 
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val indexMetadata = new IndexMetadata(List(esClient), false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
+      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
+      val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
 
       indexMetadata.clients foreach { client =>
         client execute {
-          ESSchema.createIndexDefinition(idx, IndexMetadata.address,
+          ESSchema.createIndexDefinition(idx.formattedName, IndexMetadata.address,
             ESSchema.Settings(1, 0, "1s"))
         } await()
       }
@@ -163,8 +163,8 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", idle) === idle)
 
-      val collectionName = indexMetadata.getCollectionInUseFor("abp").get.toString
-      assert(collectionName === "abp_39_200102030405")
+      val indexName = indexMetadata.getIndexNameInUseFor("abp").get.formattedName
+      assert(indexName === "abp_39_200102030405")
     }
   }
 
@@ -174,16 +174,17 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
        * should not change the nominated collection
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val indexMetadata = new IndexMetadata(List(esClient), false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
-      val initialCollectionName = indexMetadata.getCollectionInUseFor("abp")
+      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
+      val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
+      val initialCollectionName = indexMetadata.getIndexNameInUseFor("abp")
 
       val request = newRequest("GET", "/switch/es/abp/39/209902030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", idle) === idle)
 
-      val collectionName = indexMetadata.getCollectionInUseFor("abp")
-      assert(collectionName === initialCollectionName)
+      val indexName = indexMetadata.getIndexNameInUseFor("abp")
+      assert(indexName === initialCollectionName)
     }
 
     """
@@ -191,19 +192,21 @@ class GoSuiteES(val appEndpoint: String, val esClient: ElasticClient)(implicit v
        * should not change the nominated collection
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val indexMetadata = new IndexMetadata(List(esClient), false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
-      val initialCollectionName = indexMetadata.getCollectionInUseFor("abp")
+      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
+      val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
+      val initialCollectionName = indexMetadata.getIndexNameInUseFor("abp")
 
-      createSchema("209902030405", indexMetadata.clients)
-      waitForIndex("209902030405")
+      val idx = IndexName("abp", Some(39), Some("209002030405"))
+      createSchema(idx, indexMetadata.clients)
+      waitForIndex(idx.formattedName)
 
       val request = newRequest("GET", "/switch/es/abp/39/209002030405")
       val response = await(request.withAuth("admin", "password", BASIC).execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", idle) === idle)
 
-      val collectionName = indexMetadata.getCollectionInUseFor("abp")
-      assert(collectionName === initialCollectionName)
+      val indexName = indexMetadata.getIndexNameInUseFor("abp")
+      assert(indexName === initialCollectionName)
     }
 
     """

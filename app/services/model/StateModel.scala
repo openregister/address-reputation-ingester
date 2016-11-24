@@ -17,39 +17,43 @@
 package services.model
 
 import fetch.OSGBProduct
-import services.CollectionName
+import uk.gov.hmrc.address.services.es.{IndexName, IndexState}
 
 case class StateModel(
                        productName: String = "",
-                       epoch: Int = 0,
+                       epoch: Option[Int] = None,
                        variant: Option[String] = None,
                        timestamp: Option[String] = None,
                        product: Option[OSGBProduct] = None,
                        target: String = "db",
                        forceChange: Boolean = false,
                        hasFailed: Boolean = false
-                     ) {
+                     ) extends IndexState {
 
   def forceChangeString: String = StateModel.forceChangeString(forceChange)
 
   def pathSegment: String = {
     val v = variant getOrElse "full"
-    s"$productName/$epoch/$v"
+    s"$productName/${epoch.get}/$v"
   }
 
-  def withNewTimestamp: StateModel = copy(timestamp = Some(CollectionName.newTimestamp))
+  def withNewTimestamp: StateModel = copy(timestamp = Some(IndexName.newTimestamp))
 
-  def collectionName: CollectionName = CollectionName(productName, Some(epoch), timestamp)
+  lazy val indexName: IndexName = IndexName(productName, epoch, timestamp)
+
+  override def toPrefix: String = indexName.toPrefix
+
+  override def formattedName: String = indexName.formattedName
 }
 
 
 object StateModel {
   def apply(product: OSGBProduct): StateModel = {
-    new StateModel(product.productName, product.epoch, None, None, Some(product))
+    new StateModel(product.productName, Some(product.epoch), None, None, Some(product))
   }
 
-  def apply(collectionName: CollectionName): StateModel = {
-    new StateModel(collectionName.productName, collectionName.epoch.get, None, collectionName.timestamp, None)
+  def apply(indexName: IndexName): StateModel = {
+    new StateModel(indexName.productName, indexName.epoch, None, indexName.timestamp, None)
   }
 
   def forceChangeString(forceChange: Boolean): String = if (forceChange) " (forced)" else ""

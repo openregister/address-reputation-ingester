@@ -28,7 +28,6 @@ import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import com.github.sardine.Sardine
 import fetch.{FetchController, SardineWrapper, WebDavFile, WebDavTree}
-import ingest.algorithm.Algorithm
 import ingest.writers._
 import ingest.{IngestController, StubWorkerFactory}
 import org.junit.runner.RunWith
@@ -41,6 +40,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
+import uk.gov.hmrc.address.services.writers.WriterSettings
 import uk.gov.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
@@ -137,7 +137,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel], any[Continuer])
-      verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
+      verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(esSwitchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }
@@ -157,7 +157,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel], any[Continuer])
-      verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
+      verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(esSwitchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }
@@ -177,7 +177,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController).fetch(any[StateModel], any[Continuer])
-      verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
+      verify(ingestController).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(esSwitchoverController).switchIfOK(any[StateModel])
       teardown()
     }
@@ -226,7 +226,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController, times(2)).fetch(any[StateModel], any[Continuer])
-      verify(ingestController, times(2)).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
+      verify(ingestController, times(2)).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(esSwitchoverController, times(2)).switchIfOK(any[StateModel])
       verify(esCollectionController).cleanup()
       teardown()
@@ -253,7 +253,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
       worker.awaitCompletion()
       assert(response.header.status === ACCEPTED)
       verify(fetchController, never).fetch(any[StateModel], any[Continuer])
-      verify(ingestController, never).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], any[Algorithm], anyString, any[Continuer])
+      verify(ingestController, never).ingestIfOK(any[StateModel], any[StatusLogger], any[WriterSettings], anyString, any[Continuer])
       verify(esSwitchoverController, never).switchIfOK(any[StateModel])
       teardown()
     }

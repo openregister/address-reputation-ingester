@@ -21,9 +21,9 @@ package ingest
 
 import addressbase.{OSDpa, OSLpi}
 import ingest.Ingester.{Blpu, Street, StreetDescriptor}
-import ingest.algorithm.Algorithm
 import org.scalatest.FunSuite
 import uk.gov.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.services.writers.Algorithm
 
 class ExportDbAddressTest extends FunSuite {
 
@@ -108,7 +108,7 @@ class ExportDbAddressTest extends FunSuite {
       val street = Street('1', "8")
       val streetDesc = StreetDescriptor("The Street", "Locality Name", "Town Name")
 
-      val a = ExportDbAddress.exportLPI(c.lpi, c.blpu, street, streetDesc, Algorithm())
+      val a = ExportDbAddress.exportLPI(c.lpi, c.blpu, street, streetDesc, Algorithm.default)
       assert(a === c.expected)
     }
   }

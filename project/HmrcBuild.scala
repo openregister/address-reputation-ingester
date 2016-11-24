@@ -29,11 +29,11 @@ object HmrcBuild extends Build with MicroService {
   val jacksonVersion = "2.7.4"
 
   val compile = Seq(
-    ws excludeAll(ExclusionRule(organization = "commons-logging")),
+    ws excludeAll ExclusionRule(organization = "commons-logging"),
     // netty 3.10 has a breaking API change
     "io.netty" % "netty" % "3.10.6.Final" force(),
 //    "uk.gov.hmrc" %% "logging" % "0.2.0" withSources(),
-    "uk.gov.hmrc" %% "address-reputation-store" % "2.4.0" withSources(),
+    "uk.gov.hmrc" %% "address-reputation-store" % "2.5.0" withSources(),
     "uk.gov.hmrc" %% "microservice-bootstrap" % "5.4.0",
 //    "uk.gov.hmrc" %% "play-authorisation" % "3.1.0",
     "uk.gov.hmrc" %% "play-health" % "2.0.0",

@@ -56,7 +56,7 @@ class IngestFileSuite(val appEndpoint: String, tmpDir: File)(implicit val app: A
 
       val outputDir = new File(tmpDir, "output")
       val files = outputDir.listFiles()
-      println(files.toList)
+//      println(files.toList)
       val chosen = files.filter(_.getName.contains("-DPA+LPI-1."))
       chosen.length mustBe 1
       val outFile = chosen.head
@@ -87,7 +87,7 @@ class IngestFileSuite(val appEndpoint: String, tmpDir: File)(implicit val app: A
 
       val outputDir = new File(tmpDir, "output")
       val files = outputDir.listFiles()
-      println(files.toList)
+//      println(files.toList)
       val chosen = files.filter(_.getName.contains("-LPI+DPA-2."))
       chosen.length mustBe 1
       val outFile = chosen.head
@@ -118,7 +118,7 @@ class IngestFileSuite(val appEndpoint: String, tmpDir: File)(implicit val app: A
 
       val outputDir = new File(tmpDir, "output")
       val files = outputDir.listFiles()
-      println(files.toList)
+//      println(files.toList)
       val chosen = files.filter(_.getName.contains("-LPI-0."))
       chosen.length mustBe 1
       val outFile = chosen.head

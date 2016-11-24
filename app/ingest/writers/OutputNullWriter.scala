@@ -22,12 +22,14 @@ import java.util.Date
 
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.services.writers.{OutputWriter, WriterSettings}
 
 import scala.concurrent.ExecutionContext
 
 class OutputNullWriter(model: StateModel, statusLogger: StatusLogger) extends OutputWriter {
 
   private var count = 0
+  private val hasFailed = false
 
   def existingTargetThatIsNewerThan(date: Date): Option[String] = None
 
@@ -38,9 +40,9 @@ class OutputNullWriter(model: StateModel, statusLogger: StatusLogger) extends Ou
   }
 
   // scalastylye:off
-  def end(completed: Boolean): StateModel = {
+  def end(completed: Boolean): Boolean = {
     statusLogger.info(s"*** document count = $count")
-    model
+    hasFailed
   }
 }
 

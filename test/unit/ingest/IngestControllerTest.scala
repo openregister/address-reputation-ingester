@@ -24,7 +24,6 @@ import java.io.File
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import controllers.PassThroughAction
-import ingest.algorithm.Algorithm
 import ingest.writers._
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
@@ -36,6 +35,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.exec.{Continuer, WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
+import uk.gov.hmrc.address.services.writers.{Algorithm, OutputWriter, WriterSettings}
 import uk.gov.hmrc.logging.StubLogger
 
 import scala.concurrent.ExecutionContext
@@ -44,6 +44,7 @@ import scala.concurrent.ExecutionContext
 class IngestControllerTest extends FunSuite with MockitoSugar {
 
   implicit val system = ActorSystem("test")
+
   implicit def mat: Materializer = ActorMaterializer()
 
   // scalastyle:off
@@ -153,19 +154,18 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       then the state model index is set
     """) {
     new context {
-      val model1 = new StateModel("abp", 40, Some("full"))
-      val model2 = model1.copy(timestamp = Some("timestamp"))
-      val settings = WriterSettings(1, 0)
-      when(outputESWriter.end(true)) thenReturn model2
+      val model1 = new StateModel("abp", Some(40), Some("full"))
+      val settings = WriterSettings(1, 0, Algorithm.default)
+      when(outputESWriter.end(true)) thenReturn false
 
       // when
-      val model3 = ingestController.ingestIfOK(model1, status, settings, Algorithm(), "es", new StubContinuer)
+      val model3 = ingestController.ingestIfOK(model1, status, settings, "es", new StubContinuer)
 
       // then
-      assert(model3 === model2)
+      assert(model3.copy(timestamp = None) === model1)
       verify(ingester).ingestFrom(any[File], anyObject())
       assert(logger.size === 1, logger.all.mkString("\n"))
-      assert(logger.infos.map(_.message) === List("Cleaning up the ingester."))
+      assert(logger.infos.map(_.message) === List("Cleaning up the ingester: ok."))
 
       worker.terminate()
     }
@@ -178,11 +178,11 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       then the state model stays in its current state
     """) {
     new context {
-      val model1 = new StateModel("abp", 40, Some("full"), hasFailed = true)
-      val settings = WriterSettings(1, 0)
+      val model1 = new StateModel("abp", Some(40), Some("full"), hasFailed = true)
+      val settings = WriterSettings(1, 0, Algorithm.default)
 
       // when
-      val model2 = ingestController.ingestIfOK(model1, status, settings, Algorithm(), "null", new StubContinuer)
+      val model2 = ingestController.ingestIfOK(model1, status, settings, "null", new StubContinuer)
 
       // then
       assert(model2 === model1)
@@ -199,12 +199,12 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
       Settings are correctly hard-limited
     """) {
     import IngestControllerHelper._
-    assert(settings(None, None) === WriterSettings(defaultBulkSize, defaultLoopDelay))
-    assert(settings(Some(7), Some(9)) === WriterSettings(7, 9))
-    assert(settings(Some(0), None) === WriterSettings(1, defaultLoopDelay))
-    assert(settings(Some(10001), None) === WriterSettings(10000, defaultLoopDelay))
-    assert(settings(None, Some(-1)) === WriterSettings(defaultBulkSize, 0))
-    assert(settings(None, Some(100001)) === WriterSettings(defaultBulkSize, 100000))
+    assert(settings(None, None) === WriterSettings(defaultBulkSize, defaultLoopDelay, Algorithm.default))
+    assert(settings(Some(7), Some(9)) === WriterSettings(7, 9, Algorithm.default))
+    assert(settings(Some(0), None) === WriterSettings(1, defaultLoopDelay, Algorithm.default))
+    assert(settings(Some(10001), None) === WriterSettings(10000, defaultLoopDelay, Algorithm.default))
+    assert(settings(None, Some(-1)) === WriterSettings(defaultBulkSize, 0, Algorithm.default))
+    assert(settings(None, Some(100001)) === WriterSettings(defaultBulkSize, 100000, Algorithm.default))
   }
 }
 

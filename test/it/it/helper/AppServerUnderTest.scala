@@ -21,6 +21,7 @@ package it.helper
 
 import java.io.File
 
+import com.sksamuel.elastic4s.ElasticClient
 import org.scalatest._
 import org.scalatestplus.play.ServerProvider
 import play.api.test.{FakeApplication, Helpers, TestServer}
@@ -30,9 +31,9 @@ import uk.gov.hmrc.util.FileUtils
 trait AppServerUnderTest extends SuiteMixin with ServerProvider with AppServerTestApi {
   this: Suite =>
 
-  val esDataPath = System.getProperty("java.io.tmpdir") + "/es"
+  val esDataPath: String = System.getProperty("java.io.tmpdir") + "/es"
 
-  lazy val esClient = ElasticsearchHelper.buildDiskClient(esDataPath)
+  lazy val esClient: ElasticClient = ElasticsearchHelper.buildDiskClient(esDataPath)
 
   lazy val webdavStub = new WebdavStub(getClass.getClassLoader.getResource("ut").toURI.getPath)
 

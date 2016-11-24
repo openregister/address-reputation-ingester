@@ -19,10 +19,10 @@ package controllers
 import com.sksamuel.elastic4s.ElasticDsl
 import controllers.SimpleValidator._
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.{CollectionName, DbFacade}
 import services.audit.AuditClient
 import services.exec.{WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
+import uk.gov.hmrc.address.services.es.{IndexMetadata, IndexName}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext
@@ -42,7 +42,7 @@ object ElasticSwitchoverController extends SwitchoverController(
 class SwitchoverController(action: ActionBuilder[Request],
                            status: StatusLogger,
                            workerFactory: WorkerFactory,
-                           collectionMetadata: DbFacade,
+                           indexMetadata: IndexMetadata,
                            auditClient: AuditClient,
                            target: String,
                            ec: ExecutionContext) extends BaseController with ElasticDsl {
@@ -53,8 +53,8 @@ class SwitchoverController(action: ActionBuilder[Request],
       require(isAlphaNumeric(product))
       require(isTimestamp(timestamp))
 
-      val model = new StateModel(product, epoch, None, Some(timestamp), target = target)
-      workerFactory.worker.push(s"switching to ${model.collectionName.toString}", continuer => switchIfOK(model))
+      val model = new StateModel(product, Some(epoch), None, Some(timestamp), target = target)
+      workerFactory.worker.push(s"switching to ${model.indexName.toString}", continuer => switchIfOK(model))
       Accepted
   }
 
@@ -64,7 +64,7 @@ class SwitchoverController(action: ActionBuilder[Request],
       model // unchanged
 
     } else if (model.timestamp.isEmpty) {
-      status.warn(s"cannot switch to ${model.collectionName.toPrefix} with unknown date stamp")
+      status.warn(s"cannot switch to ${model.indexName.toPrefix} with unknown date stamp")
       model.copy(hasFailed = true)
 
     } else {
@@ -74,14 +74,14 @@ class SwitchoverController(action: ActionBuilder[Request],
 
   private def doSwitch(model: StateModel): StateModel = {
 
-    val newName = model.collectionName
-    if (!collectionMetadata.collectionExists(newName.toString)) {
+    val newName = model.indexName
+    if (!indexMetadata.indexExists(newName)) {
       status.warn(s"$newName: collection was not found")
       model.copy(hasFailed = true)
     }
-    else if (collectionMetadata.findMetadata(newName).exists(_.completedAt.isDefined)) {
+    else if (indexMetadata.findMetadata(newName).exists(_.completedAt.isDefined)) {
       // this metadata key/value is checked by all address-lookup nodes once every few minutes
-      setCollectionName(newName)
+      setIndexName(newName)
       status.info(s"Switched over to $newName")
       model // unchanged
     }
@@ -91,8 +91,8 @@ class SwitchoverController(action: ActionBuilder[Request],
     }
   }
 
-  private def setCollectionName(name: CollectionName) {
-    collectionMetadata.setCollectionInUse(name)
+  private def setIndexName(name: IndexName) {
+    indexMetadata.setIndexInUse(name)
     auditClient.succeeded(Map("product" -> name.productName, "epoch" -> name.epoch.get.toString, "newCollection" -> name.toString))
   }
 }

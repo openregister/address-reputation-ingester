@@ -26,8 +26,6 @@ import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
 import ingest.Ingester.{Blpu, PostcodeLCC}
-import ingest.algorithm.Algorithm
-import ingest.writers.OutputWriter
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -37,6 +35,7 @@ import org.scalatest.mock.MockitoSugar
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.osgb.DbAddress
+import uk.gov.hmrc.address.services.writers.{Algorithm, OutputWriter}
 import uk.gov.hmrc.logging.StubLogger
 
 import scala.collection.mutable
@@ -73,7 +72,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, Algorithm(), model, status, fd).ingestFrom(mockFile, dummyOut)
+          new Ingester(continuer, Algorithm.default, model, status, fd).ingestFrom(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -95,7 +94,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, Algorithm(), model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingestFrom(mockFile, dummyOut)
+          new Ingester(continuer, Algorithm.default, model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingestFrom(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -117,7 +116,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          result = new Ingester(continuer, Algorithm(), model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingestFrom(mockFile, dummyOut)
+          result = new Ingester(continuer, Algorithm.default, model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingestFrom(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -148,13 +147,13 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
         def end(completed: Boolean) = {
           closed = true
-          model
+          false
         }
       }
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, Algorithm(prefer = "DPA"), model, status, ForwardData.simpleHeapInstance("DPA")).ingestFiles(List(sample), out)
+          new Ingester(continuer, Algorithm(preferDPA = true), model, status, ForwardData.simpleHeapInstance("DPA")).ingestFiles(List(sample), out)
           lock.put(true)
       })
 
@@ -308,13 +307,13 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
         def end(completed: Boolean) = {
           closed = true
-          model
+          false
         }
       }
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, Algorithm(prefer = "LPI"), model, status, ForwardData.simpleHeapInstance("LPI")).ingestFiles(List(sample), out)
+          new Ingester(continuer, Algorithm(preferDPA = false), model, status, ForwardData.simpleHeapInstance("LPI")).ingestFiles(List(sample), out)
           lock.put(true)
       })
 
@@ -467,7 +466,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       fd.blpu.put(2L, blpu2.pack)
       fd.blpu.put(3L, blpu3.pack)
 
-      val rfd = new Ingester(continuer, Algorithm(), model, status, mock[ForwardData]).reduceDefaultedLCCs(fd)
+      val rfd = new Ingester(continuer, Algorithm.default, model, status, mock[ForwardData]).reduceDefaultedLCCs(fd)
       assert(rfd.blpu.get(1L) === blpu1.pack)
       assert(rfd.blpu.get(2L) === blpu2.pack)
       assert(rfd.blpu.get(3L) === Blpu(Some(2L), "FX1 1CC", '1', '2', 'E', blpu2.localCustodianCode, "0,0").pack)
@@ -500,7 +499,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       fd.postcodeLCCs.put("FX1 1AA", PostcodeLCC(Some(1234)).pack)
       fd.postcodeLCCs.put("FX1 1BB", PostcodeLCC(None).pack)
 
-      val rfd = new Ingester(continuer, Algorithm(), model, status, mock[ForwardData]).reduceDefaultedLCCs(fd)
+      val rfd = new Ingester(continuer, Algorithm.default, model, status, mock[ForwardData]).reduceDefaultedLCCs(fd)
       assert(rfd.blpu.get(1L) === blpu1a.pack)
       assert(rfd.blpu.get(2L) === blpu1a.pack) // n.b. LCC was changed
       assert(rfd.blpu.get(3L) === blpu2a.pack)

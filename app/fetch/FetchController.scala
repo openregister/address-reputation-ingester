@@ -24,10 +24,9 @@ import java.net.URL
 import controllers.SimpleValidator._
 import controllers.{ControllerConfig, KnownProducts}
 import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.es.IndexMetadata
-import services.CollectionName
 import services.exec.{Continuer, WorkQueue, WorkerFactory}
 import services.model.{StateModel, StatusLogger}
+import uk.gov.hmrc.address.services.es.{IndexMetadata, IndexName}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.util.FileUtils
 
@@ -55,7 +54,7 @@ class FetchController(action: ActionBuilder[Request],
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
 
-      val model = new StateModel(product, epoch, Some(variant), forceChange = forceChange getOrElse false)
+      val model = new StateModel(product, Some(epoch), Some(variant), forceChange = forceChange getOrElse false)
       workerFactory.worker.push(s"fetching ${model.pathSegment}${model.forceChangeString}", continuer => fetch(model, continuer))
       Accepted(s"Fetch has started for ${model.pathSegment}${model.forceChangeString}")
   }
@@ -65,7 +64,7 @@ class FetchController(action: ActionBuilder[Request],
       if (model1.product.isDefined) model1
       else {
         val tree = sardine.exploreRemoteTree
-        val found = tree.findAvailableFor(model1.productName, model1.epoch)
+        val found = tree.findAvailableFor(model1.productName, model1.epoch.get)
         model1.copy(product = found)
       }
 
@@ -104,7 +103,7 @@ class FetchController(action: ActionBuilder[Request],
 
   private[fetch] def determineObsoleteFiles(products: List[String]): List[File] = {
     // already sorted
-    val existingCollections: List[CollectionName] = indexMetadata.existingCollections
+    val existingCollections: List[IndexName] = indexMetadata.existingIndexes
     val productDirs: List[File] = webdavFetcher.downloadFolder.listFiles.toList
     val epochDirs: List[File] = productDirs.flatMap(_.listFiles)
     val filtered = for (p <- products) yield {
@@ -113,7 +112,7 @@ class FetchController(action: ActionBuilder[Request],
     filtered.flatten.sorted
   }
 
-  private def determineObsoleteFilesFor(product: String, existingCollections: List[CollectionName], productDirs: List[File]): List[File] = {
+  private def determineObsoleteFilesFor(product: String, existingCollections: List[IndexName], productDirs: List[File]): List[File] = {
     val relevantCollections = existingCollections.filter(_.productName == product)
     val relevantEpochs: List[Int] = relevantCollections.flatMap(_.epoch)
     val relevantDirs = productDirs.filter(_.getName == product)

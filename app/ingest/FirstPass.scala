@@ -23,8 +23,8 @@ package ingest
 
 import addressbase._
 import ingest.Ingester._
-import ingest.algorithm.Algorithm
 import services.exec.Continuer
+import uk.gov.hmrc.address.services.writers.Algorithm
 
 import scala.collection._
 
