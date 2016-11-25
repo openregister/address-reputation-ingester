@@ -30,8 +30,6 @@ object HmrcBuild extends Build with MicroService {
 
   val compile = Seq(
     ws excludeAll ExclusionRule(organization = "commons-logging"),
-    // netty 3.10 has a breaking API change
-    "io.netty" % "netty" % "3.10.6.Final" force(),
 //    "uk.gov.hmrc" %% "logging" % "0.2.0" withSources(),
     "uk.gov.hmrc" %% "address-reputation-store" % "2.5.0" withSources(),
     "uk.gov.hmrc" %% "microservice-bootstrap" % "5.8.0",
@@ -40,11 +38,7 @@ object HmrcBuild extends Build with MicroService {
     "uk.gov.hmrc" %% "play-config" % "3.0.0",
     "uk.gov.hmrc" %% "logback-json-logger" % "3.1.0",
     "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.1",
-    // for some reason this dependency is skipping the local cache and forcing resolution from the internet
-    // hence the exclusion
-    "com.github.lookfirst" % "sardine" % "5.7" excludeAll ExclusionRule(organization = "org.apache.httpcomponents", name = "httpclient"),
-    "org.apache.httpcomponents" % "httpclient" % "4.5.1" force(),
-    "org.apache.httpcomponents" % "httpcore" % "4.4.3" force(),
+    "com.github.lookfirst" % "sardine" % "5.7",
     "net.openhft" % "chronicle-map" % "3.8.0",
     "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
     "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,

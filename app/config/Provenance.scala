@@ -25,7 +25,7 @@ import scala.io.Source
 
 object Provenance {
   private val stream = getClass.getResourceAsStream("/provenance.json")
-  val versionInfo = Source.fromInputStream(stream).mkString
+  val versionInfo: String = Source.fromInputStream(stream).mkString
   stream.close()
 
   private val tr = new TypeReference[Map[String, String]] {}
