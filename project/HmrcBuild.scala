@@ -14,26 +14,25 @@
  * limitations under the License.
  */
 
-import sbt.{ExclusionRule, _}
 import play.sbt.PlayImport._
 import play.core.PlayVersion
+import sbt._
 
 object HmrcBuild extends Build with MicroService {
   import scala.util.Properties.envOrElse
 
   val appName = "address-reputation-ingester"
-  val appVersion = envOrElse("ADDRESS_REPUTATION_INGESTER_VERSION", "999-SNAPSHOT")
-
-  override lazy val appDependencies: Seq[ModuleID] = compile ++ testDependencies ++ itDependencies
+  val appVersionKey = appName.toUpperCase.replace('-', '_') + "_VERSION"
+  val appVersion = envOrElse(appVersionKey, "999-SNAPSHOT")
 
   val jacksonVersion = "2.7.4"
 
   val compile = Seq(
     ws excludeAll ExclusionRule(organization = "commons-logging"),
 //    "uk.gov.hmrc" %% "logging" % "0.2.0" withSources(),
-    "uk.gov.hmrc" %% "address-reputation-store" % "2.5.0" withSources(),
+    "uk.gov.hmrc" %% "address-reputation-store" % "2.6.0" withSources(),
     "uk.gov.hmrc" %% "microservice-bootstrap" % "5.8.0",
-//    "uk.gov.hmrc" %% "play-authorisation" % "3.1.0",
+//    "uk.gov.hmrc" %% "play-authorisation" % "4.2.0",
     "uk.gov.hmrc" %% "play-health" % "2.0.0",
     "uk.gov.hmrc" %% "play-config" % "3.0.0",
     "uk.gov.hmrc" %% "logback-json-logger" % "3.1.0",
@@ -58,9 +57,11 @@ object HmrcBuild extends Build with MicroService {
     "com.pyruby" % "java-stub-server" % "0.14" % scope,
     "io.milton" % "milton-server-ce" % "2.7.1.5" % scope)
 
-  val testDependencies = baseTestDependencies("test")
+  private val testDependencies = baseTestDependencies("test")
 
-  val itDependencies = baseTestDependencies("it") ++
+  private val itDependencies = baseTestDependencies("it") ++
     Seq("com.typesafe.play" %% "play-test" % PlayVersion.current % "it")
+
+  override lazy val appDependencies: Seq[ModuleID] = compile ++ testDependencies ++ itDependencies
 }
 

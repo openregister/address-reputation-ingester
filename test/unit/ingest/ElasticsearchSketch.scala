@@ -22,9 +22,9 @@ package ingest
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.BuildProvenance
 import uk.gov.hmrc.address.osgb.DbAddress
-import uk.gov.hmrc.address.services.es.{ESAdminImpl, ElasticsearchHelper, IndexMetadata}
 import uk.gov.hmrc.address.services.writers.{OutputESWriter, WriterSettings}
 import uk.gov.hmrc.logging.Stdout
+import uk.gov.hmrc.address.services.es._
 
 // for manual test/development
 object ElasticsearchSketch {
@@ -35,7 +35,7 @@ object ElasticsearchSketch {
     //.withNewTimestamp
     val status = new StatusLogger(Stdout)
 
-    val esClients = ElasticsearchHelper.buildNetClients("elasticsearch", "elasticsearch://localhost:9300", Stdout)
+    val esClients = ElasticsearchHelper.buildNetClients(ElasticNetClientSettings("elasticsearch://localhost:9300", false, "elasticsearch", Map()), Stdout)
     val esImpl = new ESAdminImpl(esClients, Stdout, ec)
     val indexMetadata = new IndexMetadata(esImpl, false, Map("essay" -> 2), status, ec)
     val w = new OutputESWriter(model, status, indexMetadata, WriterSettings.default, ec, BuildProvenance(None, None))

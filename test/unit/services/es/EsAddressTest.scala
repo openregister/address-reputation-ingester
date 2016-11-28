@@ -19,14 +19,11 @@
 
 package services.es
 
-import java.io.File
-
 import com.sksamuel.elastic4s.ElasticDsl._
 import org.elasticsearch.common.unit.TimeValue
 import org.scalatest.FunSuite
 import uk.gov.hmrc.address.osgb.DbAddress
-import uk.gov.hmrc.address.services.es.{ESSchema, ElasticsearchHelper}
-import uk.gov.hmrc.util.FileUtils
+import uk.gov.hmrc.address.services.es.{ESSchema, ElasticDiskClientSettings, ElasticsearchHelper}
 
 class EsAddressTest extends FunSuite {
 
@@ -38,11 +35,7 @@ class EsAddressTest extends FunSuite {
     Some("UK"), Some(1234), Some(English), Some(2), Some(1), Some(8), Some("1"), Some("1.0,-1.0"))
 
   val esDataPath = System.getProperty("java.io.tmpdir") + "/es"
-
-  // local client will create a temporary directory tree containing its data; start by erasing previous stuff
-  FileUtils.deleteDir(new File(esDataPath))
-
-  val esClient = ElasticsearchHelper.buildDiskClient(esDataPath)
+  val esClient = ElasticsearchHelper.buildDiskClient(ElasticDiskClientSettings(esDataPath, true))
   val indexName = "test"
 
   esClient execute {

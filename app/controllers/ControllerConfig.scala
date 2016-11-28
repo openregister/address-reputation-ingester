@@ -30,7 +30,7 @@ import fetch._
 import play.api.Logger
 import play.api.Play._
 import services.exec.{WorkQueue, WorkerFactory}
-import uk.gov.hmrc.address.services.es.{ESAdminImpl, ElasticsearchHelper, IndexMetadata}
+import uk.gov.hmrc.address.services.es._
 import uk.gov.hmrc.logging.LoggerFacade
 
 object ControllerConfig {
@@ -68,24 +68,20 @@ object ControllerConfig {
   val workerFactory = new WorkerFactory()
 
   lazy val elasticSearchService: IndexMetadata = {
-    val elasticSearchLocalMode = getConfigString(current.mode, current.configuration, "elastic.localmode").exists(_.toBoolean)
-    if (elasticSearchLocalMode) {
-      val client = ElasticsearchHelper.buildNodeLocalClient()
-      val esImpl = new ESAdminImpl(List(client), WorkQueue.statusLogger, ec)
-      new IndexMetadata(esImpl, false, Map(), WorkQueue.statusLogger, ec)
-    }
-    else {
-      val clusterName = mustGetConfigString(current.mode, current.configuration, "elastic.clustername")
-      val connectionString = mustGetConfigString(current.mode, current.configuration, "elastic.uri")
-      val isCluster = getConfigString(current.mode, current.configuration, "elastic.is-cluster").exists(_.toBoolean)
-      val numShards = current.configuration.getConfig("elastic.shards").map(
-        _.entrySet.foldLeft(Map.empty[String, Int])((m, a) => m + (a._1 -> a._2.unwrapped().asInstanceOf[Int]))
-      ).getOrElse(Map.empty[String, Int])
+    val localMode = getConfigString(current.mode, current.configuration, "elastic.localMode").exists(_.toBoolean)
+    val homeDir = getConfigString(current.mode, current.configuration, "elastic.homeDir")
+    val preDelete = getConfigString(current.mode, current.configuration, "elastic.preDelete").exists(_.toBoolean)
+    val clusterName = mustGetConfigString(current.mode, current.configuration, "elastic.clusterName")
+    val connectionString = mustGetConfigString(current.mode, current.configuration, "elastic.uri")
+    val isCluster = getConfigString(current.mode, current.configuration, "elastic.isCluster").exists(_.toBoolean)
+    val numShards = current.configuration.getConfig("elastic.shards").map(
+      _.entrySet.foldLeft(Map.empty[String, Int])((m, a) => m + (a._1 -> a._2.unwrapped().asInstanceOf[Int]))
+    ).getOrElse(Map.empty[String, Int])
 
-      val clients = ElasticsearchHelper.buildNetClients(clusterName, connectionString, new LoggerFacade(Logger.logger))
-      val esImpl = new ESAdminImpl(clients, WorkQueue.statusLogger, ec)
-      new IndexMetadata(esImpl, isCluster, numShards, WorkQueue.statusLogger, ec)
-    }
+    val settings = ElasticSettings(localMode, homeDir, preDelete, connectionString, isCluster, clusterName, numShards)
+    val clients = ElasticsearchHelper.buildClients(settings, new LoggerFacade(Logger.logger))
+    val esImpl = new ESAdminImpl(clients, WorkQueue.statusLogger, ec)
+    new IndexMetadata(esImpl, isCluster, numShards, WorkQueue.statusLogger, ec)
   }
 
   val sardine = new SardineWrapper(remoteServer, remoteUser, remotePass, proxyAuthInfo, new SardineFactory2)

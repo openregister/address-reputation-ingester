@@ -24,7 +24,7 @@ import java.io.File
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.BuildProvenance
 import uk.gov.hmrc.address.osgb.DbAddress
-import uk.gov.hmrc.address.services.es.{ESAdminImpl, ElasticsearchHelper, IndexMetadata}
+import uk.gov.hmrc.address.services.es.{ESAdminImpl, ElasticDiskClientSettings, ElasticsearchHelper, IndexMetadata}
 import uk.gov.hmrc.address.services.writers.{OutputESWriter, WriterSettings}
 import uk.gov.hmrc.logging.Stdout
 import uk.gov.hmrc.util.FileUtils
@@ -39,9 +39,7 @@ object EsMultiClientSketch {
     val status = new StatusLogger(Stdout)
 
     val esDataPath = System.getProperty("java.io.tmpdir") + "/es"
-    FileUtils.deleteDir(new File(esDataPath))
-
-    val diskEsClient = ElasticsearchHelper.buildDiskClient(esDataPath)
+    val diskEsClient = ElasticsearchHelper.buildDiskClient(ElasticDiskClientSettings(esDataPath, true))
     val diskEsImpl = new ESAdminImpl(List(diskEsClient), Stdout, ec)
     val diskIndexMetadata = new IndexMetadata(diskEsImpl, false, Map("essay" -> 2), status, ec)
     val w = new OutputESWriter(model, status, diskIndexMetadata, WriterSettings.default, ec, BuildProvenance(None, None))

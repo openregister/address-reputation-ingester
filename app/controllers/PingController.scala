@@ -23,10 +23,7 @@ import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
-object PingController extends PingController
-
-
-trait PingController extends BaseController {
+object PingController extends BaseController {
 
   def ping(): Action[AnyContent] = Action { request =>
     Ok(Provenance.versionInfo).as(MimeTypes.JSON).withHeaders(CACHE_CONTROL -> "no-cache,max-age=0,must-revalidate")

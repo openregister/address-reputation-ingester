@@ -40,6 +40,7 @@ trait MicroService {
   lazy val microservice = Project(appName, file("."))
     .enablePlugins(plugins: _*)
     .settings(playSettings: _*)
+    .settings(version := HmrcBuild.appVersion)
     .settings(scalaSettings: _*)
     .settings(scalaVersion := "2.11.8")
     .settings(publishingSettings: _*)
@@ -64,7 +65,7 @@ trait MicroService {
     .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
     .settings(
       Keys.fork in IntegrationTest := false,
-      unmanagedSourceDirectories in IntegrationTest <<= (baseDirectory in Test) (base => Seq(base / "test" / "it")),
+      unmanagedSourceDirectories in IntegrationTest <<= (baseDirectory in Test)(base => Seq(base / "test" / "it")),
       unmanagedResourceDirectories in IntegrationTest <<= (baseDirectory in Test) (base => Seq(base / "test" / "resources")),
       addTestReportOption(IntegrationTest, "int-test-reports"),
       testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
@@ -75,10 +76,14 @@ trait MicroService {
 
     .settings(resolvers ++= Seq(
       Resolver.bintrayRepo("hmrc", "releases"),
+      Resolver.bintrayRepo("hmrc", "release-candidates"),
       Resolver.bintrayRepo("milton", "Milton"),
       Resolver.jcenterRepo
     ))
     .enablePlugins(SbtDistributablesPlugin, SbtGitVersioning)
+    .settings(evictionWarningOptions in update :=
+      EvictionWarningOptions.default.withWarnTransitiveEvictions(false)
+        .withWarnDirectEvictions(false).withWarnScalaVersionEviction(false))
 }
 
 private object TestPhases {

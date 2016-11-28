@@ -25,7 +25,7 @@ import com.sksamuel.elastic4s.ElasticClient
 import org.scalatest._
 import org.scalatestplus.play.ServerProvider
 import play.api.test.{FakeApplication, Helpers, TestServer}
-import uk.gov.hmrc.address.services.es.ElasticsearchHelper
+import uk.gov.hmrc.address.services.es.{ElasticDiskClientSettings, ElasticsearchHelper}
 import uk.gov.hmrc.util.FileUtils
 
 trait AppServerUnderTest extends SuiteMixin with ServerProvider with AppServerTestApi {
@@ -33,7 +33,7 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with AppServerTe
 
   val esDataPath: String = System.getProperty("java.io.tmpdir") + "/es"
 
-  lazy val esClient: ElasticClient = ElasticsearchHelper.buildDiskClient(esDataPath)
+  lazy val esClient: ElasticClient = ElasticsearchHelper.buildDiskClient(ElasticDiskClientSettings(esDataPath, true))
 
   lazy val webdavStub = new WebdavStub(getClass.getClassLoader.getResource("ut").toURI.getPath)
 
@@ -48,7 +48,7 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with AppServerTe
   implicit override final lazy val app: FakeApplication = new FakeApplication(
     additionalConfiguration = appConfiguration ++
       Map(
-        "elastic.localmode" -> true,
+        "elastic.localMode" -> true,
         "app.remote.server" -> "http://localhost:8080/webdav")
   )
 
