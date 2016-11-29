@@ -40,7 +40,6 @@ trait MicroService {
   lazy val microservice = Project(appName, file("."))
     .enablePlugins(plugins: _*)
     .settings(playSettings: _*)
-    .settings(version := HmrcBuild.appVersion)
     .settings(scalaSettings: _*)
     .settings(scalaVersion := "2.11.8")
     .settings(publishingSettings: _*)
