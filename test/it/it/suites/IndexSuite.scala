@@ -26,7 +26,6 @@ import org.elasticsearch.common.unit.TimeValue
 import org.scalatest.{FreeSpec, MustMatchers}
 import play.api.Application
 import play.api.libs.json.JsObject
-import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
 import services.model.StatusLogger
 import uk.gov.hmrc.address.services.es._
@@ -66,7 +65,7 @@ class IndexSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit 
       waitForIndex(idx.formattedName)
 
       val request = newRequest("GET", "/indexes/es/list")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
 
       assert(response.status === OK)
       assert((response.json \ "indexes").as[ListBuffer[JsObject]].length === 1)
@@ -79,32 +78,10 @@ class IndexSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit 
 
   //-----------------------------------------------------------------------------------------------
 
-  "es index endpoints should be protected by basic auth" - {
-    "list indexes" in {
-      val request = newRequest("GET", "/indexes/es/list")
-      val response = await(request.execute())
-      assert(response.status === UNAUTHORIZED)
-    }
-
-    "drop index" in {
-      val request = newRequest("DELETE", "/indexes/es/foo")
-      val response = await(request.execute())
-      assert(response.status === UNAUTHORIZED)
-    }
-
-    "clean" in {
-      val request = newRequest("POST", "/indexes/es/clean")
-      val response = await(request.execute())
-      assert(response.status === UNAUTHORIZED)
-    }
-  }
-
-  //-----------------------------------------------------------------------------------------------
-
   "es index endpoints" - {
     "drop unknown index should give NOT_FOUND" in {
       val request = newRequest("DELETE", "/indexes/es/2001-12-31-01-02")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       response.status mustBe NOT_FOUND
     }
   }
@@ -126,7 +103,7 @@ class IndexSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit 
       assert(waitUntil("/admin/status", idle) === idle)
 
       val request = newRequest("GET", "/ingest/from/file/to/es/exeter/1/sample?bulkSize=5&loopDelay=0&forceChange=true")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       response.status mustBe ACCEPTED
 
       val busy = Synopsis.OkText("busy ingesting to es exeter/1/sample (forced)")
@@ -176,15 +153,6 @@ class IndexSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit 
       //TODO fix this
       //assert(get("/ingest/from/file/to/es/abp/1/not-a-number").status === BAD_REQUEST)
     }
-
-    """
-       * when a wrong password is supplied
-       * the response should be 401
-    """ in {
-      val request = newRequest("GET", "/ingest/from/file/to/es/exeter/1/sample")
-      val response = await(request.withAuth("admin", "wrong", BASIC).execute())
-      assert(response.status === UNAUTHORIZED)
-    }
   }
 
 
@@ -212,7 +180,7 @@ class IndexSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit 
       indexMetadata.writeCompletionDateTo(idx)
 
       val request = newRequest("GET", "/switch/es/abp/40/" + timestamp)
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", idle) === idle)
 
@@ -232,7 +200,7 @@ class IndexSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit 
       val initialIndexName = indexMetadata.getIndexNameInUseFor("abp")
 
       val request = newRequest("GET", "/switch/es/abp/39/209902030405")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", idle) === idle)
 
@@ -254,21 +222,12 @@ class IndexSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit 
       waitForIndex(idx.formattedName)
 
       val request = newRequest("GET", "/switch/es/abp/41/209002030405")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", idle) === idle)
 
       val indexName = indexMetadata.getIndexNameInUseFor("abp")
       assert(indexName === initialIndexName)
-    }
-
-    """
-       * when a wrong password is supplied
-       * the response should be 401
-    """ in {
-      val request = newRequest("GET", "/switch/es/abp/42/200102030405")
-      val response = await(request.withAuth("admin", "wrong", BASIC).execute())
-      assert(response.status === UNAUTHORIZED)
     }
 
     """

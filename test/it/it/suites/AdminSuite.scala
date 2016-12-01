@@ -22,8 +22,6 @@ package it.suites
 import it.helper.AppServerTestApi
 import org.scalatest.{MustMatchers, WordSpec}
 import play.api.Application
-import play.api.http.Status
-import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
 
 class AdminSuite(val appEndpoint: String)(implicit val app: Application)
@@ -37,60 +35,28 @@ class AdminSuite(val appEndpoint: String)(implicit val app: Application)
 
     "fullStatus" in {
       val request = newRequest("GET", "/admin/fullStatus")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       assert(response.status === OK)
       assert(response.body.nonEmpty)
     }
 
     "cancelCurrent" in {
       val request = newRequest("GET", "/admin/cancelCurrent")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       assert(response.status === OK) // when not busy
     }
 
     "cancel" in {
       val request = newRequest("GET", "/admin/cancel/0")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       assert(response.status === OK) // when not busy
     }
 
     "dirTree" in {
       val request = newRequest("GET", "/admin/dirTree")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       assert(response.status === OK)
       assert(response.body.nonEmpty)
-    }
-  }
-
-  //-----------------------------------------------------------------------------------------------
-
-  "admin endpoints should be protected by basic auth" must {
-    "status" in {
-      // speceial case - not protected
-    }
-
-    "fullStatus" in {
-      val request = newRequest("GET", "/admin/fullStatus")
-      val response = await(request.execute())
-      assert(response.status === UNAUTHORIZED)
-    }
-
-    "cancelCurrent" in {
-      val request = newRequest("GET", "/admin/cancelCurrent")
-      val response = await(request.execute())
-      assert(response.status === UNAUTHORIZED) // when not busy
-    }
-
-    "cancel" in {
-      val request = newRequest("GET", "/admin/cancel/0")
-      val response = await(request.execute())
-      assert(response.status === UNAUTHORIZED) // when not busy
-    }
-
-    "dirTree" in {
-      val request = newRequest("GET", "/admin/dirTree")
-      val response = await(request.execute())
-      assert(response.status === UNAUTHORIZED)
     }
   }
 }

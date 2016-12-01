@@ -38,7 +38,7 @@ object ControllerConfig {
   // be careful to have only one thread pool in use
   implicit val ec = ApplicationGlobal.ec
 
-  val realmString = mustGetConfigString(current.mode, current.configuration, "basicAuthentication.realm")
+  val environmentString = mustGetConfigString(current.mode, current.configuration, "app.environment")
 
   private val appRemoteServer = mustGetConfigString(current.mode, current.configuration, "app.remote.server")
   Logger.info("app.remote.server=" + appRemoteServer)
@@ -87,9 +87,4 @@ object ControllerConfig {
   val sardine = new SardineWrapper(remoteServer, remoteUser, remotePass, proxyAuthInfo, new SardineFactory2)
 
   val fetcher = new WebdavFetcher(sardine, downloadFolder, WorkQueue.statusLogger)
-
-  val authAction = {
-    val basicAuthFilterConfig = BasicAuthenticationFilterConfiguration.parse(current.mode, current.configuration)
-    new BasicAuthenticatedAction(basicAuthFilterConfig)
-  }
 }

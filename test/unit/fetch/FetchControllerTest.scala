@@ -26,7 +26,6 @@ import java.util.Date
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import com.github.sardine.Sardine
-import controllers.PassThroughAction
 import ingest.writers.OutputFileWriterFactory
 import ingest.{StubContinuer, StubWorkerFactory}
 import org.junit.runner.RunWith
@@ -73,8 +72,6 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
   val foo_40_001 = IndexName("foo_40_001").get
   val bar_40_002 = IndexName("bar_40_002").get
 
-  val pta = new PassThroughAction
-
   val stubContinuer = new StubContinuer
 
   trait context {
@@ -92,7 +89,7 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
     val request = FakeRequest()
     val indexMetadata = mock[IndexMetadata]
 
-    val fetchController = new FetchController(pta, statusLogger, workerFactory, webdavFetcher, sardineWrapper, url, indexMetadata)
+    val fetchController = new FetchController(statusLogger, workerFactory, webdavFetcher, sardineWrapper, url, indexMetadata)
 
     def parameterTest(product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]

@@ -25,7 +25,6 @@ import it.helper.{AppServerTestApi, ESHelper, Synopsis}
 import org.elasticsearch.common.unit.TimeValue
 import org.scalatest.{FreeSpec, MustMatchers}
 import play.api.Application
-import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
 import services.model.StatusLogger
 import uk.gov.hmrc.address.services.es._
@@ -41,20 +40,6 @@ class GoSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit val
   private implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
   val idle = Synopsis.OkText("idle")
-
-  "es index endpoints should be protected by basic auth" - {
-    "go-via-file" in {
-      val request = newRequest("GET", "/go/via/file/to/es/exeter/1/full?forceChange=true")
-      val response = await(request.execute())
-      assert(response.status === UNAUTHORIZED)
-    }
-
-    "go-auto" in {
-      val request = newRequest("GET", "/goAuto/via/file/to/es")
-      val response = await(request.execute())
-      assert(response.status === UNAUTHORIZED)
-    }
-  }
 
   //-----------------------------------------------------------------------------------------------
 
@@ -76,7 +61,7 @@ class GoSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit val
       assert(waitUntil("/admin/status", idle) === idle)
 
       val request = newRequest("GET", "/go/via/file/to/es/exeter/1/sample?bulkSize=7&loopDelay=0&forceChange=true")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       response.status mustBe ACCEPTED
 
       val busy = Synopsis.OkText("busy automatically loading to es exeter/1/sample (forced)")
@@ -121,15 +106,6 @@ class GoSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit val
       //TODO fix this
       //assert(get("/ingest/from/file/to/es/abp/1/not-a-number").status === BAD_REQUEST)
     }
-
-    """
-       * when a wrong password is supplied
-       * the response should be 401
-    """ in {
-      val request = newRequest("GET", "/ingest/from/file/to/es/exeter/1/sample")
-      val response = await(request.withAuth("admin", "wrong", BASIC).execute())
-      assert(response.status === UNAUTHORIZED)
-    }
   }
 
 
@@ -159,7 +135,7 @@ class GoSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit val
       Thread.sleep(100)
 
       val request = newRequest("GET", "/switch/es/abp/39/200102030405")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", idle) === idle)
 
@@ -179,7 +155,7 @@ class GoSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit val
       val initialIndexName = indexMetadata.getIndexNameInUseFor("abp")
 
       val request = newRequest("GET", "/switch/es/abp/39/209902030405")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", idle) === idle)
 
@@ -201,21 +177,12 @@ class GoSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit val
       waitForIndex(idx.formattedName)
 
       val request = newRequest("GET", "/switch/es/abp/39/209002030405")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       assert(response.status === ACCEPTED)
       assert(waitUntil("/admin/status", idle) === idle)
 
       val indexName = indexMetadata.getIndexNameInUseFor("abp")
       assert(indexName === initialIndexName)
-    }
-
-    """
-       * when a wrong password is supplied
-       * the response should be 401
-    """ in {
-      val request = newRequest("GET", "/switch/es/abp/39/200102030405")
-      val response = await(request.withAuth("admin", "wrong", BASIC).execute())
-      assert(response.status === UNAUTHORIZED)
     }
 
     """

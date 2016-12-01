@@ -32,7 +32,6 @@ import uk.gov.hmrc.util.FileUtils
 
 
 object FetchController extends FetchController(
-  ControllerConfig.authAction,
   WorkQueue.statusLogger,
   ControllerConfig.workerFactory,
   ControllerConfig.fetcher,
@@ -41,15 +40,14 @@ object FetchController extends FetchController(
   ControllerConfig.elasticSearchService)
 
 
-class FetchController(action: ActionBuilder[Request],
-                      logger: StatusLogger,
+class FetchController(logger: StatusLogger,
                       workerFactory: WorkerFactory,
                       webdavFetcher: WebdavFetcher,
                       sardine: SardineWrapper,
                       url: URL,
                       indexMetadata: IndexMetadata) extends BaseController {
 
-  def doFetchToFile(product: String, epoch: Int, variant: String, forceChange: Option[Boolean]): Action[AnyContent] = action {
+  def doFetchToFile(product: String, epoch: Int, variant: String, forceChange: Option[Boolean]): Action[AnyContent] = Action {
     request =>
       require(isAlphaNumeric(product))
       require(isAlphaNumeric(variant))
@@ -79,7 +77,7 @@ class FetchController(action: ActionBuilder[Request],
     if (files.isEmpty) model2.copy(hasFailed = true) else model2
   }
 
-  def doCleanup(): Action[AnyContent] = action {
+  def doCleanup(): Action[AnyContent] = Action {
     request =>
       workerFactory.worker.push(s"zip file cleanup", {
         continuer =>
@@ -96,7 +94,7 @@ class FetchController(action: ActionBuilder[Request],
     }
   }
 
-  def doShowTree(): Action[AnyContent] = action {
+  def doShowTree(): Action[AnyContent] = Action {
     val tree = sardine.exploreRemoteTree
     Ok(sardine.url + "\n" + tree.indentedString)
   }

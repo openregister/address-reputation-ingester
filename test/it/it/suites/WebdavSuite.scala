@@ -24,7 +24,6 @@ import java.io.File
 import it.helper.{AppServerTestApi, Synopsis}
 import org.scalatest.{MustMatchers, WordSpec}
 import play.api.Application
-import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
 
 class WebdavSuite(val appEndpoint: String, tmpDir: File)(implicit val app: Application)
@@ -53,7 +52,7 @@ class WebdavSuite(val appEndpoint: String, tmpDir: File)(implicit val app: Appli
           |""".stripMargin
 
       val request = newRequest("GET", "/fetch/showRemoteTree")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
 
       assert(response.body === r )
     }
@@ -61,7 +60,7 @@ class WebdavSuite(val appEndpoint: String, tmpDir: File)(implicit val app: Appli
     "retrieve a file from remote endpoint" in {
       // Have to use full as the WebDaveTree code expects only full
       val request = newRequest("GET", "/fetch/to/file/exeter/1/full?forceChange=true")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
 
       assert(response.status === ACCEPTED)
 

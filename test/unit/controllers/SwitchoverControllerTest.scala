@@ -26,8 +26,6 @@ import org.mockito.Mockito._
 import org.scalatest.FreeSpec
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
-import play.api.http.HeaderNames.{WWW_AUTHENTICATE => _}
-import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.audit.AuditClient
@@ -35,9 +33,6 @@ import services.exec.WorkQueue
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.services.es.{IndexMetadata, IndexMetadataItem, IndexName}
 import uk.gov.hmrc.logging.StubLogger
-import uk.gov.hmrc.secure.{Salt, Scrambled}
-
-import scala.concurrent.Future
 
 
 @RunWith(classOf[JUnitRunner])
@@ -48,12 +43,6 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
   implicit def mat: Materializer = ActorMaterializer()
 
   private val abp_40_ts12345 = IndexName("abp_40_200102030405").get
-
-  // password="password"
-  val authConfig = BasicAuthenticationFilterConfiguration("address-reputation-ingester", true, "admin",
-    Scrambled("StfavBn0QDn042NBdycLMPogG+jE6uCE"), Salt("RaTwtD0w8rOweSGf"))
-
-  val pta = new PassThroughAction
 
   "when an invalid product is passed to ingest" - {
     "then an exception is thrown" in {
@@ -72,7 +61,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
 
     val request = FakeRequest()
 
-    val switchoverController = new SwitchoverController(pta, status, workerFactory, indexMetadata, auditClient,
+    val switchoverController = new SwitchoverController(status, workerFactory, indexMetadata, auditClient,
       scala.concurrent.ExecutionContext.Implicits.global)
 
     intercept[IllegalArgumentException] {
@@ -103,7 +92,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
           when(indexMetadata.indexExists(abp_40_ts12345)) thenReturn true
           when(indexMetadata.findMetadata(abp_40_ts12345)) thenReturn Some(IndexMetadataItem(abp_40_ts12345, Some(10), None, Some(dateAgo(3600000))))
 
-          val sc = new SwitchoverController(pta, status, workerFactory, indexMetadata, auditClient,
+          val sc = new SwitchoverController(status, workerFactory, indexMetadata, auditClient,
             scala.concurrent.ExecutionContext.Implicits.global)
           val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
@@ -124,11 +113,8 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
          then the switch-over fails due to missing the index
          and the stored metadata item for the product in question is left unchanged
       """ in {
-        new
-            Context {
-          //      when(db.indexExists(anyString)) thenReturn false
-
-          val sc = new SwitchoverController(pta, status, workerFactory, indexMetadata, auditClient,
+        new Context {
+          val sc = new SwitchoverController(status, workerFactory, indexMetadata, auditClient,
             scala.concurrent.ExecutionContext.Implicits.global)
           val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
@@ -154,7 +140,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
           when(indexMetadata.indexExists(abp_40_ts12345)) thenReturn true
           when(indexMetadata.findMetadata(abp_40_ts12345)) thenReturn Some(IndexMetadataItem(abp_40_ts12345, Some(10), None, None))
 
-          val sc = new SwitchoverController(pta, status, workerFactory, indexMetadata, auditClient,
+          val sc = new SwitchoverController(status, workerFactory, indexMetadata, auditClient,
             scala.concurrent.ExecutionContext.Implicits.global)
           val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
@@ -170,25 +156,6 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
     }
   }
 
-  "when a request is received without valid basic-auth headers" - {
-    """
-      then the response is 401
-      and the stored metadata item for the product in question is left unchanged
-    """ in {
-      new Context {
-        val sc = new SwitchoverController(new FailAuthAction, status, workerFactory, indexMetadata, auditClient,
-          scala.concurrent.ExecutionContext.Implicits.global)
-        val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
-
-        worker.awaitCompletion()
-        worker.terminate()
-
-        assert(response.header.status === 401)
-        verify(indexMetadata, never).setIndexInUse(abp_40_ts12345)
-      }
-    }
-  }
-
   "given a StateModel that is in a failed state" - {
     "when the inner switchIfOK method is called" - {
       """
@@ -196,7 +163,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
         and the state model stays in its current state
       """ in {
         new Context {
-          val sc = new SwitchoverController(pta, status, workerFactory, indexMetadata, auditClient,
+          val sc = new SwitchoverController(status, workerFactory, indexMetadata, auditClient,
             scala.concurrent.ExecutionContext.Implicits.global)
           val model1 = new StateModel("abp", Some(40), Some("full"), Some("200102030405"), hasFailed = true)
 
@@ -219,11 +186,4 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
     val now = System.currentTimeMillis
     new Date(now - ms)
   }
-}
-
-class FailAuthAction extends ActionBuilder[Request] with ActionFilter[Request] {
-
-  val fail = Some(Results.Unauthorized.withHeaders(WWW_AUTHENTICATE -> "some realm"))
-
-  def filter[A](request: Request[A]): Future[Option[Result]] = Future.successful(fail)
 }

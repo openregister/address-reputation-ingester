@@ -74,7 +74,7 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     val esSwitchoverController = mock[SwitchoverController]
     val esIndexController = mock[IndexController]
 
-    val goController = new GoController(new PassThroughAction, status, workerFactory, sardineWrapper,
+    val goController = new GoController(status, workerFactory, sardineWrapper,
       fetchController, ingestController,
       esSwitchoverController, esIndexController)
 

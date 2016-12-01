@@ -28,22 +28,19 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
 object ElasticsearchIndexController extends IndexController(
-  ControllerConfig.authAction,
   WorkQueue.statusLogger,
   ControllerConfig.workerFactory,
   ControllerConfig.elasticSearchService
 )
 
 
-class IndexController(action: ActionBuilder[Request],
-                      status: StatusLogger,
+class IndexController(status: StatusLogger,
                       workerFactory: WorkerFactory,
                       indexMetadata: IndexMetadata) extends BaseController {
 
   import IndexInfo._
 
-  def doListIndexes(): Action[AnyContent] = action {
-    request =>
+  def doListIndexes(): Action[AnyContent] = Action { request =>
       val result = listIndexes()
       Ok(Json.toJson(ListCI(result)))
   }
@@ -73,7 +70,7 @@ class IndexController(action: ActionBuilder[Request],
     }
   }
 
-  def doDeleteIndex(name: String): Action[AnyContent] = action {
+  def doDeleteIndex(name: String): Action[AnyContent] = Action {
     request =>
       val cn = IndexName(name)
       if (cn.isEmpty)
@@ -90,7 +87,7 @@ class IndexController(action: ActionBuilder[Request],
       }
   }
 
-  def doCleanup(): Action[AnyContent] = action {
+  def doCleanup(): Action[AnyContent] = Action {
     request =>
       workerFactory.worker.push("cleaning up obsolete indexes", continuer => cleanup())
       Accepted

@@ -23,7 +23,6 @@ import java.io.File
 
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
-import controllers.PassThroughAction
 import ingest.writers._
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
@@ -67,10 +66,9 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val worker = new WorkQueue(status)
     val workerFactory = new StubWorkerFactory(worker)
 
-    private val pta = new PassThroughAction
     val ec = scala.concurrent.ExecutionContext.Implicits.global
 
-    val ingestController = new IngestController(pta, folder, esFactory, fwFactory, nullFactory, ingesterFactory, workerFactory, ec)
+    val ingestController = new IngestController(folder, esFactory, fwFactory, nullFactory, ingesterFactory, workerFactory, ec)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val folder = new File(".")

@@ -29,7 +29,6 @@ import scala.concurrent.ExecutionContext
 
 
 object ElasticSwitchoverController extends SwitchoverController(
-  ControllerConfig.authAction,
   WorkQueue.statusLogger,
   ControllerConfig.workerFactory,
   ControllerConfig.elasticSearchService,
@@ -38,15 +37,14 @@ object ElasticSwitchoverController extends SwitchoverController(
 )
 
 
-class SwitchoverController(action: ActionBuilder[Request],
-                           status: StatusLogger,
+class SwitchoverController(status: StatusLogger,
                            workerFactory: WorkerFactory,
                            indexMetadata: IndexMetadata,
                            auditClient: AuditClient,
                            ec: ExecutionContext) extends BaseController with ElasticDsl {
 
   // TODO should these args just be the index name?
-  def doSwitchTo(product: String, epoch: Int, timestamp: String): Action[AnyContent] = action {
+  def doSwitchTo(product: String, epoch: Int, timestamp: String): Action[AnyContent] = Action {
     request =>
       require(isAlphaNumeric(product))
       require(isTimestamp(timestamp))

@@ -25,7 +25,6 @@ import java.util.zip.GZIPInputStream
 import it.helper.{AppServerTestApi, Synopsis}
 import org.scalatest.{MustMatchers, WordSpec}
 import play.api.Application
-import play.api.libs.ws.WSAuthScheme.BASIC
 import play.api.test.Helpers._
 
 import scala.io.Source
@@ -47,7 +46,7 @@ class IngestFileSuite(val appEndpoint: String, tmpDir: File)(implicit val app: A
       assert(waitUntil("/admin/status", idle) === idle)
 
       val request = newRequest("GET", "/ingest/from/file/to/file/exeter/1/sample?forceChange=true&prefer=DPA&include=DPA+LPI&streetFilter=1")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       response.status mustBe ACCEPTED
 
       val busy = Synopsis.OkText("busy ingesting to file exeter/1/sample (forced)")
@@ -78,7 +77,7 @@ class IngestFileSuite(val appEndpoint: String, tmpDir: File)(implicit val app: A
       assert(waitUntil("/admin/status", idle) === idle)
 
       val request = newRequest("GET", "/ingest/from/file/to/file/exeter/1/sample?forceChange=true&prefer=LPI&include=LPI+DPA&streetFilter=2")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       response.status mustBe ACCEPTED
 
       val busy = Synopsis.OkText("busy ingesting to file exeter/1/sample (forced)")
@@ -109,7 +108,7 @@ class IngestFileSuite(val appEndpoint: String, tmpDir: File)(implicit val app: A
       assert(waitUntil("/admin/status", idle) === idle)
 
       val request = newRequest("GET", "/ingest/from/file/to/file/exeter/1/sample?forceChange=true&prefer=LPI&include=LPI&streetFilter=0")
-      val response = await(request.withAuth("admin", "password", BASIC).execute())
+      val response = await(request.execute())
       response.status mustBe ACCEPTED
 
       val busy = Synopsis.OkText("busy ingesting to file exeter/1/sample (forced)")

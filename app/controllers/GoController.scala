@@ -31,7 +31,6 @@ object KnownProducts {
 
 
 object GoController extends GoController(
-  ControllerConfig.authAction,
   WorkQueue.statusLogger,
   ControllerConfig.workerFactory,
   ControllerConfig.sardine,
@@ -42,8 +41,7 @@ object GoController extends GoController(
 )
 
 
-class GoController(action: ActionBuilder[Request],
-                   logger: StatusLogger,
+class GoController(logger: StatusLogger,
                    workerFactory: WorkerFactory,
                    sardine: SardineWrapper,
                    fetchController: FetchController,
@@ -52,7 +50,7 @@ class GoController(action: ActionBuilder[Request],
                    esIndexController: IndexController) extends BaseController {
 
   def doGoAuto(target: String,
-               bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = action {
+               bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = Action {
     request =>
       require(IngestControllerHelper.allowedTargets.contains(target))
 
@@ -81,7 +79,7 @@ class GoController(action: ActionBuilder[Request],
 
   def doGo(target: String, product: String, epoch: Int, variant: String,
            bulkSize: Option[Int], loopDelay: Option[Int],
-           forceChange: Option[Boolean]): Action[AnyContent] = action {
+           forceChange: Option[Boolean]): Action[AnyContent] = Action {
     request =>
       require(IngestControllerHelper.allowedTargets.contains(target))
       require(isAlphaNumeric(product))

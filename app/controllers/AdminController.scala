@@ -35,24 +35,22 @@ import scala.io.Source
 
 
 object AdminController extends AdminController(
-  ControllerConfig.authAction,
   WorkQueue.singleton,
-  ControllerConfig.realmString)
+  ControllerConfig.environmentString)
 
 
-class AdminController(action: ActionBuilder[Request],
-                      worker: WorkQueue,
-                      realmString: String) extends BaseController {
+class AdminController(worker: WorkQueue,
+                      environmentString: String) extends BaseController {
 
   private val PlainText = CONTENT_TYPE -> MimeTypes.TEXT
   private val ApplJson = CONTENT_TYPE -> MimeTypes.JSON
   private val startTime = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM).format(new Date())
 
-  def index: Action[AnyContent] = action {
+  def index: Action[AnyContent] = Action {
     Redirect("ui/index.html")
   }
 
-  def cancelTask(): Action[AnyContent] = action {
+  def cancelTask(): Action[AnyContent] = Action {
     if (worker.abort()) {
       Accepted
     } else {
@@ -60,7 +58,7 @@ class AdminController(action: ActionBuilder[Request],
     }
   }
 
-  def cancelQueue(id: Int): Action[AnyContent] = action {
+  def cancelQueue(id: Int): Action[AnyContent] = Action {
     Ok(JacksonMapper.writeValueAsString(worker.dropQueueItem(id))).as(MimeTypes.JSON)
   }
 
@@ -69,27 +67,27 @@ class AdminController(action: ActionBuilder[Request],
     Ok(worker.status).as(MimeTypes.TEXT)
   }
 
-  def fullStatus(): Action[AnyContent] = action {
+  def fullStatus(): Action[AnyContent] = Action {
     Ok(worker.fullStatus).as(MimeTypes.TEXT)
   }
 
-  def viewQueue(): Action[AnyContent] = action {
+  def viewQueue(): Action[AnyContent] = Action {
     Ok(JacksonMapper.writeValueAsString(worker.viewQueue)).as(MimeTypes.JSON)
   }
 
-  def showLog(dir: Option[String]): Action[AnyContent] = action {
+  def showLog(dir: Option[String]): Action[AnyContent] = Action {
     val d = if (dir.isEmpty) "." else dir.get
     Ok(LogFileHelper.readLogFile(new File(d).getCanonicalFile)).as(MimeTypes.TEXT)
   }
 
-  def dirTree(root: Option[String], max: Option[Int]): Action[AnyContent] = action {
+  def dirTree(root: Option[String], max: Option[Int]): Action[AnyContent] = Action {
     val dir = if (root.isDefined) new File(root.get) else ControllerConfig.downloadFolder
     val treeInfo = DirTreeHelper.dirTreeInfo(dir, max getOrElse 2)
     Ok(treeInfo).as(MimeTypes.TEXT)
   }
 
-  def realm: Action[AnyContent] = action {
-    Ok(s"$realmString\n$startTime").as(MimeTypes.TEXT)
+  def realm: Action[AnyContent] = Action {
+    Ok(s"$environmentString\n$startTime").as(MimeTypes.TEXT)
   }
 }
 

@@ -46,7 +46,6 @@ object IngestControllerHelper {
 
 
 object IngestController extends IngestController(
-  ControllerConfig.authAction,
   ControllerConfig.downloadFolder,
   new OutputESWriterFactory,
   new OutputFileWriterFactory,
@@ -56,8 +55,7 @@ object IngestController extends IngestController(
   ControllerConfig.ec
 )
 
-class IngestController(action: ActionBuilder[Request],
-                       unpackedFolder: File,
+class IngestController(unpackedFolder: File,
                        esWriterFactory: OutputWriterFactory,
                        fileWriterFactory: OutputWriterFactory,
                        nullWriterFactory: OutputWriterFactory,
@@ -73,7 +71,7 @@ class IngestController(action: ActionBuilder[Request],
                       include: Option[String],
                       prefer: Option[String],
                       streetFilter: Option[Int]
-                    ): Action[AnyContent] = action {
+                    ): Action[AnyContent] = Action {
     request =>
       require(IngestControllerHelper.allowedTargets.contains(target))
       require(isAlphaNumeric(product))
