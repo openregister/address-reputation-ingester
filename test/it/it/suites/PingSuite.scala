@@ -37,7 +37,7 @@ class PingSuite(val appEndpoint: String)(implicit val app: Application)
     }
 
     "give headers that disable caching of the response" in {
-      get("/ping").header("Cache-Control").get mustBe "no-cache,max-age=0,must-revalidate"
+      get("/ping").header("Cache-Control").get mustBe "no-cache,no-store,max-age=0"
     }
   }
 

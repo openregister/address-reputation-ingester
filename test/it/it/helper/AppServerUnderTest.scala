@@ -24,7 +24,9 @@ import java.io.File
 import com.sksamuel.elastic4s.ElasticClient
 import org.scalatest._
 import org.scalatestplus.play.ServerProvider
-import play.api.test.{FakeApplication, Helpers, TestServer}
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.test.{Helpers, TestServer}
 import uk.gov.hmrc.address.services.es.{ElasticDiskClientSettings, ElasticsearchHelper}
 import uk.gov.hmrc.util.FileUtils
 
@@ -45,12 +47,13 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with AppServerTe
 
   def afterAppServerStops() {}
 
-  implicit override final lazy val app: FakeApplication = new FakeApplication(
-    additionalConfiguration = appConfiguration ++
+  implicit override final lazy val app: Application = new GuiceApplicationBuilder().configure(
+    appConfiguration ++
       Map(
         "elastic.localMode" -> true,
-        "app.remote.server" -> "http://localhost:8080/webdav")
-  )
+        "app.remote.server" -> "http://localhost:8080/webdav"
+      )
+  ).build()
 
   /**
     * The port used by the `TestServer`.  By default this will be set to the result returned from

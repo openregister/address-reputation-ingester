@@ -39,8 +39,8 @@ object Provenance {
     if (!file.exists()) {
       val text =
         s"""{
-        |  "appName":     "${HmrcBuild.appName}",
-        |  "version":     "${HmrcBuild.appVersion}",
+        |  "appName":     "${MicroServiceBuild.appName}",
+        |  "version":     "${MicroServiceBuild.appVersion}",
         |  "buildTag":    "$tag",
         |  "buildNumber": "$number",
         |  "buildId":     "$id",

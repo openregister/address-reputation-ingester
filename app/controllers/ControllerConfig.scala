@@ -24,7 +24,6 @@ package controllers
 import java.io.File
 import java.net.URL
 
-import config.ApplicationGlobal
 import config.ConfigHelper._
 import fetch._
 import play.api.Logger
@@ -36,7 +35,7 @@ import uk.gov.hmrc.logging.LoggerFacade
 object ControllerConfig {
 
   // be careful to have only one thread pool in use
-  implicit val ec = ApplicationGlobal.ec
+  implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
   val environmentString = mustGetConfigString(current.mode, current.configuration, "app.environment")
 
