@@ -22,16 +22,18 @@ package it.helper
 import com.sksamuel.elastic4s.{ElasticClient, RichSearchResponse}
 import com.sksamuel.elastic4s.ElasticDsl._
 import org.elasticsearch.common.unit.TimeValue
+import org.scalatest.{BeforeAndAfterAll, Suite}
 import uk.gov.hmrc.address.osgb.{DbAddress, DbAddressOrderingByLine1}
-import uk.gov.hmrc.address.services.es.{ESSchema, IndexMetadata, IndexState}
+import uk.gov.hmrc.address.services.es._
 import uk.gov.hmrc.address.uk.Postcode
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Sorting
+import scala.concurrent.ExecutionContext.Implicits.global
 
-trait ESHelper {
-
-  def esClient: ElasticClient
+object ElasticsearchTestHelper {
+  private val esDataPath: String = System.getProperty("java.io.tmpdir") + "/es"
+  lazy val esClient: ElasticClient = ElasticsearchHelper.buildDiskClient(ElasticDiskClientSettings(esDataPath, true))
 
   def createSchema(idx: IndexState, clients: List[ElasticClient]) {
     clients foreach { client =>
@@ -58,4 +60,22 @@ trait ESHelper {
     Sorting.quickSort(arr)(DbAddressOrderingByLine1)
     arr.toList
   }
+}
+
+trait EmbeddedElasticsearchSuite extends Suite with BeforeAndAfterAll {
+
+  override def beforeAll(): Unit = {
+    val clusterHealthResp = esClient execute clusterHealth
+    clusterHealthResp map { chr =>
+      println(s"***  Starting elasticsearch cluster ${chr.getClusterName}")
+    }
+  }
+
+  override def afterAll(): Unit = {
+    println("*** Stopping elasticsearch")
+    esClient.close()
+    super.afterAll()
+  }
+
+  def esClient = ElasticsearchTestHelper.esClient
 }

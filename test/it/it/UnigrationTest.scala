@@ -23,39 +23,48 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption._
 
-import it.helper.{AppServerUnderTest, PSuites}
+import it.helper.{EmbeddedElasticsearchSuite, EmbeddedWebdavStubSuite}
 import it.suites._
-import org.scalatest.{Args, SequentialNestedSuiteExecution, Status}
-import org.scalatestplus.play.PlaySpec
+import org.scalatest._
+import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.{Application, Mode}
 import uk.gov.hmrc.util.FileUtils
 
-class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNestedSuiteExecution {
+class UnigrationTest extends PlaySpec with OneServerPerSuite with EmbeddedElasticsearchSuite with EmbeddedWebdavStubSuite
+  with SequentialNestedSuiteExecution with BeforeAndAfterAll {
 
   //  private val tmp = System.getProperty("java.io.tmpdir")
   // this will get deleted so BE CAREFUL to include the subdirectory!
   private val tmpDir = new File("target", "ari")
 
-  def appConfiguration: Map[String, String] = Map(
-    "app.files.downloadFolder" -> s"$tmpDir/download",
-    "app.files.outputFolder" -> s"$tmpDir/output"
-  )
+  implicit lazy val appEndpoint = s"http://localhost:$port"
 
-  override def runNestedSuites(args: Args): Status = {
-    val s = new PSuites(
-      new AdminSuite(appEndpoint)(app),
-      new IngestFileSuite(appEndpoint, tmpDir)(app),
-      new WebdavSuite(appEndpoint, tmpDir)(app),
-      new IndexSuite(appEndpoint, esClient)(app),
-      new GoSuite(appEndpoint, esClient)(app),
-      new PingSuite(appEndpoint)(app)
+  override implicit lazy val app: Application = new GuiceApplicationBuilder()
+    .configure(Map(
+      "app.files.downloadFolder" -> s"$tmpDir/download",
+      "app.files.outputFolder" -> s"$tmpDir/output",
+      "elastic.localMode" -> true,
+      "app.remote.server" -> "http://localhost:8080/webdav"
+    ))
+    .in(Mode.Test)
+    .build()
+
+  override def nestedSuites: Vector[Suite] = {
+    Vector(
+      new AdminSuite,
+      new IngestFileSuite(tmpDir),
+      new WebdavSuite(tmpDir),
+      new IndexSuite,
+      new GoSuite,
+      new PingSuite
     )
-    s.runNestedSuites(args)
   }
 
   //-----------------------------------------------------------------------------------------------
 
-  override def beforeAppServerStarts() {
-    super.beforeAppServerStarts()
+  override def beforeAll(): Unit = {
+    super.beforeAll()
     FileUtils.deleteDir(tmpDir)
     val sample = getClass.getClassLoader.getResourceAsStream("exeter/1/sample/addressbase-premium-csv-sample-data.zip")
     val unpackFolder = new File(tmpDir, "download/exeter/1/sample")
@@ -64,9 +73,9 @@ class UnigrationTest extends PlaySpec with AppServerUnderTest with SequentialNes
     sample.close()
   }
 
-  override def afterAppServerStops() {
+  override def afterAll(): Unit = {
+    super.afterAll()
     FileUtils.deleteDir(tmpDir)
-    super.afterAppServerStops()
   }
 }
 

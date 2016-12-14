@@ -20,11 +20,12 @@
 package it.suites
 
 import it.helper.AppServerTestApi
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.{DoNotDiscover, MustMatchers, WordSpec}
 import play.api.Application
 import play.api.test.Helpers._
 
-class AdminSuite(val appEndpoint: String)(implicit val app: Application)
+@DoNotDiscover
+class AdminSuite()(implicit val app: Application, implicit val appEndpoint: String)
   extends WordSpec with MustMatchers with AppServerTestApi {
 
   // only light-weight admin tests are provided; mostly, manually testing happens here
