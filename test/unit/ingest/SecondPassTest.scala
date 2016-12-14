@@ -25,6 +25,7 @@ import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
 import addressbase.{OSBlpu, OSCsv, OSLpi}
+import config.ConfigHelper
 import ingest.Ingester.{Blpu, Street, StreetDescriptor}
 import org.junit.runner.RunWith
 import org.mockito.ArgumentCaptor
@@ -32,6 +33,7 @@ import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import play.api.inject.ApplicationLifecycle
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.osgb.DbAddress
@@ -50,12 +52,14 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
   class context {
     val logger = new StubLogger
+    val lifecycle = mock[ApplicationLifecycle]
     val status = new StatusLogger(logger)
-    val worker = new WorkQueue(status)
+    val worker = new WorkQueue(lifecycle, status)
     val continuer = mock[Continuer]
     val lock = new SynchronousQueue[Boolean]()
     val model = new StateModel()
-    val fd = ForwardData.chronicleInMemoryForUnitTest("DPA")
+    val configHelper = mock[ConfigHelper]
+    val fd = new ForwardDataConstants(configHelper).chronicleInMemoryForUnitTest("DPA")
   }
 
   val allVehicles = "8"
@@ -327,7 +331,8 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
     val boolTrue: Boolean = true
     val boolFalse: Boolean = false
 
-    val fd = ForwardData.chronicleInMemoryForUnitTest("DPA")
+    val configHelper = mock[ConfigHelper]
+    val fd = new ForwardDataConstants(configHelper).chronicleInMemoryForUnitTest("DPA")
     fd.blpu.put(131041604L, Blpu(None, blpu.postcode, blpu.logicalState, osblpu.blpuState, blpu.subdivision, blpu.localCustodianCode, blpu.location).pack)
     fd.uprns.add(131041604L)
 
@@ -384,7 +389,8 @@ class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
     val boolTrue: Boolean = true
 
-    val fd = ForwardData.chronicleInMemoryForUnitTest("DPA")
+    val configHelper = mock[ConfigHelper]
+    val fd = new ForwardDataConstants(configHelper).chronicleInMemoryForUnitTest("DPA")
     fd.blpu.put(131041604L, Blpu(None, blpu.postcode, blpu.logicalState, osblpu.blpuState, blpu.subdivision, blpu.localCustodianCode, blpu.location).pack)
     fd.streets.put(48804683L, Street('A', allVehicles).pack)
     fd.streets.put(58804683L, Street('A', allVehicles).pack)

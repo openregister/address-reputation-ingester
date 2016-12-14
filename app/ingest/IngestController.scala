@@ -19,17 +19,16 @@ package ingest
 import java.io.File
 import java.nio.file.{Files, StandardCopyOption}
 
+import com.google.inject.Inject
 import controllers.ControllerConfig
 import controllers.SimpleValidator._
 import ingest.algorithm.AlgorithmSettings
 import ingest.writers._
-import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.exec.{Continuer, WorkerFactory}
+import play.api.mvc.{Action, AnyContent}
+import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.services.writers.{Algorithm, WriterSettings}
 import uk.gov.hmrc.play.microservice.controller.BaseController
-
-import scala.concurrent.ExecutionContext
 
 
 object IngestControllerHelper {
@@ -45,24 +44,14 @@ object IngestControllerHelper {
 }
 
 
-object IngestController extends IngestController(
-  ControllerConfig.downloadFolder,
-  new OutputESWriterFactory,
-  new OutputFileWriterFactory,
-  new OutputNullWriterFactory,
-  new IngesterFactory,
-  ControllerConfig.workerFactory,
-  ControllerConfig.ec
-)
-
-class IngestController(unpackedFolder: File,
-                       esWriterFactory: OutputWriterFactory,
-                       fileWriterFactory: OutputWriterFactory,
-                       nullWriterFactory: OutputWriterFactory,
-                       ingesterFactory: IngesterFactory,
-                       workerFactory: WorkerFactory,
-                       ec: ExecutionContext
-                      ) extends BaseController {
+class IngestController @Inject()(cc: ControllerConfig,
+                                 esWriterFactory: OutputESWriterFactory,
+                                 fileWriterFactory: OutputFileWriterFactory,
+                                 nullWriterFactory: OutputNullWriterFactory,
+                                 ingesterFactory: IngesterFactory,
+                                 worker: WorkQueue,
+                                 statusLogger: StatusLogger
+                                ) extends BaseController {
 
   def doIngestFileTo(
                       target: String, product: String, epoch: Int, variant: String,
@@ -81,10 +70,9 @@ class IngestController(unpackedFolder: File,
       val algorithmSettings = AlgorithmSettings(include, prefer, streetFilter)
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay, algorithmSettings)
 
-      val worker = workerFactory.worker
       worker.push(
         s"ingesting to $target ${model.pathSegment}${model.forceChangeString}",
-        continuer => ingestIfOK(model, worker.statusLogger, settings, target, continuer)
+        continuer => ingestIfOK(model, statusLogger, settings, target, continuer)
       )
 
       Accepted(s"Ingestion has started for ${model.pathSegment}${model.forceChangeString}")
@@ -113,13 +101,13 @@ class IngestController(unpackedFolder: File,
 
     val dataLoc = model.productName match {
       case "test" => new File(cannedDataLoc)
-      case _ => new File(unpackedFolder, model.pathSegment)
+      case _ => new File(cc.downloadFolder, model.pathSegment)
     }
-    val writer = writerFactory.writer(model, status, writerSettings, ec)
+    val writer = writerFactory.writer(model, writerSettings)
     var result = model
     var ingestFailed = true
     try {
-      ingestFailed = ingesterFactory.ingester(continuer, writerSettings.algorithm, model, status).ingestFrom(dataLoc, writer)
+      ingestFailed = ingesterFactory.ingester(continuer, writerSettings.algorithm, model).ingestFrom(dataLoc, writer)
     } catch {
       case e: Exception =>
         status.warn(e.getMessage)

@@ -16,17 +16,22 @@
 
 package ingest.writers
 
+import com.google.inject.{Inject, Singleton}
 import config.Provenance
-import controllers.ControllerConfig
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.BuildProvenance
+import uk.gov.hmrc.address.services.es.IndexMetadata
 import uk.gov.hmrc.address.services.writers.{OutputESWriter, OutputWriter, WriterSettings}
 
 import scala.concurrent.ExecutionContext
 
-class OutputESWriterFactory extends OutputWriterFactory {
-  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext): OutputWriter = {
-    new OutputESWriter(model, statusLogger, ControllerConfig.elasticSearchService, settings, ec,
-      BuildProvenance(Provenance.version, Provenance.buildNumber))
+@Singleton
+class OutputESWriterFactory @Inject()(elasticSearchService: IndexMetadata,
+                                      statusLogger: StatusLogger,
+                                      provenance: Provenance,
+                                      ec: ExecutionContext) extends OutputWriterFactory {
+  def writer(model: StateModel, settings: WriterSettings): OutputWriter = {
+    new OutputESWriter(model, statusLogger, elasticSearchService, settings, ec,
+      BuildProvenance(provenance.version, provenance.buildNumber))
   }
 }

@@ -24,24 +24,23 @@ import java.nio.file.Files
 import java.text.DateFormat
 import java.util.Date
 
+import com.google.inject.{Inject, Singleton}
 import config.JacksonMapper
 import fetch.WebDavFile
 import play.api.http.MimeTypes
 import play.api.mvc._
-import services.exec.{TaskInfo, WorkQueue}
+import services.exec.WorkQueue
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.io.Source
 
 
-object AdminController extends AdminController(
-  WorkQueue.singleton,
-  ControllerConfig.environmentString)
+class AdminController @Inject()(worker: WorkQueue,
+                                dirTreeHelper: DirTreeHelper,
+                                logFileHelper: LogFileHelper,
+                                cc: ControllerConfig) extends BaseController {
 
-
-class AdminController(worker: WorkQueue,
-                      environmentString: String) extends BaseController {
-
+  private val environmentString = cc.environmentString
   private val PlainText = CONTENT_TYPE -> MimeTypes.TEXT
   private val ApplJson = CONTENT_TYPE -> MimeTypes.JSON
   private val startTime = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM).format(new Date())
@@ -77,12 +76,12 @@ class AdminController(worker: WorkQueue,
 
   def showLog(dir: Option[String]): Action[AnyContent] = Action {
     val d = if (dir.isEmpty) "." else dir.get
-    Ok(LogFileHelper.readLogFile(new File(d).getCanonicalFile)).as(MimeTypes.TEXT)
+    Ok(logFileHelper.readLogFile(new File(d).getCanonicalFile)).as(MimeTypes.TEXT)
   }
 
   def dirTree(root: Option[String], max: Option[Int]): Action[AnyContent] = Action {
-    val dir = if (root.isDefined) new File(root.get) else ControllerConfig.downloadFolder
-    val treeInfo = DirTreeHelper.dirTreeInfo(dir, max getOrElse 2)
+    val dir = if (root.isDefined) new File(root.get) else cc.downloadFolder
+    val treeInfo = dirTreeHelper.dirTreeInfo(dir, max getOrElse 2)
     Ok(treeInfo).as(MimeTypes.TEXT)
   }
 
@@ -92,7 +91,8 @@ class AdminController(worker: WorkQueue,
 }
 
 
-object LogFileHelper {
+@Singleton
+class LogFileHelper {
   private val logFile1 = "address-reputation-ingester.log"
   private val logFile2 = "application.log"
 
@@ -123,11 +123,11 @@ object LogFileHelper {
   }
 }
 
-
-object DirTreeHelper {
+@Singleton
+class DirTreeHelper @Inject()(cc: ControllerConfig) {
   def dirTreeInfo(dir: File, maxDepth: Int): String = {
-    val tree = DirTreeHelper.listFiles(dir, maxDepth)
-    val disk = DirTreeHelper.reportDiskSpace(dir)
+    val tree = listFiles(dir, maxDepth)
+    val disk = reportDiskSpace(dir)
     val pwd = System.getenv("PWD")
     s"root=$dir (max=$maxDepth)\n$tree\n$disk\nPWD=$pwd"
   }
@@ -141,8 +141,9 @@ object DirTreeHelper {
       else if (mb >= 100) "%d MiB".format(mb)
       else "%d KiB".format(kb)
     }
+
     try {
-      val downloadFileStore = Files.getFileStore(ControllerConfig.downloadFolder.toPath)
+      val downloadFileStore = Files.getFileStore(cc.downloadFolder.toPath)
       val total = downloadFileStore.getTotalSpace
       val usable = downloadFileStore.getUsableSpace
       "Disk space free %s out of total %s.".format(memSize(usable), memSize(total))

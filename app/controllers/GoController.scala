@@ -16,11 +16,12 @@
 
 package controllers
 
+import com.google.inject.Inject
 import controllers.SimpleValidator._
 import fetch.{FetchController, SardineWrapper}
 import ingest.{IngestController, IngestControllerHelper}
-import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.exec.{Continuer, WorkQueue, WorkerFactory}
+import play.api.mvc.{Action, AnyContent}
+import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.services.writers.{Algorithm, WriterSettings}
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -30,51 +31,39 @@ object KnownProducts {
 }
 
 
-object GoController extends GoController(
-  WorkQueue.statusLogger,
-  ControllerConfig.workerFactory,
-  ControllerConfig.sardine,
-  FetchController,
-  IngestController,
-  ElasticSwitchoverController,
-  ElasticsearchIndexController
-)
-
-
-class GoController(logger: StatusLogger,
-                   workerFactory: WorkerFactory,
-                   sardine: SardineWrapper,
-                   fetchController: FetchController,
-                   ingestController: IngestController,
-                   esSwitchoverController: SwitchoverController,
-                   esIndexController: IndexController) extends BaseController {
+class GoController @Inject()(logger: StatusLogger,
+                             worker: WorkQueue,
+                             sardine: SardineWrapper,
+                             fetchController: FetchController,
+                             ingestController: IngestController,
+                             esSwitchoverController: SwitchoverController,
+                             esIndexController: IndexController) extends BaseController {
 
   def doGoAuto(target: String,
                bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = Action {
-    request =>
-      require(IngestControllerHelper.allowedTargets.contains(target))
+    require(IngestControllerHelper.allowedTargets.contains(target))
 
-      val settings = IngestControllerHelper.settings(bulkSize, loopDelay, Algorithm.default)
-      workerFactory.worker.push(s"automatically searching and loading to $target", {
-        continuer =>
-          val tree = sardine.exploreRemoteTree
-          for (product <- KnownProducts.OSGB
-               if continuer.isBusy) {
-            val found = tree.findLatestFor(product)
-            if (found.isDefined) {
-              val model = StateModel(found.get)
-              pipeline(target, model, settings, continuer)
-            }
+    val settings = IngestControllerHelper.settings(bulkSize, loopDelay, Algorithm.default)
+    worker.push(s"automatically searching and loading to $target", {
+      continuer =>
+        val tree = sardine.exploreRemoteTree
+        for (product <- KnownProducts.OSGB
+             if continuer.isBusy) {
+          val found = tree.findLatestFor(product)
+          if (found.isDefined) {
+            val model = StateModel(found.get)
+            pipeline(target, model, settings, continuer)
           }
-          if (continuer.isBusy) {
-            target match {
-              case "es" => esIndexController.cleanup()
-              case _ => // no action
-            }
-            fetchController.cleanup()
+        }
+        if (continuer.isBusy) {
+          target match {
+            case "es" => esIndexController.cleanup()
+            case _ => // no action
           }
-      })
-      Accepted
+          fetchController.cleanup()
+        }
+    })
+    Accepted
   }
 
   def doGo(target: String, product: String, epoch: Int, variant: String,
@@ -87,7 +76,6 @@ class GoController(logger: StatusLogger,
 
       val settings = IngestControllerHelper.settings(bulkSize, loopDelay, Algorithm.default)
       val model = new StateModel(product, Some(epoch), Some(variant), forceChange = forceChange getOrElse false)
-      val worker = workerFactory.worker
       worker.push(s"automatically loading to $target ${model.pathSegment}${model.forceChangeString}", {
         continuer =>
           pipeline(target, model, settings, continuer)

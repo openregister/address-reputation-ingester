@@ -20,6 +20,7 @@ package ingest.writers
 
 import java.util.Date
 
+import com.google.inject.{Inject, Singleton}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.osgb.DbAddress
 import uk.gov.hmrc.address.services.writers.{OutputWriter, WriterSettings}
@@ -46,8 +47,8 @@ class OutputNullWriter(model: StateModel, statusLogger: StatusLogger) extends Ou
   }
 }
 
-
-class OutputNullWriterFactory extends OutputWriterFactory {
-  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext): OutputWriter =
+@Singleton
+class OutputNullWriterFactory @Inject() (statusLogger: StatusLogger, ec: ExecutionContext) extends OutputWriterFactory {
+  override def writer(model: StateModel, settings: WriterSettings): OutputWriter =
     new OutputNullWriter(model, statusLogger)
 }

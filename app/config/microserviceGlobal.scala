@@ -18,6 +18,7 @@
 
 package config
 
+import com.kenshoo.play.metrics.MetricsFilter
 import com.typesafe.config.Config
 import play.api.{Application, Configuration, Play}
 import uk.gov.hmrc.play.audit.filters.AuditFilter
@@ -69,15 +70,10 @@ object MicroserviceGlobal extends DefaultMicroserviceGlobal with RunMode with Mi
   override val authFilter = None
 
   override def onStart(app: Application) {
+    val provenance = Play.current.injector.instanceOf[Provenance]
     Logger.info(s"Starting microservice : $appName : in mode : ${app.mode}")
-    Logger.info(Provenance.versionInfo)
+    Logger.info(provenance.versionInfo)
     super.onStart(app)
-  }
-
-  override def onStop(app: Application): Unit = {
-    Logger.info(s"Stopping microservice")
-    WorkQueue.singleton.terminate()
-    super.onStop(app)
   }
 
 }

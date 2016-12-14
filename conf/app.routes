@@ -2,7 +2,7 @@
 
 GET    /                          controllers.AdminController.index
 GET    /ui/*file                  controllers.Assets.at(path="/public", file)
-GET    /admin/metrics             @com.kenshoo.play.metrics.MetricsController.metrics
+GET    /admin/metrics             com.kenshoo.play.metrics.MetricsController.metrics
 
 # ----- Ping -----
 HEAD   /ping                                                    controllers.PingController.ping
@@ -20,11 +20,11 @@ GET    /fetch/showRemoteTree                                    fetch.FetchContr
 
 GET    /ingest/from/file/to/:target/:product/:epoch/:variant    ingest.IngestController.doIngestFileTo(target, product, epoch: Int, variant, bulkSize: Option[Int], loopDelay: Option[Int], forceChange: Option[Boolean], include: Option[String], prefer: Option[String], streetFilter: Option[Int])
 
-GET    /switch/es/:product/:epoch/:version                      controllers.ElasticSwitchoverController.doSwitchTo(product, epoch: Int, version)
+GET    /switch/es/:product/:epoch/:version                      controllers.SwitchoverController.doSwitchTo(product, epoch: Int, version)
 
-GET    /indexes/es/list                                     controllers.ElasticsearchIndexController.doListIndexes
-DELETE /indexes/es/:name                                    controllers.ElasticsearchIndexController.doDeleteIndex(name)
-POST   /indexes/es/clean                                    controllers.ElasticsearchIndexController.doCleanup
+GET    /indexes/es/list                                         controllers.IndexController.doListIndexes
+DELETE /indexes/es/:name                                        controllers.IndexController.doDeleteIndex(name)
+POST   /indexes/es/clean                                        controllers.IndexController.doCleanup
 
 GET    /admin/realm                                             controllers.AdminController.realm
 GET    /admin/cancelCurrent                                     controllers.AdminController.cancelTask

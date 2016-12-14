@@ -20,10 +20,12 @@
 package config
 
 import com.fasterxml.jackson.core.`type`.TypeReference
+import com.google.inject.Singleton
 
 import scala.io.Source
 
-object Provenance {
+@Singleton
+class Provenance {
   private val stream = getClass.getResourceAsStream("/provenance.json")
   val versionInfo: String = Source.fromInputStream(stream).mkString
   stream.close()

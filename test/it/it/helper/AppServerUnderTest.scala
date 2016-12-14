@@ -35,7 +35,7 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with AppServerTe
 
   val esDataPath: String = System.getProperty("java.io.tmpdir") + "/es"
 
-  lazy val esClient: ElasticClient = ElasticsearchHelper.buildDiskClient(ElasticDiskClientSettings(esDataPath, true))
+  val esClient: ElasticClient = ElasticsearchHelper.buildDiskClient(ElasticDiskClientSettings(esDataPath, true))
 
   lazy val webdavStub = new WebdavStub(getClass.getClassLoader.getResource("ut").toURI.getPath)
 

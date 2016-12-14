@@ -96,7 +96,8 @@ private object AppDependencies {
         "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % scope,
         "org.mockito" % "mockito-all" % "1.10.19" % scope,
         "com.pyruby" % "java-stub-server" % "0.14" % scope,
-        "io.milton" % "milton-server-ce" % "2.7.1.5" % scope
+        "io.milton" % "milton-server-ce" % "2.7.1.5" % scope,
+        "org.scalactic" %% "scalactic" % "2.2.5" force()
       )
     }.test
   }

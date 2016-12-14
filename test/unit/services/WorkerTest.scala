@@ -23,12 +23,14 @@ import java.util.concurrent.SynchronousQueue
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.mock.MockitoSugar
+import play.api.inject.ApplicationLifecycle
 import services.exec.WorkQueue
 import services.model.StatusLogger
 import uk.gov.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
-class WorkerTest extends FunSuite {
+class WorkerTest extends FunSuite with MockitoSugar {
 
   test(
     """
@@ -38,8 +40,9 @@ class WorkerTest extends FunSuite {
       and then the second should execute to completion
     """) {
     val logger = new StubLogger()
+    val lifecycle = mock[ApplicationLifecycle]
     val status = new StatusLogger(logger, 1)
-    val worker = new WorkQueue(status)
+    val worker = new WorkQueue(lifecycle, status)
     val lock1 = new SynchronousQueue[Boolean]()
     val lock2 = new SynchronousQueue[Boolean]()
 
@@ -82,8 +85,9 @@ class WorkerTest extends FunSuite {
       then viewQueue method returns the expected list of enqueued tasks.
     """) {
     val logger = new StubLogger()
+    val lifecycle = mock[ApplicationLifecycle]
     val status = new StatusLogger(logger, 1)
-    val worker = new WorkQueue(status)
+    val worker = new WorkQueue(lifecycle, status)
     val lock1 = new SynchronousQueue[Boolean]()
 
     assert(worker.status === "idle")
@@ -131,8 +135,9 @@ class WorkerTest extends FunSuite {
       and returns the list of remaining enqueued tasks.
     """) {
     val logger = new StubLogger()
+    val lifecycle = mock[ApplicationLifecycle]
     val status = new StatusLogger(logger, 1)
-    val worker = new WorkQueue(status)
+    val worker = new WorkQueue(lifecycle, status)
     val lock1 = new SynchronousQueue[Boolean]()
 
     assert(worker.status === "idle")
@@ -181,8 +186,9 @@ class WorkerTest extends FunSuite {
       then two log statements are issued
     """) {
     val logger = new StubLogger()
+    val lifecycle = mock[ApplicationLifecycle]
     val status = new StatusLogger(logger, 1)
-    val worker = new WorkQueue(status)
+    val worker = new WorkQueue(lifecycle, status)
     val lock = new SynchronousQueue[Boolean]()
 
     worker.push("thinking", {
@@ -206,8 +212,9 @@ class WorkerTest extends FunSuite {
       then return true and log one statement
     """) {
     val logger = new StubLogger()
+    val lifecycle = mock[ApplicationLifecycle]
     val status = new StatusLogger(logger, 1)
-    val worker = new WorkQueue(status)
+    val worker = new WorkQueue(lifecycle, status)
     val lock = new SynchronousQueue[Boolean]()
 
     worker.push("thinking", {
@@ -230,8 +237,9 @@ class WorkerTest extends FunSuite {
       then its thread terminates
     """) {
     val logger = new StubLogger()
+    val lifecycle = mock[ApplicationLifecycle]
     val status = new StatusLogger(logger, 1)
-    val worker = new WorkQueue(status)
+    val worker = new WorkQueue(lifecycle, status)
 
     worker.terminate()
 
@@ -252,8 +260,9 @@ class WorkerTest extends FunSuite {
       then its thread terminates
     """) {
     val logger = new StubLogger()
+    val lifecycle = mock[ApplicationLifecycle]
     val status = new StatusLogger(logger, 1)
-    val worker = new WorkQueue(status)
+    val worker = new WorkQueue(lifecycle, status)
     val lock = new SynchronousQueue[Boolean]()
 
     worker.push("thinking", {

@@ -25,6 +25,8 @@ import akka.stream.{ActorMaterializer, Materializer}
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.mock.MockitoSugar
+import play.api.inject.ApplicationLifecycle
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.exec.WorkQueue
@@ -32,9 +34,10 @@ import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.logging.StubLogger
 
 @RunWith(classOf[JUnitRunner])
-class AdminControllerTest extends FunSuite {
+class AdminControllerTest extends FunSuite with MockitoSugar {
 
   implicit val system = ActorSystem("test")
+
   implicit def mat: Materializer = ActorMaterializer()
 
   test(
@@ -45,8 +48,12 @@ class AdminControllerTest extends FunSuite {
     """) {
     val logger = new StubLogger
     val status = new StatusLogger(logger)
-    val worker = new WorkQueue(status)
-    val ac = new AdminController(worker, "")
+    val lifecycle = mock[ApplicationLifecycle]
+    val logFileHelper = new LogFileHelper
+    val cc = mock[ControllerConfig]
+    val dirTreeHelper = new DirTreeHelper(cc)
+    val worker = new WorkQueue(lifecycle, status)
+    val ac = new AdminController(worker, dirTreeHelper, logFileHelper, cc)
     val request = FakeRequest()
 
     val futureResponse = call(ac.cancelTask(), request)
@@ -65,7 +72,11 @@ class AdminControllerTest extends FunSuite {
     val logger = new StubLogger
     val status = new StatusLogger(logger)
     val stuff = new SynchronousQueue[Boolean]()
-    val worker = new WorkQueue(status)
+    val lifecycle = mock[ApplicationLifecycle]
+    val logFileHelper = new LogFileHelper
+    val cc = mock[ControllerConfig]
+    val dirTreeHelper = new DirTreeHelper(cc)
+    val worker = new WorkQueue(lifecycle, status)
     val model = new StateModel()
     worker.push("thinking", {
       c =>
@@ -73,8 +84,9 @@ class AdminControllerTest extends FunSuite {
         stuff.take() // blocks until signalled
     })
 
-    stuff.put(true) // release the lock first time
-    val ac = new AdminController(worker, "")
+    stuff.put(true)
+    // release the lock first time
+    val ac = new AdminController(worker, dirTreeHelper, logFileHelper, cc)
     val request = FakeRequest()
 
     val futureResponse = call(ac.cancelTask(), request)
