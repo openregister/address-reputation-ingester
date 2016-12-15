@@ -16,6 +16,8 @@
 
 package controllers
 
+import com.google.inject.Inject
+
 import scala.concurrent.Future
 import config.Provenance
 import play.api.http.MimeTypes
@@ -23,10 +25,10 @@ import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
-object PingController extends BaseController {
+class PingController @Inject()(provenance: Provenance) extends BaseController {
 
   def ping(): Action[AnyContent] = Action { request =>
-    Ok(Provenance.versionInfo).as(MimeTypes.JSON).withHeaders(CACHE_CONTROL -> "no-cache,max-age=0,must-revalidate")
+    Ok(provenance.versionInfo).as(MimeTypes.JSON).withHeaders(CACHE_CONTROL -> "no-cache,max-age=0,must-revalidate")
   }
 
   def exit(): Action[AnyContent] = Action { request =>

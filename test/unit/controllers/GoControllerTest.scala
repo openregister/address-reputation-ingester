@@ -28,14 +28,15 @@ import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import com.github.sardine.Sardine
 import fetch.{FetchController, SardineWrapper, WebDavFile, WebDavTree}
+import ingest.IngestController
 import ingest.writers._
-import ingest.{IngestController, StubWorkerFactory}
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
+import play.api.inject.ApplicationLifecycle
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.exec.{Continuer, WorkQueue}
@@ -66,15 +67,15 @@ class GoControllerTest extends FunSuite with MockitoSugar {
     when(sardineWrapper.begin) thenReturn sardine
 
     val folder = new File(".")
-    val worker = new WorkQueue(status)
-    val workerFactory = new StubWorkerFactory(worker)
+    val lifecycle = mock[ApplicationLifecycle]
+    val worker = new WorkQueue(lifecycle, status)
 
     val fetchController = mock[FetchController]
     val ingestController = mock[IngestController]
     val esSwitchoverController = mock[SwitchoverController]
     val esIndexController = mock[IndexController]
 
-    val goController = new GoController(status, workerFactory, sardineWrapper,
+    val goController = new GoController(status, worker, sardineWrapper,
       fetchController, ingestController,
       esSwitchoverController, esIndexController)
 

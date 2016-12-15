@@ -24,7 +24,7 @@ import uk.gov.hmrc.address.services.writers.{OutputWriter, WriterSettings}
 import scala.concurrent.ExecutionContext
 
 trait OutputWriterFactory {
-  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext): OutputWriter
+  def writer(model: StateModel, settings: WriterSettings): OutputWriter
 }
 
 

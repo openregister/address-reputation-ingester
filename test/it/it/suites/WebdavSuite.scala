@@ -22,11 +22,12 @@ package it.suites
 import java.io.File
 
 import it.helper.{AppServerTestApi, Synopsis}
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.{DoNotDiscover, MustMatchers, WordSpec}
 import play.api.Application
 import play.api.test.Helpers._
 
-class WebdavSuite(val appEndpoint: String, tmpDir: File)(implicit val app: Application)
+@DoNotDiscover
+class WebdavSuite(tmpDir: File)(implicit val app: Application, implicit val appEndpoint: String)
   extends WordSpec with MustMatchers with AppServerTestApi {
 
   val idle = Synopsis.OkText("idle")

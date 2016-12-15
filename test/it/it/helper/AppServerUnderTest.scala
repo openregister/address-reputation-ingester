@@ -19,30 +19,18 @@
 
 package it.helper
 
-import java.io.File
-
-import com.sksamuel.elastic4s.ElasticClient
 import org.scalatest._
 import org.scalatestplus.play.ServerProvider
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.{Helpers, TestServer}
-import uk.gov.hmrc.address.services.es.{ElasticDiskClientSettings, ElasticsearchHelper}
-import uk.gov.hmrc.util.FileUtils
 
 trait AppServerUnderTest extends SuiteMixin with ServerProvider with AppServerTestApi {
   this: Suite =>
 
-  val esDataPath: String = System.getProperty("java.io.tmpdir") + "/es"
-
-  lazy val esClient: ElasticClient = ElasticsearchHelper.buildDiskClient(ElasticDiskClientSettings(esDataPath, true))
-
-  lazy val webdavStub = new WebdavStub(getClass.getClassLoader.getResource("ut").toURI.getPath)
-
   def appConfiguration: Map[String, String]
 
   def beforeAppServerStarts() {
-    FileUtils.deleteDir(new File(esDataPath))
   }
 
   def afterAppServerStops() {}
@@ -68,7 +56,6 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with AppServerTe
     beforeAppServerStarts()
     val testServer = TestServer(port, app)
     testServer.start()
-    webdavStub.start()
     try {
       val newConfigMap = args.configMap + ("org.scalatestplus.play.app" -> app) + ("org.scalatestplus.play.port" -> port)
       val newArgs = args.copy(configMap = newConfigMap)
@@ -77,10 +64,8 @@ trait AppServerUnderTest extends SuiteMixin with ServerProvider with AppServerTe
       status
     }
     finally {
-      webdavStub.stop()
       testServer.stop()
       afterAppServerStops()
-      esClient.close()
     }
   }
 }

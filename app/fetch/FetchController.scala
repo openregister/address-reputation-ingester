@@ -19,32 +19,22 @@
 package fetch
 
 import java.io.File
-import java.net.URL
 
+import com.google.inject.Inject
+import controllers.KnownProducts
 import controllers.SimpleValidator._
-import controllers.{ControllerConfig, KnownProducts}
-import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.exec.{Continuer, WorkQueue, WorkerFactory}
+import play.api.mvc.{Action, AnyContent}
+import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.services.es.{IndexMetadata, IndexName}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.util.FileUtils
 
 
-object FetchController extends FetchController(
-  WorkQueue.statusLogger,
-  ControllerConfig.workerFactory,
-  ControllerConfig.fetcher,
-  ControllerConfig.sardine,
-  ControllerConfig.remoteServer,
-  ControllerConfig.elasticSearchService)
-
-
-class FetchController(logger: StatusLogger,
-                      workerFactory: WorkerFactory,
+class FetchController @Inject() (logger: StatusLogger,
+                      worker: WorkQueue,
                       webdavFetcher: WebdavFetcher,
                       sardine: SardineWrapper,
-                      url: URL,
                       indexMetadata: IndexMetadata) extends BaseController {
 
   def doFetchToFile(product: String, epoch: Int, variant: String, forceChange: Option[Boolean]): Action[AnyContent] = Action {
@@ -53,7 +43,7 @@ class FetchController(logger: StatusLogger,
       require(isAlphaNumeric(variant))
 
       val model = new StateModel(product, Some(epoch), Some(variant), forceChange = forceChange getOrElse false)
-      workerFactory.worker.push(s"fetching ${model.pathSegment}${model.forceChangeString}", continuer => fetch(model, continuer))
+      worker.push(s"fetching ${model.pathSegment}${model.forceChangeString}", continuer => fetch(model, continuer))
       Accepted(s"Fetch has started for ${model.pathSegment}${model.forceChangeString}")
   }
 
@@ -79,7 +69,7 @@ class FetchController(logger: StatusLogger,
 
   def doCleanup(): Action[AnyContent] = Action {
     request =>
-      workerFactory.worker.push(s"zip file cleanup", {
+      worker.push(s"zip file cleanup", {
         continuer =>
           cleanup()
       })

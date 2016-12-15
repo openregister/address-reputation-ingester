@@ -19,30 +19,24 @@
 
 package controllers
 
+import com.google.inject.Inject
 import play.api.libs.json.Json
-import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
-import services.exec.{WorkQueue, WorkerFactory}
+import play.api.mvc.{Action, AnyContent}
+import services.exec.WorkQueue
 import services.model.StatusLogger
 import uk.gov.hmrc.address.services.es.{IndexMetadata, IndexMetadataItem, IndexName}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 
-object ElasticsearchIndexController extends IndexController(
-  WorkQueue.statusLogger,
-  ControllerConfig.workerFactory,
-  ControllerConfig.elasticSearchService
-)
-
-
-class IndexController(status: StatusLogger,
-                      workerFactory: WorkerFactory,
-                      indexMetadata: IndexMetadata) extends BaseController {
+class IndexController @Inject()(status: StatusLogger,
+                                worker: WorkQueue,
+                                indexMetadata: IndexMetadata) extends BaseController {
 
   import IndexInfo._
 
   def doListIndexes(): Action[AnyContent] = Action { request =>
-      val result = listIndexes()
-      Ok(Json.toJson(ListCI(result)))
+    val result = listIndexes()
+    Ok(Json.toJson(ListCI(result)))
   }
 
   private def listIndexes(): List[IndexInfo] = {
@@ -80,7 +74,7 @@ class IndexController(status: StatusLogger,
       } else if (systemIndexes.contains(name) || indexesInUse.contains(name)) {
         BadRequest(name + " cannot be dropped")
       } else {
-        workerFactory.worker.push("dropping index " + name, continuer => {
+        worker.push("dropping index " + name, continuer => {
           indexMetadata.deleteIndex(cn.get)
         })
         Accepted
@@ -89,7 +83,7 @@ class IndexController(status: StatusLogger,
 
   def doCleanup(): Action[AnyContent] = Action {
     request =>
-      workerFactory.worker.push("cleaning up obsolete indexes", continuer => cleanup())
+      worker.push("cleaning up obsolete indexes", continuer => cleanup())
       Accepted
   }
 

@@ -25,10 +25,10 @@ import java.io.Closeable
 import java.lang.{Long => JLong}
 import java.util
 
-import config.ConfigHelper._
+import com.google.inject.{Inject, Singleton}
+import config.ConfigHelper
 import net.openhft.chronicle.map.ChronicleMapBuilder
 import net.openhft.chronicle.set.ChronicleSetBuilder
-import play.api.Play._
 
 class ForwardData(
                    val blpu: util.Map[JLong, String],
@@ -57,18 +57,19 @@ class ForwardData(
   }
 }
 
-
-object ForwardData {
+@Singleton
+class ForwardDataConstants @Inject()(configHelper: ConfigHelper) {
 
   // all sizes are measured in bytes
-  private lazy val blpuMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.blpu.mapSize")
-  private lazy val dpaSetSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.dpa.setSize")
-  private lazy val streetMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.street.mapSize")
-  private lazy val streetDescMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.streetDescriptor.mapSize")
-  private lazy val postcodeMapSize = mustGetConfigInt(current.mode, current.configuration, "app.chronicleMap.postcode.mapSize")
+  private lazy val blpuMapSize = configHelper.mustGetConfigInt("app.chronicleMap.blpu.mapSize")
+  private lazy val dpaSetSize = configHelper.mustGetConfigInt("app.chronicleMap.dpa.setSize")
+  private lazy val streetMapSize = configHelper.mustGetConfigInt("app.chronicleMap.street.mapSize")
+  private lazy val streetDescMapSize = configHelper.mustGetConfigInt("app.chronicleMap.streetDescriptor.mapSize")
+  private lazy val postcodeMapSize = configHelper.mustGetConfigInt("app.chronicleMap.postcode.mapSize")
 
   private val blpuValueSize = 20
-  private val lpiValueSize = 100 // ABP source data has, on average, 141 bytes per record
+  private val lpiValueSize = 100
+  // ABP source data has, on average, 141 bytes per record
   private val streetValueSize = 8
   private val streetDescValueSize = 60
   private val postcodeKeySize = 8

@@ -19,11 +19,11 @@
 
 package it.suites
 
-import com.sksamuel.elastic4s.ElasticClient
 import com.sksamuel.elastic4s.ElasticDsl._
-import it.helper.{AppServerTestApi, ESHelper, Synopsis}
+import it.helper.ElasticsearchTestHelper._
+import it.helper.{AppServerTestApi, Synopsis}
 import org.elasticsearch.common.unit.TimeValue
-import org.scalatest.{FreeSpec, MustMatchers}
+import org.scalatest.{DoNotDiscover, FreeSpec, MustMatchers}
 import play.api.Application
 import play.api.test.Helpers._
 import services.model.StatusLogger
@@ -34,8 +34,9 @@ import uk.gov.hmrc.logging.StubLogger
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, Future}
 
-class GoSuite(val appEndpoint: String, val esClient: ElasticClient)(implicit val app: Application)
-  extends FreeSpec with MustMatchers with AppServerTestApi with ESHelper {
+@DoNotDiscover
+class GoSuite()(implicit val app: Application, implicit val appEndpoint: String)
+  extends FreeSpec with MustMatchers with AppServerTestApi  {
 
   private implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 

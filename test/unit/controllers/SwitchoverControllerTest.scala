@@ -20,12 +20,12 @@ import java.util.Date
 
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
-import ingest.StubWorkerFactory
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
 import org.scalatest.FreeSpec
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
+import play.api.inject.ApplicationLifecycle
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.audit.AuditClient
@@ -55,14 +55,13 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
     val status = new StatusLogger(logger)
     val auditClient = mock[AuditClient]
     val indexMetadata = mock[IndexMetadata]
+    val lifecycle = mock[ApplicationLifecycle]
 
-    val worker = new WorkQueue(status)
-    val workerFactory = new StubWorkerFactory(worker)
+    val worker = new WorkQueue(lifecycle, status)
 
     val request = FakeRequest()
 
-    val switchoverController = new SwitchoverController(status, workerFactory, indexMetadata, auditClient,
-      scala.concurrent.ExecutionContext.Implicits.global)
+    val switchoverController = new SwitchoverController(status, worker, indexMetadata, auditClient)
 
     intercept[IllegalArgumentException] {
       await(call(switchoverController.doSwitchTo(product, epoch, timestamp), request))
@@ -72,11 +71,11 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
   class Context {
     val logger = new StubLogger()
     val status = new StatusLogger(logger)
+    val lifecycle = mock[ApplicationLifecycle]
     val auditClient = mock[AuditClient]
     val indexMetadata = mock[IndexMetadata]
 
-    val worker = new WorkQueue(status)
-    val workerFactory = new StubWorkerFactory(worker)
+    val worker = new WorkQueue(lifecycle, status)
 
     val request = FakeRequest()
   }
@@ -92,8 +91,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
           when(indexMetadata.indexExists(abp_40_ts12345)) thenReturn true
           when(indexMetadata.findMetadata(abp_40_ts12345)) thenReturn Some(IndexMetadataItem(abp_40_ts12345, Some(10), None, Some(dateAgo(3600000))))
 
-          val sc = new SwitchoverController(status, workerFactory, indexMetadata, auditClient,
-            scala.concurrent.ExecutionContext.Implicits.global)
+          val sc = new SwitchoverController(status, worker, indexMetadata, auditClient)
           val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
           assert(response.header.status / 100 === 2)
@@ -114,8 +112,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
          and the stored metadata item for the product in question is left unchanged
       """ in {
         new Context {
-          val sc = new SwitchoverController(status, workerFactory, indexMetadata, auditClient,
-            scala.concurrent.ExecutionContext.Implicits.global)
+          val sc = new SwitchoverController(status, worker, indexMetadata, auditClient)
           val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
           worker.awaitCompletion()
@@ -140,8 +137,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
           when(indexMetadata.indexExists(abp_40_ts12345)) thenReturn true
           when(indexMetadata.findMetadata(abp_40_ts12345)) thenReturn Some(IndexMetadataItem(abp_40_ts12345, Some(10), None, None))
 
-          val sc = new SwitchoverController(status, workerFactory, indexMetadata, auditClient,
-            scala.concurrent.ExecutionContext.Implicits.global)
+          val sc = new SwitchoverController(status, worker, indexMetadata, auditClient)
           val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
 
           worker.awaitCompletion()
@@ -163,8 +159,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
         and the state model stays in its current state
       """ in {
         new Context {
-          val sc = new SwitchoverController(status, workerFactory, indexMetadata, auditClient,
-            scala.concurrent.ExecutionContext.Implicits.global)
+          val sc = new SwitchoverController(status, worker, indexMetadata, auditClient)
           val model1 = new StateModel("abp", Some(40), Some("full"), Some("200102030405"), hasFailed = true)
 
           val model2 = sc.switchIfOK(model1)

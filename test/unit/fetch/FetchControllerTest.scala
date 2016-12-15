@@ -26,14 +26,15 @@ import java.util.Date
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import com.github.sardine.Sardine
+import ingest.StubContinuer
 import ingest.writers.OutputFileWriterFactory
-import ingest.{StubContinuer, StubWorkerFactory}
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.PlaySpec
+import play.api.inject.ApplicationLifecycle
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -49,6 +50,7 @@ import scala.concurrent.Future
 class FetchControllerTest extends PlaySpec with MockitoSugar {
 
   implicit val system = ActorSystem("test")
+
   implicit def mat: Materializer = ActorMaterializer()
 
   import WebDavTree.readyToCollectFile
@@ -77,19 +79,19 @@ class FetchControllerTest extends PlaySpec with MockitoSugar {
   trait context {
     val logger = new StubLogger
     val statusLogger = new StatusLogger(logger)
+    val lifecycle = mock[ApplicationLifecycle]
 
     val sardine = mock[Sardine]
     val sardineWrapper = mock[SardineWrapper]
     when(sardineWrapper.begin) thenReturn sardine
 
-    val worker = new WorkQueue(statusLogger)
-    val workerFactory = new StubWorkerFactory(worker)
+    val worker = new WorkQueue(lifecycle, statusLogger)
 
     val webdavFetcher = mock[WebdavFetcher]
     val request = FakeRequest()
     val indexMetadata = mock[IndexMetadata]
 
-    val fetchController = new FetchController(statusLogger, workerFactory, webdavFetcher, sardineWrapper, url, indexMetadata)
+    val fetchController = new FetchController(statusLogger, worker, webdavFetcher, sardineWrapper, indexMetadata)
 
     def parameterTest(product: String, epoch: Int, variant: String): Unit = {
       val writerFactory = mock[OutputFileWriterFactory]

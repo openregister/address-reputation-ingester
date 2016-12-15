@@ -23,6 +23,7 @@ import java.io.File
 
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
+import controllers.ControllerConfig
 import ingest.writers._
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
@@ -30,14 +31,13 @@ import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
+import play.api.inject.ApplicationLifecycle
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.exec.{Continuer, WorkQueue, WorkerFactory}
+import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.services.writers.{Algorithm, OutputWriter, WriterSettings}
 import uk.gov.hmrc.logging.StubLogger
-
-import scala.concurrent.ExecutionContext
 
 @RunWith(classOf[JUnitRunner])
 class IngestControllerTest extends FunSuite with MockitoSugar {
@@ -57,18 +57,24 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val outputESWriter = mock[OutputWriter]
     val outputNullWriter = mock[OutputWriter]
 
-    val ingesterFactory = new StubIngesterFactory(ingester)
-    val esFactory = new StubOutputWriterFactory(outputESWriter)
-    val fwFactory = new StubOutputWriterFactory(outputFileWriter)
-    val nullFactory = new StubOutputWriterFactory(outputNullWriter)
+    val ingesterFactory = mock[IngesterFactory]
+    when(ingesterFactory.ingester(any[Continuer], any[Algorithm], any[StateModel])).thenReturn(ingester)
+    val esFactory = mock[OutputESWriterFactory]
+    when(esFactory.writer(any[StateModel], any[WriterSettings])).thenReturn(outputESWriter)
+    val fwFactory = mock[OutputFileWriterFactory]
+    when(fwFactory.writer(any[StateModel], any[WriterSettings])).thenReturn(outputFileWriter)
+    val nullFactory = mock[OutputNullWriterFactory]
+    when(nullFactory.writer(any[StateModel], any[WriterSettings])).thenReturn(outputNullWriter)
 
     val folder = new File(".")
-    val worker = new WorkQueue(status)
-    val workerFactory = new StubWorkerFactory(worker)
+    val cc = mock[ControllerConfig]
+    when(cc.downloadFolder).thenReturn(folder)
+    val lifecycle = mock[ApplicationLifecycle]
+    val worker = new WorkQueue(lifecycle, status)
 
     val ec = scala.concurrent.ExecutionContext.Implicits.global
 
-    val ingestController = new IngestController(folder, esFactory, fwFactory, nullFactory, ingesterFactory, workerFactory, ec)
+    val ingestController = new IngestController(cc, esFactory, fwFactory, nullFactory, ingesterFactory, worker, status)
 
     def parameterTest(target: String, product: String, epoch: Int, variant: String): Unit = {
       val folder = new File(".")
@@ -204,18 +210,6 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     assert(settings(None, Some(-1)) === WriterSettings(defaultBulkSize, 0, Algorithm.default))
     assert(settings(None, Some(100001)) === WriterSettings(defaultBulkSize, 100000, Algorithm.default))
   }
-}
-
-class StubOutputWriterFactory(w: OutputWriter) extends OutputWriterFactory {
-  override def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext): OutputWriter = w
-}
-
-class StubIngesterFactory(i: Ingester) extends IngesterFactory {
-  override def ingester(continuer: Continuer, settings: Algorithm, model: StateModel, statusLogger: StatusLogger): Ingester = i
-}
-
-class StubWorkerFactory(w: WorkQueue) extends WorkerFactory {
-  override def worker = w
 }
 
 class StubContinuer extends Continuer {

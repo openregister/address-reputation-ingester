@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import play.sbt.PlayImport.PlayKeys
-import play.routes.compiler.StaticRoutesGenerator
 import sbt.Keys._
 import sbt.Tests.{Group, SubProcess}
 import sbt._
@@ -29,7 +27,6 @@ trait MicroService {
   import DefaultBuildSettings._
   import TestPhases._
   import uk.gov.hmrc.SbtBuildInfo
-  import play.sbt.routes.RoutesKeys.routesGenerator
 
   val appName: String
 
@@ -49,8 +46,7 @@ trait MicroService {
       libraryDependencies ++= appDependencies,
       parallelExecution in Test := false,
       fork in Test := false,
-      retrieveManaged := true,
-      routesGenerator := StaticRoutesGenerator
+      retrieveManaged := true
     )
     .settings(Provenance.setting)
 //    .settings(Repositories.playPublishingSettings: _*)

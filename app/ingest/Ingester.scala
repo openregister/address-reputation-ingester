@@ -19,6 +19,7 @@ package ingest
 import java.io.File
 import java.util.Date
 
+import com.google.inject.{Inject, Singleton}
 import config.Divider
 import ingest.Ingester.{Blpu, PostcodeLCC}
 import services.exec.Continuer
@@ -259,8 +260,9 @@ class Ingester(continuer: Continuer, settings: Algorithm, model: StateModel, sta
   val emptyBlpu = Blpu(None, "", ' ', ' ', ' ', 0, "")
 }
 
-class IngesterFactory {
-  def ingester(continuer: Continuer, settings: Algorithm, model: StateModel, statusLogger: StatusLogger): Ingester =
-    new Ingester(continuer, settings, model, statusLogger, ForwardData.chronicleInMemory(settings.prefer))
+@Singleton
+class IngesterFactory @Inject() (statusLogger: StatusLogger, forwardDataConstants: ForwardDataConstants) {
+  def ingester(continuer: Continuer, settings: Algorithm, model: StateModel): Ingester =
+    new Ingester(continuer, settings, model, statusLogger, forwardDataConstants.chronicleInMemory(settings.prefer))
 }
 

@@ -21,11 +21,12 @@ package services.exec
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import java.util.concurrent.{BlockingQueue, LinkedTransferQueue}
 
-import play.api.Logger
+import com.google.inject.{Inject, Singleton}
+import play.api.inject.ApplicationLifecycle
 import services.model.StatusLogger
 import uk.co.bigbeeconsultants.util.DiagnosticTimer
-import uk.gov.hmrc.logging.LoggerFacade
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 object ExecutionState {
@@ -57,19 +58,17 @@ object Task {
 }
 
 
-// WorkQueue provids a process-oriented implementation that guarantees the correct interleaving of
+// WorkQueue provides a process-oriented implementation that guarantees the correct interleaving of
 // tasks to be performed. These tasks are actioned one at a time. It is possible to abort the
 // flow of work cleanly.
 
 object WorkQueue {
-  val statusLogger = new StatusLogger(new LoggerFacade(Logger.logger))
-  val singleton = new WorkQueue(statusLogger)
-
   val idle = TaskInfo(None, "idle")
 }
 
 
-class WorkQueue(val statusLogger: StatusLogger) {
+@Singleton
+class WorkQueue @Inject() (lifecycle: ApplicationLifecycle, statusLogger : StatusLogger) {
   private val queue = new LinkedTransferQueue[Task]()
   private val worker = new Worker(queue, statusLogger)
   worker.setDaemon(true)
@@ -138,6 +137,14 @@ class WorkQueue(val statusLogger: StatusLogger) {
     // push a 'poison' task that may never get execcuted
     push(Task("shutting down", { c: Continuer => }))
   }
+
+  lifecycle.addStopHook { () => {
+    statusLogger.info("Terminating worker queue")
+    Future.successful {
+      terminate()
+    }
+  }}
+
 }
 
 
@@ -224,10 +231,5 @@ private[exec] class Worker(queue: BlockingQueue[Task], statusLogger: StatusLogge
     task.action(this)
     statusLogger.info(s"Finished $info after {}.", timer)
   }
-}
-
-
-class WorkerFactory {
-  def worker: WorkQueue = WorkQueue.singleton
 }
 

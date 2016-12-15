@@ -22,6 +22,7 @@ import java.io.{OutputStreamWriter, _}
 import java.util.Date
 import java.util.zip.GZIPOutputStream
 
+import com.google.inject.{Inject, Singleton}
 import controllers.ControllerConfig
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.osgb.DbAddress
@@ -30,7 +31,11 @@ import uk.gov.hmrc.address.services.writers.{Algorithm, OutputWriter, WriterSett
 import scala.concurrent.ExecutionContext
 
 
-class OutputFileWriter(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, fieldSeparator: String = "\t") extends OutputWriter {
+class OutputFileWriter(cc: ControllerConfig,
+                       model: StateModel,
+                       statusLogger: StatusLogger,
+                       settings: WriterSettings,
+                       fieldSeparator: String = "\t") extends OutputWriter {
 
   private var hasFailed = false
 
@@ -44,7 +49,7 @@ class OutputFileWriter(model: StateModel, statusLogger: StatusLogger, settings: 
   val filter = settings.algorithm.streetFilter
   val fileRoot = model.indexName.toString
   val kind = if (fieldSeparator == "\t") "tsv" else "txt"
-  val outputFile = new File(ControllerConfig.outputFolder, s"$fileRoot-$algChoice-$filter.$kind.gz")
+  val outputFile = new File(cc.outputFolder, s"$fileRoot-$algChoice-$filter.$kind.gz")
 
   private val bufSize = 32 * 1024
   private var outCSV: PrintWriter = _
@@ -58,7 +63,7 @@ class OutputFileWriter(model: StateModel, statusLogger: StatusLogger, settings: 
       None
 
   def begin() {
-    ControllerConfig.outputFolder.mkdirs()
+    cc.outputFolder.mkdirs()
     val outfile = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile), bufSize))
     outCSV = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outfile), bufSize))
   }
@@ -92,8 +97,8 @@ class OutputFileWriter(model: StateModel, statusLogger: StatusLogger, settings: 
   }
 }
 
-
-class OutputFileWriterFactory extends OutputWriterFactory {
-  def writer(model: StateModel, statusLogger: StatusLogger, settings: WriterSettings, ec: ExecutionContext) =
-    new OutputFileWriter(model, statusLogger, settings)
+@Singleton
+class OutputFileWriterFactory @Inject() (cc: ControllerConfig, statusLogger: StatusLogger, ec: ExecutionContext) extends OutputWriterFactory {
+  def writer(model: StateModel, settings: WriterSettings) =
+    new OutputFileWriter(cc, model, statusLogger, settings)
 }

@@ -25,6 +25,7 @@ import java.io.File
 import java.util.Date
 import java.util.concurrent.SynchronousQueue
 
+import config.ConfigHelper
 import ingest.Ingester.{Blpu, PostcodeLCC}
 import org.junit.runner.RunWith
 import org.mockito.Matchers._
@@ -32,6 +33,7 @@ import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
+import play.api.inject.ApplicationLifecycle
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.osgb.DbAddress
@@ -47,9 +49,12 @@ class IngesterTest extends FunSuite with MockitoSugar {
   class context {
     val logger = new StubLogger
     val model = new StateModel()
+    val lifecycle = mock[ApplicationLifecycle]
     val status = new StatusLogger(logger)
-    val worker = new WorkQueue(status)
+    val worker = new WorkQueue(lifecycle, status)
     val lock = new SynchronousQueue[Boolean]()
+    val configHelper = mock[ConfigHelper]
+    val forwardDataConstants = new ForwardDataConstants(configHelper)
   }
 
   test("finding files recursively: results should be sorted and include subdirectories") {
@@ -94,7 +99,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, Algorithm.default, model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingestFrom(mockFile, dummyOut)
+          new Ingester(continuer, Algorithm.default, model, status, forwardDataConstants.chronicleInMemoryForUnitTest("DPA")).ingestFrom(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -116,7 +121,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          result = new Ingester(continuer, Algorithm.default, model, status, ForwardData.chronicleInMemoryForUnitTest("DPA")).ingestFrom(mockFile, dummyOut)
+          result = new Ingester(continuer, Algorithm.default, model, status, forwardDataConstants.chronicleInMemoryForUnitTest("DPA")).ingestFrom(mockFile, dummyOut)
           lock.put(true)
       })
 
@@ -153,7 +158,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, Algorithm(preferDPA = true), model, status, ForwardData.simpleHeapInstance("DPA")).ingestFiles(List(sample), out)
+          new Ingester(continuer, Algorithm(preferDPA = true), model, status, forwardDataConstants.simpleHeapInstance("DPA")).ingestFiles(List(sample), out)
           lock.put(true)
       })
 
@@ -313,7 +318,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
 
       worker.push("testing", {
         continuer =>
-          new Ingester(continuer, Algorithm(preferDPA = false), model, status, ForwardData.simpleHeapInstance("LPI")).ingestFiles(List(sample), out)
+          new Ingester(continuer, Algorithm(preferDPA = false), model, status, forwardDataConstants.simpleHeapInstance("LPI")).ingestFiles(List(sample), out)
           lock.put(true)
       })
 
@@ -456,7 +461,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       val continuer = mock[Continuer]
-      val fd = ForwardData.chronicleInMemoryForUnitTest("DPA")
+      val fd = forwardDataConstants.chronicleInMemoryForUnitTest("DPA")
 
       val blpu1 = Blpu(None, "FX1 1AA", '1', '2', 'E', 1234, "0,0")
       val blpu2 = Blpu(None, "FX1 1BB", '1', '2', 'E', 1111, "0,0")
@@ -482,7 +487,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
     """) {
     new context {
       val continuer = mock[Continuer]
-      val fd = ForwardData.chronicleInMemoryForUnitTest("DPA")
+      val fd = forwardDataConstants.chronicleInMemoryForUnitTest("DPA")
 
       val blpu1a = Blpu(None, "FX1 1AA", '1', '2', 'E', 1234, "0,0")
       val blpu1b = Blpu(None, "FX1 1AA", '1', '2', 'E', 7655, "0,0")

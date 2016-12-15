@@ -20,11 +20,12 @@
 package it.suites
 
 import it.helper.AppServerTestApi
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.{DoNotDiscover, MustMatchers, WordSpec}
 import play.api.Application
 import play.api.http.Status
 
-class PingSuite(val appEndpoint: String)(implicit val app: Application)
+@DoNotDiscover
+class PingSuite()(implicit val app: Application, implicit val appEndpoint: String)
   extends WordSpec with MustMatchers with AppServerTestApi {
 
   "ping resource" must {

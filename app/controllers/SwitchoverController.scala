@@ -16,32 +16,21 @@
 
 package controllers
 
+import com.google.inject.Inject
 import com.sksamuel.elastic4s.ElasticDsl
 import controllers.SimpleValidator._
-import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
+import play.api.mvc.{Action, AnyContent}
 import services.audit.AuditClient
-import services.exec.{WorkQueue, WorkerFactory}
+import services.exec.WorkQueue
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.services.es.{IndexMetadata, IndexName}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-import scala.concurrent.ExecutionContext
 
-
-object ElasticSwitchoverController extends SwitchoverController(
-  WorkQueue.statusLogger,
-  ControllerConfig.workerFactory,
-  ControllerConfig.elasticSearchService,
-  services.audit.Services.auditClient,
-  ControllerConfig.ec
-)
-
-
-class SwitchoverController(status: StatusLogger,
-                           workerFactory: WorkerFactory,
-                           indexMetadata: IndexMetadata,
-                           auditClient: AuditClient,
-                           ec: ExecutionContext) extends BaseController with ElasticDsl {
+class SwitchoverController @Inject()(status: StatusLogger,
+                                     worker: WorkQueue,
+                                     indexMetadata: IndexMetadata,
+                                     auditClient: AuditClient) extends BaseController with ElasticDsl {
 
   // TODO should these args just be the index name?
   def doSwitchTo(product: String, epoch: Int, timestamp: String): Action[AnyContent] = Action {
@@ -50,7 +39,7 @@ class SwitchoverController(status: StatusLogger,
       require(isTimestamp(timestamp))
 
       val model = new StateModel(product, Some(epoch), None, Some(timestamp), target = "es")
-      workerFactory.worker.push(s"switching to ${model.indexName.toString}", continuer => switchIfOK(model))
+      worker.push(s"switching to ${model.indexName.toString}", continuer => switchIfOK(model))
       Accepted
   }
 

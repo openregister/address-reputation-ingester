@@ -21,20 +21,20 @@
 package services.audit
 
 import config.AppVersion
+import play.api.Environment
+import com.google.inject.{Inject, Singleton}
 import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.{Audit, DataEvent, EventTypes}
-import uk.gov.hmrc.play.config.{AppName, RunMode}
+import uk.gov.hmrc.play.config.AppName
 
-object Services extends AppName with RunMode {
 
-  val auditClient: AuditClient = new AuditClient(Audit(appName, new AuditConnector with RunMode {
-    override lazy val auditingConfig = LoadAuditingConfig(s"$env.auditing")
-  }))
+@Singleton
+class AuditClient @Inject()(env: Environment) extends AppName with AppVersion {
 
-}
-
-class AuditClient(audit: Audit) extends AppName with AppVersion {
+  val audit = Audit(appName, new AuditConnector {
+    override lazy val auditingConfig = LoadAuditingConfig(s"${env.mode}.auditing")
+  })
 
   def succeeded(detail: Map[String, String]) {
     audit.sendDataEvent(

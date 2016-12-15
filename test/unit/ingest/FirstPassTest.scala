@@ -24,11 +24,14 @@ package ingest
 import java.util.concurrent.SynchronousQueue
 
 import addressbase.OSCsv
+import config.ConfigHelper
+import controllers.ControllerConfig
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
+import play.api.inject.ApplicationLifecycle
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.address.services.CsvParser
@@ -48,11 +51,13 @@ class FirstPassTest extends FunSuite with MockitoSugar {
     val csv = CsvParser.split(data)
     val logger = new StubLogger
     val status = new StatusLogger(logger)
-    val worker = new WorkQueue(status)
+    val lifecycle = mock[ApplicationLifecycle]
+    val worker = new WorkQueue(lifecycle, status)
     val continuer = mock[Continuer]
     val lock = new SynchronousQueue[Boolean]()
     val model = new StateModel()
-    val forwardData = ForwardData.chronicleInMemoryForUnitTest("DPA")
+    val configHelper = mock[ConfigHelper]
+    val forwardData = new ForwardDataConstants(configHelper).chronicleInMemoryForUnitTest("DPA")
   }
 
   test(

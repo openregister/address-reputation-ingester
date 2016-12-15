@@ -52,7 +52,7 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "play-config" % playConfigVersion,
     "uk.gov.hmrc" %% "logback-json-logger" % logbackJsonLoggerVersion,
     "uk.gov.hmrc" %% "address-reputation-store" % "2.16.0",
-    "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.1",
+    "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.4.0",
     "com.github.lookfirst" % "sardine" % "5.7",
     "net.openhft" % "chronicle-map" % "3.8.0",
     "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
@@ -77,7 +77,8 @@ private object AppDependencies {
         "org.scalamock" %% "scalamock-scalatest-support" % "3.2" % scope,
         "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % scope,
         "org.mockito" % "mockito-all" % "1.10.19" % scope,
-        "com.pyruby" % "java-stub-server" % "0.14" % scope
+        "com.pyruby" % "java-stub-server" % "0.14" % scope,
+        "org.scalactic" %% "scalactic" % "2.2.5" force()
       )
     }.test
   }
@@ -96,7 +97,8 @@ private object AppDependencies {
         "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % scope,
         "org.mockito" % "mockito-all" % "1.10.19" % scope,
         "com.pyruby" % "java-stub-server" % "0.14" % scope,
-        "io.milton" % "milton-server-ce" % "2.7.1.5" % scope
+        "io.milton" % "milton-server-ce" % "2.7.1.5" % scope,
+        "org.scalactic" %% "scalactic" % "2.2.5" force()
       )
     }.test
   }

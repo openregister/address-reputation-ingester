@@ -24,6 +24,28 @@ import java.io.File
 import io.milton.config.HttpManagerBuilder
 import io.milton.http.fs.{FileSystemResourceFactory, NullSecurityManager}
 import io.milton.simpleton.SimpletonServer
+import org.scalatest.{BeforeAndAfterAll, Suite}
+
+object EmbeddedWebdavStubSuite {
+  lazy val webdavStub = new WebdavStub(getClass.getClassLoader.getResource("ut").toURI.getPath)
+}
+
+trait EmbeddedWebdavStubSuite extends Suite with BeforeAndAfterAll {
+
+  override def beforeAll() = {
+    println("*** Starting webdavStub")
+    webdavStub.start()
+    super.beforeAll()
+  }
+
+  override def afterAll() = {
+    println("*** Stopping webdavStub")
+    webdavStub.stop()
+    super.afterAll()
+  }
+
+  def webdavStub = EmbeddedWebdavStubSuite.webdavStub
+}
 
 //TODO this is hard-wired to port 8080; it needs to use an ephemeral port during testing
 
