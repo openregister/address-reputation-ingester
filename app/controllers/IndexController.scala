@@ -49,7 +49,6 @@ class IndexController @Inject()(status: StatusLogger,
         size = info.size,
         system = systemIndexes.contains(name),
         inUse = pc.contains(name),
-        createdAt = info.createdAt.map(_.toString),
         completedAt = info.completedAt.map(_.toString),
         bulkSize = info.bulkSize,
         loopDelay = info.loopDelay,
@@ -59,7 +58,8 @@ class IndexController @Inject()(status: StatusLogger,
         streetFilter = info.streetFilter,
         buildVersion = info.buildVersion,
         buildNumber = info.buildNumber,
-        aliases = info.aliases
+        aliases = info.aliases,
+        doNotDelete = info.doNotDelete
       )
     }
   }
@@ -92,6 +92,21 @@ class IndexController @Inject()(status: StatusLogger,
     deleteObsoleteIndexes(toGo)
   }
 
+  def doDoNotDelete(name: String): Action[AnyContent] = Action {
+    request =>
+      val cn = IndexName(name)
+      if(cn.isEmpty) {
+        BadRequest(name)
+      } else if(!indexMetadata.indexExists(cn.get)) {
+        NotFound(name)
+      } else {
+        worker.push("toggling doNotDelete", continuer => {
+          indexMetadata.toggleDoNotDelete(cn.get)
+        })
+        Accepted
+      }
+  }
+
   private[controllers] def determineObsoleteIndexes: Set[IndexMetadataItem] = {
     // already sorted
     val indexes: List[IndexMetadataItem] = indexMetadata.existingIndexMetadata
@@ -99,7 +114,7 @@ class IndexController @Inject()(status: StatusLogger,
 
     // all incomplete indexes are cullable
     val incompleteIndexes = mainIndexes.filter(_.isIncomplete)
-    val completeIndexes = mainIndexes.filter(_.isComplete)
+    val completeIndexes = mainIndexes.filter(_.isComplete).filter(!_.doNotDelete)
 
     val cullable: List[List[IndexMetadataItem]] =
       for (product <- KnownProducts.OSGB) yield {

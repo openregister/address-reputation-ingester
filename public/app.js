@@ -184,6 +184,15 @@ function cleanCol() {
     post('/indexes/es/clean', true);
 }
 
+function doNotDelete() {
+    var colname = $('#colname').val();
+    if (colname == '')
+        alert("Enter the index name");
+    else {
+        post('/indexes/es/doNotDelete/' + colname, true);
+    }
+}
+
 function listCol() {
     getAndRefreshConsoleJson('/indexes/es/list');
 }
@@ -267,6 +276,7 @@ $(document).ready(
         $('#listCol').click(listCol);
         $('#switchCol').click(switchCol);
         $('#dropCol').click(dropCol);
+        $('#doNotDelete').click(doNotDelete);
         $('#remoteTree').click(remoteTree);
         $('#ping').click(ping);
         $('#dirTree').click(dirTree);

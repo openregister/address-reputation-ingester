@@ -30,7 +30,6 @@ case class IndexInfo(
                       size: Option[Int],
                       system: Boolean,
                       inUse: Boolean,
-                      createdAt: Option[String] = None,
                       completedAt: Option[String] = None,
                       bulkSize: Option[String] = None,
                       loopDelay: Option[String] = None,
@@ -40,7 +39,8 @@ case class IndexInfo(
                       streetFilter: Option[String] = None,
                       buildVersion: Option[String] = None,
                       buildNumber: Option[String] = None,
-                      aliases: List[String] = Nil
+                      aliases: List[String] = Nil,
+                      doNotDelete: Boolean = false
                     )
 
 
@@ -51,7 +51,6 @@ object IndexInfo {
       (JsPath \ "size").readNullable[Int] and
       (JsPath \ "system").read[Boolean] and
       (JsPath \ "inUse").read[Boolean] and
-      (JsPath \ "createdAt").readNullable[String] and
       (JsPath \ "completedAt").readNullable[String] and
       (JsPath \ "bulkSize").readNullable[String] and
       (JsPath \ "loopDelay").readNullable[String] and
@@ -61,14 +60,14 @@ object IndexInfo {
       (JsPath \ "streetFilter").readNullable[String] and
       (JsPath \ "buildVersion").readNullable[String] and
       (JsPath \ "buildNumber").readNullable[String] and
-      (JsPath \ "aliases").read[List[String]]) (IndexInfo.apply _)
+      (JsPath \ "aliases").read[List[String]] and
+      (JsPath \ "doNotDelete").read[Boolean]) (IndexInfo.apply _)
 
   implicit val IndexInfoWrites: Writes[IndexInfo] = (
     (JsPath \ "name").write[String] and
       (JsPath \ "size").writeNullable[Int] and
       (JsPath \ "system").write[Boolean] and
       (JsPath \ "inUse").write[Boolean] and
-      (JsPath \ "createdAt").writeNullable[String] and
       (JsPath \ "completedAt").writeNullable[String] and
       (JsPath \ "bulkSize").writeNullable[String] and
       (JsPath \ "loopDelay").writeNullable[String] and
@@ -78,7 +77,8 @@ object IndexInfo {
       (JsPath \ "streetFilter").writeNullable[String] and
       (JsPath \ "buildVersion").writeNullable[String] and
       (JsPath \ "buildNumber").writeNullable[String] and
-      (JsPath \ "aliases").write[List[String]]) (unlift(IndexInfo.unapply))
+      (JsPath \ "aliases").write[List[String]] and
+      (JsPath \ "doNotDelete").write[Boolean]) (unlift(IndexInfo.unapply))
 
   implicit val ListIndexInfoWrites: Writes[ListCI] = Json.format[ListCI]
 }

@@ -25,6 +25,7 @@ GET    /switch/es/:product/:epoch/:version                      controllers.Swit
 GET    /indexes/es/list                                         controllers.IndexController.doListIndexes
 DELETE /indexes/es/:name                                        controllers.IndexController.doDeleteIndex(name)
 POST   /indexes/es/clean                                        controllers.IndexController.doCleanup
+POST   /indexes/es/doNotDelete/:name                            controllers.IndexController.doDoNotDelete(name)
 
 GET    /admin/realm                                             controllers.AdminController.realm
 GET    /admin/cancelCurrent                                     controllers.AdminController.cancelTask

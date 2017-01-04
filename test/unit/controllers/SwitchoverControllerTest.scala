@@ -89,7 +89,7 @@ class SwitchoverControllerTest extends FreeSpec with MockitoSugar {
       """ in {
         new Context {
           when(indexMetadata.indexExists(abp_40_ts12345)) thenReturn true
-          when(indexMetadata.findMetadata(abp_40_ts12345)) thenReturn Some(IndexMetadataItem(abp_40_ts12345, Some(10), None, Some(dateAgo(3600000))))
+          when(indexMetadata.findMetadata(abp_40_ts12345)) thenReturn Some(IndexMetadataItem(abp_40_ts12345, Some(10), Some(dateAgo(3600000))))
 
           val sc = new SwitchoverController(status, worker, indexMetadata, auditClient)
           val response = await(call(sc.doSwitchTo("abp", 40, "200102030405"), request))
