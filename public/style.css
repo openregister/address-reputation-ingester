@@ -135,6 +135,10 @@ a.button.stop {
     background: #fdd;
 }
 
+a.button.toggle {
+    background: #E0E0FF;
+}
+
 a.button.grey {
     color: #999;
 }
