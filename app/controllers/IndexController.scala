@@ -48,6 +48,7 @@ class IndexController @Inject()(status: StatusLogger,
         name = name,
         size = info.size,
         system = systemIndexes.contains(name),
+        doNotDelete = info.doNotDelete,
         inUse = pc.contains(name),
         completedAt = info.completedAt.map(_.toString),
         bulkSize = info.bulkSize,
@@ -58,8 +59,7 @@ class IndexController @Inject()(status: StatusLogger,
         streetFilter = info.streetFilter,
         buildVersion = info.buildVersion,
         buildNumber = info.buildNumber,
-        aliases = info.aliases,
-        doNotDelete = info.doNotDelete
+        aliases = info.aliases
       )
     }
   }

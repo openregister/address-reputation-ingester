@@ -189,7 +189,9 @@ function doNotDelete() {
     if (colname == '')
         alert("Enter the index name");
     else {
-        post('/indexes/es/doNotDelete/' + colname, true);
+        ajax('POST', '/indexes/es/doNotDelete/' + colname, function (data) {
+            setTimeout(listCol, 500);
+        });
     }
 }
 
