@@ -114,7 +114,7 @@ class IndexController @Inject()(status: StatusLogger,
 
     // all incomplete indexes are cullable
     val incompleteIndexes = mainIndexes.filter(_.isIncomplete)
-    val completeIndexes = mainIndexes.filter(_.isComplete).filter(!_.doNotDelete)
+    val completeIndexes = mainIndexes.filter(_.isComplete)
 
     val cullable: List[List[IndexMetadataItem]] =
       for (product <- KnownProducts.OSGB) yield {
@@ -128,7 +128,7 @@ class IndexController @Inject()(status: StatusLogger,
           completeIndexesForProduct.take(i)
         }
       }
-    (incompleteIndexes ++ cullable.flatten).toSet
+    (incompleteIndexes ++ cullable.flatten.filterNot(_.doNotDelete)).toSet
   }
 
   private def deleteObsoleteIndexes(unwantedIndexes: Traversable[IndexMetadataItem]) {
