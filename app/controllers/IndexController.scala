@@ -95,9 +95,9 @@ class IndexController @Inject()(status: StatusLogger,
   def doDoNotDelete(name: String): Action[AnyContent] = Action {
     request =>
       val cn = IndexName(name)
-      if(cn.isEmpty) {
+      if (cn.isEmpty) {
         BadRequest(name)
-      } else if(!indexMetadata.indexExists(cn.get)) {
+      } else if (!indexMetadata.indexExists(cn.get)) {
         NotFound(name)
       } else {
         worker.push("toggling doNotDelete", continuer => {

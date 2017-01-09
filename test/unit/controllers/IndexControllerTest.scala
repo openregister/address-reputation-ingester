@@ -16,6 +16,8 @@
 
 package controllers
 
+import java.util.Date
+
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import org.junit.runner.RunWith
@@ -29,7 +31,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.exec.WorkQueue
 import services.model.StatusLogger
-import uk.gov.hmrc.address.services.es.IndexMetadata
+import uk.gov.hmrc.address.services.es.{IndexMetadata, IndexMetadataItem, IndexName}
 import uk.gov.hmrc.logging.StubLogger
 
 
@@ -99,4 +101,66 @@ class IndexControllerTest extends FunSuite with MockitoSugar {
       worker.terminate()
     }
   }
+
+  test(
+    """
+       when determineObsoleteIndexes is called
+       then the result includes all incomplete indexes
+       and all complete indexes where doNotDelete is unset
+       but not the two most recent complete indexes for each product
+       nor the two system indexes
+    """) {
+    new Context {
+      // -- GIVEN --
+      val d1 = new Date()
+      // abi: to be retained
+      val abi39a = IndexMetadataItem(name = IndexName("abi", Some(39), Some("ts1")), size = Some(1), completedAt = Some(d1), doNotDelete = true)
+      val abi39b = IndexMetadataItem(name = IndexName("abi", Some(39), Some("ts2")), size = Some(1), completedAt = Some(d1), doNotDelete = true)
+      val abi40a = IndexMetadataItem(name = IndexName("abi", Some(40), Some("ts1")), size = Some(1), completedAt = Some(d1), doNotDelete = true)
+      // oldest: to be deleted
+      val abp40a = IndexMetadataItem(name = IndexName("abp", Some(40), Some("ts1")), size = Some(1), completedAt = Some(d1))
+      val abp40b = IndexMetadataItem(name = IndexName("abp", Some(40), Some("ts2")), size = Some(1), completedAt = Some(d1))
+      // second-most recent: to be retained
+      val abp40c = IndexMetadataItem(name = IndexName("abp", Some(40), Some("ts3")), size = Some(1), completedAt = Some(d1))
+      // incomplete: to be deleted
+      val abp40d = IndexMetadataItem(name = IndexName("abp", Some(40), Some("ts4")), size = Some(1), completedAt = None)
+      // in use: to be retained
+      val abp41a = IndexMetadataItem(name = IndexName("abp", Some(41), Some("ts1")), size = Some(1), completedAt = Some(d1), doNotDelete = true)
+      // future: to be retained
+      val abp41b = IndexMetadataItem(name = IndexName("abp", Some(41), Some("ts2")), size = Some(1), completedAt = Some(d1))
+      // admin: to be retained
+      val admin = IndexMetadataItem(name = IndexName("admin", None, None), size = None, completedAt = None)
+      // system: to be retained
+      val system = IndexMetadataItem(name = IndexName("system.indexes", None, None), size = None, completedAt = None)
+
+      // here's the test data
+      val items = List(abi39a, abi39b, abi40a, abp40a, abp40b, abp40c, abp40d, abp41a, abp41b, admin, system)
+
+      // need to ensure it meets the behaviour given by ESAdmin and IndexMetadata, namely that the list contains
+      // distinct items and they are sorted by index name.
+      val names = items.map(_.name)
+      val sorted = names.sorted
+      assert(names === sorted, "Cross-check failed")
+      assert(items.distinct.size === items.size, "Cross-check failed")
+
+      val expectToDelete = Set(abp40a, abp40b, abp40d)
+      val expectToRetain = Set(abi39a, abi39b, abi40a, abp40c, abp41a, abp41b, admin, system)
+      assert(items.toSet === expectToDelete ++ expectToRetain, "Cross-check failed")
+
+      when(indexMetadata.existingIndexMetadata) thenReturn items
+      when(indexMetadata.getIndexNameInUseFor("abi")) thenReturn Some(abi40a.name)
+      when(indexMetadata.getIndexNameInUseFor("abp")) thenReturn Some(abp41a.name)
+
+      // -- WHEN --
+
+      private val toDelete = ic.determineObsoleteIndexes
+
+      // -- THEN --
+
+      assert(toDelete === expectToDelete)
+
+      worker.terminate()
+    }
+  }
+
 }
