@@ -35,8 +35,8 @@ private[ingest] object ExportDbAddress {
                 language: String): DbAddress = {
     val id = GBPrefix + dpa.uprn.toString
     val line1 = List(normaliseAddressLine(dpa.subBuildingName), normaliseAddressLine(dpa.buildingName)).filterNot(_.isEmpty).mkString(", ")
-    val line2 = normaliseAddressLine(dpa.buildingNumber + " " + dpa.dependentThoroughfareName + " " + dpa.thoroughfareName)
-    val line3 = normaliseAddressLine(dpa.doubleDependentLocality + " " + dpa.dependentLocality)
+    val line2 = joinWithSpaces(normaliseAddressLine(dpa.buildingNumber), normaliseAddressLine(dpa.dependentThoroughfareName, dpa.thoroughfareName))
+    val line3 = normaliseAddressLine(dpa.doubleDependentLocality, dpa.dependentLocality)
     val lines = List(line1, line2, line3).filterNot(_.isEmpty)
 
     DbAddress(id, lines,
@@ -75,7 +75,7 @@ private[ingest] object ExportDbAddress {
       if (street.recordType == Ingester.StreetTypeOfficialDesignatedName) streetDescriptor.streetDescription
       else ""
 
-    val line2 = (lpi.primaryNumberRange + " " + filteredDescription).trim
+    val line2 = joinWithSpaces(lpi.primaryNumberRange, filteredDescription)
     val line3 = streetDescriptor.localityName
 
     val n1 = removeUninterestingStreets(line1, settings)
@@ -139,4 +139,6 @@ private[ingest] object ExportDbAddress {
 
   private def toInt(s: String) =
     if (s.isEmpty) None else Some(s.toInt)
+
+  private def joinWithSpaces(s: String*) = s.filterNot(_.isEmpty).mkString(" ")
 }

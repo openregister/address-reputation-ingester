@@ -61,7 +61,7 @@ class IngestFileSuite(tmpDir: File)(implicit val app: Application, implicit val 
       chosen.length mustBe 1
       val outFile = chosen.head
       outFile.exists() must be(true)
-      outFile.length() must be(1109057L)
+      outFile.length() must be(1109018L)
       numLines(outFile) must be(48737)
     }
   }

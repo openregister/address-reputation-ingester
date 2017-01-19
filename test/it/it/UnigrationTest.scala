@@ -72,10 +72,5 @@ class UnigrationTest extends PlaySpec with OneServerPerSuite with EmbeddedElasti
     Files.copy(sample, new File(unpackFolder, "SX9090.zip").toPath, REPLACE_EXISTING)
     sample.close()
   }
-
-  override def afterAll(): Unit = {
-    super.afterAll()
-    FileUtils.deleteDir(tmpDir)
-  }
 }
 
