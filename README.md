@@ -24,6 +24,12 @@ apt-get -y install default-jdk elasticsearch
 echo "cluster.name: address-reputation" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
 ```
 
+### Associated Repos
+
+* [hmrc/addresses](https://github.com/hmrc/addresses) - documentation
+* [hmrc/address-lookup](https://github.com/hmrc/address-lookup) - address-lookup microservice
+
+
 ### Licence
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").

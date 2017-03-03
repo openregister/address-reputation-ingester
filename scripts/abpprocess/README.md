@@ -46,3 +46,7 @@ Examples:
 abpprocess abp_43                       # Process zips in current dir into postgres
 abpprocess abi_43 -c /tmp/*.zip         # Process zips in /tmp, creating type CSVs only
 ```
+
+### See Also
+
+* csvdemux, csvtool2 in [file-splitter](https://bitbucket.org/rickb777/file-splitter)
