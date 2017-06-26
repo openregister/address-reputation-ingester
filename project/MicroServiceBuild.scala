@@ -44,7 +44,7 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "play-url-binders" % "2.0.0",
     "uk.gov.hmrc" %% "play-config" % "3.0.0",
     "uk.gov.hmrc" %% "logback-json-logger" % "3.1.0",
-    "uk.gov.hmrc" %% "address-reputation-store" % "2.22.0" withSources(),
+    "uk.gov.hmrc" %% "address-reputation-store" % "2.23.0" withSources(),
     "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.4.0",
     "com.github.lookfirst" % "sardine" % "5.7",
     "net.openhft" % "chronicle-map" % "3.8.0",
