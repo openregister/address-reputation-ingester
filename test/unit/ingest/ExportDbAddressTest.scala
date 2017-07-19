@@ -126,11 +126,12 @@ class ExportDbAddressTest extends FunSuite {
           doubleDependentLocality = "doubleDependentLocality",
           dependentLocality = "dependentLocality",
           postTown = "postTown",
-          postcode = "postcode").normalise,
+          postcode = "postcode",
+          poBox = "").normalise,
         Blpu(None, "SE1 9PY", '1', '2', 'E', 7655, "1.0,-1.0"),
         DbAddress("GB1", List("Subbuildingname, Buildingname", "Buildingnumber Dependentthoroughfarename Thoroughfarename",
           "Doubledependentlocality Dependentlocality"), Some("Posttown"), "POSTCODE", Some("GB-ENG"), Some("UK"),
-          Some(7655), Some("en"), Some(2), Some(1), None, None, Some("1.0,-1.0"))),
+          Some(7655), Some("en"), Some(2), Some(1), None, None, Some("1.0,-1.0"), None)),
 
       Case2(
         // 21,"I",52302,10023119082,1,2,2010-09-17,10023119042,291232.36,094165.57,50.7368747,-3.5427382,2,1110,"E",2010-09-18,,2016-02-10,2010-09-17,"D","EX4 4FT",0
@@ -143,10 +144,11 @@ class ExportDbAddressTest extends FunSuite {
           doubleDependentLocality = "",
           dependentLocality = "",
           postTown = "EXETER",
-          postcode = "EX4 4FT").normalise,
+          postcode = "EX4 4FT",
+          poBox = "any non-blank value here").normalise,
         Blpu(None, "EX4 4FT", '1', '2', 'E', 1110, "1.0,-1.0"),
         DbAddress("GB10023119082", List("Flat G.01 Block G, Birks Hall", "New North Road"), Some("Exeter"),
-          "EX4 4FT", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None, None, Some("1.0,-1.0")))
+          "EX4 4FT", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None, None, Some("1.0,-1.0"), Some(true)))
 
     )
 

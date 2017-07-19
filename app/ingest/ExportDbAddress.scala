@@ -50,7 +50,8 @@ private[ingest] object ExportDbAddress {
       toInt(blpu.logicalState),
       None,
       None,
-      Some(blpu.location))
+      Some(blpu.location),
+      if (dpa.poBox.nonEmpty) Some(true) else None)
   }
 
   def exportLPI(lpi: OSLpi,

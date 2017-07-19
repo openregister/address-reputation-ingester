@@ -42,7 +42,7 @@ import uk.gov.hmrc.logging.StubLogger
 class FirstPassTest extends FunSuite with MockitoSugar {
 
   // sample data here is in the new format
-  OSCsv.setCsvFormat(2)
+//  OSCsv.setCsvFormat(2)
 
   // test data is long so disable scalastyle check
   // scalastyle:off
@@ -172,37 +172,6 @@ class FirstPassTest extends FunSuite with MockitoSugar {
       assert(firstPass.sizeInfo === "First pass obtained 0 BLPUs, 0 DPAs, 1 streets, 1/0 street descriptors.")
     }
   }
-
-
-  test(
-    """Given a v1 OS-BLPU
-       the BLPU table will be augmented correctly
-    """) {
-    new context(
-      """
-        |10,"GeoPlace",9999,2011-07-08,1,2011-07-08,16:00:30,"1.0","F"
-        |21,"I",521480,320077134,1,2,2011-09-09,,354661.00,702526.00,1,9066,1992-06-10,,2004-08-10,2004-08-09,"S","KY10 2PY",0
-        | """.stripMargin
-    ) {
-      when(continuer.isBusy) thenReturn true
-
-      val firstPass = new FirstPass(continuer, Algorithm.default, forwardData)
-      worker.push("testing", {
-        continuer =>
-          lock.put(true)
-          firstPass.processFile(csv)
-      })
-
-      lock.take()
-      worker.awaitCompletion()
-      assert(firstPass.forwardData.blpu.size === 1)
-      assert(firstPass.forwardData.blpu.get(320077134L) === "|KY10 2PY|1|2|J|9066|0,0")
-      assert(firstPass.forwardData.postcodeLCCs.size === 1)
-      assert(firstPass.forwardData.postcodeLCCs.get("KY10 2PY") === "9066")
-      assert(firstPass.sizeInfo === "First pass obtained 1 BLPUs, 0 DPAs, 0 streets, 0/0 street descriptors.")
-    }
-  }
-
 
   test(
     """Given a v2 OS-BLPU

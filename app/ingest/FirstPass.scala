@@ -46,9 +46,6 @@ class FirstPass(continuer: Continuer, settings: Algorithm, val forwardData: Forw
          if continuer.isBusy) {
 
       csvLine(OSCsv.RecordIdentifier_idx) match {
-        case OSHeader.RecordId =>
-          OSCsv.setCsvFormatFor(csvLine(OSHeader.Version_Idx))
-
         case OSBlpu.RecordId if OSBlpu.isUsefulPostcode(csvLine) =>
           processBlpu(OSBlpu(csvLine))
 

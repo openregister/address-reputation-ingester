@@ -27,19 +27,7 @@ object OSBlpu {
   val RecordId = "21"
 
   // scalastyle:off
-  val v1 = OSBlpuIdx(
-    uprn = 3,
-    parentUprn = 7,
-    logicalState = 4,
-    blpuState = 5,
-    subdivision = -1,
-    localCustodian = 11,
-    postalCode = 16,
-    postcode = 17,
-    latitude = -1,
-    longitude = -1)
-
-  val v2 = OSBlpuIdx(
+  var idx = OSBlpuIdx(
     uprn = 3,
     parentUprn = 7,
     logicalState = 4,
@@ -51,16 +39,14 @@ object OSBlpu {
     latitude = 10,
     longitude = 11)
 
-  var idx = v1
-
   def isUsefulPostcode(csv: Array[String]): Boolean = {
     csv(idx.postalCode) != "N" // not a postal address
   }
 
   def apply(csv: Array[String]): OSBlpu = {
-    val subdivision = if (idx == v1) Ingester.UnknownSubdivision else csv(idx.subdivision).head
-    val lat = if(idx == v1) Ingester.UnknownLat else csv(idx.latitude)
-    val long = if(idx == v1) Ingester.UnknownLat else csv(idx.longitude)
+    val subdivision = csv(idx.subdivision).head
+    val lat = csv(idx.latitude)
+    val long = csv(idx.longitude)
     OSBlpu(
       csv(idx.uprn).toLong,
       blankToOptLong(csv(idx.parentUprn)),

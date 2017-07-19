@@ -27,19 +27,7 @@ object OSDpa {
   val RecordId = "28"
 
   // scalastyle:off
-  val v1 = OSDpaIdx(
-    uprn = 3,
-    subBuildingName = 8,
-    buildingName = 9,
-    buildingNumber = 10,
-    dependentThoroughfareName = 11,
-    thoroughfareName = 12,
-    doubleDependentLocality = 13,
-    dependentLocality = 14,
-    postTown = 15,
-    postcode = 16)
-
-  val v2 = OSDpaIdx(
+  var idx = OSDpaIdx(
     uprn = 3,
     subBuildingName = 7,
     buildingName = 8,
@@ -49,9 +37,8 @@ object OSDpa {
     doubleDependentLocality = 12,
     dependentLocality = 13,
     postTown = 14,
-    postcode = 15)
-
-  var idx = v1
+    postcode = 15,
+    poBox = 23)
 
   def apply(csv: Array[String]): OSDpa =
     OSDpa(
@@ -64,7 +51,8 @@ object OSDpa {
       csv(idx.doubleDependentLocality).trim,
       csv(idx.dependentLocality).trim,
       csv(idx.postTown).trim,
-      csv(idx.postcode).trim)
+      csv(idx.postcode).trim,
+      csv(idx.poBox).trim)
 }
 
 case class OSDpaIdx(uprn: Int,
@@ -76,7 +64,8 @@ case class OSDpaIdx(uprn: Int,
                     doubleDependentLocality: Int,
                     dependentLocality: Int,
                     postTown: Int,
-                    postcode: Int)
+                    postcode: Int,
+                    poBox: Int)
 
 case class OSDpa(uprn: Long,
                  subBuildingName: String,
@@ -87,7 +76,8 @@ case class OSDpa(uprn: Long,
                  doubleDependentLocality: String,
                  dependentLocality: String,
                  postTown: String,
-                 postcode: String) extends Document {
+                 postcode: String,
+                 poBox: String) extends Document {
 
   // For use as input to MongoDbObject (hence it's not a Map)
   def tupled: List[(String, Any)] = List(
@@ -110,6 +100,7 @@ case class OSDpa(uprn: Long,
     Capitalisation.normaliseAddressLine(doubleDependentLocality),
     Capitalisation.normaliseAddressLine(dependentLocality),
     Capitalisation.normaliseAddressLine(postTown),
-    Postcode.normalisePostcode(postcode))
+    Postcode.normalisePostcode(postcode),
+    poBox)
 }
 

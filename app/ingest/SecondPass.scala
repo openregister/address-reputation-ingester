@@ -37,9 +37,6 @@ class SecondPass(out: OutputWriter, continuer: Continuer, settings: Algorithm, f
          if continuer.isBusy) {
 
       csvLine(OSCsv.RecordIdentifier_idx) match {
-        case OSHeader.RecordId =>
-          OSCsv.setCsvFormatFor(csvLine(OSHeader.Version_Idx))
-
         case OSLpi.RecordId if settings.includeLPI =>
           processLPI(csvLine, out)
 

@@ -45,7 +45,7 @@ import uk.gov.hmrc.logging.StubLogger
 class SecondPassTest extends FunSuite with Matchers with MockitoSugar {
 
   // sample data here is in the new format
-  OSCsv.setCsvFormat(2)
+//  OSCsv.setCsvFormat(2)
 
   // test data is long so disable scalastyle check
   // scalastyle:off

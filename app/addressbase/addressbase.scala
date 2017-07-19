@@ -32,24 +32,5 @@ object OSHeader {
 //-------------------------------------------------------------------------------------------------
 
 object OSCsv {
-  // Up to Epoch-38 is variant 1. Later epochs are variant 2.
-  // this may well change - see https://jira.tools.tax.service.gov.uk/browse/TXMNT-294
-  def setCsvFormat(v: Int) {
-    if (v == 1) {
-      OSBlpu.idx = OSBlpu.v1
-      OSDpa.idx = OSDpa.v1
-    } else {
-      OSBlpu.idx = OSBlpu.v2
-      OSDpa.idx = OSDpa.v2
-    }
-  }
-
-  def setCsvFormatFor(version: String): Unit = {
-    version match {
-      case "1.0" => setCsvFormat(1)
-      case _ => setCsvFormat(2)
-    }
-  }
-
   val RecordIdentifier_idx = 0
 }
