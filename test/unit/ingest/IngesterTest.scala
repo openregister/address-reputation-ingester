@@ -278,7 +278,7 @@ class IngesterTest extends FunSuite with MockitoSugar {
       // TODO parsing and presentation of PO Box addresses suspect?
       assert(addressesProduced("GB10092760043") === DbAddress("GB10092760043",
         List(), Some("Exeter"), "EX1 9UL", Some("GB-ENG"), Some("UK"), Some(1110),
-        Some("en"), None, Some(1), None, None, Some("50.7263105,-3.5222624"), Some(true)))
+        Some("en"), None, Some(1), None, None, Some("50.7263105,-3.5222624"), Some("795")))
 
       // 11,"I",76,14202264,1,1110,2,1990-01-01,1,8,0,2007-10-24,,2016-02-10,2004-03-29,292131.10,090785.06,50.7066528,-3.5290171,291680.33,090701.86,50.705821,-3.5353741,10
       // 15,"I",2384,14202264,"MARSH GREEN ROAD WEST","","EXETER","DEVON","ENG",2007-10-24,,2016-02-06,2004-03-29

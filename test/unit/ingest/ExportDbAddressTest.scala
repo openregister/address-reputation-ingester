@@ -148,7 +148,7 @@ class ExportDbAddressTest extends FunSuite {
           poBox = "any non-blank value here").normalise,
         Blpu(None, "EX4 4FT", '1', '2', 'E', 1110, "1.0,-1.0"),
         DbAddress("GB10023119082", List("Flat G.01 Block G, Birks Hall", "New North Road"), Some("Exeter"),
-          "EX4 4FT", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None, None, Some("1.0,-1.0"), Some(true)))
+          "EX4 4FT", Some("GB-ENG"), Some("UK"), Some(1110), Some("en"), Some(2), Some(1), None, None, Some("1.0,-1.0"), Some("any non-blank value here")))
 
     )
 
