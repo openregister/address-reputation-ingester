@@ -30,7 +30,7 @@ private object AppDependencies {
   import play.sbt.PlayImport._
   import play.core.PlayVersion
 
-  private val hmrcTestVersion = "2.2.0"
+  private val hmrcTestVersion = "2.3.0"
   private val scalaTestVersion = "2.2.6"
   private val pegdownVersion = "1.6.0"
   private val jacksonVersion = "2.7.4"
@@ -38,11 +38,11 @@ private object AppDependencies {
   val compile = Seq(
 
     ws excludeAll ExclusionRule(organization = "commons-logging"),
-    "uk.gov.hmrc" %% "microservice-bootstrap" % "5.8.0",
-    "uk.gov.hmrc" %% "play-authorisation" % "4.2.0",
-    "uk.gov.hmrc" %% "play-health" % "2.0.0",
-    "uk.gov.hmrc" %% "play-url-binders" % "2.0.0",
-    "uk.gov.hmrc" %% "play-config" % "3.0.0",
+    "uk.gov.hmrc" %% "microservice-bootstrap" % "5.16.0",
+    "uk.gov.hmrc" %% "play-authorisation" % "4.3.0",
+    "uk.gov.hmrc" %% "play-health" % "2.1.0",
+    "uk.gov.hmrc" %% "play-url-binders" % "2.1.0",
+    "uk.gov.hmrc" %% "play-config" % "4.3.0",
     "uk.gov.hmrc" %% "logback-json-logger" % "3.1.0",
     "uk.gov.hmrc" %% "address-reputation-store" % "2.25.0" withSources(),
     "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.4.0",
