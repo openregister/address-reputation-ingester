@@ -28,7 +28,7 @@ import uk.gov.hmrc.address.services.es._
 
 // for manual test/development
 object ElasticsearchSketch {
-  private val ec = scala.concurrent.ExecutionContext.Implicits.global
+  private val ec = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   def main(args: Array[String]) {
     val model = StateModel("essay", Some(1), None, Some("ts1"), None, "es")

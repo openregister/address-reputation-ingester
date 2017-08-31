@@ -40,7 +40,7 @@ import scala.concurrent.{Await, Future}
 class IndexSuite()(implicit val app: Application, implicit val appEndpoint: String)
   extends FreeSpec with MustMatchers with AppServerTestApi {
 
-  private implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+  private implicit val ec = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   val idle = Synopsis.OkText("idle")
 

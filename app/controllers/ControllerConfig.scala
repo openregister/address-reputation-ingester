@@ -30,7 +30,7 @@ import config.ConfigHelper
 class ControllerConfig @Inject()(configHelper: ConfigHelper) {
 
   // be careful to have only one thread pool in use
-  implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+  implicit val ec = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   val downloadFolder = new File(configHelper.replaceHome(configHelper.mustGetConfigString("app.files.downloadFolder")))
   val outputFolder = new File(configHelper.replaceHome(configHelper.mustGetConfigString("app.files.outputFolder")))

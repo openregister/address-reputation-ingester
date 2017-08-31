@@ -72,7 +72,7 @@ class IngestControllerTest extends FunSuite with MockitoSugar {
     val lifecycle = mock[ApplicationLifecycle]
     val worker = new WorkQueue(lifecycle, status)
 
-    val ec = scala.concurrent.ExecutionContext.Implicits.global
+    val ec = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
     val ingestController = new IngestController(cc, esFactory, fwFactory, nullFactory, ingesterFactory, worker, status)
 
