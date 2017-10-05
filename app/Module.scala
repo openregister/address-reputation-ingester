@@ -30,6 +30,11 @@ import scala.concurrent.ExecutionContext
 
 class Module(environment: Environment,
              configuration: Configuration) extends AbstractModule {
+
+  lazy val numShards = configuration.getConfig("elastic.shards").map(
+    _.entrySet.foldLeft(Map.empty[String, Int])((m, a) => m + (a._1 -> a._2.unwrapped().asInstanceOf[Int]))
+  ).getOrElse(Map.empty[String, Int])
+
   def configure(): Unit = {}
 
   @Provides
@@ -42,21 +47,22 @@ class Module(environment: Environment,
 
   @Provides
   @Singleton
-  def provideIndexMetadata(configHelper: ConfigHelper, statusLogger: StatusLogger, ec: ExecutionContext): IndexMetadata = {
+  def provideElasticSettings(configHelper: ConfigHelper): ElasticSettings = {
     val localMode = configHelper.getConfigString("elastic.localMode").exists(_.toBoolean)
     val homeDir = configHelper.getConfigString("elastic.homeDir")
     val preDelete = configHelper.getConfigString("elastic.preDelete").exists(_.toBoolean)
     val clusterName = configHelper.mustGetConfigString("elastic.clusterName")
     val connectionString = configHelper.mustGetConfigString("elastic.uri")
     val isCluster = configHelper.getConfigString("elastic.isCluster").exists(_.toBoolean)
-    val numShards = configHelper.getConfig("elastic.shards").map(
-      _.entrySet.foldLeft(Map.empty[String, Int])((m, a) => m + (a._1 -> a._2.unwrapped().asInstanceOf[Int]))
-    ).getOrElse(Map.empty[String, Int])
+    ElasticSettings(localMode, homeDir, preDelete, connectionString, isCluster, clusterName, numShards)
+  }
 
-    val settings = ElasticSettings(localMode, homeDir, preDelete, connectionString, isCluster, clusterName, numShards)
+  @Provides
+  @Singleton
+  def provideIndexMetadata(configHelper: ConfigHelper, statusLogger: StatusLogger, ec: ExecutionContext, settings: ElasticSettings): IndexMetadata = {
     val clients = ElasticsearchHelper.buildClients(settings, new LoggerFacade(Logger.logger))
-    val esImpl = new ESAdminImpl(clients, statusLogger, ec)
-    new IndexMetadata(esImpl, isCluster, numShards, statusLogger, ec)
+    val esImpl = new ESAdminImpl(clients, statusLogger, ec, settings)
+    new IndexMetadata(esImpl, settings.isCluster, numShards, statusLogger, ec)
   }
 
   @Provides

@@ -33,7 +33,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object ElasticsearchTestHelper {
   private val esDataPath: String = System.getProperty("java.io.tmpdir") + "/es"
-  lazy val esClient: ElasticClient = ElasticsearchHelper.buildDiskClient(ElasticDiskClientSettings(esDataPath, true))
+  private val diskClientSettings = ElasticDiskClientSettings(esDataPath, true)
+  val settings = ElasticSettings(diskClient = Some(diskClientSettings))
+  lazy val esClient: ElasticClient = ElasticsearchHelper.buildDiskClient(diskClientSettings)
 
   def createSchema(idx: IndexState, clients: List[ElasticClient]) {
     clients foreach { client =>

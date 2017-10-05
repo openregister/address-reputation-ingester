@@ -35,8 +35,10 @@ object ElasticsearchSketch {
     //.withNewTimestamp
     val status = new StatusLogger(Stdout)
 
-    val esClients = ElasticsearchHelper.buildNetClients(ElasticNetClientSettings("elasticsearch://localhost:9300", false, "elasticsearch", Map()), Stdout)
-    val esImpl = new ESAdminImpl(esClients, Stdout, ec)
+    val netClientSettings = ElasticNetClientSettings("elasticsearch://localhost:9300", false, "elasticsearch", Map())
+    val settings = ElasticSettings(netClient = Some(netClientSettings))
+    val esClients = ElasticsearchHelper.buildNetClients(netClientSettings, Stdout)
+    val esImpl = new ESAdminImpl(esClients, Stdout, ec, settings)
     val indexMetadata = new IndexMetadata(esImpl, false, Map("essay" -> 2), status, ec)
     val w = new OutputESWriter(model, status, indexMetadata, WriterSettings.default, ec, BuildProvenance(None, None))
 
