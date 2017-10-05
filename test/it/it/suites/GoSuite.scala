@@ -55,7 +55,7 @@ class GoSuite()(implicit val app: Application, implicit val appEndpoint: String)
        * verify additional index metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
+      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec, settings)
       val indexMetadata = new IndexMetadata(esAdmin, false, Map("exeter" -> 1, "abi" -> 1, "abp" -> 1), statusLogger, ec)
       val start = System.currentTimeMillis()
 
@@ -120,7 +120,7 @@ class GoSuite()(implicit val app: Application, implicit val appEndpoint: String)
       val idx = IndexName("abp", Some(39), Some("200102030405"))
 
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
+      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec, settings)
       val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
 
       indexMetadata.clients foreach { client =>
@@ -151,7 +151,7 @@ class GoSuite()(implicit val app: Application, implicit val appEndpoint: String)
        * should not change the nominated index
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
+      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec, settings)
       val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
       val initialIndexName = indexMetadata.getIndexNameInUseFor("abp")
 
@@ -169,7 +169,7 @@ class GoSuite()(implicit val app: Application, implicit val appEndpoint: String)
        * should not change the nominated index
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
+      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec, settings)
       val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
       val initialIndexName = indexMetadata.getIndexNameInUseFor("abp")
 

@@ -56,7 +56,7 @@ class IndexSuite()(implicit val app: Application, implicit val appEndpoint: Stri
       val idx = IndexName("abp", Some(39), Some("ts5"))
 
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
+      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec, settings)
       val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 2, "abp" -> 2), statusLogger, ec)
 
       createSchema(idx, indexMetadata.clients)
@@ -112,7 +112,7 @@ class IndexSuite()(implicit val app: Application, implicit val appEndpoint: Stri
       assert(waitWhile("/admin/status", busy) === idle)
 
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
+      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec, settings)
       val indexMetadata = new IndexMetadata(esAdmin, false, Map("exeter" -> 1, "abi" -> 1, "abp" -> 1), statusLogger, ec)
       waitForIndex("exeter", TimeValue.timeValueSeconds(3))
 
@@ -168,7 +168,7 @@ class IndexSuite()(implicit val app: Application, implicit val appEndpoint: Stri
       val idx = IndexName("abp", Some(40), Some(timestamp))
 
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
+      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec, settings)
       val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
 
       indexMetadata.clients foreach { client =>
@@ -196,7 +196,7 @@ class IndexSuite()(implicit val app: Application, implicit val appEndpoint: Stri
        * should not change the nominated index
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
+      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec, settings)
       val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
       val initialIndexName = indexMetadata.getIndexNameInUseFor("abp")
 
@@ -214,7 +214,7 @@ class IndexSuite()(implicit val app: Application, implicit val appEndpoint: Stri
        * should not change the nominated index
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
-      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec)
+      val esAdmin = new ESAdminImpl(List(esClient), statusLogger, ec, settings)
       val indexMetadata = new IndexMetadata(esAdmin, false, Map("abi" -> 1, "abp" -> 1), statusLogger, ec)
       val initialIndexName = indexMetadata.getIndexNameInUseFor("abp")
 

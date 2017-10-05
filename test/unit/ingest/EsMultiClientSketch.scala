@@ -24,7 +24,7 @@ import java.io.File
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.BuildProvenance
 import uk.gov.hmrc.address.osgb.DbAddress
-import uk.gov.hmrc.address.services.es.{ESAdminImpl, ElasticDiskClientSettings, ElasticsearchHelper, IndexMetadata}
+import uk.gov.hmrc.address.services.es._
 import uk.gov.hmrc.address.services.writers.{OutputESWriter, WriterSettings}
 import uk.gov.hmrc.logging.Stdout
 import uk.gov.hmrc.util.FileUtils
@@ -39,8 +39,10 @@ object EsMultiClientSketch {
     val status = new StatusLogger(Stdout)
 
     val esDataPath = System.getProperty("java.io.tmpdir") + "/es"
-    val diskEsClient = ElasticsearchHelper.buildDiskClient(ElasticDiskClientSettings(esDataPath, true))
-    val diskEsImpl = new ESAdminImpl(List(diskEsClient), Stdout, ec)
+    val diskClientSettings = ElasticDiskClientSettings(esDataPath, true)
+    val settings = ElasticSettings(diskClient = Some(diskClientSettings))
+    val diskEsClient = ElasticsearchHelper.buildDiskClient(diskClientSettings)
+    val diskEsImpl = new ESAdminImpl(List(diskEsClient), Stdout, ec, settings)
     val diskIndexMetadata = new IndexMetadata(diskEsImpl, false, Map("essay" -> 2), status, ec)
     val w = new OutputESWriter(model, status, diskIndexMetadata, WriterSettings.default, ec, BuildProvenance(None, None))
 
@@ -59,7 +61,7 @@ object EsMultiClientSketch {
     Thread.sleep(1000)
 
     val localEsClient = ElasticsearchHelper.buildNodeLocalClient()
-    val localEsImpl = new ESAdminImpl(List(localEsClient), Stdout, ec)
+    val localEsImpl = new ESAdminImpl(List(localEsClient), Stdout, ec, ElasticSettings())
     val localIndexMetadata = new IndexMetadata(localEsImpl, false, Map("essay" -> 2), status, ec)
 
     println("From local: " + localIndexMetadata.existingIndexes)
