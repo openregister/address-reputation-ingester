@@ -23,6 +23,7 @@ import ingest.{IngestController, IngestControllerHelper}
 import play.api.mvc.{Action, AnyContent}
 import services.exec.{Continuer, WorkQueue}
 import services.model.{StateModel, StatusLogger}
+import uk.gov.hmrc.address.services.es.IndexMetadata
 import uk.gov.hmrc.address.services.writers.{Algorithm, WriterSettings}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -37,7 +38,8 @@ class GoController @Inject()(logger: StatusLogger,
                              fetchController: FetchController,
                              ingestController: IngestController,
                              esSwitchoverController: SwitchoverController,
-                             esIndexController: IndexController) extends BaseController {
+                             esIndexController: IndexController,
+                             indexMetadata: IndexMetadata) extends BaseController {
 
   def doGoAuto(target: String,
                bulkSize: Option[Int], loopDelay: Option[Int]): Action[AnyContent] = Action {
@@ -84,7 +86,7 @@ class GoController @Inject()(logger: StatusLogger,
   }
 
   private def pipeline(target: String, model1: StateModel, settings: WriterSettings, continuer: Continuer) {
-    if (continuer.isBusy) {
+    if (shouldIngest(model1, continuer)) {
       val model2 = fetchController.fetch(model1, continuer)
       val model3 = ingestController.ingestIfOK(model2, logger, settings, target, continuer)
       target match {
@@ -93,4 +95,24 @@ class GoController @Inject()(logger: StatusLogger,
       }
     }
   }
+
+  def shouldIngest(model1: StateModel, continuer: Continuer): Boolean = {
+    val prod = model1.productName
+    val epoch = model1.epoch
+    val exists = indexExists(prod, epoch)
+    val force = model1.forceChange
+    val should = continuer.isBusy && (!exists || force)
+    if (!should) {
+      logger.info(s"Skipping ingest: index already exists in ES for $prod ${epoch.getOrElse(-1)}")
+    }
+    should
+  }
+
+  def indexExists(product: String, epoch: Option[Int]): Boolean = {
+    (product, epoch) match {
+      case (prod, Some(ep)) => indexMetadata.getIndexNameInUseFor(prod).exists(_.epoch == Some(ep))
+      case _ => false
+    }
+  }
+
 }

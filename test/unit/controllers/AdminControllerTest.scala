@@ -22,10 +22,8 @@ import java.util.concurrent.SynchronousQueue
 
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
-import org.junit.runner.RunWith
-import org.scalatest.FunSuite
-import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
+import org.scalatestplus.play.PlaySpec
 import play.api.inject.ApplicationLifecycle
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -33,68 +31,48 @@ import services.exec.WorkQueue
 import services.model.{StateModel, StatusLogger}
 import uk.gov.hmrc.logging.StubLogger
 
-@RunWith(classOf[JUnitRunner])
-class AdminControllerTest extends FunSuite with MockitoSugar {
+class AdminControllerTest extends PlaySpec with MockitoSugar {
 
   implicit val system = ActorSystem("test")
 
   implicit def mat: Materializer = ActorMaterializer()
 
-  test(
-    """
-      when cancel task is called
-      and no task is executing
-      then an ok response is returned
-    """) {
+  class Scenario {
     val logger = new StubLogger
-    val status = new StatusLogger(logger)
+    val statusLogger = new StatusLogger(logger)
     val lifecycle = mock[ApplicationLifecycle]
     val logFileHelper = new LogFileHelper
     val cc = mock[ControllerConfig]
     val dirTreeHelper = new DirTreeHelper(cc)
-    val worker = new WorkQueue(lifecycle, status)
+    val worker = new WorkQueue(lifecycle, statusLogger)
     val ac = new AdminController(worker, dirTreeHelper, logFileHelper, cc)
     val request = FakeRequest()
-
-    val futureResponse = call(ac.cancelTask(), request)
-
-    val response = await(futureResponse)
-    assert(response.header.status === 200)
-    worker.terminate()
   }
 
-  test(
-    """
-      when cancel task is called
-      and a task is executing
-      then an accepted response is returned
-    """) {
-    val logger = new StubLogger
-    val status = new StatusLogger(logger)
-    val stuff = new SynchronousQueue[Boolean]()
-    val lifecycle = mock[ApplicationLifecycle]
-    val logFileHelper = new LogFileHelper
-    val cc = mock[ControllerConfig]
-    val dirTreeHelper = new DirTreeHelper(cc)
-    val worker = new WorkQueue(lifecycle, status)
-    val model = new StateModel()
-    worker.push("thinking", {
-      c =>
-        stuff.take() // blocks until signalled
-        stuff.take() // blocks until signalled
-    })
+  "cancel task" should {
 
-    stuff.put(true)
-    // release the lock first time
-    val ac = new AdminController(worker, dirTreeHelper, logFileHelper, cc)
-    val request = FakeRequest()
+    "return ok when no task is executing" in new Scenario {
+      val futureResponse = call(ac.cancelTask(), request)
+      status(futureResponse) must be (200)
+      worker.terminate()
+    }
 
-    val futureResponse = call(ac.cancelTask(), request)
+    "return accepted when a task is executing" in new Scenario {
+      val stuff = new SynchronousQueue[Boolean]()
+      val model = new StateModel()
+      worker.push("thinking", {
+        c =>
+          stuff.take() // blocks until signalled
+          stuff.take() // blocks until signalled
+      })
+      stuff.put(true)
+      val futureResponse = call(ac.cancelTask(), request)
+      status(futureResponse) must be (202)
+      stuff.put(true) // release the lock second time
+      worker.awaitCompletion()
+      worker.terminate()
+    }
 
-    val response = await(futureResponse)
-    assert(response.header.status === 202)
-    stuff.put(true) // release the lock second time
-    worker.awaitCompletion()
-    worker.terminate()
   }
+
 }
