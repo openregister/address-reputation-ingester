@@ -10,9 +10,8 @@ import uk.gov.hmrc.play.http.ws._
 import uk.gov.hmrc.http.hooks.HttpHook
 import uk.gov.hmrc.play.microservice.config.LoadAuditingConfig
 
-trait Hooks extends HttpHooks with HttpAuditing {
+trait Hooks extends HttpHooks {
   override val hooks = NoneRequired
-  override lazy val auditConnector: AuditConnector = MicroserviceAuditConnector
 }
 
 trait WSHttp extends HttpGet with WSGet with HttpPut with WSPut with HttpPost with WSPost with HttpDelete with WSDelete with Hooks with AppName
