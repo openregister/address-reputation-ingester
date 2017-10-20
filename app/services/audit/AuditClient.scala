@@ -23,10 +23,10 @@ package services.audit
 import config.AppVersion
 import play.api.Environment
 import com.google.inject.{Inject, Singleton}
-import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.{Audit, DataEvent, EventTypes}
 import uk.gov.hmrc.play.config.AppName
+import uk.gov.hmrc.play.microservice.config.LoadAuditingConfig
 
 
 @Singleton

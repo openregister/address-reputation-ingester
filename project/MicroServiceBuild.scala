@@ -30,20 +30,17 @@ private object AppDependencies {
   import play.sbt.PlayImport._
   import play.core.PlayVersion
 
-  private val hmrcTestVersion = "2.3.0"
-  private val scalaTestVersion = "2.2.6"
+  private val hmrcTestVersion = "3.0.0"
   private val pegdownVersion = "1.6.0"
   private val jacksonVersion = "2.7.4"
+  private val scalaTestPlusPlayVersion = "2.0.1"
+  private val scalacticVersion = "3.0.1"
 
   val compile = Seq(
 
     ws excludeAll ExclusionRule(organization = "commons-logging"),
-    "uk.gov.hmrc" %% "microservice-bootstrap" % "5.16.0",
-    "uk.gov.hmrc" %% "play-authorisation" % "4.3.0",
-    "uk.gov.hmrc" %% "play-health" % "2.1.0",
+    "uk.gov.hmrc" %% "microservice-bootstrap" % "6.10.0",
     "uk.gov.hmrc" %% "play-url-binders" % "2.1.0",
-    "uk.gov.hmrc" %% "play-config" % "4.3.0",
-    "uk.gov.hmrc" %% "logback-json-logger" % "3.1.0",
     "uk.gov.hmrc" %% "address-reputation-store" % "2.29.0" withSources(),
     "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.4.0",
     "com.github.lookfirst" % "sardine" % "5.7",
@@ -64,14 +61,13 @@ private object AppDependencies {
     def apply() = new TestDependencies {
       override lazy val test = Seq(
         "uk.gov.hmrc" %% "hmrctest" % hmrcTestVersion % scope,
-        "org.scalatest" %% "scalatest" % scalaTestVersion % scope,
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "org.scalamock" %% "scalamock-scalatest-support" % "3.2" % scope,
-        "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % scope,
+        "org.scalatestplus.play" %% "scalatestplus-play" % scalaTestPlusPlayVersion % scope,
         "org.mockito" % "mockito-all" % "1.10.19" % scope,
         "com.pyruby" % "java-stub-server" % "0.14" % scope,
-        "org.scalactic" %% "scalactic" % "2.2.5" force()
+        "org.scalactic" %% "scalactic" % scalacticVersion force()
       )
     }.test
   }
@@ -83,15 +79,15 @@ private object AppDependencies {
 
       override lazy val test = Seq(
         "uk.gov.hmrc" %% "hmrctest" % hmrcTestVersion % scope,
-        "org.scalatest" %% "scalatest" % scalaTestVersion % scope,
+        //"org.scalatest" %% "scalatest" % scalaTestVersion % scope,
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "org.scalamock" %% "scalamock-scalatest-support" % "3.2" % scope,
-        "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % scope,
+        "org.scalatestplus.play" %% "scalatestplus-play" % scalaTestPlusPlayVersion % scope,
         "org.mockito" % "mockito-all" % "1.10.19" % scope,
         "com.pyruby" % "java-stub-server" % "0.14" % scope,
         "io.milton" % "milton-server-ce" % "2.7.1.5" % scope,
-        "org.scalactic" %% "scalactic" % "2.2.5" force()
+        "org.scalactic" %% "scalactic" % scalacticVersion force()
       )
     }.test
   }
