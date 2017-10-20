@@ -11,7 +11,7 @@ import uk.gov.hmrc.http.hooks.HttpHook
 import uk.gov.hmrc.play.microservice.config.LoadAuditingConfig
 
 trait Hooks extends HttpHooks with HttpAuditing {
-  override val hooks = Seq(AuditingHook)
+  override val hooks = NoneRequired
   override lazy val auditConnector: AuditConnector = MicroserviceAuditConnector
 }
 
