@@ -92,7 +92,8 @@ class FetchController @Inject() (logger: StatusLogger,
   private[fetch] def determineObsoleteFiles(products: List[String]): List[File] = {
     // already sorted
     val existingIndexes: List[IndexName] = indexMetadata.existingIndexes
-    val productDirs: List[File] = webdavFetcher.downloadFolder.listFiles.toList
+    val files = webdavFetcher.downloadFolder.listFiles
+    val productDirs: List[File] = if (files == null) List.empty else files.toList
     val epochDirs: List[File] = productDirs.flatMap(_.listFiles)
     val filtered = for (p <- products) yield {
       determineObsoleteFilesFor(p, existingIndexes, productDirs)
