@@ -73,6 +73,8 @@ class GoSuite()(implicit val app: Application, implicit val appEndpoint: String)
       val health = waitForIndex(exeter1.formattedName, TimeValue.timeValueSeconds(30))
       assert(health.getStatus == ClusterHealthStatus.GREEN)
 
+      // FIXME temporary fix: poll index metadata for around 10 seconds for document count; only fail after that time
+      Thread.sleep(10000)
       val metadata = indexMetadata.findMetadata(exeter1).get
       metadata.size mustBe Some(48737) // one less than MongoDB because metadata stored in idx settings
 
