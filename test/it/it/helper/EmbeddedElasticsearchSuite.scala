@@ -21,6 +21,7 @@ package it.helper
 
 import com.sksamuel.elastic4s.{ElasticClient, RichSearchResponse}
 import com.sksamuel.elastic4s.ElasticDsl._
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse
 import org.elasticsearch.common.unit.TimeValue
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import uk.gov.hmrc.address.osgb.{DbAddress, DbAddressOrderingByLine1}
@@ -46,7 +47,7 @@ object ElasticsearchTestHelper {
     }
   }
 
-  def waitForIndex(idx: String, timeout: TimeValue = TimeValue.timeValueSeconds(2)) {
+  def waitForIndex(idx: String, timeout: TimeValue = TimeValue.timeValueSeconds(2)): ClusterHealthResponse = {
     esClient.java.admin.cluster.prepareHealth(idx).setWaitForGreenStatus().setTimeout(timeout).get
   }
 

@@ -22,6 +22,7 @@ package it.suites
 import com.sksamuel.elastic4s.ElasticDsl._
 import it.helper.ElasticsearchTestHelper._
 import it.helper.{AppServerTestApi, Synopsis}
+import org.elasticsearch.cluster.health.ClusterHealthStatus
 import org.elasticsearch.common.unit.TimeValue
 import org.scalatest.{DoNotDiscover, FreeSpec, MustMatchers}
 import play.api.Application
@@ -69,7 +70,8 @@ class GoSuite()(implicit val app: Application, implicit val appEndpoint: String)
       assert(waitWhile("/admin/status", busy) === idle)
 
       val exeter1 = indexMetadata.existingIndexNamesLike(IndexName("exeter", Some(1))).last
-      waitForIndex(exeter1.formattedName, TimeValue.timeValueSeconds(30))
+      val health = waitForIndex(exeter1.formattedName, TimeValue.timeValueSeconds(30))
+      assert(health.getStatus == ClusterHealthStatus.GREEN)
 
       val metadata = indexMetadata.findMetadata(exeter1).get
       metadata.size mustBe Some(48737) // one less than MongoDB because metadata stored in idx settings
