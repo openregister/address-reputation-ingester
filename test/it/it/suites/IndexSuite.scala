@@ -96,7 +96,6 @@ class IndexSuite()(implicit val app: Application, implicit val appEndpoint: Stri
        * observe busy status
        * await successful outcome
        * observe quiet status
-       * verify that the index metadata contains completedAt with a sensible value
        * verify additional index metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
     """ in {
       val start = System.currentTimeMillis()
@@ -123,9 +122,6 @@ class IndexSuite()(implicit val app: Application, implicit val appEndpoint: Stri
       metadata.size mustBe Some(48737) // one less than DB because metadata stored in idx settings
 
       // (see similar tests in ExtractorTest)
-      val completedAt = metadata.completedAt.get.getTime
-      assert(start <= completedAt)
-      assert(completedAt <= System.currentTimeMillis())
       assert(metadata.bulkSize.get === "5")
       assert(metadata.loopDelay.get === "0")
       assert(metadata.includeDPA.get === "true")

@@ -41,7 +41,7 @@ private object AppDependencies {
     ws excludeAll ExclusionRule(organization = "commons-logging"),
     "uk.gov.hmrc" %% "microservice-bootstrap" % "6.10.0",
     "uk.gov.hmrc" %% "play-url-binders" % "2.1.0",
-    "uk.gov.hmrc" %% "address-reputation-store" % "2.29.0" withSources(),
+    "uk.gov.hmrc" %% "address-reputation-store" % "2.30.0" withSources(),
     "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.4.0",
     "com.github.lookfirst" % "sardine" % "5.7",
     "net.openhft" % "chronicle-map" % "3.8.0",

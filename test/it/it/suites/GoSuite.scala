@@ -51,7 +51,6 @@ class GoSuite()(implicit val app: Application, implicit val appEndpoint: String)
        * observe busy status
        * await successful outcome
        * observe quiet status
-       * verify that the index metadata contains completedAt with a sensible value
        * verify additional index metadata (loopDelay,bulkSize,includeDPA,includeLPI,prefer,streetFilter)
     """ in {
       val statusLogger = new StatusLogger(new StubLogger(true))
@@ -76,9 +75,6 @@ class GoSuite()(implicit val app: Application, implicit val appEndpoint: String)
       metadata.size mustBe Some(48737) // one less than MongoDB because metadata stored in idx settings
 
       // (see similar tests in ExtractorTest)
-      val completedAt = metadata.completedAt.get.getTime
-      assert(start <= completedAt)
-      assert(completedAt <= System.currentTimeMillis())
       assert(metadata.bulkSize.get === "7")
       assert(metadata.loopDelay.get === "0")
       assert(metadata.includeDPA.get === "true")
