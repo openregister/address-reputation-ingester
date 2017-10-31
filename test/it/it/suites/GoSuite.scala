@@ -24,6 +24,8 @@ import it.helper.ElasticsearchTestHelper._
 import it.helper.{AppServerTestApi, Synopsis}
 import org.elasticsearch.cluster.health.ClusterHealthStatus
 import org.elasticsearch.common.unit.TimeValue
+import org.scalatest.concurrent.Eventually
+import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{DoNotDiscover, FreeSpec, MustMatchers}
 import play.api.Application
 import play.api.test.Helpers._
@@ -37,7 +39,7 @@ import scala.concurrent.{Await, Future}
 
 @DoNotDiscover
 class GoSuite()(implicit val app: Application, implicit val appEndpoint: String)
-  extends FreeSpec with MustMatchers with AppServerTestApi  {
+  extends FreeSpec with MustMatchers with AppServerTestApi with Eventually {
 
   private implicit val ec = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -73,18 +75,18 @@ class GoSuite()(implicit val app: Application, implicit val appEndpoint: String)
       val health = waitForIndex(exeter1.formattedName, TimeValue.timeValueSeconds(30))
       assert(health.getStatus == ClusterHealthStatus.GREEN)
 
-      // FIXME temporary fix: poll index metadata for around 10 seconds for document count; only fail after that time
-      Thread.sleep(10000)
-      val metadata = indexMetadata.findMetadata(exeter1).get
-      metadata.size mustBe Some(48737) // one less than MongoDB because metadata stored in idx settings
+      eventually(timeout(Span(10, Seconds)), interval(Span(1, Seconds))) {
+        val metadata = indexMetadata.findMetadata(exeter1).get
+        metadata.size mustBe Some(48737) // one less than MongoDB because metadata stored in idx settings
 
-      // (see similar tests in ExtractorTest)
-      assert(metadata.bulkSize.get === "7")
-      assert(metadata.loopDelay.get === "0")
-      assert(metadata.includeDPA.get === "true")
-      assert(metadata.includeLPI.get === "true")
-      assert(metadata.streetFilter.get === "0")
-      assert(metadata.prefer.get === "DPA")
+        // (see similar tests in ExtractorTest)
+        assert(metadata.bulkSize.get === "7")
+        assert(metadata.loopDelay.get === "0")
+        assert(metadata.includeDPA.get === "true")
+        assert(metadata.includeLPI.get === "true")
+        assert(metadata.streetFilter.get === "0")
+        assert(metadata.prefer.get === "DPA")
+      }
 
       val ex46aw = await(findPostcode(exeter1, Postcode("EX4 6AW")))
       assert(ex46aw.size === 38)
