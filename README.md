@@ -1,36 +1,69 @@
-#  address-reputation-ingester
+This is how we got [HMRC's AddressBase matching
+microservice](https://github.com/hmrc/address-reputation-ingester) working on an
+Arch linux laptop.
 
-[![Build Status](https://travis-ci.org/hmrc/address-reputation-ingester.svg?branch=master)](https://travis-ci.org/hmrc/address-reputation-ingester) [![Download](https://api.bintray.com/packages/hmrc/releases/address-reputation-ingester/images/download.svg)](https://bintray.com/hmrc/releases/address-reputation-ingester/_latestVersion)
+## The git bit
 
-This application imports [AddressBase-Premium](https://www.ordnancesurvey.co.uk/business-and-government/products/addressbase-premium.html)
-data from Ordnance Survey GB. It regularly check for updates and, when necessary, downloads and converts the data to the format 
-used by the address-reputation microservice, which in turn feeds diverse systems within HMRC.
+Clone `git@github.com:hmrc/address-reputation-ingester.git` and `cd` into it.
 
-The application is built upon the [Play Framework using Scala](https://www.playframework.com/documentation/2.3.x/ScalaHome).
+### The AddressBase bit
 
-Timed behaviour is implemented using *cron* externally by poking the URL /goAuto/to/db
+Download the AddressBase data as a single zip, called e.g. `AB76GB_CSV.zip`,
+according to the https://github.com/openregister/addressbase2postgres README.
 
-A simple built-in console allows viewing of the current status and triggering or cancelling various processing steps, as required.
-
-## Elasticsearch Setup
-
-You need Elasticsearch for development. Ubuntu example:
+Place it in some subdirectory `/wherever/you/like/abi/45/full/`.  Then edit
+the file `conf/application.conf` in the `address-reputation-ingester` repo, to
+change the line
 
 ```
-SOURCE=/etc/apt/sources.list.d/elasticsearch-2.x.list
-echo "deb https://packages.elastic.co/elasticsearch/2.x/debian stable main" | sudo tee $SOURCE
-apt-get -q -q update
-apt-get -y install default-jdk elasticsearch
+    downloadFolder = "$HOME/OSGB-AddressBasePremium/download"
+```
+
+to
+
+```
+    downloadFolder = "/wherever/you/like"
+```
+
+The `/abi/45/full` bit is constructed by the UI according to what you tell it is
+the "Product" (defaults to "abi" for "AddressBase Premium"), the "Epoch"
+(defaults to 45), and the "Variant" (defaults to "full").
+
+### The elasticsearch bit
+
+We need a version 2 series of elasticsearch.  Fortunately the AUR has one.
+
+```sh
+yaourt -S elasticsearch2
+sudo systemctl start elasticsearch.service
+sudo systemctl enable elasticsearch.service
 echo "cluster.name: address-reputation" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
 ```
 
-### Associated Repos
+## The scala bit
 
-* [hmrc/addresses](https://github.com/hmrc/addresses) - documentation
-* [hmrc/address-lookup](https://github.com/hmrc/address-lookup) - address-lookup microservice
+```sh
+sudo pacman -S scala sbt
+```
 
+I had to downgrade `ncurses` first to `ncurses-6.0+20170429-1-x86_64.pkg.tar.xz`
 
-### Licence
+```sh
+downgrade ncurses
+```
 
-This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
-    
+After downgrading, `sbt` (in the root of the address-reputation-ingester) worked
+(wait for ages).
+
+```sh
+sbt
+run
+```
+
+## The prize
+
+Go to http://localhost:9000/ and wait ages for it to load.
+
+Click "Ingest only".
+
+Your CPU should burn up.
