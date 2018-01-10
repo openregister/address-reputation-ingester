@@ -26,8 +26,9 @@ to
 ```
 
 The `/abi/45/full` bit is constructed by the UI according to what you tell it is
-the "Product" (defaults to "abi" for "AddressBase Premium"), the "Epoch"
-(defaults to 45), and the "Variant" (defaults to "full").
+the "Product" (defaults to "abi" for "AddressBase Islands", even though what
+we're using is "AddressBase Premium"), the "Epoch" (defaults to 45), and the
+"Variant" (defaults to "full").
 
 ### The elasticsearch bit
 
@@ -60,10 +61,73 @@ sbt
 run
 ```
 
-## The prize
+## The ingestion bit
 
 Go to http://localhost:9000/ and wait ages for it to load.
 
 Click "Ingest only".
 
-Your CPU should burn up.
+Your CPU should burn up for about 3 hours.  Click "Current status" to track
+progress, or `tail -f address-reputation-ingester.log`.
+
+It's done when you see something like
+
+```text
+...
+Reading zip entry data/AddressBasePremium_FULL_2017-11-13_340.csv...
+Reading zip entry data/AddressBasePremium_FULL_2017-11-13_341.csv...
+Reading zip entry resources/AddressBase_products_classification_scheme.csv...
+Reading zip entry resources/Record_10_HEADER_Header.csv...
+Reading zip entry resources/Record_11_STREET_Header.csv...
+Reading zip entry resources/Record_15_STREETDESCRIPTOR_Header.csv...
+Reading zip entry resources/Record_21_BLPU_Header.csv...
+Reading zip entry resources/Record_23_XREF_Header.csv...
+Reading zip entry resources/Record_24_LPI_Header.csv...
+Reading zip entry resources/Record_28_DELIVERYPOINTADDRESS_Header.csv...
+Reading zip entry resources/Record_29_METADATA_Header.csv...
+Reading zip entry resources/Record_30_SUCCESSOR_Header.csv...
+Reading zip entry resources/Record_31_ORGANISATION_Header.csv...
+Reading zip entry resources/Record_32_CLASSIFICATION_Header.csv...
+Reading zip entry resources/Record_99_TRAILER_Header.csv...
+Reading from 354 CSV files in AB76GB_CSV.zip (1 of 1) took 8968s.
+Second pass processed 28816409 DPAs, 4040001 LPIs.
+Ingester finished after 9539s.
+Finished ingesting to index abi_45_201801101001
+Cleaning up the ingester: ok.
+Finished ingesting to es abi/45/full after 9539s.
+idle
+```
+
+That created an index, so set the thing to use that index by clicking "List" to
+show the index's name, pasting the name into the "Index" box, and clicking
+"Switch to".  You'll probably see this:
+
+```text
+Starting switching to abi_45_201801101001.
+Warn: abi_45_201801101001: index is still being written
+Finished switching to abi_45_201801101001 after 12.6ms.
+~~~~~~~~~~~~~~~ 10-Jan-2018 12:47:20 ~~~~~~~~~~~~~~~
+Starting switching to abi_45_201801101001.
+Warn: abi_45_201801101001: index is still being written
+Finished switching to abi_45_201801101001 after 5945μs.
+idle
+```
+
+That means it didn't work!  So bodge it.  Edit `app/controllers/SwitchoverController.scala` line 67 from
+
+```scala
+else if (indexMetadata.findMetadata(newName).exists(_.completedAt.isDefined)) {
+```
+
+to
+
+```scala
+else if (true) {
+```
+
+## The address-lookup bit
+
+Clone git@github.com:hmrc/address-lookup.git.  `cd` into it, start `sbt`, and
+`run 9022` (or some port number that is available).
+
+`curl --header "X-LOCALHOST-Origin: 0" http://localhost:9022/v2/uk/addresses?postcode=AA1+1AA`
