@@ -130,4 +130,37 @@ else if (true) {
 Clone git@github.com:hmrc/address-lookup.git.  `cd` into it, start `sbt`, and
 `run 9022` (or some port number that is available).
 
-`curl --header "X-LOCALHOST-Origin: 0" http://localhost:9022/v2/uk/addresses?postcode=AA1+1AA`
+The `/v2/uk/addresses` endpoint is quite fussy about optional parameters.  We
+think the rules are:
+
+1. Unless you provide `postcode`, don't provide `filter`
+2. If you only provide `postcode`, don't provide `limit`
+
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?postcode=AA1+1AA'`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?postcode=HA6+3BF&filter=46+Rofant+Road'`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?postcode=HA6+3BF'`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?postcode=HA6+3BE&filter='`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?postcode=HA6+3BE&limit='`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?postcode=HA6+3BE&limit=1'`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?postcode=HA6+3BE&line1=46'`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?postcode=HA6+3BE&line1=46&limit=1'`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?postcode=HA6+3BE&line2=46&limit=1'`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?filter=HA6+3BE'`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?line2=46&limit=1'`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?limit=1'`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?line1=1'`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?postcode=HA6+3BE&line1=46&filter='`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?line1=46&filter='`
+
+# Multiple matches
+
+This returns many matches because it doesn't use any information about the place
+being a jobcentre.  The UPRN we chose for the jobcentre register was
+200003771457.
+
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?postcode=cf44%207hu&line1=crown%20buildings&line2=greenbach&town=aberdare' | jq .`
+
+## Improvements to make
+
+* Align the parts of an address in the index (`line1`, `postcode`, etc.) to the
+    fields returned by libpostal, which normalises free-form addresses.
