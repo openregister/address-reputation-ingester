@@ -152,6 +152,13 @@ think the rules are:
 `curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?postcode=HA6+3BE&line1=46&filter='`
 `curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?line1=46&filter='`
 
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?line1=0+the+vale'`
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?line1=1+the+vale'`
+
+`curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?line1=garmonsway'`
+
+The `limit` parameter has no effect `curl --header "X-LOCALHOST-Origin: 0" 'http://localhost:9022/v2/uk/addresses?line1=avenue&limit=1'`
+
 # Multiple matches
 
 This returns many matches because it doesn't use any information about the place
